@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --exec \"ts-node --project tsconfig-node.json\" src/server.ts",
-    "build": "tsc",
+    "build": "prisma generate && tsc",
     "start": "node dist/server.js",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -17,7 +17,8 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts"
+    "db:seed": "ts-node prisma/seed.ts",
+    "db:deploy": "prisma migrate deploy"
   },
   "keywords": [
     "marketplace",
@@ -44,6 +45,7 @@
     "http-proxy-middleware": "^3.0.5",
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
+    "serverless-http": "^3.2.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^4.2.1",
@@ -62,6 +64,7 @@
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.10.4",
+    "@types/serverless-http": "^3.0.0",
     "@types/nodemailer": "^6.4.14",
     "@types/supertest": "^6.0.3",
     "@types/uuid": "^9.0.8",
