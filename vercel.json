@@ -10,9 +10,5 @@
       "src": "/api/(.*)",
       "dest": "/api/[...all].ts"
     }
-  ],
-  "env": {
-    "DATABASE_URL": "@postgres_prisma_url",
-    "DIRECT_URL": "@postgres_url_non_pooling"
-  }
+  ]
 }
