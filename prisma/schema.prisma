@@ -1,0 +1,679 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                String            @id @default(cuid())
+  email             String            @unique
+  phone             String?           @unique
+  username          String            @unique
+  firstName         String
+  lastName          String
+  avatar            String?
+  bio               String?
+  dateOfBirth       DateTime?
+  gender            String?
+  country           String?
+  state             String?
+  city              String?
+  address           String?
+  role              UserRole          @default(USER)
+  status            UserStatus        @default(PENDING_VERIFICATION)
+  isEmailVerified   Boolean           @default(false)
+  isPhoneVerified   Boolean           @default(false)
+  isKYCVerified     Boolean           @default(false)
+  passwordHash      String
+  lastLoginAt       DateTime?
+  loginAttempts     Int               @default(0)
+  lockedUntil       DateTime?
+  twoFactorEnabled  Boolean           @default(false)
+  twoFactorSecret   String?
+  referralCode      String            @unique
+  referredBy        String?
+  totalReferrals    Int               @default(0)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  emailVerifiedAt   DateTime?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  verificationToken String?
+  ngnWalletAddress  String?
+  usdtWalletAddress String?
+  messages          ChatMessage[]
+  chatParticipants  ChatParticipant[]
+  comments          Comment[]
+  escrowMessages    EscrowMessage[]   @relation("EscrowMessages")
+  escrowsAsBuyer    Escrow[]          @relation("EscrowBuyer")
+  escrowsAsSeller   Escrow[]          @relation("EscrowSeller")
+  follows           Follow[]          @relation("UserFollows")
+  followers         Follow[]          @relation("UserFollowers")
+  kycVerifications  KYCVerification[]
+  likes             Like[]
+  notifications     Notification[]
+  posts             Post[]
+  reports           Report[]          @relation("ReportedBy")
+  reportedContent   Report[]          @relation("ReportedUser")
+  stories           Story[]           @relation("UserStories")
+  storyViews        StoryView[]       @relation("StoryViews")
+  transactions      Transaction[]
+  vtuTransactions   VTUTransaction[]
+  wallets           Wallet[]
+  listings          Listing[]         @relation("SellerListings")
+  purchases         Purchase[]        @relation("BuyerPurchases")
+  sales             Purchase[]        @relation("SellerSales")
+
+  @@map("users")
+}
+
+model Game {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  slug        String       @unique
+  description String?
+  category    GameCategory
+  status      GameStatus   @default(ACTIVE)
+  icon        String?
+  banner      String?
+  platforms   String[]
+  minLevel    Int?
+  maxLevel    Int?
+  features    String[]
+  isPopular   Boolean      @default(false)
+  sortOrder   Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  posts       Post[]
+
+  @@map("games")
+}
+
+model Wallet {
+  id               String        @id @default(cuid())
+  userId           String
+  currency         Currency
+  balance          Decimal       @default(0) @db.Decimal(15, 2)
+  lockedBalance    Decimal       @default(0) @db.Decimal(15, 2)
+  totalDeposits    Decimal       @default(0) @db.Decimal(15, 2)
+  totalWithdrawals Decimal       @default(0) @db.Decimal(15, 2)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  transactions     Transaction[]
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, currency])
+  @@map("wallets")
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  userId          String
+  walletId        String
+  type            TransactionType
+  status          TransactionStatus @default(PENDING)
+  amount          Decimal           @db.Decimal(15, 2)
+  fee             Decimal           @default(0) @db.Decimal(15, 2)
+  netAmount       Decimal           @db.Decimal(15, 2)
+  currency        Currency
+  reference       String            @unique
+  description     String
+  metadata        Json?
+  gatewayResponse Json?
+  failureReason   String?
+  processedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  user            User              @relation(fields: [userId], references: [id])
+  wallet          Wallet            @relation(fields: [walletId], references: [id])
+
+  @@map("transactions")
+}
+
+model Escrow {
+  id            String          @id @default(cuid())
+  buyerId       String
+  sellerId      String
+  postId        String?
+  amount        Decimal         @db.Decimal(15, 2)
+  fee           Decimal         @db.Decimal(15, 2)
+  currency      Currency
+  status        EscrowStatus    @default(PENDING)
+  title         String
+  description   String
+  terms         String?
+  disputeReason String?
+  adminNotes    String?
+  fundedAt      DateTime?
+  releasedAt    DateTime?
+  disputedAt    DateTime?
+  autoReleaseAt DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  messages      EscrowMessage[]
+  buyer         User            @relation("EscrowBuyer", fields: [buyerId], references: [id])
+  post          Post?           @relation(fields: [postId], references: [id])
+  seller        User            @relation("EscrowSeller", fields: [sellerId], references: [id])
+  purchase      Purchase?
+
+  @@map("escrows")
+}
+
+model EscrowMessage {
+  id          String    @id @default(cuid())
+  escrowId    String
+  senderId    String
+  message     String
+  attachments String[]
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  escrow      Escrow    @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+  sender      User      @relation("EscrowMessages", fields: [senderId], references: [id])
+
+  @@map("escrow_messages")
+}
+
+model Post {
+  id             String     @id @default(cuid())
+  userId         String
+  type           PostType
+  status         PostStatus @default(ACTIVE)
+  title          String
+  description    String
+  price          Decimal?   @db.Decimal(15, 2)
+  currency       Currency?
+  images         String[]
+  videos         String[]
+  tags           String[]
+  category       String?
+  gameTitle      String?
+  platform       String?
+  accountLevel   String?
+  accountDetails Json?
+  location       String?
+  isNegotiable   Boolean    @default(false)
+  isFeatured     Boolean    @default(false)
+  viewCount      Int        @default(0)
+  likeCount      Int        @default(0)
+  commentCount   Int        @default(0)
+  shareCount     Int        @default(0)
+  soldAt         DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  accountAge     Int?
+  accountRank    String?
+  accountRegion  String?
+  gameId         String?
+  hasRareItems   Boolean    @default(false)
+  isVerified     Boolean    @default(false)
+  comments       Comment[]
+  escrows        Escrow[]
+  likes          Like[]
+  game           Game?      @relation(fields: [gameId], references: [id])
+  user           User       @relation(fields: [userId], references: [id])
+  reports        Report[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  userId    String
+  postId    String
+  parentId  String?
+  content   String
+  likeCount Int       @default(0)
+  isEdited  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, postId])
+  @@map("likes")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("UserFollows", fields: [followerId], references: [id])
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+}
+
+model Story {
+  id        String      @id @default(cuid())
+  userId    String
+  media     String
+  mediaType String      @default("image")
+  caption   String?
+  views     Int         @default(0)
+  createdAt DateTime    @default(now())
+  expiresAt DateTime
+  user      User        @relation("UserStories", fields: [userId], references: [id], onDelete: Cascade)
+  viewers   StoryView[]
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("stories")
+}
+
+model StoryView {
+  id       String   @id @default(cuid())
+  storyId  String
+  userId   String
+  viewedAt DateTime @default(now())
+  story    Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user     User     @relation("StoryViews", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, userId])
+  @@map("story_views")
+}
+
+model Chat {
+  id            String            @id @default(cuid())
+  type          ChatType          @default(DIRECT)
+  name          String?
+  description   String?
+  avatar        String?
+  isActive      Boolean           @default(true)
+  lastMessageAt DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  messages      ChatMessage[]
+  participants  ChatParticipant[]
+
+  @@map("chats")
+}
+
+model ChatParticipant {
+  id         String    @id @default(cuid())
+  chatId     String
+  userId     String
+  role       String    @default("member")
+  joinedAt   DateTime  @default(now())
+  lastReadAt DateTime?
+  isActive   Boolean   @default(true)
+  chat       Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id])
+
+  @@unique([chatId, userId])
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id          String        @id @default(cuid())
+  chatId      String
+  userId      String
+  type        MessageType   @default(TEXT)
+  content     String
+  attachments String[]
+  metadata    Json?
+  isEdited    Boolean       @default(false)
+  isDeleted   Boolean       @default(false)
+  replyToId   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  chat        Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  replyTo     ChatMessage?  @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies     ChatMessage[] @relation("MessageReplies")
+  user        User          @relation(fields: [userId], references: [id])
+
+  @@map("chat_messages")
+}
+
+model KYCVerification {
+  id               String    @id @default(cuid())
+  userId           String
+  status           KYCStatus @default(PENDING)
+  documentType     String
+  documentNumber   String
+  documentImages   String[]
+  firstName        String
+  lastName         String
+  dateOfBirth      DateTime
+  address          String
+  phoneNumber      String
+  verificationData Json?
+  rejectionReason  String?
+  verifiedAt       DateTime?
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id])
+
+  @@map("kyc_verifications")
+}
+
+model VTUTransaction {
+  id                String            @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  recipient         String
+  amount            Decimal           @db.Decimal(15, 2)
+  fee               Decimal           @db.Decimal(15, 2)
+  currency          Currency
+  status            TransactionStatus @default(PENDING)
+  reference         String            @unique
+  providerReference String?
+  description       String
+  metadata          Json?
+  processedAt       DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  user              User              @relation(fields: [userId], references: [id])
+
+  @@map("vtu_transactions")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model Report {
+  id             String    @id @default(cuid())
+  reportedById   String
+  reportedUserId String?
+  postId         String?
+  listingId      String?
+  reason         String
+  description    String?
+  status         String    @default("PENDING")
+  adminNotes     String?
+  resolvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  post           Post?     @relation(fields: [postId], references: [id])
+  listing        Listing?  @relation("ListingReports", fields: [listingId], references: [id])
+  reportedBy     User      @relation("ReportedBy", fields: [reportedById], references: [id])
+  reportedUser   User?     @relation("ReportedUser", fields: [reportedUserId], references: [id])
+
+  @@map("reports")
+}
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_configs")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+  PENDING_VERIFICATION
+}
+
+enum KYCStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+  PURCHASE
+  SALE
+  VTU_PURCHASE
+  ESCROW_DEPOSIT
+  ESCROW_RELEASE
+  FEE_CHARGE
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  PROCESSING
+}
+
+enum EscrowStatus {
+  PENDING
+  FUNDED
+  DISPUTED
+  RELEASED
+  CANCELLED
+  REFUNDED
+}
+
+enum Currency {
+  NGN
+  USD
+  LMC
+}
+
+enum PostType {
+  GAME_ACCOUNT
+  SOCIAL_POST
+  SERVICE_OFFER
+}
+
+enum PostStatus {
+  ACTIVE
+  SOLD
+  SUSPENDED
+  DELETED
+}
+
+enum ChatType {
+  DIRECT
+  GROUP
+  SUPPORT
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+enum NotificationType {
+  TRANSACTION
+  CHAT
+  POST
+  SYSTEM
+  KYC
+  ESCROW
+}
+
+enum GameCategory {
+  BATTLE_ROYALE
+  FPS
+  SPORTS
+  MOBA
+  RPG
+  STRATEGY
+  RACING
+  SIMULATION
+  OTHER
+}
+
+enum GameStatus {
+  ACTIVE
+  INACTIVE
+  FEATURED
+}
+
+// ============================================
+// MARKETPLACE MODELS
+// ============================================
+
+model Listing {
+  id          String         @id @default(cuid())
+  sellerId    String
+  seller      User           @relation("SellerListings", fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  // Product Info
+  title       String
+  description String         @db.Text
+  category    ListingCategory
+  type        ListingType
+  
+  // Pricing
+  price       Decimal        @db.Decimal(10, 2)
+  currency    Currency       @default(NGN)
+  
+  // Game/Social Account Details
+  platform    String?        // PlayStation, Xbox, Instagram, TikTok, etc.
+  level       Int?           // For game accounts
+  followers   Int?           // For social accounts
+  verified    Boolean?       // For social accounts (blue check)
+  username    String?        // Account username
+  
+  // Media (Cloudinary URLs)
+  images      String[]       // Array of image URLs
+  videos      String[]       // Array of video URLs
+  
+  // Additional Details
+  tags        String[]       // Searchable tags
+  features    Json?          // Additional features as JSON
+  
+  // Status
+  status      ListingStatus  @default(ACTIVE)
+  featured    Boolean        @default(false)
+  
+  // Metadata
+  views       Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  // Relations
+  purchases   Purchase[]
+  reports     Report[]       @relation("ListingReports")
+  
+  @@index([sellerId])
+  @@index([category])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Purchase {
+  id          String         @id @default(cuid())
+  listingId   String
+  listing     Listing        @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId     String
+  buyer       User           @relation("BuyerPurchases", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId    String
+  seller      User           @relation("SellerSales", fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  // Payment
+  amount      Decimal        @db.Decimal(10, 2)
+  currency    Currency
+  
+  // Escrow
+  escrowId    String?        @unique
+  escrow      Escrow?        @relation(fields: [escrowId], references: [id])
+  
+  // Status
+  status      PurchaseStatus @default(PENDING_PAYMENT)
+  
+  // Delivery
+  accountDetails Json?        // Encrypted account credentials
+  deliveredAt    DateTime?
+  completedAt    DateTime?
+  
+  // Rating
+  buyerRating    Int?         // 1-5 stars
+  sellerRating   Int?         // 1-5 stars
+  buyerReview    String?
+  sellerReview   String?
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([listingId])
+  @@index([status])
+}
+
+enum ListingCategory {
+  GAMING
+  SOCIAL_MEDIA
+  STREAMING
+  DIGITAL_GOODS
+  OTHER
+}
+
+enum ListingType {
+  GAME_ACCOUNT
+  SOCIAL_ACCOUNT
+  GAME_ITEMS
+  SOCIAL_BOOST
+  STREAMING_ACCOUNT
+  OTHER
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  PENDING_REVIEW
+  SOLD
+  SUSPENDED
+  DELETED
+}
+
+enum PurchaseStatus {
+  PENDING_PAYMENT
+  PAYMENT_CONFIRMED
+  IN_ESCROW
+  DELIVERED
+  COMPLETED
+  DISPUTED
+  REFUNDED
+  CANCELLED
+}
