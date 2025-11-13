@@ -30,21 +30,20 @@ const app = express();
 app.set('trust proxy', true);
 
 // CORS configuration - MUST be before other middleware
-app.use(cors({
+const corsOptions = {
   origin: '*', // Allow all origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   exposedHeaders: ['Content-Length', 'X-Request-Id'],
   maxAge: 86400, // 24 hours
-  preflightContinue: false,
   optionsSuccessStatus: 204
-}));
+};
 
-// Handle preflight requests explicitly - BEFORE other middleware
-app.options('*', (req, res) => {
-  res.status(204).end();
-});
+app.use(cors(corsOptions));
+
+// Handle preflight requests - let cors middleware handle it
+app.options('*', cors(corsOptions));
 
 // Security middleware - disabled for now to debug CORS
 // app.use(helmet({
