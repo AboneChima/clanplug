@@ -37,12 +37,13 @@ export default async function(req: VercelRequest, res: VercelResponse) {
   
   try {
     // Handle all other routes through Express app with timeout
-    return await Promise.race([
+    const result = await Promise.race([
       handler(req as any, res as any),
       new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Function timeout')), 9000)
       )
     ])
+    return result
   } catch (error: any) {
     console.error('Handler error:', error)
     if (!res.headersSent) {
@@ -52,5 +53,6 @@ export default async function(req: VercelRequest, res: VercelResponse) {
         error: error.message
       })
     }
+    return
   }
 }
