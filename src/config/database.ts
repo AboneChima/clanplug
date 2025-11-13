@@ -10,13 +10,6 @@ declare global {
 export const prisma = globalThis.__prisma || new PrismaClient({
   log: config.isDevelopment ? ['query', 'info', 'warn', 'error'] : ['error'],
   errorFormat: 'minimal',
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-  // Optimize for serverless
-  datasourceUrl: process.env.DATABASE_URL,
 });
 
 // In development, store the client in global to prevent multiple instances
