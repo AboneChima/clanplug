@@ -29,16 +29,11 @@ const app = express();
 // Trust proxy for ngrok and other reverse proxies
 app.set('trust proxy', true);
 
-// Security middleware
+// Security middleware - relaxed for API
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
+  contentSecurityPolicy: false, // Disable CSP for API
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
 // CORS configuration - Allow all origins for now (restrict in production later)
@@ -47,7 +42,12 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Request-Id'],
+  maxAge: 86400, // 24 hours
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
 
 // Rate limiting - disabled for development with ngrok
 // const limiter = rateLimit({
