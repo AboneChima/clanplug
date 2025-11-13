@@ -145,52 +145,84 @@ app.use(errorHandler);
 
 // Start server
 const startServer = async () => {
-  // Try to connect to database, but continue if unavailable
   try {
-    await connectDatabase();
-    console.log('✅ Database connected successfully');
-  } catch (error) {
-    console.warn('⚠️ Database connection failed, continuing without DB:', error instanceof Error ? error.message : error);
-  }
-
-  // Try to connect to Redis, but continue if unavailable
-  try {
-    await connectRedis();
-    console.log('✅ Redis connected successfully');
-  } catch (error) {
-    console.warn('⚠️ Redis connection failed, continuing without Redis:', error instanceof Error ? error.message : error);
-  }
-
-  // Start HTTP server regardless, so health and static routes are available
-  const server = app.listen(config.PORT, () => {
-    console.log(`🚀 Server running on port ${config.PORT}`);
-    console.log(`🌍 Environment: ${config.NODE_ENV}`);
-    console.log(`📱 Frontend URL: ${config.FRONTEND_URL}`);
+    console.log('🚀 Starting server...');
+    console.log(`📍 Environment: ${config.NODE_ENV}`);
+    console.log(`📍 Port: ${config.PORT}`);
     
-    // Start transaction cleanup job
-    startTransactionCleanupJob();
-  });
+    // Try to connect to database, but continue if unavailable
+    try {
+      await connectDatabase();
+      console.log('✅ Database connected successfully');
+    } catch (error) {
+      console.warn('⚠️ Database connection failed, continuing without DB:', error instanceof Error ? error.message : error);
+    }
 
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
-    stopTransactionCleanupJob();
-    server.close(() => {
-      console.log('Process terminated');
-      process.exit(0);
-    });
-  });
+    // Try to connect to Redis, but continue if unavailable
+    try {
+      await connectRedis();
+      console.log('✅ Redis connected successfully');
+    } catch (error) {
+      console.warn('⚠️ Redis connection failed, continuing without Redis:', error instanceof Error ? error.message : error);
+    }
 
-  process.on('SIGINT', () => {
-    console.log('SIGINT received, shutting down gracefully');
-    stopTransactionCleanupJob();
-    server.close(() => {
-      console.log('Process terminated');
-      process.exit(0);
+    // Start HTTP server regardless, so health and static routes are available
+    const server = app.listen(config.PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${config.PORT}`);
+      console.log(`🌍 Environment: ${config.NODE_ENV}`);
+      console.log(`📱 Frontend URL: ${config.FRONTEND_URL || 'Not set'}`);
+      
+      // Start transaction cleanup job
+      try {
+        startTransactionCleanupJob();
+        console.log('✅ Transaction cleanup job started');
+      } catch (error) {
+        console.warn('⚠️ Failed to start cleanup job:', error);
+      }
     });
-  });
+
+    server.on('error', (error: any) => {
+      console.error('❌ Server error:', error);
+      process.exit(1);
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received, shutting down gracefully');
+      stopTransactionCleanupJob();
+      server.close(() => {
+        console.log('Process terminated');
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGINT', () => {
+      console.log('SIGINT received, shutting down gracefully');
+      stopTransactionCleanupJob();
+      server.close(() => {
+        console.log('Process terminated');
+        process.exit(0);
+      });
+    });
+  } catch (error) {
+    console.error('❌ Fatal error starting server:', error);
+    process.exit(1);
+  }
 };
 
-startServer();
+// Handle unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+startServer().catch((error) => {
+  console.error('❌ Failed to start server:', error);
+  process.exit(1);
+});
 
 export default app;
