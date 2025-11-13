@@ -29,28 +29,21 @@ const app = express();
 // Trust proxy for ngrok and other reverse proxies
 app.set('trust proxy', true);
 
-// CORS configuration - MUST be before other middleware
-const corsOptions = {
-  origin: '*', // Allow all origins
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Content-Length', 'X-Request-Id'],
-  maxAge: 86400, // 24 hours
-  optionsSuccessStatus: 204
-};
-
-app.use(cors(corsOptions));
-
-// Handle preflight requests - let cors middleware handle it
-app.options('*', cors(corsOptions));
-
-// Security middleware - disabled for now to debug CORS
-// app.use(helmet({
-//   contentSecurityPolicy: false,
-//   crossOriginEmbedderPolicy: false,
-//   crossOriginResourcePolicy: { policy: "cross-origin" },
-// }));
+// Simple CORS - allow everything
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400');
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  
+  next();
+});
 
 // Rate limiting - disabled for development with ngrok
 // const limiter = rateLimit({
