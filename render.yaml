@@ -1,0 +1,52 @@
+services:
+  # Backend API
+  - type: web
+    name: lordmoon-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lordmoon-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      - key: BCRYPT_ROUNDS
+        value: 10
+      - key: DEFAULT_CURRENCY
+        value: NGN
+      - key: SUPPORTED_CURRENCIES
+        value: NGN,USD
+      - key: DEPOSIT_FEE
+        value: 3
+      - key: WITHDRAWAL_FEE
+        value: 3
+      - key: TRANSACTION_FEE
+        value: 3
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 100
+      - key: APP_NAME
+        value: Lordmoon
+      - key: ADMIN_EMAIL
+        value: admin@lordmoon.com
+    healthCheckPath: /health
+
+databases:
+  - name: lordmoon-db
+    plan: free
+    databaseName: lordmoon
+    user: lordmoon
