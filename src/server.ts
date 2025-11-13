@@ -120,20 +120,22 @@ app.use('/api/stories', storyRoutes);
 app.use('/api/follow', followRoutes);
 app.use('/api/manual-verify', manualVerifyRoutes);
 
-// Proxy middleware for frontend - catch all non-API routes
-const frontendProxy = createProxyMiddleware({
-  target: config.FRONTEND_URL,
-  changeOrigin: true,
-  ws: true
-});
+// Proxy middleware for frontend - only in development
+if (config.NODE_ENV === 'development' && config.FRONTEND_URL) {
+  const frontendProxy = createProxyMiddleware({
+    target: config.FRONTEND_URL,
+    changeOrigin: true,
+    ws: true
+  });
 
-// Apply proxy to all routes that don't start with /api or /health
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
-    return next();
-  }
-  return frontendProxy(req, res, next);
-});
+  // Apply proxy to all routes that don't start with /api or /health
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      return next();
+    }
+    return frontendProxy(req, res, next);
+  });
+}
 
 // 404 handler for API routes only
 app.use('/api/*', notFoundHandler);
