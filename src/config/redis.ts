@@ -47,6 +47,12 @@ export const createRedisClient = (): ReturnType<typeof createClient> => {
 // Connect to Redis
 export const connectRedis = async (): Promise<void> => {
   try {
+    // Skip Redis if URL is localhost or not configured
+    if (!config.REDIS_URL || config.REDIS_URL.includes('localhost')) {
+      console.warn('⚠️ Redis not configured or using localhost, skipping connection');
+      return;
+    }
+    
     redisClient = createRedisClient();
     await redisClient.connect();
     
@@ -55,14 +61,8 @@ export const connectRedis = async (): Promise<void> => {
     
   } catch (error) {
     console.error('❌ Redis connection failed:', error);
-    
-    // In development, continue without Redis
-    if (config.isDevelopment) {
-      console.warn('⚠️ Continuing without Redis in development mode');
-      return;
-    }
-    
-    throw error;
+    console.warn('⚠️ Continuing without Redis');
+    return;
   }
 };
 

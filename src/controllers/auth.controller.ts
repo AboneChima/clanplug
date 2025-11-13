@@ -87,16 +87,21 @@ export async function register(req: Request, res: Response) {
       }
     }
 
-    // Send verification email (best-effort)
-    try {
-      await emailService.sendVerificationEmail(user.email, {
-        username: user.firstName || user.username,
-        verificationCode: verificationToken,
-        verificationUrl: `${config.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}`
-      });
-    } catch (emailError) {
-      console.warn('Failed to send verification email:', emailError);
-      // Don't fail registration if email sending fails
+    // Send verification email (best-effort) - skip if email not configured
+    if (config.SMTP_HOST && config.SMTP_USER) {
+      try {
+        await Promise.race([
+          emailService.sendVerificationEmail(user.email, {
+            username: user.firstName || user.username,
+            verificationCode: verificationToken,
+            verificationUrl: `${config.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}`
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 3000))
+        ]);
+      } catch (emailError) {
+        console.warn('Failed to send verification email:', emailError);
+        // Don't fail registration if email sending fails
+      }
     }
 
     const tokens = jwtUtils.generateTokenPair({ userId: user.id, email: user.email, role: user.role });

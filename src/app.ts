@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import config from './config/config';
+import prisma from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import authRoutes from './routes/auth.routes';
@@ -40,24 +41,9 @@ app.use(helmet({
   },
 }));
 
-// CORS configuration (allow multiple local origins)
+// CORS configuration - Allow all origins for now (restrict in production later)
 app.use(cors({
-  origin: (origin: any, callback: any) => {
-    const allowedOrigins = [
-      config.FRONTEND_URL,
-      config.APP_URL,
-      'http://localhost:3005',
-      'http://localhost:3000',
-    ].filter(Boolean);
-
-    // Allow non-browser or same-origin requests (no Origin header)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error(`Not allowed by CORS: ${origin}`));
-  },
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -83,6 +69,51 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 if (config.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
+
+// Root endpoint
+app.get('/', (req: any, res: any) => {
+  res.status(200).json({
+    name: 'Lordmoon API',
+    version: '1.0.0',
+    status: 'running',
+    message: 'API is operational',
+    endpoints: {
+      health: '/health',
+      api: '/api/*',
+      test: '/api/test/ping'
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Simple test endpoint
+app.get('/api/test/ping', (req: any, res: any) => {
+  res.status(200).json({
+    success: true,
+    message: 'pong',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Test database connection
+app.get('/api/test/db', async (req: any, res: any) => {
+  try {
+    const count = await prisma.user.count();
+    res.status(200).json({
+      success: true,
+      message: 'Database connected',
+      userCount: count,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
 
 // Health check endpoint
 app.get('/health', (req: any, res: any) => {
@@ -111,20 +142,22 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/crypto', cryptoRoutes);
 app.use('/api/test', testRoutes);
 
-// Proxy middleware for frontend - catch all non-API routes
-const frontendProxy = createProxyMiddleware({
-  target: 'http://localhost:3000',
-  changeOrigin: true,
-  ws: true
-});
+// Proxy middleware for frontend - only in development
+if (config.NODE_ENV === 'development') {
+  const frontendProxy = createProxyMiddleware({
+    target: 'http://localhost:3000',
+    changeOrigin: true,
+    ws: true
+  });
 
-// Apply proxy to all routes that don't start with /api or /health
-app.use((req: any, res: any, next: any) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
-    return next();
-  }
-  return frontendProxy(req, res, next);
-});
+  // Apply proxy to all routes that don't start with /api or /health
+  app.use((req: any, res: any, next: any) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+      return next();
+    }
+    return frontendProxy(req, res, next);
+  });
+}
 
 // 404 handler for API routes only
 app.use('/api/*', notFoundHandler);
