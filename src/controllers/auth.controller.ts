@@ -26,16 +26,20 @@ function toPublicUser(user: any) {
 export async function register(req: Request, res: Response) {
   const { email, password, username, firstName, lastName, fullName, phone, referredBy } = req.body || {};
 
+  console.log('Registration attempt:', { email, username, firstName, lastName });
+
   if (!email || !password || !username) {
     return res.status(400).json({ success: false, message: 'Email, username and password are required', code: 'VALIDATION_ERROR' });
   }
 
   try {
+    console.log('Checking for existing user...');
     const existing = await prisma.user.findFirst({ where: { OR: [{ email }, { username }] } });
     if (existing) {
       return res.status(409).json({ success: false, message: 'Email or username already exists', code: 'CONFLICT' });
     }
 
+    console.log('Hashing password...');
     const hashedPassword = await passwordUtils.hash(password);
     const referralCode = codeUtils.generateReferralCode(8);
     const verificationToken = codeUtils.generateOTP(32);
@@ -51,6 +55,7 @@ export async function register(req: Request, res: Response) {
       return res.status(400).json({ success: false, message: 'firstName and lastName are required', code: 'VALIDATION_ERROR' });
     }
 
+    console.log('Creating user in database...');
     const user = await prisma.user.create({
       data: {
         email,
@@ -65,6 +70,7 @@ export async function register(req: Request, res: Response) {
         verificationToken,
       },
     });
+    console.log('User created successfully:', user.id);
 
     // Create default wallets for supported currencies (best-effort)
     try {
@@ -109,11 +115,21 @@ export async function register(req: Request, res: Response) {
 
     return res.status(201).json({ success: true, message: 'Registration successful', data: { user: toPublicUser(user), tokens } });
   } catch (error: any) {
-    console.error('Registration error:', error);
+    console.error('❌ Registration error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      name: error.name
+    });
     if ((error as Prisma.PrismaClientKnownRequestError)?.code === 'P2002') {
       return res.status(409).json({ success: false, message: 'Email or username already exists', code: 'CONFLICT' });
     }
-    return res.status(500).json({ success: false, message: 'Failed to register', code: 'SERVER_ERROR' });
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to register: ' + (error.message || 'Unknown error'), 
+      code: 'SERVER_ERROR' 
+    });
   }
 }
 
