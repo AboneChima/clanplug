@@ -1,0 +1,16 @@
+node_modules/
+.git/
+.env
+.env.local
+.env.production
+*.log
+dist/
+web/
+docker-compose.yml
+README.md
+docs/
+tests/
+*.test.ts
+*.spec.ts
+.vscode/
+.idea/
