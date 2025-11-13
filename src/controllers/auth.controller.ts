@@ -68,10 +68,10 @@ export async function register(req: Request, res: Response) {
 
     // Create default wallets for supported currencies (best-effort)
     try {
-      const currencies = (process.env.SUPPORTED_CURRENCIES || 'NGN,USD,LMC').split(',');
+      const currencies = (process.env.SUPPORTED_CURRENCIES || 'NGN,USD').split(',');
       for (const cur of currencies) {
         const c = cur.trim().toUpperCase();
-        if (c === 'NGN' || c === 'USD' || c === 'LMC') {
+        if (c === 'NGN' || c === 'USD') {
           await prisma.wallet.create({ data: { userId: user.id, currency: c as Currency } });
         }
       }
