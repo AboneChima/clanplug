@@ -32,19 +32,37 @@ import manualVerifyRoutes from './routes/manual-verify.routes';
 
 const app = express();
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-}));
+// Simple CORS - allow everything (MUST be first)
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400');
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+  
+  next();
+});
 
-// CORS configuration (allow multiple local origins)
+// Security middleware - disabled for now
+// app.use(helmet({
+//   contentSecurityPolicy: {
+//     directives: {
+//       defaultSrc: ["'self'"],
+//       styleSrc: ["'self'", "'unsafe-inline'"],
+//       scriptSrc: ["'self'"],
+//       imgSrc: ["'self'", "data:", "https:"],
+//     },
+//   },
+// }));
+
+// OLD CORS configuration - replaced with manual headers above
+/*
 app.use(cors({
   origin: (origin, callback) => {
     const allowedOrigins = [
@@ -67,6 +85,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+*/
 
 // Rate limiting - disabled for development with ngrok
 // const limiter = rateLimit({
