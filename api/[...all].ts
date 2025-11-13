@@ -2,7 +2,14 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import serverless from 'serverless-http'
 import app from '../src/app'
 
-const handler = serverless(app)
+// Create handler with timeout configuration
+const handler = serverless(app, {
+  binary: ['image/*', 'application/pdf'],
+  request(request: any) {
+    // Set a reasonable timeout
+    request.setTimeout(9000) // 9 seconds (leave 1s buffer for Vercel's 10s limit)
+  }
+})
 
 export default async function(req: VercelRequest, res: VercelResponse) {
   // Add health check endpoint
@@ -28,6 +35,22 @@ export default async function(req: VercelRequest, res: VercelResponse) {
     })
   }
   
-  // Handle all other routes through Express app
-  return handler(req as any, res as any)
+  try {
+    // Handle all other routes through Express app with timeout
+    return await Promise.race([
+      handler(req as any, res as any),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Function timeout')), 9000)
+      )
+    ])
+  } catch (error: any) {
+    console.error('Handler error:', error)
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        message: 'Request timeout or server error',
+        error: error.message
+      })
+    }
+  }
 }
