@@ -1,0 +1,54 @@
+CONTEXT FOR NEXT SESSION:
+
+ClanPlug is a social platform with integrated services. Here's what you need to know:
+
+PROJECT STRUCTURE:
+- Frontend: Next.js deployed on Vercel (https://clanplug.vercel.app)
+- Backend: Express/Node.js on Render (https://clanplug-o7rp.onrender.com)
+- Database: PostgreSQL on Render
+- Media: Cloudinary for images
+
+RECENTLY COMPLETED (Nov 14, 2025):
+✅ TikTok-style feed algorithm - Posts mixed so no consecutive posts from same user
+✅ Removed stories section - Cleaner interface
+✅ Added Favorites tab - Users can bookmark and view favorite posts
+✅ Fixed chat 400 error - Proper validation for participants array
+✅ Added follow/message buttons - One-click actions on each post in feed
+✅ Improved layout - Single column, centered, professional design
+
+KEY FILES:
+- web/src/app/feed/page.tsx - Social feed with TikTok algorithm
+- src/services/post.service.ts - getSocialFeed() method with mixing logic
+- src/controllers/chat.controller.ts - Chat creation with validation
+- PROJECT_HANDOFF.md - Complete documentation
+- QUICK_REFERENCE.md - Quick commands and fixes
+
+CURRENT STATUS:
+- All features deployed and live
+- No known bugs
+- Feed algorithm working perfectly
+- Chat creation fixed
+- Follow/message buttons functional
+
+DEPLOYMENT:
+- Frontend: Auto-deploys via Vercel CLI
+- Backend: Auto-deploys on git push to main
+- Both are currently live and working
+
+WHAT TO SAY TO CONTINUE:
+"I'm continuing work on ClanPlug. Last session we implemented TikTok-style feed algorithm, removed stories, added favorites tab, and fixed chat creation. Everything is deployed. What should we work on next?"
+
+OR if there are issues:
+"I'm seeing [describe issue] on ClanPlug. Last session we worked on the feed algorithm and chat system. Can you help debug?"
+
+IMPORTANT NOTES:
+- Database is on Render (not local)
+- Cloudinary is configured for media uploads
+- All API endpoints use Bearer token authentication
+- Feed endpoint is /api/posts/feed (not /api/posts?type=SOCIAL_POST)
+- Chat creation requires participants array: { type: 'DIRECT', participants: [userId] }
+
+READ THESE FOR FULL CONTEXT:
+1. PROJECT_HANDOFF.md - Architecture and deployment
+2. SESSION_SUMMARY.md - What was done last session
+3. QUICK_REFERENCE.md - Commands and quick fixes
