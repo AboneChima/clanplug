@@ -180,10 +180,9 @@ router.post('/kyc/:kycId/retry',
   })
 );
 
-// POST /api/users/follow/:userId - Follow a user
+// POST /api/users/follow/:userId - Follow a user (removed KYC requirement)
 router.post('/follow/:userId',
   authenticate,
-  requireKYC,
   param('userId').notEmpty().withMessage('User ID is required'),
   handleValidationErrors,
   asyncHandler(async (req: Request, res: Response) => {
@@ -198,10 +197,9 @@ router.post('/follow/:userId',
   })
 );
 
-// DELETE /api/users/follow/:userId - Unfollow a user
+// DELETE /api/users/follow/:userId - Unfollow a user (removed KYC requirement)
 router.delete('/follow/:userId',
   authenticate,
-  requireKYC,
   param('userId').notEmpty().withMessage('User ID is required'),
   handleValidationErrors,
   asyncHandler(async (req: Request, res: Response) => {

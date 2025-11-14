@@ -16,8 +16,8 @@ router.get('/feed', authenticate, asyncHandler(postController.getSocialFeed));
 // GET /api/posts/trending - Get trending posts
 router.get('/trending', authenticate, asyncHandler(postController.getTrendingPosts));
 
-// POST /api/posts - Create new post
-router.post('/', authenticate, requireKYC, asyncHandler(postController.createPost));
+// POST /api/posts - Create new post (removed KYC requirement for marketplace)
+router.post('/', authenticate, asyncHandler(postController.createPost));
 
 // GET /api/posts/search - Search posts
 router.get('/search', optionalAuthenticate, asyncHandler(postController.searchPosts));
@@ -40,8 +40,8 @@ router.put('/:postId', authenticate, requireKYC, asyncHandler(postController.upd
 // DELETE /api/posts/:postId - Delete post
 router.delete('/:postId', authenticate, asyncHandler(postController.deletePost));
 
-// POST /api/posts/:postId/like - Like/unlike post
-router.post('/:postId/like', authenticate, requireKYC, asyncHandler(postController.toggleLike));
+// POST /api/posts/:postId/like - Like/unlike post (removed KYC requirement)
+router.post('/:postId/like', authenticate, asyncHandler(postController.toggleLike));
 
 // POST /api/posts/:postId/bookmark - Bookmark/unbookmark post
 router.post('/:postId/bookmark', authenticate, asyncHandler(postController.toggleBookmark));
