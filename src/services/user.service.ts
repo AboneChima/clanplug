@@ -288,6 +288,32 @@ export const userService = {
     if (!user) throw new Error('User not found');
     return user;
   },
+
+  async updateUserProfile(userId: string, data: Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'city' | 'state' | 'country' | 'avatar'>>): Promise<{ success: boolean; message?: string; user?: any; error?: string }> {
+    try {
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          avatar: true,
+          bio: true,
+          city: true,
+          state: true,
+          country: true,
+          isKYCVerified: true,
+          isEmailVerified: true,
+        },
+      });
+      return { success: true, message: 'Profile updated successfully', user };
+    } catch (error: any) {
+      return { success: false, message: 'Failed to update profile', error: error.message || 'UPDATE_ERROR' };
+    }
+  },
 };
 
 export default userService;

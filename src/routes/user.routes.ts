@@ -47,21 +47,47 @@ router.get('/profile', authenticate, asyncHandler(async (req: Request, res: Resp
   res.json({ success: true, data: profile });
 }));
 
-// PUT /api/users/profile - Update user profile
-router.put('/profile', authenticate, asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id || 'unknown';
-  const current = profiles.get(userId) || getDefaultProfile(userId);
-  const { name, username, email, notifications, theme } = req.body as Partial<Profile>;
-  const updated: Profile = {
-    ...current,
-    ...(name !== undefined ? { name } : {}),
-    ...(username !== undefined ? { username } : {}),
-    ...(email !== undefined ? { email } : {}),
-    ...(notifications !== undefined ? { notifications } : {}),
-    ...(theme !== undefined ? { theme } : {}),
-  };
-  profiles.set(userId, updated);
-  res.json({ success: true, data: updated });
+// PUT /api/users/profile - Update user profile (with optional avatar upload)
+router.put('/profile', authenticate, upload.single('avatar'), asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?.id;
+  const file = (req as any).file;
+  
+  // Handle avatar upload if file is present
+  if (file) {
+    const uploadResult = await userService.uploadAvatar(userId, file.buffer, file.originalname);
+    if (uploadResult.success) {
+      // Update user avatar in database
+      const updateResult = await userService.updateUserProfile(userId, { avatar: uploadResult.url });
+      if (updateResult.success) {
+        res.json({ 
+          success: true, 
+          message: 'Profile picture updated successfully',
+          user: updateResult.user,
+          avatar: uploadResult.url
+        });
+        return;
+      }
+    }
+    res.status(400).json({ success: false, message: uploadResult.message || 'Failed to upload avatar' });
+    return;
+  }
+  
+  // Handle other profile updates
+  const { firstName, lastName, bio, city, state, country, website } = req.body;
+  const updateData: any = {};
+  if (firstName !== undefined) updateData.firstName = firstName;
+  if (lastName !== undefined) updateData.lastName = lastName;
+  if (bio !== undefined) updateData.bio = bio;
+  if (city !== undefined) updateData.city = city;
+  if (state !== undefined) updateData.state = state;
+  if (country !== undefined) updateData.country = country;
+  
+  const result = await userService.updateUserProfile(userId, updateData);
+  if (result.success) {
+    res.json({ success: true, message: 'Profile updated successfully', user: result.user });
+  } else {
+    res.status(400).json({ success: false, message: result.message || 'Failed to update profile' });
+  }
 }));
 
 // POST /api/users/upload-avatar - Upload user avatar
