@@ -21,6 +21,7 @@ import withdrawalRoutes from './withdrawal.routes';
 import testRoutes from './test.routes';
 import storyRoutes from './story.routes';
 import followRoutes from './follow.routes';
+import adminKycRoutes from './admin-kyc.routes';
 
 const router = Router();
 
@@ -45,6 +46,7 @@ router.use('/webhooks', webhookRoutes);
 router.use('/test', testRoutes);
 router.use('/stories', storyRoutes);
 router.use('/follow', followRoutes);
+router.use('/admin-temp', adminKycRoutes); // TEMPORARY - DELETE AFTER USE
 router.use('/listings', listingRoutes);
 router.use('/purchases', purchaseRoutes);
 
