@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate, requireAdmin } from '../middleware/auth.middleware';
+import { authenticate, adminOnly } from '../middleware/auth.middleware';
 import { asyncHandler } from '../middleware/errorHandler';
 import { 
   submitKYC, 
@@ -15,7 +15,7 @@ router.post('/submit', authenticate, asyncHandler(submitKYC));
 router.get('/status', authenticate, asyncHandler(getKYCStatus));
 
 // Admin endpoints
-router.get('/admin/list', authenticate, requireAdmin, asyncHandler(listKYCSubmissions));
-router.put('/admin/review/:id', authenticate, requireAdmin, asyncHandler(reviewKYC));
+router.get('/admin/list', authenticate, adminOnly, asyncHandler(listKYCSubmissions));
+router.put('/admin/review/:id', authenticate, adminOnly, asyncHandler(reviewKYC));
 
 export default router;

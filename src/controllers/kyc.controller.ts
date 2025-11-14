@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import prisma from '../config/database';
-import { uploadToCloudinary } from '../utils/cloudinary';
 
 export async function submitKYC(req: Request, res: Response) {
   try {
@@ -52,21 +51,15 @@ export async function submitKYC(req: Request, res: Response) {
     const kyc = await prisma.kYCVerification.create({
       data: {
         userId,
+        documentType: idType,
+        documentNumber: idNumber,
+        documentImages: [idFrontUrl, idBackUrl, selfieUrl].filter(Boolean),
         firstName,
         lastName,
         dateOfBirth: new Date(dateOfBirth),
         address,
-        city,
-        state,
-        country,
-        idType,
-        idNumber,
-        bvn: bvn || null,
-        idFrontUrl,
-        idBackUrl,
-        selfieUrl,
-        status: 'PENDING',
-        submittedAt: new Date()
+        phoneNumber: req.body.phoneNumber || '',
+        status: 'PENDING'
       }
     });
 
@@ -110,8 +103,8 @@ export async function getKYCStatus(req: Request, res: Response) {
       success: true,
       data: {
         status: kyc.status,
-        submittedAt: kyc.submittedAt,
-        reviewedAt: kyc.reviewedAt,
+        createdAt: kyc.createdAt,
+        updatedAt: kyc.updatedAt,
         rejectionReason: kyc.rejectionReason
       }
     });
@@ -129,7 +122,7 @@ export async function listKYCSubmissions(req: Request, res: Response) {
   try {
     const { status } = req.query;
 
-    const where = status ? { status: status as string } : {};
+    const where = status ? { status: status as any } : {};
 
     const submissions = await prisma.kYCVerification.findMany({
       where,
@@ -176,9 +169,7 @@ export async function reviewKYC(req: Request, res: Response) {
       where: { id },
       data: {
         status,
-        rejectionReason: status === 'REJECTED' ? rejectionReason : null,
-        reviewedAt: new Date(),
-        reviewedBy: req.user?.id
+        rejectionReason: status === 'REJECTED' ? rejectionReason : null
       }
     });
 
