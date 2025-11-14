@@ -23,6 +23,7 @@ import paymentRoutes from './routes/payment.routes';
 import notificationRoutes from './routes/notification.routes';
 import cryptoRoutes from './routes/crypto.routes';
 import testRoutes from './routes/test.routes';
+import escrowRoutes from './routes/escrow.routes';
 
 const app = express();
 
@@ -138,6 +139,7 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/crypto', cryptoRoutes);
 app.use('/api/test', testRoutes);
+app.use('/api/escrow', escrowRoutes);
 
 // Proxy middleware for frontend - only in development
 if (config.NODE_ENV === 'development') {

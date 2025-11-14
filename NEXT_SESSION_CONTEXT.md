@@ -172,27 +172,42 @@ npx prisma migrate deploy
 - **File**: `web/src/app/feed/page.tsx`
 - **Change**: Removed stories section for cleaner interface
 
-### 3. Added Favorites Tab
+### 3. Fixed Bookmarks Persistence ✅ NEW
 - **Files**: 
   - `web/src/app/feed/page.tsx` (frontend)
   - `src/services/post.service.ts` (backend)
-  - `prisma/schema.prisma` (database)
-- **Feature**: Users can bookmark posts and view in Favorites tab
-- **Endpoints**: 
-  - `POST /api/posts/:postId/bookmark` - Toggle bookmark
-  - `GET /api/posts/bookmarks` - Get bookmarked posts
+- **Fix**: Bookmarks now persist across page refreshes using localStorage
+- **How it works**:
+  - Bookmarks save to localStorage immediately
+  - Favorites tab fetches all posts and filters by bookmarked IDs
+  - Backend gracefully handles missing bookmarks table
+  - Bookmarks sync with backend when table is ready
 
-### 4. Fixed Chat Creation
+### 4. Fixed Marketplace Listing Creation ✅ NEW
+- **File**: `web/src/app/posts/page.tsx`
+- **Fix**: Resolved 400 error when creating listings
+- **Issue**: Backend expected `description` field, frontend was sending `content`
+- **Solution**: Frontend now sends correct `description` field
+- **Also fixed**: Social account listings now properly set gameTitle
+
+### 5. Fixed Marketplace Loading ✅ NEW
+- **File**: `src/services/post.service.ts`
+- **Fix**: Resolved 500 error when loading marketplace
+- **Issue**: Backend tried to fetch bookmarks from non-existent table
+- **Solution**: Added try-catch to gracefully handle missing bookmarks table
+- **Result**: Marketplace loads successfully, bookmarks work when table exists
+
+### 6. Fixed Chat Creation
 - **File**: `web/src/app/feed/page.tsx`
 - **Change**: Better error messages for chat creation
 - **Message**: "You need to follow this user first before messaging them"
 
-### 5. Fixed Marketplace Listings
+### 7. Fixed Marketplace Listings
 - **File**: `web/src/app/posts/page.tsx`
 - **Change**: Shows ALL posts from ALL users (not just own posts)
 - **Type**: Changed from `GAME_ACCOUNT` to `MARKETPLACE`
 
-### 6. Fixed Profile Picture Sync
+### 8. Fixed Profile Picture Sync
 - **File**: `web/src/app/profile/page.tsx`
 - **Change**: Added timestamp to force cache refresh across devices
 - **Format**: `image.jpg?t=1731600000000`
@@ -399,9 +414,12 @@ Should I modify the frontend (Vercel) or backend (Render)?"
 
 - ✅ TikTok-style feed algorithm working
 - ✅ Stories removed
-- ✅ Favorites tab with backend persistence
+- ✅ Favorites tab with localStorage persistence (works across refreshes)
+- ✅ Bookmarks persist after page refresh
 - ✅ Chat creation with better error handling
 - ✅ Marketplace showing all listings
+- ✅ Marketplace listing creation fixed (400 error resolved)
+- ✅ Marketplace loading fixed (500 error resolved)
 - ✅ Profile picture syncing across devices
 - ✅ Follow/message buttons on posts
 - ✅ All features deployed and live
