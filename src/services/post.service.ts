@@ -156,6 +156,21 @@ export const postService = {
       }
     }
 
+    // Get user's bookmarks (if table exists)
+    let bookmarkedPostIds: string[] = [];
+    if (userId) {
+      try {
+        const bookmarks = await prisma.bookmark.findMany({
+          where: { userId },
+          select: { postId: true },
+        });
+        bookmarkedPostIds = bookmarks.map(b => b.postId);
+      } catch (err) {
+        // Bookmarks table doesn't exist yet, continue without bookmarks
+        console.log('Bookmarks table not ready, skipping bookmark check');
+      }
+    }
+
     const [posts, total] = await Promise.all([
       prisma.post.findMany({
         where,
@@ -189,6 +204,7 @@ export const postService = {
     const postsWithLikeStatus = posts.map(post => ({
       ...post,
       isLiked: userId ? post.likes && post.likes.length > 0 : false,
+      isBookmarked: userId ? bookmarkedPostIds.includes(post.id) : false,
       likes: undefined, // Remove the likes array from response
     })) as PostWithAuthor[];
 
@@ -736,6 +752,19 @@ export const postService = {
       // Fetch more posts than needed to allow for filtering
       const fetchLimit = limit * 3;
 
+      // Get user's bookmarks (if table exists)
+      let bookmarkedPostIds: string[] = [];
+      try {
+        const bookmarks = await prisma.bookmark.findMany({
+          where: { userId },
+          select: { postId: true },
+        });
+        bookmarkedPostIds = bookmarks.map(b => b.postId);
+      } catch (err) {
+        // Bookmarks table doesn't exist yet, continue without bookmarks
+        console.log('Bookmarks table not ready, skipping bookmark check');
+      }
+
       const [allPosts, total] = await Promise.all([
         prisma.post.findMany({
           where: {
@@ -802,7 +831,7 @@ export const postService = {
       const postsWithLikeStatus = mixedPosts.map(post => ({
         ...post,
         isLiked: post.likes.length > 0,
-        isBookmarked: false, // TODO: Implement bookmark check
+        isBookmarked: bookmarkedPostIds.includes(post.id),
         likes: undefined,
       }));
 
