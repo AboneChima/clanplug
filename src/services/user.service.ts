@@ -314,6 +314,44 @@ export const userService = {
       return { success: false, message: 'Failed to update profile', error: error.message || 'UPDATE_ERROR' };
     }
   },
+
+  async getSuggestedUsers(userId: string, limit: number = 10): Promise<any[]> {
+    try {
+      // Get users that the current user is not following
+      const users = await prisma.user.findMany({
+        where: {
+          id: { not: userId },
+          NOT: {
+            followers: {
+              some: {
+                followerId: userId
+              }
+            }
+          }
+        },
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          avatar: true,
+          bio: true,
+        },
+        take: limit,
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+      
+      return users.map(user => ({
+        ...user,
+        isFollowing: false
+      }));
+    } catch (error) {
+      console.error('Error getting suggested users:', error);
+      return [];
+    }
+  },
 };
 
 export default userService;

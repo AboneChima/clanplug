@@ -250,6 +250,19 @@ router.get('/following',
   })
 );
 
+// GET /api/users/suggested - Get suggested users to follow
+router.get('/suggested',
+  authenticate,
+  asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+    const limit = parseInt((req.query.limit as string) || '10', 10);
+    
+    // Get users that the current user is not following
+    const users = await userService.getSuggestedUsers(userId, limit);
+    res.json({ success: true, users });
+  })
+);
+
 // GET /api/users/search - Search users
 router.get('/search',
   authenticate,
