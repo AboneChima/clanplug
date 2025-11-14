@@ -55,6 +55,7 @@ model User {
   followers         Follow[]          @relation("UserFollowers")
   kycVerifications  KYCVerification[]
   likes             Like[]
+  bookmarks         Bookmark[]
   notifications     Notification[]
   posts             Post[]
   reports           Report[]          @relation("ReportedBy")
@@ -217,6 +218,7 @@ model Post {
   comments       Comment[]
   escrows        Escrow[]
   likes          Like[]
+  bookmarks      Bookmark[]
   game           Game?      @relation(fields: [gameId], references: [id])
   user           User       @relation(fields: [userId], references: [id])
   reports        Report[]
@@ -252,6 +254,18 @@ model Like {
 
   @@unique([userId, postId])
   @@map("likes")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, postId])
+  @@map("bookmarks")
 }
 
 model Follow {

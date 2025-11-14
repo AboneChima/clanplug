@@ -25,6 +25,9 @@ router.get('/search', optionalAuthenticate, asyncHandler(postController.searchPo
 // GET /api/posts/user/:userId - Get user's posts
 router.get('/user/:userId', optionalAuthenticate, asyncHandler(postController.getUserPosts));
 
+// GET /api/posts/bookmarks - Get user's bookmarked posts
+router.get('/bookmarks', authenticate, asyncHandler(postController.getBookmarkedPosts));
+
 // POST /api/posts/upload-media - Upload media files
 router.post('/upload-media', authenticate, requireKYC, uploadMiddleware, asyncHandler(postController.uploadMedia));
 
@@ -39,6 +42,9 @@ router.delete('/:postId', authenticate, asyncHandler(postController.deletePost))
 
 // POST /api/posts/:postId/like - Like/unlike post
 router.post('/:postId/like', authenticate, requireKYC, asyncHandler(postController.toggleLike));
+
+// POST /api/posts/:postId/bookmark - Bookmark/unbookmark post
+router.post('/:postId/bookmark', authenticate, asyncHandler(postController.toggleBookmark));
 
 // GET /api/posts/:postId/comments - Get post comments
 router.get('/:postId/comments', optionalAuthenticate, asyncHandler(commentController.getPostComments));

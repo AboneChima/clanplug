@@ -579,8 +579,6 @@ export const postService = {
   // Bookmark/Unbookmark post
   async toggleBookmark(postId: string, userId: string) {
     try {
-      // Check if already bookmarked (we'll use a simple metadata approach)
-      // In production, you'd want a separate Bookmark model
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { id: true },
@@ -598,15 +596,111 @@ export const postService = {
         return { success: false, message: 'Post not found' };
       }
 
-      // For now, return success (implement proper bookmark model later)
+      // Check if bookmark exists
+      const existingBookmark = await prisma.bookmark.findUnique({
+        where: {
+          userId_postId: {
+            userId,
+            postId,
+          },
+        },
+      });
+
+      let isBookmarked: boolean;
+
+      if (existingBookmark) {
+        // Remove bookmark
+        await prisma.bookmark.delete({
+          where: {
+            userId_postId: {
+              userId,
+              postId,
+            },
+          },
+        });
+        isBookmarked = false;
+      } else {
+        // Add bookmark
+        await prisma.bookmark.create({
+          data: {
+            userId,
+            postId,
+          },
+        });
+        isBookmarked = true;
+      }
+
       return {
         success: true,
-        isBookmarked: true,
-        message: 'Bookmark toggled',
+        isBookmarked,
+        message: isBookmarked ? 'Post bookmarked' : 'Bookmark removed',
       };
     } catch (error) {
       console.error('Error toggling bookmark:', error);
       return { success: false, message: 'Failed to toggle bookmark' };
+    }
+  },
+
+  // Get user's bookmarked posts
+  async getBookmarkedPosts(userId: string, page: number = 1, limit: number = 20) {
+    try {
+      const skip = (page - 1) * limit;
+
+      const [bookmarks, total] = await Promise.all([
+        prisma.bookmark.findMany({
+          where: { userId },
+          include: {
+            post: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                    firstName: true,
+                    lastName: true,
+                    avatar: true,
+                  },
+                },
+                _count: {
+                  select: {
+                    likes: true,
+                    comments: true,
+                  },
+                },
+                likes: {
+                  where: { userId },
+                  select: { id: true },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        prisma.bookmark.count({ where: { userId } }),
+      ]);
+
+      const posts = bookmarks.map(bookmark => ({
+        ...bookmark.post,
+        isLiked: bookmark.post.likes.length > 0,
+        isBookmarked: true,
+        likes: undefined,
+      }));
+
+      return {
+        success: true,
+        posts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching bookmarked posts:', error);
+      return { success: false, message: 'Failed to fetch bookmarked posts' };
     }
   },
 

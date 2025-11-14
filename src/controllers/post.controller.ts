@@ -495,6 +495,29 @@ export const postController = {
       });
     }
   },
+
+  // GET /api/posts/bookmarks - Get user's bookmarked posts
+  async getBookmarkedPosts(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as any).user?.id;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      const result = await postService.getBookmarkedPosts(userId, page, limit);
+
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch bookmarked posts',
+        error: error.message,
+      });
+    }
+  },
 };
 
 // Export multer upload middleware for use in routes
