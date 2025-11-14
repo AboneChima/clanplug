@@ -69,11 +69,19 @@ class ChatController {
       const userId = (req as any).user.id;
       const { type, name, description, participants } = req.body;
 
+      // Validate participants array
+      if (!participants || !Array.isArray(participants) || participants.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Participants array is required and must contain at least one user ID',
+        });
+      }
+
       const chat = await chatService.createChat({
         type: type || ChatType.DIRECT,
         name,
         description,
-        participants: participants || [],
+        participants,
         creatorId: userId,
       });
 

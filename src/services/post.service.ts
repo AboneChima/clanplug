@@ -610,27 +610,19 @@ export const postService = {
     }
   },
 
-  // Get all posts for social feed (includes own posts and followed users)
+  // Get all posts for social feed with TikTok-style algorithm (no consecutive posts from same user)
   async getSocialFeed(userId: string, page: number = 1, limit: number = 20) {
     try {
       const skip = (page - 1) * limit;
 
-      const [posts, total] = await Promise.all([
+      // Fetch more posts than needed to allow for filtering
+      const fetchLimit = limit * 3;
+
+      const [allPosts, total] = await Promise.all([
         prisma.post.findMany({
           where: {
             status: PostStatus.ACTIVE,
-            OR: [
-              { userId }, // Own posts
-              {
-                user: {
-                  followers: {
-                    some: {
-                      followerId: userId,
-                    },
-                  },
-                },
-              },
-            ],
+            type: 'SOCIAL_POST',
           },
           include: {
             user: {
@@ -655,28 +647,41 @@ export const postService = {
           },
           orderBy: { createdAt: 'desc' },
           skip,
-          take: limit,
+          take: fetchLimit,
         }),
         prisma.post.count({
           where: {
             status: PostStatus.ACTIVE,
-            OR: [
-              { userId },
-              {
-                user: {
-                  followers: {
-                    some: {
-                      followerId: userId,
-                    },
-                  },
-                },
-              },
-            ],
+            type: 'SOCIAL_POST',
           },
         }),
       ]);
 
-      const postsWithLikeStatus = posts.map(post => ({
+      // TikTok-style algorithm: Mix posts so no consecutive posts from same user
+      const mixedPosts: any[] = [];
+      const remainingPosts = [...allPosts];
+      let lastUserId: string | null = null;
+
+      while (mixedPosts.length < limit && remainingPosts.length > 0) {
+        // Find a post from a different user than the last one
+        const postIndex = remainingPosts.findIndex(post => post.userId !== lastUserId);
+        
+        if (postIndex === -1) {
+          // If all remaining posts are from the same user, just take the first one
+          const post = remainingPosts.shift();
+          if (post) {
+            mixedPosts.push(post);
+            lastUserId = post.userId;
+          }
+        } else {
+          // Take the post from a different user
+          const [post] = remainingPosts.splice(postIndex, 1);
+          mixedPosts.push(post);
+          lastUserId = post.userId;
+        }
+      }
+
+      const postsWithLikeStatus = mixedPosts.map(post => ({
         ...post,
         isLiked: post.likes.length > 0,
         isBookmarked: false, // TODO: Implement bookmark check
