@@ -439,10 +439,13 @@ class ChatService {
       },
     });
 
-    // Update chat's lastMessageAt
+    // Update chat's lastMessageAt and updatedAt
     await prisma.chat.update({
       where: { id: chatId },
-      data: { lastMessageAt: message.createdAt },
+      data: { 
+        lastMessageAt: message.createdAt,
+        updatedAt: message.createdAt
+      },
     });
 
     // Send notifications to other participants
