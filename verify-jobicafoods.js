@@ -1,34 +1,28 @@
-// Run this script on Render to verify a user
-// Usage: node activate-kyc-user.js
+// Quick script to verify jobicafoods@gmail.com
+// Run this on Render: node verify-jobicafoods.js
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-const EMAIL = 'jobicafoods@gmail.com';
-
-async function activateKYC() {
+async function verifyUser() {
   try {
-    console.log(`🔍 Searching for user with email: ${EMAIL}`);
+    console.log('🔍 Searching for user: jobicafoods@gmail.com');
     
     const user = await prisma.user.findUnique({
-      where: { email: EMAIL }
+      where: { email: 'jobicafoods@gmail.com' }
     });
 
     if (!user) {
-      console.log(`❌ User not found with email: ${EMAIL}`);
+      console.log('❌ User not found');
       await prisma.$disconnect();
       return;
     }
 
-    console.log('✅ User found:');
-    console.log({
+    console.log('✅ User found:', {
       id: user.id,
       email: user.email,
       username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      isKYCVerified: user.isKYCVerified,
-      status: user.status
+      isKYCVerified: user.isKYCVerified
     });
 
     if (user.isKYCVerified) {
@@ -47,9 +41,8 @@ async function activateKYC() {
       }
     });
 
-    console.log('✅ User verified successfully!');
+    console.log('✅ SUCCESS! User verified!');
     console.log({
-      id: updated.id,
       email: updated.email,
       username: updated.username,
       isKYCVerified: updated.isKYCVerified,
@@ -63,4 +56,4 @@ async function activateKYC() {
   }
 }
 
-activateKYC();
+verifyUser();
