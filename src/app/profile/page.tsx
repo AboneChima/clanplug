@@ -76,13 +76,18 @@ export default function ProfilePage() {
   const [following, setFollowing] = useState<FollowUser[]>([]);
   const [loadingFollowers, setLoadingFollowers] = useState(false);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
+  const [editingBio, setEditingBio] = useState(false);
+  const [bioText, setBioText] = useState('');
 
-  // Update avatar preview when user data is available
+  // Update avatar preview and bio when user data is available
   useEffect(() => {
     if (user?.avatar) {
       setAvatarPreview(user.avatar);
     }
-  }, [user?.avatar]);
+    if (user?.bio) {
+      setBioText(user.bio);
+    }
+  }, [user?.avatar, user?.bio]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -183,43 +188,55 @@ export default function ProfilePage() {
     try {
       const token = localStorage.getItem('accessToken');
       
-      // Load user posts
-      const postsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/user/${user.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (postsResponse.ok) {
-        const postsData = await postsResponse.json();
-        const posts = Array.isArray(postsData.posts) ? postsData.posts : Array.isArray(postsData) ? postsData : [];
-        setRecentPosts(posts);
+      // Load user posts - try multiple endpoints
+      let posts: Post[] = [];
+      try {
+        const postsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts?userId=${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         
-        // Calculate total likes from posts
-        const totalLikes = posts.reduce((sum: number, post: Post) => sum + post._count.likes, 0);
-        
-        setStats(prev => ({ 
-          ...prev, 
-          posts: posts.length,
-          likes: totalLikes,
-        }));
+        if (postsResponse.ok) {
+          const postsData = await postsResponse.json();
+          posts = Array.isArray(postsData.data) ? postsData.data : Array.isArray(postsData.posts) ? postsData.posts : Array.isArray(postsData) ? postsData : [];
+        }
+      } catch (err) {
+        console.error('Error fetching posts:', err);
       }
-
+      
+      setRecentPosts(posts);
+      
+      // Calculate total likes from posts
+      const totalLikes = posts.reduce((sum: number, post: Post) => sum + (post._count?.likes || 0), 0);
+      
       // Load follow stats
-      const followResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${user.id}/stats`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      let followersCount = 0;
+      let followingCount = 0;
       
-      if (followResponse.ok) {
-        const followData = await followResponse.json();
-        setStats(prev => ({
-          ...prev,
-          followers: followData.followers || 0,
-          following: followData.following || 0,
-        }));
+      try {
+        const followResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${user.id}/stats`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (followResponse.ok) {
+          const followData = await followResponse.json();
+          followersCount = followData.followers || followData.data?.followers || 0;
+          followingCount = followData.following || followData.data?.following || 0;
+        }
+      } catch (err) {
+        console.error('Error fetching follow stats:', err);
       }
+      
+      setStats({
+        posts: posts.length,
+        followers: followersCount,
+        following: followingCount,
+        likes: totalLikes,
+        views: 0,
+      });
       
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -295,7 +312,7 @@ export default function ProfilePage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-32 lg:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-40 lg:pb-8">
         {/* Hero Header - Compact */}
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-6 mb-4">
           <div className="max-w-4xl mx-auto px-3 sm:px-4">
@@ -369,9 +386,73 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-gray-400 mb-1.5 sm:mb-2">@{user?.username}</p>
-                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
-                  {user?.bio || 'No bio yet'}
-                </p>
+                {editingBio ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={bioText}
+                      onChange={(e) => setBioText(e.target.value)}
+                      maxLength={160}
+                      rows={3}
+                      placeholder="Write something about yourself..."
+                      className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    />
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-400">{bioText.length}/160</span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setBioText(user?.bio || '');
+                            setEditingBio(false);
+                          }}
+                          className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded-md transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const token = localStorage.getItem('accessToken');
+                              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
+                                method: 'PUT',
+                                headers: {
+                                  'Authorization': `Bearer ${token}`,
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ bio: bioText }),
+                              });
+
+                              if (response.ok) {
+                                updateUser({ bio: bioText });
+                                showToast('Bio updated successfully!', 'success');
+                                setEditingBio(false);
+                              } else {
+                                showToast('Failed to update bio', 'error');
+                              }
+                            } catch (error) {
+                              showToast('Error updating bio', 'error');
+                            }
+                          }}
+                          className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <p className="text-xs sm:text-sm text-gray-300 leading-relaxed flex-1">
+                      {user?.bio || 'No bio yet'}
+                    </p>
+                    <button
+                      onClick={() => setEditingBio(true)}
+                      className="p-1 hover:bg-slate-700 rounded transition-colors flex-shrink-0"
+                      title="Edit bio"
+                    >
+                      <IoCreateOutline className="w-4 h-4 text-gray-400 hover:text-white" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* User Details */}

@@ -162,17 +162,7 @@ export default function ChatPage() {
   };
 
   const onCreateChat = async () => {
-    if (!accessToken) return;
-    try {
-      const chat = await chatService.createChat(accessToken, {
-        type: 'DIRECT',
-        name: 'New Chat'
-      });
-      setChats(prev => [...prev, chat]);
-      setSelected(chat);
-    } catch (error: any) {
-      showToast(error.message || 'Failed to create chat', 'error');
-    }
+    showToast('Please select a user from your contacts to start a chat', 'error');
   };
 
   const formatTime = (dateString: string) => {
@@ -193,7 +183,7 @@ export default function ChatPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-32 lg:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-40 lg:pb-8">
         {/* Hero Header - Compact */}
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-6 mb-4">
           <div className="max-w-7xl mx-auto px-3 sm:px-4">
@@ -204,13 +194,7 @@ export default function ChatPage() {
                   {chats.length} conversations
                 </p>
               </div>
-              <button
-                onClick={onCreateChat}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg text-sm font-medium transition-all flex items-center gap-1.5"
-              >
-                <IoAddOutline className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">New Chat</span>
-              </button>
+
             </div>
           </div>
         </div>
@@ -249,16 +233,13 @@ export default function ChatPage() {
                 ) : filteredChats.length === 0 ? (
                   <div className="text-center py-12 px-4">
                     <IoChatbubbleEllipsesOutline className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-                    <p className="text-gray-400 text-sm mb-4">
-                      {searchQuery ? 'No conversations found' : 'No conversations yet'}
+                    <p className="text-gray-400 text-sm mb-2">
+                      {searchQuery ? 'No conversations found' : 'No messages yet'}
                     </p>
                     {!searchQuery && (
-                      <button
-                        onClick={onCreateChat}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-                      >
-                        Start a conversation
-                      </button>
+                      <p className="text-gray-500 text-xs">
+                        Visit a user's profile and click "Message" to start chatting
+                      </p>
                     )}
                   </div>
                 ) : (
@@ -320,22 +301,15 @@ export default function ChatPage() {
             {/* Messages Area */}
             <div className="lg:col-span-8 xl:col-span-9 bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 flex flex-col overflow-hidden shadow-xl">
               {!selected ? (
-                <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
-                  <div className="text-center max-w-md">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-700/50 flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                      <IoChatbubbleEllipsesOutline className="w-8 h-8 sm:w-10 sm:h-10 text-gray-500" />
+                <div className="flex-1 flex items-center justify-center p-4">
+                  <div className="text-center max-w-sm">
+                    <div className="w-16 h-16 rounded-full bg-slate-700/50 flex items-center justify-center mx-auto mb-3">
+                      <IoChatbubbleEllipsesOutline className="w-8 h-8 text-gray-500" />
                     </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white mb-2">Select a conversation</h3>
-                    <p className="text-sm text-gray-400 mb-4 sm:mb-6">
-                      Choose a chat from the sidebar or start a new conversation
+                    <h3 className="text-base font-bold text-white mb-2">No conversation selected</h3>
+                    <p className="text-xs text-gray-400 mb-4">
+                      Select a chat from the list or message someone from their profile
                     </p>
-                    <button
-                      onClick={onCreateChat}
-                      className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium transition-colors inline-flex items-center gap-2"
-                    >
-                      <IoAddOutline className="w-4 h-4 sm:w-5 sm:h-5" />
-                      New Conversation
-                    </button>
                   </div>
                 </div>
               ) : (
