@@ -155,7 +155,10 @@ class ChatService {
           },
         },
       },
-      orderBy: { lastMessageAt: 'desc' },
+      orderBy: [
+        { lastMessageAt: { sort: 'desc', nulls: 'last' } },
+        { createdAt: 'desc' }
+      ],
       skip: (page - 1) * limit,
       take: limit,
     });
