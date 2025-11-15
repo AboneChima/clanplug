@@ -406,26 +406,70 @@ export const postService = {
   },
 
   // Upload media for posts
-  async uploadMedia(buffer: Buffer, filename: string, folder: string = 'lordmoon/posts'): Promise<{ success: boolean; url?: string; message: string; error?: string }> {
+  async uploadMedia(
+    buffer: Buffer, 
+    filename: string, 
+    folder: string = 'lordmoon/posts',
+    postType?: string
+  ): Promise<{ success: boolean; url?: string; message: string; error?: string; duration?: number }> {
     try {
       if (!config.CLOUDINARY_CLOUD_NAME || !config.CLOUDINARY_API_KEY || !config.CLOUDINARY_API_SECRET) {
         return { success: false, message: 'Cloud storage is not configured', error: 'CLOUDINARY_NOT_CONFIGURED' };
       }
 
+      const isVideo = filename.match(/\.(mp4|mov|avi|wmv|flv|webm)$/i);
+      
+      // Check if it's a social media marketplace post (should only allow images)
+      if (postType === 'SOCIAL_ACCOUNT' && isVideo) {
+        return { 
+          success: false, 
+          message: 'Social media marketplace only allows images, not videos', 
+          error: 'VIDEO_NOT_ALLOWED_FOR_SOCIAL' 
+        };
+      }
+
       const uploadResult: any = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream({
+        const uploadOptions: any = {
           folder,
           public_id: filename.replace(/\.[^/.]+$/, ''),
           resource_type: 'auto',
           overwrite: true,
-        }, (error, result) => {
+        };
+
+        // For game marketplace videos, add duration limit (120 seconds = 2 minutes)
+        if (isVideo && postType === 'GAME_ACCOUNT') {
+          uploadOptions.eager = [
+            { duration: '0-120' } // Limit to first 2 minutes
+          ];
+        }
+
+        const stream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
           if (error) return reject(error);
           resolve(result);
         });
         stream.end(buffer);
       });
 
-      return { success: true, url: uploadResult.secure_url, message: 'Media uploaded successfully' };
+      // Check video duration for game marketplace
+      if (isVideo && postType === 'GAME_ACCOUNT' && uploadResult.duration) {
+        if (uploadResult.duration > 120) {
+          // Delete the uploaded video since it exceeds limit
+          await cloudinary.uploader.destroy(uploadResult.public_id, { resource_type: 'video' });
+          return { 
+            success: false, 
+            message: 'Video duration exceeds 2 minutes limit for game marketplace', 
+            error: 'VIDEO_TOO_LONG',
+            duration: uploadResult.duration
+          };
+        }
+      }
+
+      return { 
+        success: true, 
+        url: uploadResult.secure_url, 
+        message: 'Media uploaded successfully',
+        duration: uploadResult.duration 
+      };
     } catch (error: any) {
       return { success: false, message: 'Failed to upload media', error: error.message || 'UPLOAD_ERROR' };
     }

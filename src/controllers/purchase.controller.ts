@@ -1,70 +1,171 @@
 import { Request, Response } from 'express';
 import { purchaseService } from '../services/purchase.service';
 
-class PurchaseController {
-  // POST /api/purchases
+export const purchaseController = {
+  // POST /api/purchases - Create a purchase (initiate)
   async initiate(req: Request, res: Response) {
     try {
-      const buyerId = req.user?.id;
-      const { listingId } = req.body || {};
+      const buyerId = (req as any).user.id;
+      const { listingId } = req.body;
 
-      if (!buyerId) {
-        return res.status(401).json({ success: false, message: 'Authentication required' });
-      }
       if (!listingId) {
-        return res.status(400).json({ success: false, message: 'listingId is required' });
+        res.status(400).json({
+          success: false,
+          message: 'Listing ID is required',
+        });
+        return;
       }
 
-      const result = await purchaseService.initiatePurchase({ listingId, buyerId });
-      return res.status(201).json({ success: true, message: 'Purchase initiated', data: result.purchase });
-    } catch (error: any) {
-      return res.status(400).json({ success: false, message: error.message || 'Failed to initiate purchase' });
-    }
-  }
+      const result = await purchaseService.createPurchase(buyerId, listingId);
 
-  // POST /api/purchases/:purchaseId/deliver
+      if (result.success) {
+        res.status(201).json(result);
+      } else {
+        const statusCode =
+          result.error === 'LISTING_NOT_FOUND' ? 404 :
+          result.error === 'INSUFFICIENT_BALANCE' ? 400 :
+          result.error === 'CANNOT_BUY_OWN_LISTING' ? 400 : 400;
+        res.status(statusCode).json(result);
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create purchase',
+        error: error.message,
+      });
+    }
+  },
+
+  // POST /api/purchases/:purchaseId/deliver - Seller delivers account
   async deliver(req: Request, res: Response) {
     try {
-      const sellerId = req.user?.id;
+      const sellerId = (req as any).user.id;
       const { purchaseId } = req.params;
-      const { accountDetails } = req.body || {};
+      const { accountDetails } = req.body;
 
-      if (!sellerId) {
-        return res.status(401).json({ success: false, message: 'Authentication required' });
-      }
-      if (!purchaseId) {
-        return res.status(400).json({ success: false, message: 'purchaseId is required' });
-      }
-      if (!accountDetails || !accountDetails.username || !accountDetails.password) {
-        return res.status(400).json({ success: false, message: 'accountDetails.username and accountDetails.password are required' });
+      if (!accountDetails) {
+        res.status(400).json({
+          success: false,
+          message: 'Account details are required',
+        });
+        return;
       }
 
-      const result = await purchaseService.deliverAccount({ purchaseId, sellerId, accountDetails });
-      return res.json({ success: true, message: 'Account delivered', data: result.purchase });
+      const result = await purchaseService.deliverPurchase(purchaseId, sellerId, accountDetails);
+
+      if (result.success) {
+        res.json(result);
+      } else {
+        const statusCode =
+          result.error === 'PURCHASE_NOT_FOUND' ? 404 :
+          result.error === 'UNAUTHORIZED' ? 403 : 400;
+        res.status(statusCode).json(result);
+      }
     } catch (error: any) {
-      return res.status(400).json({ success: false, message: error.message || 'Failed to deliver account' });
+      res.status(500).json({
+        success: false,
+        message: 'Failed to deliver purchase',
+        error: error.message,
+      });
     }
-  }
+  },
 
-  // POST /api/purchases/:purchaseId/confirm
+  // POST /api/purchases/:purchaseId/confirm - Buyer confirms receipt
   async confirm(req: Request, res: Response) {
     try {
-      const buyerId = req.user?.id;
+      const buyerId = (req as any).user.id;
+      const { purchaseId } = req.params;
+      const { rating, review } = req.body;
+
+      const result = await purchaseService.confirmPurchase(purchaseId, buyerId, rating, review);
+
+      if (result.success) {
+        res.json(result);
+      } else {
+        const statusCode =
+          result.error === 'PURCHASE_NOT_FOUND' ? 404 :
+          result.error === 'UNAUTHORIZED' ? 403 : 400;
+        res.status(statusCode).json(result);
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to confirm purchase',
+        error: error.message,
+      });
+    }
+  },
+
+  // GET /api/purchases - Get user's purchases
+  async getUserPurchases(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.id;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      const result = await purchaseService.getUserPurchases(userId, page, limit);
+
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get purchases',
+        error: error.message,
+      });
+    }
+  },
+
+  // GET /api/purchases/sales - Get user's sales
+  async getUserSales(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.id;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      const result = await purchaseService.getUserSales(userId, page, limit);
+
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get sales',
+        error: error.message,
+      });
+    }
+  },
+
+  // GET /api/purchases/:purchaseId - Get purchase by ID
+  async getPurchaseById(req: Request, res: Response) {
+    try {
+      const userId = (req as any).user.id;
       const { purchaseId } = req.params;
 
-      if (!buyerId) {
-        return res.status(401).json({ success: false, message: 'Authentication required' });
-      }
-      if (!purchaseId) {
-        return res.status(400).json({ success: false, message: 'purchaseId is required' });
-      }
+      const result = await purchaseService.getPurchaseById(purchaseId, userId);
 
-      const result = await purchaseService.confirmDelivery(purchaseId, buyerId);
-      return res.json({ success: true, message: 'Purchase completed', data: result.purchase });
+      if (result.success) {
+        res.json(result);
+      } else {
+        const statusCode =
+          result.error === 'PURCHASE_NOT_FOUND' ? 404 :
+          result.error === 'UNAUTHORIZED' ? 403 : 400;
+        res.status(statusCode).json(result);
+      }
     } catch (error: any) {
-      return res.status(400).json({ success: false, message: error.message || 'Failed to confirm delivery' });
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get purchase',
+        error: error.message,
+      });
     }
-  }
-}
+  },
+};
 
-export const purchaseController = new PurchaseController();
+export default purchaseController;

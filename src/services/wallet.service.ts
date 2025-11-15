@@ -172,20 +172,25 @@ class WalletService {
       throw new Error('INVALID_AMOUNT');
     }
 
+    // Calculate 3% deposit fee
+    const feePercentage = 0.03; // 3% fee
+    const fee = amount * feePercentage;
+    const netAmount = amount - fee; // User receives amount minus fee
+
     const reference = `DEP-${uuidv4()}`;
 
     const result = await prisma.$transaction(async (tx) => {
       const wallet = await tx.wallet.upsert({
         where: { userId_currency: { userId, currency } },
         update: {
-          balance: { increment: amount },
-          totalDeposits: { increment: amount },
+          balance: { increment: netAmount },
+          totalDeposits: { increment: netAmount },
         },
         create: {
           userId,
           currency,
-          balance: amount,
-          totalDeposits: amount,
+          balance: netAmount,
+          totalDeposits: netAmount,
         },
       });
 
@@ -196,8 +201,8 @@ class WalletService {
           type: TransactionType.DEPOSIT,
           status: TransactionStatus.COMPLETED,
           amount,
-          fee: 0,
-          netAmount: amount,
+          fee: fee,
+          netAmount: netAmount,
           currency,
           reference,
           description: description || 'Wallet deposit',

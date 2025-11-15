@@ -8,10 +8,18 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 50 * 1024 * 1024, // 50MB limit for videos
   },
   fileFilter: (req, file, cb) => {
-    // Allow images and videos
+    const postType = req.body.postType;
+    
+    // Social media marketplace: only images
+    if (postType === 'SOCIAL_ACCOUNT' && file.mimetype.startsWith('video/')) {
+      cb(new Error('Social media marketplace only allows images, not videos'));
+      return;
+    }
+    
+    // Allow images and videos for other types
     if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
       cb(null, true);
     } else {
@@ -305,6 +313,7 @@ export const postController = {
   async uploadMedia(req: Request, res: Response): Promise<void> {
     try {
       const files = req.files as Express.Multer.File[];
+      const { postType } = req.body; // Get post type to enforce rules
       
       if (!files || files.length === 0) {
         res.status(400).json({
@@ -316,7 +325,7 @@ export const postController = {
 
       const uploadPromises = files.map(async (file) => {
         const filename = `${Date.now()}-${file.originalname}`;
-        return postService.uploadMedia(file.buffer, filename);
+        return postService.uploadMedia(file.buffer, filename, 'lordmoon/posts', postType);
       });
 
       const results = await Promise.all(uploadPromises);
@@ -328,7 +337,7 @@ export const postController = {
         res.status(400).json({
           success: false,
           message: 'All uploads failed',
-          errors: failedUploads.map(f => f.error),
+          errors: failedUploads.map(f => ({ error: f.error, message: f.message })),
         });
         return;
       }
@@ -339,6 +348,7 @@ export const postController = {
         data: {
           urls: successfulUploads.map(result => result.url),
           failed: failedUploads.length,
+          failedReasons: failedUploads.map(f => f.message),
         },
       });
     } catch (error: any) {
