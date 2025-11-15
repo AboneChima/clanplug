@@ -16,6 +16,7 @@ import {
   IoSettingsOutline,
   IoImageOutline,
   IoCloseOutline,
+  IoPeopleOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -44,6 +45,16 @@ interface Post {
   };
 }
 
+interface FollowUser {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  avatar?: string;
+  isKYCVerified?: boolean;
+  bio?: string;
+}
+
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();
   const { showToast } = useToast();
@@ -59,6 +70,12 @@ export default function ProfilePage() {
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [followers, setFollowers] = useState<FollowUser[]>([]);
+  const [following, setFollowing] = useState<FollowUser[]>([]);
+  const [loadingFollowers, setLoadingFollowers] = useState(false);
+  const [loadingFollowing, setLoadingFollowing] = useState(false);
 
   // Update avatar preview when user data is available
   useEffect(() => {
@@ -146,6 +163,17 @@ export default function ProfilePage() {
     }
   }, [user?.id]); // Run when user ID is available
 
+  // Auto-refresh stats every 10 seconds for real-time updates
+  useEffect(() => {
+    if (!user?.id) return;
+    
+    const interval = setInterval(() => {
+      loadProfileData();
+    }, 10000); // Refresh every 10 seconds
+    
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
   const loadProfileData = async () => {
     if (!user?.id) {
       setLoading(false);
@@ -198,6 +226,64 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadFollowers = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoadingFollowers(true);
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${user.id}/followers`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFollowers(data.followers || []);
+      }
+    } catch (error) {
+      console.error('Error loading followers:', error);
+      showToast('Failed to load followers', 'error');
+    } finally {
+      setLoadingFollowers(false);
+    }
+  };
+
+  const loadFollowing = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setLoadingFollowing(true);
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${user.id}/following`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFollowing(data.following || []);
+      }
+    } catch (error) {
+      console.error('Error loading following:', error);
+      showToast('Failed to load following', 'error');
+    } finally {
+      setLoadingFollowing(false);
+    }
+  };
+
+  const handleShowFollowers = () => {
+    setShowFollowersModal(true);
+    loadFollowers();
+  };
+
+  const handleShowFollowing = () => {
+    setShowFollowingModal(true);
+    loadFollowing();
   };
 
   const formatDate = (dateString: string) => {
@@ -314,14 +400,20 @@ export default function ProfilePage() {
                   <p className="text-base sm:text-lg font-bold text-white">{stats.posts}</p>
                   <p className="text-[10px] sm:text-xs text-gray-400">Posts</p>
                 </div>
-                <div>
+                <button 
+                  onClick={handleShowFollowers}
+                  className="text-left hover:opacity-80 transition-opacity"
+                >
                   <p className="text-base sm:text-lg font-bold text-white">{stats.followers}</p>
                   <p className="text-[10px] sm:text-xs text-gray-400">Followers</p>
-                </div>
-                <div>
+                </button>
+                <button 
+                  onClick={handleShowFollowing}
+                  className="text-left hover:opacity-80 transition-opacity"
+                >
                   <p className="text-base sm:text-lg font-bold text-white">{stats.following}</p>
                   <p className="text-[10px] sm:text-xs text-gray-400">Following</p>
-                </div>
+                </button>
                 <div>
                   <p className="text-base sm:text-lg font-bold text-white">{stats.likes}</p>
                   <p className="text-[10px] sm:text-xs text-gray-400">Likes</p>
@@ -467,6 +559,150 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Followers Modal */}
+        {showFollowersModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="bg-slate-800 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden border border-slate-700 shadow-2xl">
+              <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                <h2 className="text-lg font-semibold text-white">Followers</h2>
+                <button
+                  onClick={() => setShowFollowersModal(false)}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  <IoCloseOutline className="w-6 h-6 text-gray-400" />
+                </button>
+              </div>
+              <div className="overflow-y-auto max-h-[calc(80vh-80px)]">
+                {loadingFollowers ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : followers.length === 0 ? (
+                  <div className="text-center py-12">
+                    <IoPeopleOutline className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                    <p className="text-gray-400">No followers yet</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-700">
+                    {followers.map((follower) => (
+                      <Link
+                        key={follower.id}
+                        href={`/user/${follower.id}`}
+                        className="flex items-center gap-3 p-4 hover:bg-slate-700/50 transition-colors"
+                        onClick={() => setShowFollowersModal(false)}
+                      >
+                        {follower.avatar ? (
+                          <Image
+                            src={follower.avatar}
+                            alt={follower.username}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                            <span className="text-white font-semibold">
+                              {follower.firstName[0]}{follower.lastName[0]}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1">
+                            <p className="text-white font-medium truncate">
+                              {follower.firstName} {follower.lastName}
+                            </p>
+                            {follower.isKYCVerified && (
+                              <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-400 truncate">@{follower.username}</p>
+                          {follower.bio && (
+                            <p className="text-xs text-gray-500 truncate mt-0.5">{follower.bio}</p>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Following Modal */}
+        {showFollowingModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="bg-slate-800 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden border border-slate-700 shadow-2xl">
+              <div className="flex items-center justify-between p-4 border-b border-slate-700">
+                <h2 className="text-lg font-semibold text-white">Following</h2>
+                <button
+                  onClick={() => setShowFollowingModal(false)}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  <IoCloseOutline className="w-6 h-6 text-gray-400" />
+                </button>
+              </div>
+              <div className="overflow-y-auto max-h-[calc(80vh-80px)]">
+                {loadingFollowing ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : following.length === 0 ? (
+                  <div className="text-center py-12">
+                    <IoPeopleOutline className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                    <p className="text-gray-400">Not following anyone yet</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-slate-700">
+                    {following.map((followedUser) => (
+                      <Link
+                        key={followedUser.id}
+                        href={`/user/${followedUser.id}`}
+                        className="flex items-center gap-3 p-4 hover:bg-slate-700/50 transition-colors"
+                        onClick={() => setShowFollowingModal(false)}
+                      >
+                        {followedUser.avatar ? (
+                          <Image
+                            src={followedUser.avatar}
+                            alt={followedUser.username}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                            <span className="text-white font-semibold">
+                              {followedUser.firstName[0]}{followedUser.lastName[0]}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1">
+                            <p className="text-white font-medium truncate">
+                              {followedUser.firstName} {followedUser.lastName}
+                            </p>
+                            {followedUser.isKYCVerified && (
+                              <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-400 truncate">@{followedUser.username}</p>
+                          {followedUser.bio && (
+                            <p className="text-xs text-gray-500 truncate mt-0.5">{followedUser.bio}</p>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
 
