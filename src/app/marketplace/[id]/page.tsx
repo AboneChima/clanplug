@@ -423,7 +423,7 @@ export default function MarketplaceDetailPage() {
 
                           if (response.ok) {
                             const data = await response.json();
-                            router.push(`/chat?chatId=${data.data.id}`);
+                            router.push(`/chat?id=${data.data.id}`);
                           } else {
                             const error = await response.json();
                             showToast(error.message || 'Failed to start chat', 'error');

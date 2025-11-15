@@ -27,85 +27,6 @@ interface Provider {
   color?: string;
 }
 
-// Network Provider Selector Component
-const NetworkProviderSelector: React.FC<{
-  providers: Provider[];
-  selectedProvider: string;
-  onSelect: (code: string) => void;
-}> = ({ providers, selectedProvider, onSelect }) => {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-card-foreground mb-2">Select Network</label>
-      
-      {/* Mobile: Single row with 4 columns */}
-      <div className="sm:hidden">
-        <div className="grid grid-cols-4 gap-2">
-          {providers.map((provider) => (
-            <button
-              key={provider.id}
-              onClick={() => onSelect(provider.code)}
-              className={`p-2 rounded-xl border-2 transition-all ${
-                selectedProvider === provider.code
-                  ? 'border-brand-500 bg-brand-50'
-                  : 'border-border hover:border-brand-300 bg-surface'
-              }`}
-            >
-              <div className="text-center">
-                <div className="w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center bg-white shadow-sm">
-                  {provider.logo ? (
-                    <img src={provider.logo} alt={provider.name} className="w-6 h-6 object-contain" />
-                  ) : (
-                    <div 
-                      className="w-full h-full rounded-lg flex items-center justify-center text-white font-bold text-xs"
-                      style={{ backgroundColor: provider.color }}
-                    >
-                      {provider.name.charAt(0)}
-                    </div>
-                  )}
-                </div>
-                <p className={`text-[10px] font-medium truncate ${
-                  selectedProvider === provider.code ? 'text-brand-600' : 'text-card-foreground'
-                }`}>{provider.name}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-      
-      {/* Desktop: Grid layout */}
-      <div className="hidden sm:grid grid-cols-4 gap-3">
-        {providers.map((provider) => (
-          <button
-            key={provider.id}
-            onClick={() => onSelect(provider.code)}
-            className={`p-4 rounded-xl border-2 transition-all ${
-              selectedProvider === provider.code
-                ? 'border-brand-500 bg-brand-50'
-                : 'border-border hover:border-brand-300 bg-surface'
-            }`}
-          >
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center bg-gray-100 shadow-sm">
-                {provider.logo ? (
-                  <img src={provider.logo} alt={provider.name} className="w-8 h-8 object-contain" />
-                ) : (
-                  <div 
-                    className="w-full h-full rounded-full flex items-center justify-center text-white font-bold"
-                    style={{ backgroundColor: provider.color }}
-                  >
-                    {provider.name.charAt(0)}
-                  </div>
-                )}
-              </div>
-              <p className="text-sm font-medium text-card-foreground truncate">{provider.name}</p>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 const VTUServices: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -324,11 +245,43 @@ const VTUServices: React.FC = () => {
       <div className="bg-card rounded-2xl p-6 border border-border shadow-sm">
         {activeService === 'airtime' && (
           <div className="space-y-6">
-            <NetworkProviderSelector 
-              providers={providers}
-              selectedProvider={selectedProvider}
-              onSelect={setSelectedProvider}
-            />
+            {/* Network Provider Selection */}
+            <div>
+              <label className="block text-sm font-medium text-card-foreground mb-3">Select Network</label>
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+                {providers.map((provider) => (
+                  <button
+                    key={provider.id}
+                    onClick={() => setSelectedProvider(provider.code)}
+                    className={`p-1.5 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 ${
+                      selectedProvider === provider.code
+                        ? 'border-brand-500 bg-brand-50'
+                        : 'border-border hover:border-brand-300 bg-surface'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full mx-auto mb-0.5 sm:mb-2 flex items-center justify-center bg-gray-100 shadow-sm">
+                        {provider.logo ? (
+                          <img 
+                            src={provider.logo} 
+                            alt={provider.name}
+                            className="w-5 h-5 sm:w-8 sm:h-8 object-contain"
+                          />
+                        ) : (
+                          <div 
+                            className="w-full h-full rounded-full flex items-center justify-center text-white font-bold"
+                            style={{ backgroundColor: provider.color }}
+                          >
+                            {provider.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[10px] sm:text-sm font-medium text-card-foreground truncate leading-tight">{provider.name}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Phone Number */}
             <div>
@@ -399,11 +352,43 @@ const VTUServices: React.FC = () => {
 
         {activeService === 'data' && (
           <div className="space-y-6">
-            <NetworkProviderSelector 
-              providers={providers}
-              selectedProvider={selectedProvider}
-              onSelect={setSelectedProvider}
-            />
+            {/* Network Provider Selection */}
+            <div>
+              <label className="block text-sm font-medium text-card-foreground mb-3">Select Network</label>
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
+                {providers.map((provider) => (
+                  <button
+                    key={provider.id}
+                    onClick={() => setSelectedProvider(provider.code)}
+                    className={`p-1.5 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 ${
+                      selectedProvider === provider.code
+                        ? 'border-brand-500 bg-brand-50'
+                        : 'border-border hover:border-brand-300 bg-surface'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full mx-auto mb-0.5 sm:mb-2 flex items-center justify-center bg-gray-100 shadow-sm">
+                        {provider.logo ? (
+                          <img 
+                            src={provider.logo} 
+                            alt={provider.name}
+                            className="w-5 h-5 sm:w-8 sm:h-8 object-contain"
+                          />
+                        ) : (
+                          <div 
+                            className="w-full h-full rounded-full flex items-center justify-center text-white font-bold"
+                            style={{ backgroundColor: provider.color }}
+                          >
+                            {provider.name.charAt(0)}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-[10px] sm:text-sm font-medium text-card-foreground truncate leading-tight">{provider.name}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Phone Number */}
             <div>

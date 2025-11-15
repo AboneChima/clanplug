@@ -101,3 +101,15 @@
     display: inline !important;
   }
 }
+
+/* Toast Animation */
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}

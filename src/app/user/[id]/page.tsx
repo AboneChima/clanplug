@@ -251,7 +251,7 @@ export default function UserProfilePage() {
           }));
           
           // Navigate to chat
-          router.push(`/chat?chatId=${chatId}`);
+          router.push(`/chat?id=${chatId}`);
         } else {
           showToast('Failed to create chat', 'error');
         }

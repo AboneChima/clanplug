@@ -420,37 +420,11 @@ export default function FeedPage() {
   };
 
   const handleStartChat = async (userId: string, userInfo?: any) => {
-    try {
-      const response = await authFetch('/api/chats', {
-        method: 'POST',
-        body: JSON.stringify({
-          type: 'DIRECT',
-          participants: [userId],
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Store user info in localStorage for the chat page to use
-        if (userInfo) {
-          localStorage.setItem('pendingChatUser', JSON.stringify(userInfo));
-        }
-        
-        showToast('Chat created! Redirecting...', 'success');
-        window.location.href = `/chat?chatId=${data.data.id}`;
-      } else {
-        const errorData = await response.json();
-        // Better error message for users
-        if (errorData.message && errorData.message.includes('participants')) {
-          showToast('You need to follow this user first before messaging them', 'error');
-        } else {
-          showToast(errorData.message || 'Failed to start chat. Please try again.', 'error');
-        }
-      }
-    } catch (error) {
-      console.error('Error creating chat:', error);
-      showToast('Unable to start chat. Please make sure you\'re following this user first.', 'error');
+    const { openChat } = await import('@/lib/chat-helper');
+    const result = await openChat(userId, userInfo);
+    
+    if (!result.success) {
+      showToast(result.error || 'Failed to open chat', 'error');
     }
   };
 
