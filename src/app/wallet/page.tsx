@@ -316,13 +316,13 @@ function WalletContent() {
             </div>
           </div>
           
-          <div className="flex gap-2 sm:gap-3">
+          <div className="flex gap-1.5 sm:gap-2">
             <button 
               onClick={() => setDepositModalOpen(true)}
-              className="flex-1 flex flex-col items-center gap-1.5 p-3 sm:p-4 bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-xl text-white transition-all hover:scale-105 shadow-lg" 
+              className="flex-1 flex flex-col items-center gap-1 p-2 sm:p-3 bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-lg text-white transition-all hover:scale-105 shadow-lg" 
             >
-              <IoArrowDownOutline className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="text-xs sm:text-sm font-semibold">Deposit</span>
+              <IoArrowDownOutline className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-[10px] sm:text-xs font-semibold">Deposit</span>
             </button>
             
             <button 
@@ -330,10 +330,10 @@ function WalletContent() {
                 setShowSendMoney(!showSendMoney);
                 if (!showSendMoney) setShowWalletAddresses(false);
               }}
-              className="flex-1 flex flex-col items-center gap-1.5 p-3 sm:p-4 bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl text-white transition-all hover:scale-105 shadow-lg" 
+              className="flex-1 flex flex-col items-center gap-1 p-2 sm:p-3 bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-lg text-white transition-all hover:scale-105 shadow-lg" 
             >
-              <IoSwapHorizontalOutline className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="text-xs sm:text-sm font-semibold">Transfer</span>
+              <IoSwapHorizontalOutline className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-[10px] sm:text-xs font-semibold">Transfer</span>
             </button>
             
             <button 
@@ -341,18 +341,20 @@ function WalletContent() {
                 setShowWalletAddresses(!showWalletAddresses);
                 if (!showWalletAddresses) setShowSendMoney(false);
               }}
-              className="flex-1 flex flex-col items-center gap-1.5 p-3 sm:p-4 bg-gradient-to-br from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 rounded-xl text-white transition-all hover:scale-105 shadow-lg" 
+              className="flex-1 flex flex-col items-center gap-1 p-2 sm:p-3 bg-gradient-to-br from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 rounded-lg text-white transition-all hover:scale-105 shadow-lg border-2 border-white/20" 
             >
-              <IoWalletOutline className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="text-xs sm:text-sm font-semibold">Receive</span>
+              <div className="relative">
+                <IoWalletOutline className="w-4 h-4 sm:w-5 sm:h-5 drop-shadow-lg" style={{ filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.8))' }} />
+              </div>
+              <span className="text-[10px] sm:text-xs font-semibold">Receive</span>
             </button>
 
             <button 
               onClick={() => setWithdrawalModalOpen(true)}
-              className="flex-1 flex flex-col items-center gap-1.5 p-3 sm:p-4 bg-gradient-to-br from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 rounded-xl text-white transition-all hover:scale-105 shadow-lg" 
+              className="flex-1 flex flex-col items-center gap-1 p-2 sm:p-3 bg-gradient-to-br from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 rounded-lg text-white transition-all hover:scale-105 shadow-lg" 
             >
-              <IoArrowUpOutline className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="text-xs sm:text-sm font-semibold">Withdraw</span>
+              <IoArrowUpOutline className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-[10px] sm:text-xs font-semibold">Withdraw</span>
             </button>
           </div>
         </div>

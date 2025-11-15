@@ -354,7 +354,7 @@ export default function FeedPage() {
     }
   };
 
-  const handleStartChat = async (userId: string) => {
+  const handleStartChat = async (userId: string, userInfo?: any) => {
     try {
       const response = await authFetch('/api/chats', {
         method: 'POST',
@@ -366,6 +366,12 @@ export default function FeedPage() {
 
       if (response.ok) {
         const data = await response.json();
+        
+        // Store user info in localStorage for the chat page to use
+        if (userInfo) {
+          localStorage.setItem('pendingChatUser', JSON.stringify(userInfo));
+        }
+        
         showToast('Chat created! Redirecting...', 'success');
         window.location.href = `/chat?chatId=${data.data.id}`;
       } else {
@@ -430,7 +436,7 @@ export default function FeedPage() {
               {(post.user as any).isFollowing ? 'Following' : 'Follow'}
             </button>
             <button
-              onClick={() => handleStartChat(post.user.id)}
+              onClick={() => handleStartChat(post.user.id, post.user)}
               className="p-1.5 hover:bg-gray-700 rounded-md transition-colors"
             >
               <IoMailOutline className="w-4 h-4 text-gray-400" />

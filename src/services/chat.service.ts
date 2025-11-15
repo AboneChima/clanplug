@@ -106,14 +106,13 @@ export class ChatService {
     try {
       const response = await authApi.get('/api/chats');
       if (response.data.success) {
-        // Handle different response structures
         const chatsData = response.data.data || response.data.chats || response.data || [];
         return Array.isArray(chatsData) ? chatsData : [];
       }
       return [];
     } catch (error: any) {
       console.error('Error fetching chats:', error);
-      return []; // Return empty array instead of throwing
+      return [];
     }
   }
 
@@ -136,25 +135,53 @@ export class ChatService {
   // Message Management
   async getMessages(chatId: string, accessToken?: string): Promise<ChatMessage[]> {
     try {
-      const response = await authApi.get(`/api/chats/${chatId}/messages`);
-      if (response.data.success) {
-        // Handle different response structures
-        const messagesData = response.data.data || response.data.messages || response.data || [];
+      console.log('🔍 Fetching messages for chat:', chatId);
+      // Add timestamp to prevent caching
+      const response = await authApi.get(`/api/chats/${chatId}/messages?_t=${Date.now()}`);
+      console.log('📥 Backend response:', response);
+      console.log('📥 Response data:', response.data);
+      
+      if (response.data && response.data.success) {
+        const messagesData = response.data.data || response.data.messages || [];
+        console.log('✅ Parsed messages:', messagesData.length, 'messages');
+        console.log('Messages array:', messagesData);
         return Array.isArray(messagesData) ? messagesData : [];
       }
+      console.log('⚠️ Response not successful, returning empty array');
       return [];
     } catch (error: any) {
-      console.error('Error fetching messages:', error);
-      return []; // Return empty array instead of throwing
+      console.error('❌ Error fetching messages:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      return [];
     }
   }
 
   async sendMessage(chatId: string, data: SendMessageRequest, accessToken?: string): Promise<ChatMessage> {
-    const response = await authApi.post(`/api/chats/${chatId}/messages`, data);
-    if (response.data.success && response.data.data) {
-      return response.data.data;
+    try {
+      const response = await authApi.post(`/api/chats/${chatId}/messages`, data);
+      
+      // Backend returns {success: true, data: message} OR just the message directly
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      
+      // If response.data has message properties, it's the message itself
+      if (response.data.id && response.data.chatId) {
+        return response.data;
+      }
+      
+      throw new Error(response.data.message || 'Failed to send message');
+    } catch (error: any) {
+      console.error('Send message error:', error);
+      
+      // Check if it's a network error
+      if (!error.response) {
+        throw new Error('Network error: Unable to reach server');
+      }
+      
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to send message';
+      throw new Error(errorMessage);
     }
-    throw new Error(response.data.message || 'Failed to send message');
   }
 
   async editMessage(accessToken: string, chatId: string, messageId: string, content: string): Promise<ChatMessage> {
