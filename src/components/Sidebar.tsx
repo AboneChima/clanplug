@@ -36,14 +36,9 @@ type SidebarProps = {
 
 const navItems = [
   { 
-    href: '/dashboard', 
+    href: '/feed', 
     label: 'Dashboard', 
     Icon: IoGridOutline
-  },
-  { 
-    href: '/feed', 
-    label: 'Social Feed', 
-    Icon: IoPeopleOutline
   },
   { 
     href: '/wallet', 
@@ -52,7 +47,7 @@ const navItems = [
   },
   { 
     href: '/vtu', 
-    label: 'VTU Services', 
+    label: 'Airtime & Data', 
     Icon: IoPhonePortraitOutline
   },
   { 
@@ -69,11 +64,6 @@ const navItems = [
     href: '/chat', 
     label: 'Messages', 
     Icon: IoChatbubbleEllipsesOutline
-  },
-  { 
-    href: '/analytics', 
-    label: 'Analytics', 
-    Icon: IoStatsChartOutline
   },
   { 
     href: '/profile', 
@@ -105,46 +95,46 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
   };
 
   return (
-    <aside className="h-screen bg-card border-r border-border flex flex-col animate-fade-in">
-      {/* User Profile Header - Always visible */}
-      <div className="p-4 border-b border-border flex-shrink-0 bg-card">
-        <div className="flex items-center gap-4">
+    <aside className="h-screen bg-slate-900 border-r border-slate-800 flex flex-col animate-fade-in">
+      {/* User Profile Header - Compact */}
+      <div className="p-2 sm:p-3 border-b border-slate-800 flex-shrink-0 bg-slate-900">
+        <div className="flex items-center gap-2">
           <div className="relative">
             {user.avatar ? (
               <img 
                 src={user.avatar} 
                 alt={user.username || 'User'} 
-                className="w-12 h-12 rounded-2xl object-cover shadow-brand"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover"
               />
             ) : (
-              <div className="w-12 h-12 rounded-2xl bg-brand-gradient flex items-center justify-center shadow-brand">
-                <span className="text-lg font-bold text-brand-foreground">{getUserInitials()}</span>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                <span className="text-xs sm:text-sm font-bold text-white">{getUserInitials()}</span>
               </div>
             )}
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-card"></div>
+            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-slate-900"></div>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-heading truncate">{getUserDisplayName()}</h2>
-            <p className="text-caption truncate">{user.email}</p>
+            <h2 className="text-xs sm:text-sm font-bold text-white truncate">{getUserDisplayName()}</h2>
+            <p className="text-[10px] sm:text-xs text-gray-400 truncate">{user.email}</p>
           </div>
         </div>
         
-        {/* User Status */}
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20">
-            <IoShieldCheckmarkOutline className="w-3.5 h-3.5 text-blue-400" />
-            <span className="text-xs font-medium text-blue-300 capitalize">{user.role}</span>
+        {/* User Status - Compact */}
+        <div className="flex items-center gap-1.5 mt-2">
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20">
+            <IoShieldCheckmarkOutline className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-400" />
+            <span className="text-[9px] sm:text-[10px] font-medium text-blue-300 capitalize">{user.role}</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs font-medium text-green-300">Online</span>
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-500/10 border border-green-500/20">
+            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
+            <span className="text-[9px] sm:text-[10px] font-medium text-green-300">Online</span>
           </div>
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto custom-scrollbar">
-        <div className="space-y-2">
+      {/* Navigation - Compact */}
+      <nav className="flex-1 p-2 overflow-y-auto pb-48 lg:pb-4">
+        <div className="space-y-1">
           {navItems.map(({ href, label, Icon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));
 
@@ -152,56 +142,59 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               <Link
                 key={href}
                 href={href}
-                className={`nav-item ${active ? 'nav-item-active' : ''} animate-scale-in`}
-                style={{ animationDelay: `${navItems.indexOf(navItems.find(item => item.href === href)!) * 50}ms` }}
+                className={`flex items-center gap-2 px-2 py-2 rounded-lg transition-all group ${
+                  active 
+                    ? 'bg-blue-600/20 text-blue-400' 
+                    : 'text-gray-400 hover:bg-slate-800 hover:text-white'
+                }`}
               >
                 <div className={`
-                  w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200
+                  w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all flex-shrink-0
                   ${active 
-                    ? 'bg-brand-foreground/20 text-brand-foreground' 
-                    : 'bg-surface text-muted-foreground group-hover:bg-surface-hover group-hover:text-foreground'
+                    ? 'bg-blue-600/30 text-blue-400' 
+                    : 'bg-slate-800 text-gray-400 group-hover:bg-slate-700 group-hover:text-white'
                   }
                 `}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                 </div>
-                <span className="font-medium">{label}</span>
+                <span className="text-xs sm:text-sm font-medium truncate">{label}</span>
                 {active && (
-                  <div className="ml-auto w-2 h-2 bg-brand-foreground rounded-full"></div>
+                  <div className="ml-auto w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
                 )}
               </Link>
             );
           })}
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-8 pt-6 border-t border-border">
-          <div className="space-y-2">
-            <Link href="/notifications" className="nav-item w-full">
-              <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center text-muted-foreground group-hover:bg-surface-hover group-hover:text-foreground transition-all duration-200">
-                <IoNotificationsOutline className="w-5 h-5" />
+        {/* Quick Actions - Compact */}
+        <div className="mt-4 pt-3 border-t border-slate-800">
+          <div className="space-y-1">
+            <Link href="/notifications" className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
+                <IoNotificationsOutline className="w-4 h-4" />
               </div>
-              <span className="font-medium">Notifications</span>
-              <div className="ml-auto w-2 h-2 bg-destructive rounded-full animate-pulse"></div>
+              <span className="text-xs sm:text-sm font-medium truncate">Notifications</span>
+              <div className="ml-auto w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
             </Link>
             
-            <button className="nav-item w-full">
-              <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center text-muted-foreground group-hover:bg-surface-hover group-hover:text-foreground transition-all duration-200">
-                <IoHelpCircleOutline className="w-5 h-5" />
+            <button className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group w-full">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
+                <IoHelpCircleOutline className="w-4 h-4" />
               </div>
-              <span className="font-medium">Help & Support</span>
+              <span className="text-xs sm:text-sm font-medium truncate">Help</span>
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Logout Section */}
-      <div className="p-4 border-t border-border">
+      {/* Logout Section - Hidden on mobile, Compact */}
+      <div className="hidden lg:block p-2 border-t border-slate-800">
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-destructive/10 border border-destructive/20 text-destructive hover:bg-destructive/20 hover:border-destructive/30 focus-ring group"
+          className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 group"
         >
-          <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center text-destructive group-hover:bg-destructive/20 transition-all duration-200">
-            <IoLogOutOutline className="w-5 h-5" />
+          <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 group-hover:bg-red-500/20 transition-all flex-shrink-0">
+            <IoLogOutOutline className="w-4 h-4" />
           </div>
           <span>Sign Out</span>
         </button>

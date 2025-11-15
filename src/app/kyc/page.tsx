@@ -48,10 +48,107 @@ export default function KYCPage() {
     }
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCamera, setShowCamera] = useState<'idFront' | 'idBack' | 'selfie' | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement KYC submission
-    console.log('KYC Data:', formData, files);
+    setIsSubmitting(true);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      
+      // Step 1: Upload documents to Cloudinary
+      const uploadedUrls: { idFront?: string; idBack?: string; selfie?: string } = {};
+      
+      for (const [key, file] of Object.entries(files)) {
+        if (file) {
+          const formData = new FormData();
+          formData.append('media', file);
+          
+          const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+          });
+          
+          if (uploadRes.ok) {
+            const data = await uploadRes.json();
+            uploadedUrls[key as keyof typeof uploadedUrls] = data.data.urls[0];
+          }
+        }
+      }
+
+      // Step 2: Submit KYC with document URLs
+      const kycData = {
+        ...formData,
+        idFrontUrl: uploadedUrls.idFront,
+        idBackUrl: uploadedUrls.idBack,
+        selfieUrl: uploadedUrls.selfie,
+      };
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(kycData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('KYC submitted successfully! We will review it within 24-48 hours.');
+        window.location.reload();
+      } else {
+        alert(result.message || 'Failed to submit KYC');
+      }
+    } catch (error) {
+      console.error('KYC submission error:', error);
+      alert('Error submitting KYC. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const startCamera = async (type: 'idFront' | 'idBack' | 'selfie') => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: type === 'selfie' ? 'user' : 'environment' } 
+      });
+      setCameraStream(stream);
+      setShowCamera(type);
+    } catch (error) {
+      alert('Camera access denied. Please allow camera access or upload a file.');
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!cameraStream || !showCamera) return;
+
+    const video = document.getElementById('camera-preview') as HTMLVideoElement;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d')?.drawImage(video, 0, 0);
+
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], `${showCamera}.jpg`, { type: 'image/jpeg' });
+        setFiles({ ...files, [showCamera]: file });
+        stopCamera();
+      }
+    }, 'image/jpeg', 0.95);
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCamera(null);
   };
 
   const isVerified = user?.isKYCVerified;
@@ -139,14 +236,50 @@ export default function KYCPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Date of Birth</label>
-                      <input
-                        type="date"
-                        name="dateOfBirth"
-                        value={formData.dateOfBirth}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                        required
-                      />
+                      <div className="grid grid-cols-3 gap-3">
+                        <select
+                          value={formData.dateOfBirth.split('-')[2] || ''}
+                          onChange={(e) => {
+                            const [year, month] = formData.dateOfBirth.split('-');
+                            setFormData({ ...formData, dateOfBirth: `${year || '2000'}-${month || '01'}-${e.target.value.padStart(2, '0')}` });
+                          }}
+                          className="px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          required
+                        >
+                          <option value="">Day</option>
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day}>{day}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={formData.dateOfBirth.split('-')[1] || ''}
+                          onChange={(e) => {
+                            const [year, , day] = formData.dateOfBirth.split('-');
+                            setFormData({ ...formData, dateOfBirth: `${year || '2000'}-${e.target.value.padStart(2, '0')}-${day || '01'}` });
+                          }}
+                          className="px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          required
+                        >
+                          <option value="">Month</option>
+                          {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((month, i) => (
+                            <option key={i} value={i + 1}>{month}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={formData.dateOfBirth.split('-')[0] || ''}
+                          onChange={(e) => {
+                            const [, month, day] = formData.dateOfBirth.split('-');
+                            setFormData({ ...formData, dateOfBirth: `${e.target.value}-${month || '01'}-${day || '01'}` });
+                          }}
+                          className="px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          required
+                        >
+                          <option value="">Year</option>
+                          {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - 18 - i).map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     <div>
@@ -272,30 +405,90 @@ export default function KYCPage() {
                       <h3 className="text-xl font-bold text-white">Upload Documents</h3>
                     </div>
 
+                    {showCamera ? (
+                      <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+                        <div className="max-w-2xl w-full">
+                          <video
+                            id="camera-preview"
+                            autoPlay
+                            playsInline
+                            ref={(video) => {
+                              if (video && cameraStream) {
+                                video.srcObject = cameraStream;
+                              }
+                            }}
+                            className="w-full rounded-xl mb-4"
+                          />
+                          <div className="flex gap-4">
+                            <button
+                              type="button"
+                              onClick={capturePhoto}
+                              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all"
+                            >
+                              Capture Photo
+                            </button>
+                            <button
+                              type="button"
+                              onClick={stopCamera}
+                              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-semibold transition-all"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
                     {['idFront', 'idBack', 'selfie'].map((type) => (
                       <div key={type}>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
                           {type === 'idFront' ? 'ID Front' : type === 'idBack' ? 'ID Back' : 'Selfie with ID'}
                         </label>
-                        <div className="relative">
-                          <input
-                            type="file"
-                            accept="image/*,video/*"
-                            onChange={(e) => handleFileChange(e, type as any)}
-                            className="hidden"
-                            id={type}
-                          />
-                          <label
-                            htmlFor={type}
-                            className="flex flex-col items-center justify-center w-full h-32 bg-gray-900/50 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-gray-900/70 transition-all"
-                          >
-                            <IoCloudUploadOutline className="w-8 h-8 text-gray-400 mb-2" />
-                            <span className="text-sm text-gray-400">
-                              {files[type as keyof typeof files]?.name || 'Click to upload'}
-                            </span>
-                            <span className="text-xs text-gray-500 mt-1">Image or Video (Max 10MB)</span>
-                          </label>
-                        </div>
+                        {files[type as keyof typeof files] ? (
+                          <div className="relative bg-gray-900/50 border border-gray-600 rounded-xl p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <IoCheckmarkCircleOutline className="w-6 h-6 text-green-400" />
+                                <span className="text-sm text-gray-300">{files[type as keyof typeof files]?.name}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setFiles({ ...files, [type]: null })}
+                                className="text-red-400 hover:text-red-300"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-3">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleFileChange(e, type as any)}
+                              className="hidden"
+                              id={type}
+                            />
+                            <label
+                              htmlFor={type}
+                              className="flex flex-col items-center justify-center h-32 bg-gray-900/50 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-gray-900/70 transition-all"
+                            >
+                              <IoCloudUploadOutline className="w-6 h-6 text-gray-400 mb-1" />
+                              <span className="text-xs text-gray-400">Upload File</span>
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => startCamera(type as any)}
+                              className="flex flex-col items-center justify-center h-32 bg-gray-900/50 border-2 border-dashed border-gray-600 rounded-xl hover:border-blue-500 hover:bg-gray-900/70 transition-all"
+                            >
+                              <svg className="w-6 h-6 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <span className="text-xs text-gray-400">Use Camera</span>
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -323,9 +516,15 @@ export default function KYCPage() {
                   ) : (
                     <button
                       type="submit"
-                      className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all"
+                      disabled={isSubmitting || !files.idFront || !files.idBack || !files.selfie}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      Submit for Verification
+                      {isSubmitting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Submitting...
+                        </span>
+                      ) : 'Submit for Verification'}
                     </button>
                   )}
                 </div>
