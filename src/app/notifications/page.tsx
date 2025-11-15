@@ -166,99 +166,87 @@ export default function NotificationsPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-40 lg:pb-8">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-6 sm:py-8 mb-6">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-48 lg:pb-8">
+        {/* Header - Compact */}
+        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-4 mb-3">
+          <div className="max-w-6xl mx-auto px-3 sm:px-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
                 <div className="relative">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <IoNotificationsOutline className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                    <IoNotificationsOutline className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
                   {unreadCount > 0 && (
-                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-bold text-white">{unreadCount}</span>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-white">{unreadCount}</span>
                     </div>
                   )}
                 </div>
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Notifications</h1>
-                  <p className="text-sm sm:text-base text-white/80">{notifications.length} total</p>
+                  <h1 className="text-base sm:text-xl font-bold text-white">Notifications</h1>
                 </div>
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex gap-1">
                 <button
                   onClick={fetchNotifications}
                   disabled={loading}
-                  className="p-2 sm:px-4 sm:py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg transition-all flex items-center gap-2"
+                  className="p-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-md transition-all"
                 >
-                  <IoRefreshOutline className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">Refresh</span>
+                  <IoRefreshOutline className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="p-2 sm:px-4 sm:py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg transition-all flex items-center gap-2"
+                    className="p-1.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-md transition-all"
                   >
-                    <IoCheckmarkDoneOutline className="w-5 h-5" />
-                    <span className="hidden sm:inline">Mark All Read</span>
+                    <IoCheckmarkDoneOutline className="w-4 h-4" />
                   </button>
                 )}
               </div>
             </div>
+            
+            {/* Stats - Inline */}
+            <div className="flex gap-3 text-white/90 text-xs">
+              <span><span className="font-bold">{notifications.length}</span> Total</span>
+              <span>•</span>
+              <span><span className="font-bold text-orange-300">{unreadCount}</span> Unread</span>
+              <span>•</span>
+              <span><span className="font-bold text-green-300">{notifications.length - unreadCount}</span> Read</span>
+            </div>
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
-              <div className="text-2xl font-bold text-white">{notifications.length}</div>
-              <div className="text-sm text-gray-400">Total</div>
-            </div>
-            <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
-              <div className="text-2xl font-bold text-orange-400">{unreadCount}</div>
-              <div className="text-sm text-gray-400">Unread</div>
-            </div>
-            <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4">
-              <div className="text-2xl font-bold text-green-400">{notifications.length - unreadCount}</div>
-              <div className="text-sm text-gray-400">Read</div>
-            </div>
+        <div className="max-w-6xl mx-auto px-3 sm:px-4">
+          {/* Filters - Compact */}
+          <div className="flex gap-1.5 mb-3">
+            {(['all', 'unread', 'read'] as const).map((filterType) => (
+              <button
+                key={filterType}
+                onClick={() => setFilter(filterType)}
+                className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  filter === filterType
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800/50 text-gray-300 hover:bg-slate-700 border border-slate-700'
+                }`}
+              >
+                {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+              </button>
+            ))}
           </div>
 
-          {/* Filters */}
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 p-4 mb-6">
-            <div className="flex gap-2">
-              {(['all', 'unread', 'read'] as const).map((filterType) => (
-                <button
-                  key={filterType}
-                  onClick={() => setFilter(filterType)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
-                    filter === filterType
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
-                  }`}
-                >
-                  {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Notifications List */}
-          <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+          {/* Notifications List - Compact */}
+          <div className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden">
             {loading ? (
-              <div className="p-12 text-center">
-                <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-gray-400">Loading notifications...</p>
+              <div className="p-8 text-center">
+                <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                <p className="text-gray-400 text-sm">Loading...</p>
               </div>
             ) : filteredNotifications.length === 0 ? (
-              <div className="p-12 text-center">
-                <IoNotificationsOutline className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                <h3 className="text-lg font-medium text-white mb-2">No notifications</h3>
-                <p className="text-gray-400">
+              <div className="p-8 text-center">
+                <IoNotificationsOutline className="w-12 h-12 mx-auto mb-3 text-gray-600" />
+                <h3 className="text-sm font-medium text-white mb-1">No notifications</h3>
+                <p className="text-gray-400 text-xs">
                   {filter === 'unread' ? 'All caught up!' : 
                    filter === 'read' ? 'No read notifications yet' :
                    'You don\'t have any notifications yet'}
@@ -269,11 +257,11 @@ export default function NotificationsPage() {
                 {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-3 sm:p-4 hover:bg-slate-700/30 transition-colors ${
-                      !notification.isRead ? 'bg-blue-600/5 border-l-2 sm:border-l-4 border-l-blue-500' : ''
+                    className={`p-2.5 hover:bg-slate-700/30 transition-colors ${
+                      !notification.isRead ? 'bg-blue-600/5 border-l-2 border-l-blue-500' : ''
                     }`}
                   >
-                    <div className="flex items-start gap-2 sm:gap-3">
+                    <div className="flex items-start gap-2">
                       <div className="flex-shrink-0 mt-0.5">
                         {getNotificationIcon(notification.type)}
                       </div>
@@ -281,34 +269,34 @@ export default function NotificationsPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
-                              <h3 className="text-sm sm:text-base font-semibold text-white truncate">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <h3 className="text-xs font-semibold text-white truncate">
                                 {notification.title}
                               </h3>
-                              <span className="px-1.5 py-0.5 text-[10px] sm:text-xs font-medium rounded-full bg-slate-700 text-gray-300 w-fit">
+                              <span className="px-1.5 py-0.5 text-[9px] font-medium rounded bg-slate-700 text-gray-300 flex-shrink-0">
                                 {notification.type}
                               </span>
                             </div>
-                            <p className="text-xs sm:text-sm text-gray-300 mb-1.5 line-clamp-2">{notification.message}</p>
-                            <span className="text-xs text-gray-500">{formatTimeAgo(notification.createdAt)}</span>
+                            <p className="text-xs text-gray-300 mb-1 line-clamp-2">{notification.message}</p>
+                            <span className="text-[10px] text-gray-500">{formatTimeAgo(notification.createdAt)}</span>
                           </div>
                           
-                          <div className="flex flex-col sm:flex-row items-center gap-1 flex-shrink-0">
+                          <div className="flex items-center gap-0.5 flex-shrink-0">
                             {!notification.isRead && (
                               <button
                                 onClick={() => markAsRead(notification.id)}
-                                className="p-1.5 text-gray-400 hover:text-green-400 hover:bg-slate-700 rounded-lg transition-colors"
+                                className="p-1 text-gray-400 hover:text-green-400 hover:bg-slate-700 rounded transition-colors"
                                 title="Mark as read"
                               >
-                                <IoCheckmarkCircleOutline className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <IoCheckmarkCircleOutline className="w-4 h-4" />
                               </button>
                             )}
                             <button
                               onClick={() => deleteNotification(notification.id)}
-                              className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors"
+                              className="p-1 text-gray-400 hover:text-red-400 hover:bg-slate-700 rounded transition-colors"
                               title="Delete"
                             >
-                              <IoTrashOutline className="w-4 h-4 sm:w-5 sm:h-5" />
+                              <IoTrashOutline className="w-4 h-4" />
                             </button>
                           </div>
                         </div>

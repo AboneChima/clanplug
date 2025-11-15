@@ -83,20 +83,19 @@ export default function ChatPage() {
 
   // Handle chatId from URL query (when coming from message button)
   useEffect(() => {
-    if (chats.length === 0) return;
-    
     const params = new URLSearchParams(window.location.search);
     const chatId = params.get('chatId');
     
-    if (chatId && !selected) {
+    if (chatId && chats.length > 0) {
       const chat = chats.find(c => c.id === chatId);
-      if (chat) {
+      if (chat && (!selected || selected.id !== chatId)) {
         setSelected(chat);
+        loadMessages(chatId);
         // Clear URL query after selecting
         window.history.replaceState({}, '', '/chat');
       }
     }
-  }, [chats, selected]);
+  }, [chats, chatId]);
 
   useEffect(() => {
     if (!selected) return;
@@ -183,7 +182,7 @@ export default function ChatPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-40 lg:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-48 lg:pb-8">
         {/* Hero Header - Compact */}
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-6 mb-4">
           <div className="max-w-7xl mx-auto px-3 sm:px-4">

@@ -91,21 +91,42 @@ export default function UserProfilePage() {
         // Handle different response formats
         const userData = data.user || data.data || data;
         
-        // Fetch user stats separately
-        const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${params.id}/stats`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+        // Fetch user posts to get count
+        let postsCount = 0;
+        try {
+          const postsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts?userId=${params.id}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          if (postsResponse.ok) {
+            const postsData = await postsResponse.json();
+            const posts = Array.isArray(postsData.data) ? postsData.data : Array.isArray(postsData.posts) ? postsData.posts : Array.isArray(postsData) ? postsData : [];
+            postsCount = posts.length;
+          }
+        } catch (err) {
+          console.error('Error fetching posts count:', err);
+        }
         
-        let stats = { posts: 0, followers: 0, following: 0 };
-        if (statsResponse.ok) {
-          const statsData = await statsResponse.json();
-          stats = {
-            posts: statsData.posts || 0,
-            followers: statsData.followers || 0,
-            following: statsData.following || 0,
-          };
+        // Fetch user stats separately
+        let followersCount = 0;
+        let followingCount = 0;
+        
+        try {
+          const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${params.id}/stats`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          if (statsResponse.ok) {
+            const statsData = await statsResponse.json();
+            followersCount = statsData.followers || statsData.data?.followers || 0;
+            followingCount = statsData.following || statsData.data?.following || 0;
+          }
+        } catch (err) {
+          console.error('Error fetching follow stats:', err);
         }
         
         setProfile({
@@ -120,7 +141,11 @@ export default function UserProfilePage() {
           country: userData.country,
           createdAt: userData.createdAt,
           isFollowing: userData.isFollowing || false,
-          _count: stats,
+          _count: {
+            posts: postsCount,
+            followers: followersCount,
+            following: followingCount,
+          },
         });
       } else {
         showToast('User not found', 'error');
@@ -193,6 +218,7 @@ export default function UserProfilePage() {
     if (!profile) return;
 
     try {
+      showToast('Opening chat...', 'info');
       const token = localStorage.getItem('accessToken');
       
       // Create or get existing chat
@@ -211,8 +237,11 @@ export default function UserProfilePage() {
       if (response.ok) {
         const data = await response.json();
         const chatId = data.data?.id || data.id;
-        router.push(`/chat?chatId=${chatId}`);
-        showToast('Opening chat...', 'success');
+        
+        // Wait a moment for the chat to be created
+        setTimeout(() => {
+          router.push(`/chat?chatId=${chatId}`);
+        }, 500);
       } else {
         const errorData = await response.json();
         showToast(errorData.message || 'Failed to open chat', 'error');
@@ -270,7 +299,7 @@ export default function UserProfilePage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-40 lg:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-48 lg:pb-8">
         {/* Header - Compact for small screens */}
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-6 mb-4">
           <div className="max-w-4xl mx-auto px-3 sm:px-4">

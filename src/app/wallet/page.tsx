@@ -268,68 +268,35 @@ function WalletContent() {
         </div>
       )}
       
-      <div className="mb-6 lg:mb-8 animate-fade-in">
-        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 rounded-2xl lg:rounded-3xl p-6 lg:p-8 xl:p-12 text-white shadow-2xl">
+      <div className="mb-4 animate-fade-in">
+        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 rounded-xl p-3 sm:p-4 text-white shadow-xl">
           <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 lg:mb-8">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-xl lg:rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shadow-lg flex-shrink-0">
-                  <IoWalletOutline className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-1 sm:mb-2">Wallet</h1>
-                  <p className="text-sm sm:text-base lg:text-xl text-white/90 font-medium">Manage your digital assets</p>
-                </div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center flex-shrink-0">
+                <IoWalletOutline className="w-5 h-5 text-white" />
               </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={load}
-                  disabled={loading}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/20 hover:bg-white/30 disabled:bg-white/10 rounded-lg border border-white/30 text-white text-sm font-medium transition-colors disabled:cursor-not-allowed"
-                >
-                  <IoRefreshOutline className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">Refresh</span>
-                </button>
-                <button
-                  onClick={checkPendingPayments}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-500/20 hover:bg-green-500/30 rounded-lg border border-green-400/30 text-green-300 text-sm font-medium transition-colors"
-                  title="Check for pending payments"
-                >
-                  <IoCheckmarkCircleOutline className="w-4 h-4" />
-                  <span className="hidden sm:inline">Verify</span>
-                </button>
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl font-bold text-white">Wallet</h1>
+                <p className="text-xs text-white/80">Manage your funds</p>
               </div>
             </div>
             
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <IoTrendingUpOutline className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300" />
-                  <span className="text-white/80 font-medium text-xs sm:text-sm">Balance</span>
+            {/* Balance Display - Compact */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-white/70 mb-0.5">Total Balance</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">
+                    {balance ? 
+                      `₦${Object.values(balance).reduce((sum, amount) => sum + amount, 0).toLocaleString()}` : 
+                      '₦0.00'
+                    }
+                  </p>
                 </div>
-                <p className="text-lg sm:text-xl font-bold text-white">
-                  {balance ? 
-                    `₦${Object.values(balance).reduce((sum, amount) => sum + amount, 0).toLocaleString()}` : 
-                    '₦0.00'
-                  }
-                </p>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <IoSwapHorizontalOutline className="w-4 h-4 sm:w-5 sm:h-5 text-blue-300" />
-                  <span className="text-white/80 font-medium text-xs sm:text-sm">Transactions</span>
+                <div className="text-right">
+                  <p className="text-xs text-white/70 mb-0.5">Transactions</p>
+                  <p className="text-lg font-bold text-white">{transactions.length}</p>
                 </div>
-                <p className="text-lg sm:text-xl font-bold text-white">{transactions.length}</p>
-              </div>
-              
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 col-span-2 lg:col-span-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <IoCheckmarkCircleOutline className="w-4 h-4 sm:w-5 sm:h-5 text-purple-300" />
-                  <span className="text-white/80 font-medium text-xs sm:text-sm">Status</span>
-                </div>
-                <p className="text-lg sm:text-xl font-bold text-white">Active</p>
               </div>
             </div>
           </div>
