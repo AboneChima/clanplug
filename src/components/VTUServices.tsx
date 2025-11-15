@@ -248,24 +248,24 @@ const VTUServices: React.FC = () => {
             {/* Network Provider Selection */}
             <div>
               <label className="block text-sm font-medium text-card-foreground mb-3">Select Network</label>
-              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
                 {providers.map((provider) => (
                   <button
                     key={provider.id}
                     onClick={() => setSelectedProvider(provider.code)}
-                    className={`p-2 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 ${
+                    className={`p-1.5 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 ${
                       selectedProvider === provider.code
                         ? 'border-brand-500 bg-brand-50'
                         : 'border-border hover:border-brand-300 bg-surface'
                     }`}
                   >
                     <div className="text-center">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full mx-auto mb-1 sm:mb-2 flex items-center justify-center bg-gray-100 shadow-sm">
+                      <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full mx-auto mb-0.5 sm:mb-2 flex items-center justify-center bg-gray-100 shadow-sm">
                         {provider.logo ? (
                           <img 
                             src={provider.logo} 
                             alt={provider.name}
-                            className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
+                            className="w-5 h-5 sm:w-8 sm:h-8 object-contain"
                           />
                         ) : (
                           <div 
@@ -276,7 +276,7 @@ const VTUServices: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <p className="text-xs sm:text-sm font-medium text-card-foreground truncate">{provider.name}</p>
+                      <p className="text-[10px] sm:text-sm font-medium text-card-foreground truncate leading-tight">{provider.name}</p>
                     </div>
                   </button>
                 ))}
@@ -355,24 +355,24 @@ const VTUServices: React.FC = () => {
             {/* Network Provider Selection */}
             <div>
               <label className="block text-sm font-medium text-card-foreground mb-3">Select Network</label>
-              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-3">
                 {providers.map((provider) => (
                   <button
                     key={provider.id}
                     onClick={() => setSelectedProvider(provider.code)}
-                    className={`p-2 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 ${
+                    className={`p-1.5 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all duration-200 ${
                       selectedProvider === provider.code
                         ? 'border-brand-500 bg-brand-50'
                         : 'border-border hover:border-brand-300 bg-surface'
                     }`}
                   >
                     <div className="text-center">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full mx-auto mb-1 sm:mb-2 flex items-center justify-center bg-gray-100 shadow-sm">
+                      <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full mx-auto mb-0.5 sm:mb-2 flex items-center justify-center bg-gray-100 shadow-sm">
                         {provider.logo ? (
                           <img 
                             src={provider.logo} 
                             alt={provider.name}
-                            className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
+                            className="w-5 h-5 sm:w-8 sm:h-8 object-contain"
                           />
                         ) : (
                           <div 
@@ -383,7 +383,7 @@ const VTUServices: React.FC = () => {
                           </div>
                         )}
                       </div>
-                      <p className="text-xs sm:text-sm font-medium text-card-foreground truncate">{provider.name}</p>
+                      <p className="text-[10px] sm:text-sm font-medium text-card-foreground truncate leading-tight">{provider.name}</p>
                     </div>
                   </button>
                 ))}

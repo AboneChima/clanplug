@@ -138,16 +138,20 @@ export class ChatService {
       console.log('🔍 Fetching messages for chat:', chatId);
       // Add timestamp to prevent caching
       const response = await authApi.get(`/api/chats/${chatId}/messages?_t=${Date.now()}`);
-      console.log('📥 Backend response:', response);
-      console.log('📥 Response data:', response.data);
+      console.log('📥 Full response object:', response);
+      console.log('📥 Response.data:', response.data);
       
-      if (response.data && response.data.success) {
-        const messagesData = response.data.data || response.data.messages || [];
+      // authApi.get returns the axios response, so data is in response.data
+      const responseData = response.data;
+      console.log('📥 Parsed responseData:', responseData);
+      
+      if (responseData && responseData.success) {
+        const messagesData = responseData.data || responseData.messages || [];
         console.log('✅ Parsed messages:', messagesData.length, 'messages');
-        console.log('Messages array:', messagesData);
+        console.log('✅ Messages array:', messagesData);
         return Array.isArray(messagesData) ? messagesData : [];
       }
-      console.log('⚠️ Response not successful, returning empty array');
+      console.log('⚠️ Response not successful:', responseData);
       return [];
     } catch (error: any) {
       console.error('❌ Error fetching messages:', error);

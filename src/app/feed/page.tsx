@@ -60,6 +60,7 @@ export default function FeedPage() {
   const [activeTab, setActiveTab] = useState<'forYou' | 'favorites' | 'following'>('forYou');
   const [followingUsers, setFollowingUsers] = useState<any[]>([]);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [favoritePosts, setFavoritePosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,15 +83,30 @@ export default function FeedPage() {
   }, [activeTab]);
 
   const fetchFollowing = async () => {
+    if (!user?.id) {
+      console.log('⚠️ No user ID, cannot fetch following');
+      return;
+    }
     try {
       setLoadingFollowing(true);
-      const response = await authFetch('/api/follow/following');
+      console.log('🔍 Fetching following for user:', user.id);
+      const response = await authFetch(`/api/follow/${user.id}/following`);
+      console.log('📥 Following response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
-        setFollowingUsers(data.data || data.following || []);
+        console.log('📥 Following response data:', data);
+        // The response structure is { success: true, data: [...users] }
+        const followingList = data.data || [];
+        console.log('✅ Following users:', followingList.length);
+        setFollowingUsers(followingList);
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Following fetch error:', errorData);
+        setFollowingUsers([]);
       }
     } catch (error) {
-      console.error('Error fetching following:', error);
+      console.error('❌ Error fetching following:', error);
       setFollowingUsers([]);
     } finally {
       setLoadingFollowing(false);
@@ -180,9 +196,9 @@ export default function FeedPage() {
       // Upload image if selected
       if (newPostImage) {
         const formData = new FormData();
-        formData.append('file', newPostImage);
+        formData.append('media', newPostImage);
 
-        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
+        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -192,11 +208,15 @@ export default function FeedPage() {
 
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
-          if (uploadData.success && uploadData.data?.url) {
-            imageUrls.push(uploadData.data.url);
+          console.log('Upload response:', uploadData);
+          // Backend returns { success: true, data: { urls: [...] } }
+          if (uploadData.success && uploadData.data?.urls?.length > 0) {
+            imageUrls.push(...uploadData.data.urls);
           }
         } else {
-          showToast('Failed to upload image', 'error');
+          const errorData = await uploadResponse.json();
+          console.error('Upload error:', errorData);
+          showToast(errorData.message || 'Failed to upload image', 'error');
           return;
         }
       }
@@ -526,9 +546,13 @@ export default function FeedPage() {
         <div className="px-3 pb-2">
           <div className={`grid gap-1.5 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
             {post.images.map((image, index) => (
-              <div key={index} className={`relative rounded-md overflow-hidden bg-gray-700 ${post.images!.length === 1 ? 'aspect-video' : 'aspect-square'}`}>
+              <button
+                key={index}
+                onClick={() => setViewingImage(image)}
+                className={`relative rounded-md overflow-hidden bg-gray-700 ${post.images!.length === 1 ? 'aspect-video' : 'aspect-square'} cursor-pointer hover:opacity-90 transition-opacity`}
+              >
                 <Image src={image} alt="Post image" fill className="object-cover" />
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -900,6 +924,32 @@ export default function FeedPage() {
           )}
         </div>
       </div>
+
+      {/* Image Overlay Modal */}
+      {viewingImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+          onClick={() => setViewingImage(null)}
+        >
+          <button
+            onClick={() => setViewingImage(null)}
+            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+          >
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <Image
+              src={viewingImage}
+              alt="Full size image"
+              fill
+              className="object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
