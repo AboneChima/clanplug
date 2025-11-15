@@ -36,10 +36,9 @@ router.get('/',
   asyncHandler(chatController.getUserChats.bind(chatController))
 );
 
-// POST /api/chats - Create new chat
+// POST /api/chats - Create new chat (NO KYC REQUIRED - Everyone can chat)
 router.post('/', 
   authenticate, 
-  requireKYC, 
   [
     body('type').optional().isIn(['DIRECT', 'GROUP', 'SUPPORT']).withMessage('Invalid chat type'),
     body('name').optional().isLength({ min: 1, max: 100 }).withMessage('Name must be between 1 and 100 characters'),
@@ -70,10 +69,9 @@ router.get('/:chatId/messages',
   asyncHandler(chatController.getChatMessages.bind(chatController))
 );
 
-// POST /api/chats/:chatId/messages - Send message
+// POST /api/chats/:chatId/messages - Send message (NO KYC REQUIRED - Everyone can send messages)
 router.post('/:chatId/messages', 
   authenticate, 
-  requireKYC, 
   [
     param('chatId').notEmpty().withMessage('Chat ID is required'),
     body('content').isLength({ min: 1, max: 2000 }).withMessage('Content must be between 1 and 2000 characters'),
