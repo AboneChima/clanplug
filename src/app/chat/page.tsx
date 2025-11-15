@@ -263,36 +263,55 @@ export default function ChatPage() {
                   </div>
                 ) : (
                   <div className="p-1.5">
-                    {filteredChats.map((chat) => (
-                      <button
-                        key={chat.id}
-                        onClick={() => setSelected(chat)}
-                        className={`w-full p-2 rounded-lg mb-1.5 transition-all text-left ${
-                          selected?.id === chat.id
-                            ? 'bg-blue-600/20 border border-blue-500/50'
-                            : 'hover:bg-slate-700/50'
-                        }`}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                            <IoChatbubbleEllipsesOutline className="w-4 h-4 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-0.5">
-                              <h3 className="font-semibold text-white truncate text-xs sm:text-sm">
-                                {chat.name || 'Chat'}
-                              </h3>
-                              <span className="text-[10px] sm:text-xs text-gray-400 flex-shrink-0 ml-1">
-                                {formatTime(chat.updatedAt)}
-                              </span>
+                    {filteredChats.map((chat) => {
+                      // Get the other participant (not current user)
+                      const otherParticipant = chat.participants?.find(p => p.userId !== user?.id);
+                      const displayName = otherParticipant?.user 
+                        ? `${otherParticipant.user.firstName || ''} ${otherParticipant.user.lastName || ''}`.trim() || otherParticipant.user.username
+                        : chat.name || 'Chat';
+                      const avatar = otherParticipant?.user?.avatar;
+                      
+                      return (
+                        <button
+                          key={chat.id}
+                          onClick={() => setSelected(chat)}
+                          className={`w-full p-2 rounded-lg mb-1.5 transition-all text-left ${
+                            selected?.id === chat.id
+                              ? 'bg-blue-600/20 border border-blue-500/50'
+                              : 'hover:bg-slate-700/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            {avatar ? (
+                              <img
+                                src={avatar}
+                                alt={displayName}
+                                className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-slate-600"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                                <span className="text-white font-semibold text-sm">
+                                  {displayName.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-0.5">
+                                <h3 className="font-semibold text-white truncate text-sm">
+                                  {displayName}
+                                </h3>
+                                <span className="text-xs text-gray-400 flex-shrink-0 ml-1">
+                                  {formatTime(chat.updatedAt)}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-400 truncate">
+                                {otherParticipant?.user?.username ? `@${otherParticipant.user.username}` : 'Tap to chat'}
+                              </p>
                             </div>
-                            <p className="text-[10px] sm:text-xs text-gray-400 truncate">
-                              {chat.participants?.map(p => p.user?.username || p.userId).join(', ') || 'No participants'}
-                            </p>
                           </div>
-                        </div>
-                      </button>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -322,20 +341,42 @@ export default function ChatPage() {
               ) : (
                 <>
                   {/* Chat Header */}
-                  <div className="p-2 sm:p-3 border-b border-slate-700 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                        <IoChatbubbleEllipsesOutline className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                      </div>
-                      <div className="min-w-0">
-                        <h2 className="font-semibold text-white text-sm sm:text-base truncate">{selected.name || 'Chat'}</h2>
-                        <p className="text-[10px] sm:text-xs text-gray-400 truncate">
-                          {selected.participants?.map(p => p.user?.username || p.userId).join(', ') || 'No participants'}
-                        </p>
-                      </div>
+                  <div className="p-3 border-b border-slate-700 flex items-center justify-between bg-slate-900/50">
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const otherParticipant = selected.participants?.find(p => p.userId !== user?.id);
+                        const displayName = otherParticipant?.user 
+                          ? `${otherParticipant.user.firstName || ''} ${otherParticipant.user.lastName || ''}`.trim() || otherParticipant.user.username
+                          : selected.name || 'Chat';
+                        const avatar = otherParticipant?.user?.avatar;
+                        
+                        return (
+                          <>
+                            {avatar ? (
+                              <img
+                                src={avatar}
+                                alt={displayName}
+                                className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-slate-600"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                                <span className="text-white font-semibold">
+                                  {displayName.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <h2 className="font-semibold text-white text-base truncate">{displayName}</h2>
+                              <p className="text-xs text-green-400">
+                                {otherParticipant?.isActive ? 'Online' : 'Offline'}
+                              </p>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
-                    <button className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0">
-                      <IoEllipsisVerticalOutline className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+                    <button className="p-2 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0">
+                      <IoEllipsisVerticalOutline className="w-5 h-5 text-gray-400" />
                     </button>
                   </div>
 
