@@ -28,8 +28,8 @@ router.get('/user/:userId', optionalAuthenticate, asyncHandler(postController.ge
 // GET /api/posts/bookmarks - Get user's bookmarked posts
 router.get('/bookmarks', authenticate, asyncHandler(postController.getBookmarkedPosts));
 
-// POST /api/posts/upload-media - Upload media files
-router.post('/upload-media', authenticate, requireKYC, uploadMiddleware, asyncHandler(postController.uploadMedia));
+// POST /api/posts/upload-media - Upload media files (removed KYC requirement for social posts)
+router.post('/upload-media', authenticate, uploadMiddleware, asyncHandler(postController.uploadMedia));
 
 // GET /api/posts/:postId - Get post by ID
 router.get('/:postId', optionalAuthenticate, asyncHandler(postController.getPostById));
