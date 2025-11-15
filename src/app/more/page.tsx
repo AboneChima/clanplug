@@ -47,7 +47,7 @@ export default function MorePage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-48 lg:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         {/* Hero Header */}
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 mb-6">
           <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
