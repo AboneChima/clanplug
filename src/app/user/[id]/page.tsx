@@ -91,6 +91,23 @@ export default function UserProfilePage() {
         // Handle different response formats
         const userData = data.user || data.data || data;
         
+        // Fetch user stats separately
+        const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${params.id}/stats`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        let stats = { posts: 0, followers: 0, following: 0 };
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          stats = {
+            posts: statsData.posts || 0,
+            followers: statsData.followers || 0,
+            following: statsData.following || 0,
+          };
+        }
+        
         setProfile({
           id: userData.id,
           username: userData.username,
@@ -103,11 +120,7 @@ export default function UserProfilePage() {
           country: userData.country,
           createdAt: userData.createdAt,
           isFollowing: userData.isFollowing || false,
-          _count: userData._count || {
-            posts: 0,
-            followers: 0,
-            following: 0,
-          },
+          _count: stats,
         });
       } else {
         showToast('User not found', 'error');
@@ -191,14 +204,18 @@ export default function UserProfilePage() {
         },
         body: JSON.stringify({
           type: 'DIRECT',
-          participantIds: [profile.id],
+          participants: [profile.id],
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        router.push(`/chat`);
+        const chatId = data.data?.id || data.id;
+        router.push(`/chat?chatId=${chatId}`);
         showToast('Opening chat...', 'success');
+      } else {
+        const errorData = await response.json();
+        showToast(errorData.message || 'Failed to open chat', 'error');
       }
     } catch (error) {
       console.error('Error creating chat:', error);
@@ -253,7 +270,7 @@ export default function UserProfilePage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-24 lg:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-32 lg:pb-8">
         {/* Header - Compact for small screens */}
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-6 mb-4">
           <div className="max-w-4xl mx-auto px-3 sm:px-4">
@@ -347,7 +364,7 @@ export default function UserProfilePage() {
                   )}
                   <div className="flex items-center gap-1">
                     <IoCalendarOutline className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>Joined {new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                    <span>Joined {profile.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently'}</span>
                   </div>
                 </div>
               </div>

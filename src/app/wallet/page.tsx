@@ -349,17 +349,13 @@ function WalletContent() {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button 
               onClick={() => setDepositModalOpen(true)}
-              className="btn-primary flex flex-col items-center justify-center gap-2 p-4 text-center hover-lift animate-fade-in" 
-              style={{animationDelay: '0.5s'}}
+              className="flex-1 flex flex-col items-center gap-1.5 p-3 sm:p-4 bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-xl text-white transition-all hover:scale-105 shadow-lg" 
             >
-              <IoArrowUpOutline className="w-5 h-5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold">Fund Wallet</p>
-                <p className="text-xs opacity-80">Add money</p>
-              </div>
+              <IoArrowDownOutline className="w-5 h-5 sm:w-6 sm:h-6" />
+              <span className="text-xs sm:text-sm font-semibold">Deposit</span>
             </button>
             
             <button 
@@ -367,14 +363,10 @@ function WalletContent() {
                 setShowSendMoney(!showSendMoney);
                 if (!showSendMoney) setShowWalletAddresses(false);
               }}
-              className="btn-secondary flex flex-col items-center justify-center gap-2 p-4 text-center hover-lift animate-fade-in" 
-              style={{animationDelay: '0.6s'}}
+              className="flex-1 flex flex-col items-center gap-1.5 p-3 sm:p-4 bg-gradient-to-br from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl text-white transition-all hover:scale-105 shadow-lg" 
             >
-              <IoArrowUpOutline className="w-5 h-5 flex-shrink-0 rotate-45" />
-              <div>
-                <p className="text-sm font-semibold">Send Money</p>
-                <p className="text-xs opacity-80">Transfer</p>
-              </div>
+              <IoSwapHorizontalOutline className="w-5 h-5 sm:w-6 sm:h-6" />
+              <span className="text-xs sm:text-sm font-semibold">Transfer</span>
             </button>
             
             <button 
@@ -382,26 +374,18 @@ function WalletContent() {
                 setShowWalletAddresses(!showWalletAddresses);
                 if (!showWalletAddresses) setShowSendMoney(false);
               }}
-              className="btn-secondary flex flex-col items-center justify-center gap-2 p-4 text-center hover-lift animate-fade-in" 
-              style={{animationDelay: '0.7s'}}
+              className="flex-1 flex flex-col items-center gap-1.5 p-3 sm:p-4 bg-gradient-to-br from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 rounded-xl text-white transition-all hover:scale-105 shadow-lg" 
             >
-              <IoArrowDownOutline className="w-5 h-5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold">Receive</p>
-                <p className="text-xs opacity-80">Get address</p>
-              </div>
+              <IoWalletOutline className="w-5 h-5 sm:w-6 sm:h-6" />
+              <span className="text-xs sm:text-sm font-semibold">Receive</span>
             </button>
 
             <button 
               onClick={() => setWithdrawalModalOpen(true)}
-              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white flex flex-col items-center justify-center gap-2 p-4 text-center hover-lift animate-fade-in rounded-lg transition-all duration-300" 
-              style={{animationDelay: '0.8s'}}
+              className="flex-1 flex flex-col items-center gap-1.5 p-3 sm:p-4 bg-gradient-to-br from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 rounded-xl text-white transition-all hover:scale-105 shadow-lg" 
             >
-              <IoArrowUpOutline className="w-5 h-5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-semibold">Withdraw</p>
-                <p className="text-xs opacity-80">To bank</p>
-              </div>
+              <IoArrowUpOutline className="w-5 h-5 sm:w-6 sm:h-6" />
+              <span className="text-xs sm:text-sm font-semibold">Withdraw</span>
             </button>
           </div>
         </div>

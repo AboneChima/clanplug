@@ -140,7 +140,7 @@ function MarketplaceContent() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-24 lg:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-32 lg:pb-8">
         {/* Hero Header */}
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 mb-4">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6">
@@ -185,19 +185,18 @@ function MarketplaceContent() {
                 <button
                   key={game.id}
                   onClick={() => handleGameClick(game.id)}
-                  className="group relative aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden hover:scale-105 transition-transform duration-300 shadow-lg"
+                  className="group hover:scale-105 transition-transform duration-300"
                 >
-                  <img
-                    src={game.image}
-                    alt={game.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                  <div className="absolute inset-0 flex items-end p-2 sm:p-3">
-                    <h3 className="text-white font-bold text-xs sm:text-sm text-center w-full drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                      {game.name}
-                    </h3>
+                  <div className="aspect-[3/4] rounded-xl sm:rounded-2xl overflow-hidden shadow-lg mb-2">
+                    <img
+                      src={game.image}
+                      alt={game.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
+                  <h3 className="text-white font-semibold text-xs sm:text-sm text-center px-1">
+                    {game.name}
+                  </h3>
                 </button>
               ))}
             </div>
@@ -221,19 +220,18 @@ function MarketplaceContent() {
                 <button
                   key={social.id}
                   onClick={() => handleGameClick(social.id)}
-                  className="group relative aspect-square rounded-xl sm:rounded-2xl overflow-hidden hover:scale-105 transition-transform duration-300 shadow-lg"
+                  className="group hover:scale-105 transition-transform duration-300"
                 >
-                  <img
-                    src={social.image}
-                    alt={social.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                  <div className="absolute inset-0 flex items-end p-2 sm:p-3">
-                    <h3 className="text-white font-bold text-xs sm:text-sm text-center w-full drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                      {social.name}
-                    </h3>
+                  <div className="aspect-square rounded-xl sm:rounded-2xl overflow-hidden shadow-lg mb-2">
+                    <img
+                      src={social.image}
+                      alt={social.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
+                  <h3 className="text-white font-semibold text-xs sm:text-sm text-center px-1">
+                    {social.name}
+                  </h3>
                 </button>
               ))}
             </div>

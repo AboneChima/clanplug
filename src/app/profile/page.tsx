@@ -295,7 +295,7 @@ export default function ProfilePage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-24 lg:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-32 lg:pb-8">
         {/* Hero Header - Compact */}
         <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-6 mb-4">
           <div className="max-w-4xl mx-auto px-3 sm:px-4">

@@ -150,7 +150,7 @@ function ListingsContent() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-24 lg:pb-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-32 lg:pb-8">
         {/* Header */}
         <div className="bg-slate-900/50 border-b border-slate-800 mb-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
