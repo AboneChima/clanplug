@@ -30,6 +30,7 @@ import storyRoutes from './routes/story.routes';
 import followRoutes from './routes/follow.routes';
 import manualVerifyRoutes from './routes/manual-verify.routes';
 import kycRoutes from './routes/kyc.routes';
+import escrowRoutes from './routes/escrow.routes';
 
 const app = express();
 
@@ -143,6 +144,7 @@ app.use('/api/stories', storyRoutes);
 app.use('/api/follow', followRoutes);
 app.use('/api/manual-verify', manualVerifyRoutes);
 app.use('/api/kyc', kycRoutes);
+app.use('/api/escrow', escrowRoutes);
 
 // Proxy middleware for frontend - only in development
 if (config.NODE_ENV === 'development' && config.FRONTEND_URL) {
