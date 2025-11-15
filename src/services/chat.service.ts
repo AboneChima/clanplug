@@ -156,7 +156,7 @@ class ChatService {
         },
       },
       orderBy: [
-        { lastMessageAt: { sort: 'desc', nulls: 'last' } },
+        { updatedAt: 'desc' },
         { createdAt: 'desc' }
       ],
       skip: (page - 1) * limit,
