@@ -57,7 +57,9 @@ async function authFetch(endpoint: string, options: RequestInit = {}) {
 export default function FeedPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'forYou' | 'favorites'>('forYou');
+  const [activeTab, setActiveTab] = useState<'forYou' | 'favorites' | 'following'>('forYou');
+  const [followingUsers, setFollowingUsers] = useState<any[]>([]);
+  const [loadingFollowing, setLoadingFollowing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [favoritePosts, setFavoritePosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,8 +76,26 @@ export default function FeedPage() {
       fetchPosts();
     } else if (activeTab === 'favorites') {
       fetchFavoritePosts();
+    } else if (activeTab === 'following') {
+      fetchFollowing();
     }
   }, [activeTab]);
+
+  const fetchFollowing = async () => {
+    try {
+      setLoadingFollowing(true);
+      const response = await authFetch('/api/follow/following');
+      if (response.ok) {
+        const data = await response.json();
+        setFollowingUsers(data.data || data.following || []);
+      }
+    } catch (error) {
+      console.error('Error fetching following:', error);
+      setFollowingUsers([]);
+    } finally {
+      setLoadingFollowing(false);
+    }
+  };
 
   const fetchPosts = async () => {
     try {
@@ -155,13 +175,38 @@ export default function FeedPage() {
 
     try {
       const token = localStorage.getItem('accessToken');
+      let imageUrls: string[] = [];
+
+      // Upload image if selected
+      if (newPostImage) {
+        const formData = new FormData();
+        formData.append('file', newPostImage);
+
+        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          if (uploadData.success && uploadData.data?.url) {
+            imageUrls.push(uploadData.data.url);
+          }
+        } else {
+          showToast('Failed to upload image', 'error');
+          return;
+        }
+      }
       
       // Create post data
       const postData = {
         title: newPostContent.substring(0, 100), // Use first 100 chars as title
         description: newPostContent,
         type: 'SOCIAL_POST',
-        images: [],
+        images: imageUrls,
         videos: []
       };
 
@@ -674,19 +719,95 @@ export default function FeedPage() {
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"></div>
                 )}
               </button>
-              <Link
-                href="/chat"
-                className="pb-3 px-2 text-sm sm:text-base font-semibold transition-colors relative text-gray-400 hover:text-gray-300"
+              <button
+                onClick={() => setActiveTab('following')}
+                className={`pb-3 px-2 text-sm sm:text-base font-semibold transition-colors relative ${
+                  activeTab === 'following' ? 'text-white' : 'text-gray-400 hover:text-gray-300'
+                }`}
               >
-                Messages
-              </Link>
+                Following
+                {activeTab === 'following' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"></div>
+                )}
+              </button>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 py-6">
-          {activeTab === 'favorites' ? (
+          {activeTab === 'following' ? (
+            /* Following View */
+            <div className="w-full max-w-3xl mx-auto space-y-3">
+              {loadingFollowing ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="text-gray-400 mt-4">Loading following...</p>
+                </div>
+              ) : followingUsers.length === 0 ? (
+                <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
+                  <IoPeopleOutline className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400">Not following anyone yet</p>
+                  <p className="text-gray-500 text-sm mt-2">Start following users to see them here</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {followingUsers.map((followedUser: any) => (
+                    <div key={followedUser.id} className="bg-gray-800/50 rounded-lg border border-gray-700 p-4">
+                      <div className="flex items-center gap-3">
+                        <Link href={`/user/${followedUser.id}`} className="flex-shrink-0">
+                          {followedUser.avatar ? (
+                            <Image 
+                              src={followedUser.avatar} 
+                              alt={followedUser.username} 
+                              width={48} 
+                              height={48} 
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                              <span className="text-white font-semibold">
+                                {followedUser.firstName?.[0]}{followedUser.lastName?.[0]}
+                              </span>
+                            </div>
+                          )}
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/user/${followedUser.id}`} className="hover:opacity-80">
+                            <div className="flex items-center gap-1">
+                              <p className="text-white font-medium truncate">
+                                {followedUser.firstName} {followedUser.lastName}
+                              </p>
+                              {followedUser.isKYCVerified && (
+                                <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </div>
+                            <p className="text-gray-400 text-sm truncate">@{followedUser.username}</p>
+                          </Link>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleFollow(followedUser.id, true)}
+                            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-gray-700 hover:bg-gray-600 text-white"
+                          >
+                            Following
+                          </button>
+                          <button
+                            onClick={() => handleStartChat(followedUser.id, followedUser)}
+                            className="p-1.5 hover:bg-gray-700 rounded-md transition-colors"
+                          >
+                            <IoMailOutline className="w-4 h-4 text-gray-400" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : activeTab === 'favorites' ? (
             /* Favorites View */
             <div className="w-full max-w-3xl mx-auto space-y-3">
               {loading ? (
