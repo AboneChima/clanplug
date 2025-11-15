@@ -24,6 +24,7 @@ import notificationRoutes from './routes/notification.routes';
 import cryptoRoutes from './routes/crypto.routes';
 import testRoutes from './routes/test.routes';
 import escrowRoutes from './routes/escrow.routes';
+import adminKycRoutes from './routes/admin-kyc.routes';
 
 const app = express();
 
@@ -140,6 +141,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/crypto', cryptoRoutes);
 app.use('/api/test', testRoutes);
 app.use('/api/escrow', escrowRoutes);
+app.use('/api/admin-temp', adminKycRoutes); // TEMPORARY - DELETE AFTER USE
 
 // Proxy middleware for frontend - only in development
 if (config.NODE_ENV === 'development') {
