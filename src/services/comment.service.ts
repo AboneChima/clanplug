@@ -82,6 +82,38 @@ export const commentService = {
         data: { commentCount: { increment: 1 } },
       });
 
+      // Send notification to post owner (if not commenting on own post)
+      if (post.userId !== userId) {
+        try {
+          const commenter = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { firstName: true, lastName: true, username: true }
+          });
+
+          const commenterName = commenter?.firstName && commenter?.lastName
+            ? `${commenter.firstName} ${commenter.lastName}`
+            : commenter?.username || 'Someone';
+
+          await prisma.notification.create({
+            data: {
+              userId: post.userId,
+              type: 'POST',
+              title: 'New Comment',
+              message: `${commenterName} commented on your post`,
+              data: {
+                postId: postId,
+                commentId: comment.id,
+                commenterId: userId,
+                commenterName: commenterName,
+                commentContent: payload.content.substring(0, 100)
+              }
+            }
+          });
+        } catch (notifError) {
+          console.error('Failed to send comment notification:', notifError);
+        }
+      }
+
       return { success: true, comment: comment as CommentWithAuthor, message: 'Comment created successfully' };
     } catch (error: any) {
       return { success: false, message: 'Failed to create comment', error: error.message || 'CREATE_COMMENT_ERROR' };
