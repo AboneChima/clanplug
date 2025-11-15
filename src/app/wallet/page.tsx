@@ -357,16 +357,70 @@ function WalletContent() {
           </div>
         </div>
 
-        {/* Send Money Section - Collapsible */}
+        {/* Transactions Section - Moved Up */}
+        {!showSendMoney && !showWalletAddresses && (
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-200/50 shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center">
+                  <IoSwapHorizontalOutline className="w-4 h-4 text-blue-600" />
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900">Recent</h3>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              {transactions.length > 0 ? (
+                transactions.slice(0, 3).map((tx, index) => (
+                  <div key={tx.id} className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-6 h-6 rounded-md flex items-center justify-center ${
+                          tx.type === 'DEPOSIT' ? 'bg-green-100 text-green-600' : 
+                          tx.type === 'WITHDRAWAL' ? 'bg-red-100 text-red-600' : 
+                          'bg-blue-100 text-blue-600'
+                        }`}>
+                          {tx.type === 'DEPOSIT' ? <IoArrowDownOutline className="w-3 h-3" /> : 
+                           tx.type === 'WITHDRAWAL' ? <IoArrowUpOutline className="w-3 h-3" /> : 
+                           <IoSwapHorizontalOutline className="w-3 h-3" />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-gray-900 truncate">{tx.type}</p>
+                          <p className="text-[10px] text-gray-500">{formatDate(tx.createdAt)}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-xs font-semibold ${
+                          tx.type === 'DEPOSIT' ? 'text-green-600' : 
+                          tx.type === 'WITHDRAWAL' ? 'text-red-600' : 'text-gray-900'
+                        }`}>
+                          {tx.type === 'DEPOSIT' ? '+' : tx.type === 'WITHDRAWAL' ? '-' : ''}
+                          {tx.currency} {tx.amount}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <IoSwapHorizontalOutline className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-xs text-gray-500">No transactions yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Send Money Section - Compact */}
         {showSendMoney && (
-          <div className="bg-gradient-to-br from-white/80 to-gray-50/80 backdrop-blur-sm rounded-2xl lg:rounded-3xl p-6 lg:p-8 border border-gray-200/50 shadow-xl hover:shadow-2xl transition-all duration-500 animate-fade-in" style={{animationDelay: '0.15s'}}>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 lg:mb-8">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-                <IoArrowUpOutline className="w-5 h-5 lg:w-6 lg:h-6 text-white rotate-45" />
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-200/50 shadow-lg animate-fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                <IoArrowUpOutline className="w-4 h-4 text-white rotate-45" />
               </div>
               <div>
-                <h2 className="text-xl lg:text-2xl font-bold text-gray-900">Send Money</h2>
-                <p className="text-gray-600 font-medium text-sm lg:text-base">Transfer money to other users instantly</p>
+                <h2 className="text-sm font-bold text-gray-900">Send Money</h2>
+                <p className="text-xs text-gray-600">Transfer instantly</p>
               </div>
             </div>
             
@@ -428,9 +482,7 @@ function WalletContent() {
             </div>
           </div>
 
-          {/* Transactions Section - Compact */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-200/50 shadow-lg">
-            <div className="flex items-center justify-between mb-3">
+
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center">
                   <IoSwapHorizontalOutline className="w-4 h-4 text-blue-600" />

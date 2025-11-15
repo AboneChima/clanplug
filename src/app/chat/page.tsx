@@ -81,60 +81,63 @@ export default function ChatPage() {
     }
   }, [accessToken]);
 
-  // Handle chatId from URL query (when coming from message button)
+  // Handle chatId from URL query (when coming from message button) - IMPROVED LOGIC
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const chatId = params.get('chatId');
     
-    if (chatId) {
-      // Check if chat exists in loaded chats
-      const chat = chats.find(c => c.id === chatId);
-      
-      if (chat && (!selected || selected.id !== chatId)) {
-        setSelected(chat);
-        loadMessages(chatId);
-        // Clear URL query and localStorage after selecting
+    if (!chatId) return;
+    
+    // Try to get pending user info first
+    const pendingUser = localStorage.getItem('pendingChatUser');
+    
+    if (pendingUser) {
+      try {
+        const userData = JSON.parse(pendingUser);
+        // Create a temporary chat object immediately
+        const tempChat: Chat = {
+          id: chatId,
+          type: 'DIRECT',
+          name: `${userData.firstName} ${userData.lastName}`,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          participants: [{
+            id: `temp-${chatId}`,
+            userId: userData.id,
+            role: 'MEMBER',
+            joinedAt: new Date().toISOString(),
+            isActive: true,
+            user: userData
+          }]
+        };
+        
+        // Set it immediately so user sees the chat
+        if (!selected || selected.id !== chatId) {
+          setSelected(tempChat);
+          loadMessages(chatId);
+        }
+        
+        // Reload chats in background to get real data
+        loadChats();
+        
+        // Clear URL query and localStorage
         window.history.replaceState({}, '', '/chat');
         localStorage.removeItem('pendingChatId');
         localStorage.removeItem('pendingChatUser');
-      } else if (!chat && chats.length > 0) {
-        // Chat not found in list, try to load it directly
-        const pendingUser = localStorage.getItem('pendingChatUser');
-        if (pendingUser) {
-          try {
-            const userData = JSON.parse(pendingUser);
-            // Create a temporary chat object
-            const tempChat: Chat = {
-              id: chatId,
-              type: 'DIRECT',
-              name: `${userData.firstName} ${userData.lastName}`,
-              isActive: true,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              participants: [{
-                id: chatId,
-                userId: userData.id,
-                role: 'MEMBER',
-                joinedAt: new Date().toISOString(),
-                isActive: true,
-                user: userData
-              }]
-            };
-            setSelected(tempChat);
-            loadMessages(chatId);
-            // Reload chats to get the real data
-            loadChats();
-            // Clear URL query and localStorage
-            window.history.replaceState({}, '', '/chat');
-            localStorage.removeItem('pendingChatId');
-            localStorage.removeItem('pendingChatUser');
-          } catch (err) {
-            console.error('Error parsing pending user:', err);
-          }
-        }
+      } catch (err) {
+        console.error('Error parsing pending user:', err);
+      }
+    } else if (chats.length > 0) {
+      // No pending user, check if chat exists in loaded chats
+      const chat = chats.find(c => c.id === chatId);
+      if (chat && (!selected || selected.id !== chatId)) {
+        setSelected(chat);
+        loadMessages(chatId);
+        window.history.replaceState({}, '', '/chat');
       }
     }
-  }, [chats]);
+  }, [chats, accessToken]);
 
   useEffect(() => {
     if (!selected) return;
