@@ -34,6 +34,20 @@ export default function ChatPage() {
     }
   }, [selected?.id, accessToken]);
 
+  // Handle opening chat from URL (when clicking Message button)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const chatId = params.get('chatId');
+    
+    if (chatId && accessToken && chats.length > 0) {
+      const chat = chats.find(c => c.id === chatId);
+      if (chat) {
+        setSelected(chat);
+        window.history.replaceState({}, '', '/chat');
+      }
+    }
+  }, [chats, accessToken]);
+
   const loadChats = async () => {
     if (!accessToken) return;
     try {

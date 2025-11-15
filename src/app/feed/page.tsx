@@ -814,9 +814,13 @@ export default function FeedPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleFollow(followedUser.id, true)}
-                            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-gray-700 hover:bg-gray-600 text-white"
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                              followedUser.isFriend 
+                                ? 'bg-green-600 hover:bg-green-700 text-white' 
+                                : 'bg-gray-700 hover:bg-gray-600 text-white'
+                            }`}
                           >
-                            Following
+                            {followedUser.isFriend ? 'Friends' : 'Following'}
                           </button>
                           <button
                             onClick={() => handleStartChat(followedUser.id, followedUser)}
