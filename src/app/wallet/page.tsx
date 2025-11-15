@@ -428,36 +428,23 @@ function WalletContent() {
             </div>
           </div>
 
-          {/* Transactions Section */}
-          <div className="card-modern p-4 sm:p-6 animate-fade-in hover:shadow-brand-lg transition-all duration-300" style={{animationDelay: '0.3s'}}>
-            <div className="flex items-center justify-between mb-4 sm:mb-6">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-info/20 to-info/30 border border-info/30 flex items-center justify-center">
-                  <IoSwapHorizontalOutline className="w-4 h-4 sm:w-5 sm:h-5 text-info" />
+          {/* Transactions Section - Compact */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-200/50 shadow-lg">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center">
+                  <IoSwapHorizontalOutline className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-heading">Recent Transactions</h3>
-                  <p className="text-xs sm:text-sm text-body">Your latest wallet activity</p>
+                  <h3 className="text-sm font-semibold text-gray-900">Recent</h3>
                 </div>
               </div>
-              <button 
-                onClick={load}
-                disabled={loading}
-                className="btn-secondary flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm hover-lift"
-              >
-                {loading ? (
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-muted/30 border-t-muted rounded-full animate-spin"></div>
-                ) : (
-                  <IoRefreshOutline className="w-3 h-3 sm:w-4 sm:h-4" />
-                )}
-                <span className="hidden sm:inline">Refresh</span>
-              </button>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2">
               {transactions.length > 0 ? (
-                transactions.slice(0, 5).map((tx, index) => (
-                  <div key={tx.id} className="card-gradient p-3 sm:p-4 hover:shadow-md transition-all duration-200 animate-fade-in" style={{animationDelay: `${0.4 + index * 0.05}s`}}>
+                transactions.slice(0, 3).map((tx, index) => (
+                  <div key={tx.id} className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 sm:gap-3">
                         <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center ${

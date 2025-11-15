@@ -505,11 +505,11 @@ export default function ProfilePage() {
 
           {/* Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">
-            {/* Recent Posts */}
+            {/* Recent Posts - Compact */}
             <div className="lg:col-span-2">
-              <div className="bg-slate-800/80 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-700 shadow-xl">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold text-white">Your Posts</h2>
+              <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-slate-700 shadow-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm sm:text-base font-semibold text-white">Your Posts</h2>
                 </div>
                 
                 {loading ? (
@@ -531,23 +531,23 @@ export default function ProfilePage() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {recentPosts.map((post) => (
-                      <div key={post.id} className="p-4 bg-gray-700/30 rounded-xl hover:bg-gray-700/50 transition-all group">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            {post.title && <h3 className="text-white font-semibold mb-2 group-hover:text-blue-400 transition-colors">{post.title}</h3>}
-                            <p className="text-gray-300 text-sm line-clamp-2 mb-3">{post.description}</p>
-                            <div className="flex items-center gap-6 text-sm text-gray-400">
-                              <span className="flex items-center gap-1.5">
-                                <IoHeartOutline className="w-4 h-4" />
+                      <div key={post.id} className="p-2 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all group">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            {post.title && <h3 className="text-white text-xs font-semibold mb-1 group-hover:text-blue-400 transition-colors truncate">{post.title}</h3>}
+                            <p className="text-gray-300 text-xs line-clamp-1 mb-1">{post.description}</p>
+                            <div className="flex items-center gap-3 text-xs text-gray-400">
+                              <span className="flex items-center gap-1">
+                                <IoHeartOutline className="w-3 h-3" />
                                 {post._count.likes}
                               </span>
-                              <span className="flex items-center gap-1.5">
-                                <IoChatbubbleOutline className="w-4 h-4" />
+                              <span className="flex items-center gap-1">
+                                <IoChatbubbleOutline className="w-3 h-3" />
                                 {post._count.comments}
                               </span>
-                              <span className="ml-auto text-xs">{new Date(post.createdAt).toLocaleDateString()}</span>
+                              <span className="ml-auto text-[10px]">{new Date(post.createdAt).toLocaleDateString()}</span>
                             </div>
                           </div>
                           <button
@@ -574,9 +574,9 @@ export default function ProfilePage() {
                                 }
                               }
                             }}
-                            className="p-2 hover:bg-red-500/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                            className="p-1 hover:bg-red-500/20 rounded transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
                           >
-                            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>

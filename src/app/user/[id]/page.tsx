@@ -236,12 +236,25 @@ export default function UserProfilePage() {
 
       if (response.ok) {
         const data = await response.json();
-        const chatId = data.data?.id || data.id;
+        const chatData = data.data || data;
+        const chatId = chatData?.id;
         
-        // Wait a moment for the chat to be created
-        setTimeout(() => {
+        if (chatId) {
+          // Store chat info in localStorage for immediate access
+          localStorage.setItem('pendingChatId', chatId);
+          localStorage.setItem('pendingChatUser', JSON.stringify({
+            id: profile.id,
+            username: profile.username,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            avatar: profile.avatar
+          }));
+          
+          // Navigate to chat
           router.push(`/chat?chatId=${chatId}`);
-        }, 500);
+        } else {
+          showToast('Failed to create chat', 'error');
+        }
       } else {
         const errorData = await response.json();
         showToast(errorData.message || 'Failed to open chat', 'error');
