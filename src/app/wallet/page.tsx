@@ -575,9 +575,12 @@ function WalletContent() {
               )}
             </div>
           </div>
-        </div>
+        )}
 
-
+        {/* Wallet Addresses Section */}
+        {showWalletAddresses && (
+          <WalletAddresses />
+        )}
       </div>
 
       {/* Modals */}
