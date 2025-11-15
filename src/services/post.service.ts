@@ -387,6 +387,36 @@ export const postService = {
           data: { userId, postId },
         });
         isLiked = true;
+
+        // Send notification to post owner (if not liking own post)
+        if (post.userId !== userId) {
+          try {
+            const liker = await prisma.user.findUnique({
+              where: { id: userId },
+              select: { firstName: true, lastName: true, username: true }
+            });
+
+            const likerName = liker?.firstName && liker?.lastName
+              ? `${liker.firstName} ${liker.lastName}`
+              : liker?.username || 'Someone';
+
+            await prisma.notification.create({
+              data: {
+                userId: post.userId,
+                type: 'POST',
+                title: 'New Like',
+                message: `${likerName} liked your post`,
+                data: {
+                  postId: postId,
+                  likerId: userId,
+                  likerName: likerName
+                }
+              }
+            });
+          } catch (notifError) {
+            console.error('Failed to send like notification:', notifError);
+          }
+        }
       }
 
       // Get updated likes count
