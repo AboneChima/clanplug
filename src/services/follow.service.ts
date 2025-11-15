@@ -170,9 +170,27 @@ export class FollowService {
         }),
       ]);
 
+      // Check which users are friends (mutual following)
+      const followingWithFriendStatus = await Promise.all(
+        following.map(async (f) => {
+          const isFriend = await prisma.follow.findUnique({
+            where: {
+              followerId_followingId: {
+                followerId: f.followingId,
+                followingId: userId,
+              },
+            },
+          });
+          return {
+            ...f.following,
+            isFriend: !!isFriend,
+          };
+        })
+      );
+
       return {
         success: true,
-        data: following.map(f => f.following),
+        data: followingWithFriendStatus,
         pagination: {
           page,
           limit,
@@ -202,6 +220,35 @@ export class FollowService {
     } catch (error) {
       console.error('Error checking follow status:', error);
       return { success: false, isFollowing: false };
+    }
+  }
+
+  // Check if two users are friends (mutual following)
+  async areFriends(userId1: string, userId2: string) {
+    try {
+      const [follow1, follow2] = await Promise.all([
+        prisma.follow.findUnique({
+          where: {
+            followerId_followingId: {
+              followerId: userId1,
+              followingId: userId2,
+            },
+          },
+        }),
+        prisma.follow.findUnique({
+          where: {
+            followerId_followingId: {
+              followerId: userId2,
+              followingId: userId1,
+            },
+          },
+        }),
+      ]);
+
+      return { success: true, areFriends: !!(follow1 && follow2) };
+    } catch (error) {
+      console.error('Error checking friend status:', error);
+      return { success: false, areFriends: false };
     }
   }
 
