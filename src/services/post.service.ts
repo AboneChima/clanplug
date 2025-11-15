@@ -89,6 +89,7 @@ export const postService = {
               username: true,
               firstName: true,
               lastName: true,
+              isKYCVerified: true,
             },
           },
           _count: {
@@ -184,6 +185,7 @@ export const postService = {
               username: true,
               firstName: true,
               lastName: true,
+              isKYCVerified: true,
             },
           },
           _count: {
@@ -233,6 +235,7 @@ export const postService = {
               username: true,
               firstName: true,
               lastName: true,
+              isKYCVerified: true,
             },
           },
           _count: {
@@ -313,6 +316,7 @@ export const postService = {
               username: true,
               firstName: true,
               lastName: true,
+              isKYCVerified: true,
             },
           },
           _count: {
@@ -541,6 +545,7 @@ export const postService = {
                 firstName: true,
                 lastName: true,
                 avatar: true,
+                isKYCVerified: true,
               },
             },
             _count: {
@@ -615,6 +620,7 @@ export const postService = {
                 firstName: true,
                 lastName: true,
                 avatar: true,
+                isKYCVerified: true,
               },
             },
             _count: {
@@ -759,6 +765,7 @@ export const postService = {
                     firstName: true,
                     lastName: true,
                     avatar: true,
+                    isKYCVerified: true,
                   },
                 },
                 _count: {
@@ -853,6 +860,7 @@ export const postService = {
                 firstName: true,
                 lastName: true,
                 avatar: true,
+                isKYCVerified: true,
               },
             },
             _count: {
@@ -902,10 +910,25 @@ export const postService = {
         }
       }
 
+      // Get follow status for all users in the feed
+      const userIds = [...new Set(mixedPosts.map(post => post.userId))];
+      const followStatuses = await prisma.follow.findMany({
+        where: {
+          followerId: userId,
+          followingId: { in: userIds },
+        },
+        select: { followingId: true },
+      });
+      const followingIds = new Set(followStatuses.map(f => f.followingId));
+
       const postsWithLikeStatus = mixedPosts.map(post => ({
         ...post,
         isLiked: post.likes.length > 0,
         isBookmarked: bookmarkedPostIds.includes(post.id),
+        user: {
+          ...post.user,
+          isFollowing: followingIds.has(post.userId),
+        },
         likes: undefined,
       }));
 
