@@ -306,6 +306,8 @@ class ChatService {
     page = 1,
     limit = 50
   ): Promise<PaginatedMessages> {
+    console.log('📥 Getting messages for chat:', chatId, 'user:', userId);
+    
     // Verify user is participant
     const participant = await prisma.chatParticipant.findFirst({
       where: {
@@ -316,8 +318,11 @@ class ChatService {
     });
 
     if (!participant) {
+      console.log('❌ User is not a participant in this chat');
       throw new Error('User is not a participant in this chat');
     }
+
+    console.log('✅ User is participant, fetching messages...');
 
     const [messages, total] = await Promise.all([
       prisma.chatMessage.findMany({
@@ -358,6 +363,8 @@ class ChatService {
         },
       }),
     ]);
+
+    console.log(`📨 Found ${messages.length} messages (total: ${total})`);
 
     const totalPages = Math.ceil(total / limit);
 
@@ -406,6 +413,8 @@ class ChatService {
       }
     }
 
+    console.log('💾 Creating message in database:', { chatId, userId, content: content.substring(0, 50) });
+    
     const message = await prisma.chatMessage.create({
       data: {
         chatId,
@@ -439,6 +448,8 @@ class ChatService {
       },
     });
 
+    console.log('✅ Message created successfully:', message.id);
+
     // Update chat's lastMessageAt and updatedAt
     await prisma.chat.update({
       where: { id: chatId },
@@ -447,6 +458,8 @@ class ChatService {
         updatedAt: message.createdAt
       },
     });
+
+    console.log('✅ Chat updated with new message timestamp');
 
     // Send notifications to other participants
     const otherParticipants = await prisma.chatParticipant.findMany({
