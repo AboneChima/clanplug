@@ -64,7 +64,7 @@ export const verificationService = {
       throw new Error('NGN wallet not found');
     }
 
-    if (wallet.balance < VERIFICATION_COST) {
+    if (wallet.balance.toNumber() < VERIFICATION_COST) {
       throw new Error('Insufficient balance. Please deposit funds to your NGN wallet.');
     }
 
@@ -79,7 +79,7 @@ export const verificationService = {
       data: {
         userId,
         walletId: wallet.id,
-        type: 'DEBIT',
+        type: 'DEPOSIT',
         status: 'COMPLETED',
         amount: VERIFICATION_COST,
         fee: 0,

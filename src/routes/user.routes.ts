@@ -13,7 +13,7 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Validation middleware
-const handleValidationErrors = (req: Request, res: Response, next: NextFunction): void => {
+const handleValidationErrors = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
@@ -35,7 +35,8 @@ router.get('/profile', authenticate, asyncHandler(async (req: Request, res: Resp
   });
   
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' });
+    res.status(404).json({ success: false, message: 'User not found' });
+    return;
   }
   
   // Check verification status
