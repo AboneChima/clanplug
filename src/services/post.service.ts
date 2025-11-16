@@ -850,7 +850,7 @@ export const postService = {
         prisma.post.findMany({
           where: {
             status: PostStatus.ACTIVE,
-            type: 'SOCIAL_POST',
+            type: { in: ['SOCIAL_POST', 'MARKETPLACE_LISTING'] },
           },
           include: {
             user: {
@@ -881,7 +881,7 @@ export const postService = {
         prisma.post.count({
           where: {
             status: PostStatus.ACTIVE,
-            type: 'SOCIAL_POST',
+            type: { in: ['SOCIAL_POST', 'MARKETPLACE_LISTING'] },
           },
         }),
       ]);
