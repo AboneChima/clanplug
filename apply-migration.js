@@ -12,13 +12,15 @@ async function applyMigration() {
     await client.connect();
     console.log('✅ Connected to database');
 
-    // Check existing tables
-    const tables = await client.query(`
-      SELECT table_name FROM information_schema.tables 
-      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-      ORDER BY table_name;
+    // Check PostType enum values
+    const enumValues = await client.query(`
+      SELECT e.enumlabel 
+      FROM pg_type t 
+      JOIN pg_enum e ON t.oid = e.enumtypid  
+      WHERE t.typname = 'PostType'
+      ORDER BY e.enumlabel;
     `);
-    console.log('📋 Existing tables:', tables.rows.map(r => r.table_name));
+    console.log('📋 Current PostType enum values:', enumValues.rows.map(r => r.enumlabel));
 
     // Add listingId column
     await client.query(`

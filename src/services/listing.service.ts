@@ -1,5 +1,5 @@
 import { prisma } from '../config/database';
-import { ListingCategory, ListingType, ListingStatus, Currency } from '@prisma/client';
+import { ListingCategory, ListingType, ListingStatus, Currency, PostType } from '@prisma/client';
 
 export interface CreateListingRequest {
   sellerId: string;
@@ -94,7 +94,7 @@ class ListingService {
             userId: data.sellerId,
             title: `${data.title} - Marketplace Listing`,
             description: postDescription,
-            type: 'MARKETPLACE_LISTING',
+            type: PostType.MARKETPLACE_LISTING,
             images: data.images.slice(0, 1), // Use first image only
             videos: [],
             listingId: listing.id,
