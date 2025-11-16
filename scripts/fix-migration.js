@@ -27,7 +27,7 @@ async function fixMigration() {
       console.log('🔄 Cleaning up database for fresh migration...');
       
       // Drop all custom types that might exist (one at a time)
-      const types = ['UserRole', 'KYCStatus', 'TransactionType', 'TransactionStatus', 'PostType', 'PostStatus', 'Currency', 'EscrowStatus', 'MessageType', 'StoryType'];
+      const types = ['UserRole', 'UserStatus', 'KYCStatus', 'TransactionType', 'TransactionStatus', 'PostType', 'PostStatus', 'Currency', 'EscrowStatus', 'MessageType', 'StoryType'];
       for (const type of types) {
         try {
           await prisma.$executeRawUnsafe(`DROP TYPE IF EXISTS "${type}" CASCADE`);
