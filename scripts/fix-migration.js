@@ -23,39 +23,26 @@ async function fixMigration() {
     console.log(`User table exists: ${hasUserTable}`);
     
     if (!hasUserTable) {
-      console.log('⚠️ User table missing - database might be empty or corrupted');
-      console.log('🔄 Cleaning up database for fresh migration...');
+      console.log('⚠️ User table missing - checking for lowercase "users" table...');
       
-      // Get all custom types and drop them
-      const existingTypes = await prisma.$queryRaw`
-        SELECT typname FROM pg_type 
-        WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
-        AND typtype = 'e'
+      // Check if lowercase "users" table exists
+      const usersTableExists = await prisma.$queryRaw`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'users'
+        ) as exists
       `;
       
-      console.log(`Found ${existingTypes.length} custom types to drop`);
-      for (const typeRow of existingTypes) {
-        try {
-          await prisma.$executeRawUnsafe(`DROP TYPE IF EXISTS "${typeRow.typname}" CASCADE`);
-        } catch (e) {
-          console.log(`Could not drop ${typeRow.typname}:`, e.message);
-        }
+      if (usersTableExists[0]?.exists) {
+        console.log('✅ Found "users" table (lowercase) - database has data!');
+        console.log('⚠️ Database uses lowercase table names, Prisma expects capital case');
+        console.log('🛑 STOPPING - Manual intervention needed to preserve data');
+        console.log('📋 Your data is safe! Contact support or check Render dashboard');
+        process.exit(0); // Exit successfully to not block deployment
+      } else {
+        console.log('⚠️ No tables found - database is truly empty');
+        console.log('🔄 Will let migrations run fresh');
       }
-      console.log('✅ Dropped all existing types');
-      
-      // Drop the corrupted "users" table if it exists
-      try {
-        await prisma.$executeRaw`DROP TABLE IF EXISTS "users" CASCADE`;
-        console.log('✅ Dropped corrupted "users" table');
-      } catch (e) {
-        console.log('No users table to drop');
-      }
-      
-      // Clear all migration records to force fresh migration
-      await prisma.$executeRaw`
-        TRUNCATE TABLE "_prisma_migrations"
-      `;
-      console.log('✅ Cleared migration history - will run all migrations fresh');
     } else {
       // Check for failed verification badge migrations
       const failedMigrations = await prisma.$queryRaw`
