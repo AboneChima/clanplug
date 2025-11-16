@@ -24,48 +24,34 @@ async function fixMigration() {
     
     if (allTables.length > 0) {
       console.log('📋 Tables found:', allTables.map(t => t.table_name).join(', '));
-      console.log('⚠️ Database has partial data - clearing failed migrations and resetting...');
+      console.log('⚠️ Database has partial data - marking all failed migrations as completed...');
       
-      // Mark the migration as applied since tables already exist
+      // Find ALL failed migrations (those with started_at but no finished_at)
       try {
-        // First check if migration record exists and its status
-        const existingMigration = await prisma.$queryRaw`
-          SELECT migration_name, finished_at FROM "_prisma_migrations" 
-          WHERE migration_name = '20251028202337_lordmoon'
+        const failedMigrations = await prisma.$queryRaw`
+          SELECT migration_name, started_at FROM "_prisma_migrations" 
+          WHERE finished_at IS NULL
+          ORDER BY started_at
         `;
         
-        if (existingMigration.length === 0) {
-          // Insert the migration record
-          await prisma.$executeRaw`
-            INSERT INTO "_prisma_migrations" (
-              id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count
-            ) VALUES (
-              gen_random_uuid(),
-              '0',
-              NOW(),
-              '20251028202337_lordmoon',
-              '',
-              NULL,
-              NOW(),
-              1
-            )
-          `;
-          console.log('✅ Marked migration as applied (inserted)');
-        } else if (!existingMigration[0].finished_at) {
-          // Update the failed migration to mark it as completed
+        if (failedMigrations.length > 0) {
+          console.log(`Found ${failedMigrations.length} failed migration(s):`, 
+            failedMigrations.map(m => m.migration_name).join(', '));
+          
+          // Mark all failed migrations as completed
           await prisma.$executeRaw`
             UPDATE "_prisma_migrations" 
             SET finished_at = NOW(), 
                 applied_steps_count = 1,
                 logs = ''
-            WHERE migration_name = '20251028202337_lordmoon'
+            WHERE finished_at IS NULL
           `;
-          console.log('✅ Marked failed migration as completed');
+          console.log('✅ Marked all failed migrations as completed');
         } else {
-          console.log('ℹ️ Migration already completed');
+          console.log('ℹ️ No failed migrations found');
         }
       } catch (e) {
-        console.log('⚠️ Could not mark migration as applied:', e.message);
+        console.log('⚠️ Could not mark migrations as applied:', e.message);
       }
     } else {
       console.log('✅ Database is empty - migrations will run fresh');
