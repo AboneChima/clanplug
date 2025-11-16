@@ -26,16 +26,22 @@ async function fixMigration() {
       console.log('⚠️ User table missing - database might be empty or corrupted');
       console.log('🔄 Cleaning up database for fresh migration...');
       
-      // Drop all custom types that might exist (one at a time)
-      const types = ['UserRole', 'UserStatus', 'KYCStatus', 'TransactionType', 'TransactionStatus', 'PostType', 'PostStatus', 'Currency', 'EscrowStatus', 'MessageType', 'StoryType'];
-      for (const type of types) {
+      // Get all custom types and drop them
+      const existingTypes = await prisma.$queryRaw`
+        SELECT typname FROM pg_type 
+        WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+        AND typtype = 'e'
+      `;
+      
+      console.log(`Found ${existingTypes.length} custom types to drop`);
+      for (const typeRow of existingTypes) {
         try {
-          await prisma.$executeRawUnsafe(`DROP TYPE IF EXISTS "${type}" CASCADE`);
+          await prisma.$executeRawUnsafe(`DROP TYPE IF EXISTS "${typeRow.typname}" CASCADE`);
         } catch (e) {
-          // Ignore errors, type might not exist
+          console.log(`Could not drop ${typeRow.typname}:`, e.message);
         }
       }
-      console.log('✅ Dropped existing types');
+      console.log('✅ Dropped all existing types');
       
       // Clear all migration records to force fresh migration
       await prisma.$executeRaw`
