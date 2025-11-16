@@ -43,6 +43,14 @@ async function fixMigration() {
       }
       console.log('✅ Dropped all existing types');
       
+      // Drop the corrupted "users" table if it exists
+      try {
+        await prisma.$executeRaw`DROP TABLE IF EXISTS "users" CASCADE`;
+        console.log('✅ Dropped corrupted "users" table');
+      } catch (e) {
+        console.log('No users table to drop');
+      }
+      
       // Clear all migration records to force fresh migration
       await prisma.$executeRaw`
         TRUNCATE TABLE "_prisma_migrations"
