@@ -4,25 +4,7 @@ import { asyncHandler } from '../middleware/errorHandler';
 import { userService } from '../services/user.service';
 import multer = require('multer');
 import { body, param, query, validationResult } from 'express-validator';
-
-type Profile = {
-  id: string;
-  name: string;
-  username: string;
-  email: string;
-  notifications: { email: boolean; push: boolean };
-  theme: 'light' | 'dark';
-};
-
-const profiles = new Map<string, Profile>();
-const getDefaultProfile = (userId: string): Profile => ({
-  id: userId,
-  name: 'New User',
-  username: `user_${userId}`,
-  email: `user_${userId}@example.com`,
-  notifications: { email: true, push: false },
-  theme: 'light',
-});
+import { prisma } from '../config/database';
 
 const router = Router();
 
