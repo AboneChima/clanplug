@@ -151,7 +151,7 @@ function ChatContent() {
 
   return (
     <AppShell>
-      <div className="fixed inset-0 top-16 bottom-20 lg:static lg:inset-auto lg:bottom-auto lg:h-[calc(100vh-10rem)] -m-4 sm:-m-6 lg:m-0">
+      <div className="fixed inset-0 top-16 bottom-[84px] lg:static lg:inset-auto lg:bottom-auto lg:h-[calc(100vh-10rem)] -m-4 sm:-m-6 lg:m-0">
         <div className="h-full flex lg:max-w-7xl lg:mx-auto lg:gap-4 lg:p-4">
           
           {/* Chat List */}
@@ -191,7 +191,9 @@ function ChatContent() {
                           <h3 className="font-semibold text-white truncate text-sm sm:text-[15px]">{getDisplayName(chat)}</h3>
                           <span className="text-[10px] sm:text-[11px] text-gray-400 flex-shrink-0 ml-2">{formatTime(chat.updatedAt)}</span>
                         </div>
-                        <p className="text-xs text-gray-400 truncate">Tap to open</p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {(chat as any).lastMessage?.content || 'Start a conversation'}
+                        </p>
                       </div>
                     </div>
                   </button>
