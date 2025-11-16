@@ -63,34 +63,35 @@ async function fixMigration() {
     }
     
     // Always check for and clean up verification badge issues
-    const failedMigrations = await prisma.$queryRaw`
-      SELECT migration_name, finished_at 
-      FROM "_prisma_migrations" 
-      WHERE migration_name LIKE '%verification_badge%'
-    `;
-    
-    if (failedMigrations && failedMigrations.length > 0) {
-      console.log(`❌ Found ${failedMigrations.length} verification badge migration(s)`);
-      console.log('🧹 Cleaning up...');
-      
-      // Delete all verification badge migration records
-      await prisma.$executeRaw`
-        DELETE FROM "_prisma_migrations" 
+    try {
+      const failedMigrations = await prisma.$queryRaw`
+        SELECT migration_name, finished_at 
+        FROM "_prisma_migrations" 
         WHERE migration_name LIKE '%verification_badge%'
       `;
       
-      console.log('✅ Deleted verification badge migration records');
-      
-      // Drop the table if it exists
-      await prisma.$executeRaw`
-        DROP TABLE IF EXISTS "VerificationBadge" CASCADE
-      `;
-      
-      console.log('✅ Dropped VerificationBadge table');
+      if (failedMigrations && failedMigrations.length > 0) {
+        console.log(`❌ Found ${failedMigrations.length} verification badge migration(s)`);
+        console.log('🧹 Cleaning up...');
+        
+        // Delete all verification badge migration records
+        await prisma.$executeRaw`
+          DELETE FROM "_prisma_migrations" 
+          WHERE migration_name LIKE '%verification_badge%'
+        `;
+        
+        console.log('✅ Deleted verification badge migration records');
+        
+        // Drop the table if it exists
+        await prisma.$executeRaw`
+          DROP TABLE IF EXISTS "VerificationBadge" CASCADE
+        `;
+        
+        console.log('✅ Dropped VerificationBadge table');
+      }
+    } catch (e) {
+      console.log('ℹ️ Could not check for verification badge migrations');
     }
-  } catch (e) {
-    console.log('ℹ️ Could not check for verification badge migrations');
-  }
     
   } catch (error) {
     console.error('⚠️ Error during migration fix:', error.message);
