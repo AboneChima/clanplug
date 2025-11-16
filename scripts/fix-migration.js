@@ -11,25 +11,24 @@ async function fixMigration() {
   try {
     console.log('🔧 Checking for failed migrations...');
     
-    // Check if the failed migration exists
-    const failedMigration = await prisma.$queryRaw`
+    // Check for any failed verification badge migrations
+    const failedMigrations = await prisma.$queryRaw`
       SELECT migration_name, finished_at 
       FROM "_prisma_migrations" 
-      WHERE migration_name = 'add_verification_badge'
-      LIMIT 1
+      WHERE migration_name LIKE '%verification_badge%'
     `;
     
-    if (failedMigration && failedMigration.length > 0) {
-      console.log('❌ Found failed migration: add_verification_badge');
+    if (failedMigrations && failedMigrations.length > 0) {
+      console.log(`❌ Found ${failedMigrations.length} verification badge migration(s)`);
       console.log('🧹 Cleaning up...');
       
-      // Delete the failed migration record
+      // Delete all verification badge migration records
       await prisma.$executeRaw`
         DELETE FROM "_prisma_migrations" 
-        WHERE migration_name = 'add_verification_badge'
+        WHERE migration_name LIKE '%verification_badge%'
       `;
       
-      console.log('✅ Deleted failed migration record');
+      console.log('✅ Deleted all verification badge migration records');
       
       // Drop the table if it exists (might be partially created)
       await prisma.$executeRaw`
