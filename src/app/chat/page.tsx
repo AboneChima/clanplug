@@ -195,8 +195,9 @@ function ChatContent() {
 
   return (
     <AppShell>
-      <div className="h-screen flex flex-col lg:h-auto lg:block">
-        {/* Mobile: Full screen chat container */}
+      {/* Mobile: Fixed height to avoid bottom menu overlap */}
+      <div className="h-[calc(100vh-144px)] lg:h-auto flex flex-col lg:block">
+        {/* Chat container */}
         <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:gap-4 lg:p-4 lg:h-[calc(100vh-8rem)] overflow-hidden">
           
           {/* Chat List */}

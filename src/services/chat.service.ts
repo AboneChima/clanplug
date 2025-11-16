@@ -104,14 +104,27 @@ export class ChatService {
   // Chat Management
   async getChats(accessToken?: string): Promise<Chat[]> {
     try {
+      console.log('🔍 Fetching chats from API...');
       const response = await authApi.get('/api/chats');
-      if (response.data.success) {
-        const chatsData = response.data.data || response.data.chats || response.data || [];
-        return Array.isArray(chatsData) ? chatsData : [];
+      console.log('📥 Chat API response:', response);
+      console.log('📥 Response.data:', response.data);
+      
+      if (response.data) {
+        if (response.data.success) {
+          const chatsData = response.data.data || response.data.chats || [];
+          console.log('✅ Extracted chats data:', chatsData);
+          return Array.isArray(chatsData) ? chatsData : [];
+        } else {
+          console.error('⚠️ API returned success: false', response.data.message);
+          return [];
+        }
       }
+      console.error('⚠️ No data in response');
       return [];
     } catch (error: any) {
-      console.error('Error fetching chats:', error);
+      console.error('❌ Error fetching chats:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
       return [];
     }
   }
