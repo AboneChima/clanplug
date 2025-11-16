@@ -57,8 +57,11 @@ export class FollowService {
         },
       });
 
+      console.log(`🔍 Checking mutual follow: ${followerId} -> ${followingId}`, mutualFollow ? 'YES' : 'NO');
+
       // If mutual followers, auto-create a chat if it doesn't exist
       if (mutualFollow) {
+        console.log(`👥 Mutual followers detected! Creating chat...`);
         try {
           // Check if chat already exists
           const existingChat = await prisma.chat.findFirst({
@@ -71,9 +74,11 @@ export class FollowService {
             },
           });
 
-          if (!existingChat) {
+          if (existingChat) {
+            console.log(`ℹ️ Chat already exists for these users`);
+          } else {
             // Create chat for mutual followers
-            await prisma.chat.create({
+            const newChat = await prisma.chat.create({
               data: {
                 type: 'DIRECT',
                 participants: {
@@ -84,12 +89,14 @@ export class FollowService {
                 },
               },
             });
-            console.log(`✅ Auto-created chat for mutual followers: ${followerId} & ${followingId}`);
+            console.log(`✅ Auto-created chat ${newChat.id} for mutual followers: ${followerId} & ${followingId}`);
           }
         } catch (chatError) {
           console.error('⚠️ Failed to auto-create chat for mutual followers:', chatError);
           // Don't fail the follow operation if chat creation fails
         }
+      } else {
+        console.log(`ℹ️ Not mutual followers yet`);
       }
 
       return { success: true, message: 'Successfully followed user' };
