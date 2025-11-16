@@ -26,35 +26,34 @@ async function fixMigration() {
       console.log('📋 Tables found:', allTables.map(t => t.table_name).join(', '));
       console.log('⚠️ Database has partial data - clearing failed migrations and resetting...');
       
-      // Clear the failed migration record
-      try {
-        await prisma.$executeRaw`
-          DELETE FROM "_prisma_migrations" 
-          WHERE migration_name = '20251028202337_lordmoon'
-        `;
-        console.log('✅ Cleared failed migration record');
-      } catch (e) {
-        console.log('ℹ️ No failed migration record to clear');
-      }
-      
       // Mark the migration as applied since tables already exist
       try {
-        await prisma.$executeRaw`
-          INSERT INTO "_prisma_migrations" (
-            id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count
-          ) VALUES (
-            gen_random_uuid(),
-            '0',
-            NOW(),
-            '20251028202337_lordmoon',
-            '',
-            NULL,
-            NOW(),
-            1
-          )
-          ON CONFLICT (migration_name) DO NOTHING
+        // First check if migration record exists
+        const existingMigration = await prisma.$queryRaw`
+          SELECT migration_name FROM "_prisma_migrations" 
+          WHERE migration_name = '20251028202337_lordmoon'
         `;
-        console.log('✅ Marked migration as applied');
+        
+        if (existingMigration.length === 0) {
+          // Insert the migration record
+          await prisma.$executeRaw`
+            INSERT INTO "_prisma_migrations" (
+              id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count
+            ) VALUES (
+              gen_random_uuid(),
+              '0',
+              NOW(),
+              '20251028202337_lordmoon',
+              '',
+              NULL,
+              NOW(),
+              1
+            )
+          `;
+          console.log('✅ Marked migration as applied');
+        } else {
+          console.log('ℹ️ Migration record already exists');
+        }
       } catch (e) {
         console.log('⚠️ Could not mark migration as applied:', e.message);
       }
