@@ -291,6 +291,66 @@ export const userService = {
 
   async updateUserProfile(userId: string, data: Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'city' | 'state' | 'country' | 'avatar'>>): Promise<{ success: boolean; message?: string; user?: any; error?: string }> {
     try {
+      // Check if user is trying to update name
+      if (data.firstName || data.lastName) {
+        // Get current user's verification status
+        const currentUser = await prisma.user.findUnique({
+          where: { id: userId },
+          include: { verificationBadge: true },
+        });
+
+        const isCurrentUserVerified = currentUser?.verificationBadge?.status === 'active' && 
+          currentUser.verificationBadge.expiresAt && 
+          new Date() < currentUser.verificationBadge.expiresAt;
+
+        // Check if another verified user has this exact name
+        const fullName = `${data.firstName || currentUser?.firstName || ''} ${data.lastName || currentUser?.lastName || ''}`.trim();
+        
+        if (fullName) {
+          const existingVerifiedUser = await prisma.user.findFirst({
+            where: {
+              id: { not: userId },
+              firstName: data.firstName || currentUser?.firstName,
+              lastName: data.lastName || currentUser?.lastName,
+              verificationBadge: {
+                status: 'active',
+                expiresAt: { gt: new Date() },
+              },
+            },
+          });
+
+          if (existingVerifiedUser) {
+            return { 
+              success: false, 
+              message: 'This name is protected by a verified user. Please choose a different name.', 
+              error: 'NAME_PROTECTED' 
+            };
+          }
+
+          // If current user is verified, check if any other user (verified or not) has this name
+          if (isCurrentUserVerified) {
+            const anyUserWithName = await prisma.user.findFirst({
+              where: {
+                id: { not: userId },
+                firstName: data.firstName || currentUser?.firstName,
+                lastName: data.lastName || currentUser?.lastName,
+              },
+            });
+
+            if (anyUserWithName) {
+              // Force the other user to change their name by appending a number
+              const randomSuffix = Math.floor(Math.random() * 9999);
+              await prisma.user.update({
+                where: { id: anyUserWithName.id },
+                data: {
+                  firstName: `${anyUserWithName.firstName}${randomSuffix}`,
+                },
+              });
+            }
+          }
+        }
+      }
+
       const user = await prisma.user.update({
         where: { id: userId },
         data,

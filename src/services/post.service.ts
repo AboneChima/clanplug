@@ -62,6 +62,37 @@ export const postService = {
   // Create a new post
   async createPost(authorId: string, payload: CreatePostPayload): Promise<{ success: boolean; post?: PostWithAuthor; message: string; error?: string }> {
     try {
+      // Check if user is verified for unlimited posts
+      const user = await prisma.user.findUnique({
+        where: { id: authorId },
+        include: { verificationBadge: true },
+      });
+
+      const isVerified = user?.verificationBadge?.status === 'active' && 
+        user.verificationBadge.expiresAt && 
+        new Date() < user.verificationBadge.expiresAt;
+
+      // If not verified, check post limit (e.g., 10 posts per day)
+      if (!isVerified) {
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+        const recentPostsCount = await prisma.post.count({
+          where: {
+            userId: authorId,
+            createdAt: { gte: oneDayAgo },
+          },
+        });
+
+        if (recentPostsCount >= 10) {
+          return { 
+            success: false, 
+            message: 'Daily post limit reached (10 posts). Get verified for unlimited posts!', 
+            error: 'POST_LIMIT_REACHED' 
+          };
+        }
+      }
+
       const post = await prisma.post.create({
         data: {
           userId: authorId,
