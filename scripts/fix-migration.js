@@ -41,6 +41,21 @@ async function fixMigration() {
         process.exit(0); // Exit successfully to not block deployment
       } else {
         console.log('⚠️ No tables found - database is truly empty');
+        console.log('🔄 Clearing any failed migration records...');
+        
+        // Clear ALL failed migration records since database is empty
+        try {
+          await prisma.$executeRaw`
+            DELETE FROM "_prisma_migrations" 
+            WHERE finished_at IS NULL 
+            OR migration_name LIKE '%verification_badge%'
+            OR migration_name = '20251028202337_lordmoon'
+          `;
+          console.log('✅ Cleared failed migration records');
+        } catch (e) {
+          console.log('ℹ️ No migration records to clear or table does not exist yet');
+        }
+        
         console.log('🔄 Will let migrations run fresh');
       }
     } else {
