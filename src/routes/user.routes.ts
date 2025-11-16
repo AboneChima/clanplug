@@ -6,6 +6,7 @@ import multer = require('multer');
 import { body, param, query, validationResult } from 'express-validator';
 import { prisma } from '../config/database';
 
+// User routes with verification badge support
 const router = Router();
 
 // Multer memory storage for avatar uploads
