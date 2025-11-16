@@ -9,36 +9,57 @@ const prisma = new PrismaClient();
 
 async function fixMigration() {
   try {
-    console.log('🔧 Checking for failed migrations...');
+    console.log('🔧 Checking database state...');
     
-    // Check for any failed verification badge migrations
-    const failedMigrations = await prisma.$queryRaw`
-      SELECT migration_name, finished_at 
-      FROM "_prisma_migrations" 
-      WHERE migration_name LIKE '%verification_badge%'
+    // Check if User table exists
+    const userTableExists = await prisma.$queryRaw`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'User'
+      ) as exists
     `;
     
-    if (failedMigrations && failedMigrations.length > 0) {
-      console.log(`❌ Found ${failedMigrations.length} verification badge migration(s)`);
-      console.log('🧹 Cleaning up...');
+    const hasUserTable = userTableExists[0]?.exists;
+    console.log(`User table exists: ${hasUserTable}`);
+    
+    if (!hasUserTable) {
+      console.log('⚠️ User table missing - database might be empty or corrupted');
+      console.log('🔄 Will let Prisma run all migrations from scratch');
       
-      // Delete all verification badge migration records
+      // Clear all migration records to force fresh migration
       await prisma.$executeRaw`
-        DELETE FROM "_prisma_migrations" 
+        TRUNCATE TABLE "_prisma_migrations"
+      `;
+      console.log('✅ Cleared migration history - will run all migrations fresh');
+    } else {
+      // Check for failed verification badge migrations
+      const failedMigrations = await prisma.$queryRaw`
+        SELECT migration_name, finished_at 
+        FROM "_prisma_migrations" 
         WHERE migration_name LIKE '%verification_badge%'
       `;
       
-      console.log('✅ Deleted all verification badge migration records');
-      
-      // Drop the table if it exists (might be partially created)
-      await prisma.$executeRaw`
-        DROP TABLE IF EXISTS "VerificationBadge" CASCADE
-      `;
-      
-      console.log('✅ Dropped VerificationBadge table if it existed');
-      console.log('✅ Migration cleanup complete!');
-    } else {
-      console.log('✅ No failed migrations found');
+      if (failedMigrations && failedMigrations.length > 0) {
+        console.log(`❌ Found ${failedMigrations.length} verification badge migration(s)`);
+        console.log('🧹 Cleaning up...');
+        
+        // Delete all verification badge migration records
+        await prisma.$executeRaw`
+          DELETE FROM "_prisma_migrations" 
+          WHERE migration_name LIKE '%verification_badge%'
+        `;
+        
+        console.log('✅ Deleted verification badge migration records');
+        
+        // Drop the table if it exists
+        await prisma.$executeRaw`
+          DROP TABLE IF EXISTS "VerificationBadge" CASCADE
+        `;
+        
+        console.log('✅ Dropped VerificationBadge table');
+      } else {
+        console.log('✅ No failed migrations found');
+      }
     }
     
   } catch (error) {
