@@ -38,6 +38,10 @@ interface Post {
   isLiked: boolean;
   isBookmarked?: boolean;
   createdAt: string;
+  type?: 'SOCIAL_POST' | 'MARKETPLACE_LISTING';
+  listingId?: string;
+  price?: number;
+  category?: string;
 }
 
 // Helper function for authenticated API calls
@@ -61,6 +65,7 @@ export default function FeedPage() {
   const [followingUsers, setFollowingUsers] = useState<any[]>([]);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [viewingPost, setViewingPost] = useState<Post | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [favoritePosts, setFavoritePosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -510,25 +515,68 @@ export default function FeedPage() {
         )}
       </div>
 
-      {/* Post Content */}
-      <div className="px-3 pb-2">
-        <p className="text-gray-300 text-sm line-clamp-3">{post.description}</p>
-      </div>
-
-      {/* Post Media */}
-      {post.images && post.images.length > 0 && (
+      {/* Post Content - Compact Layout */}
+      {post.type === 'MARKETPLACE_LISTING' ? (
+        /* Marketplace Listing - Horizontal Layout */
         <div className="px-3 pb-2">
-          <div className={`grid gap-1.5 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-            {post.images.map((image, index) => (
-              <button
-                key={index}
-                onClick={() => setViewingImage(image)}
-                className={`relative rounded-md overflow-hidden bg-gray-700 ${post.images!.length === 1 ? 'aspect-video' : 'aspect-square'} cursor-pointer hover:opacity-90 transition-opacity`}
+          <div className="flex gap-3 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-lg p-2 border border-green-700/30">
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+              {post.images && post.images[0] ? (
+                <Image src={post.images[0]} alt="Listing image" fill className="object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                  <IoImageOutline className="w-8 h-8 text-gray-500" />
+                </div>
+              )}
+              <div className="absolute top-1 left-1 bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
+                LISTING
+              </div>
+            </div>
+            <div className="flex-1 min-w-0 flex flex-col justify-between">
+              <div>
+                <p className="text-white font-medium text-sm line-clamp-1">{post.title || 'Game Listing'}</p>
+                <p className="text-gray-400 text-xs line-clamp-2 mt-0.5">{post.description}</p>
+                {post.price && (
+                  <p className="text-green-400 font-bold text-sm mt-1">₦{post.price.toLocaleString()}</p>
+                )}
+              </div>
+              <Link
+                href={`/marketplace/${post.listingId || post.id}`}
+                className="text-blue-400 hover:text-blue-300 text-xs font-medium text-left inline-flex items-center gap-1"
               >
-                <Image src={image} alt="Post image" fill className="object-cover" />
-              </button>
-            ))}
+                View Listing →
+              </Link>
+            </div>
           </div>
+        </div>
+      ) : post.images && post.images.length > 0 ? (
+        /* Image Post - Horizontal Layout */
+        <div className="px-3 pb-2 flex gap-3">
+          <button
+            onClick={() => setViewingPost(post)}
+            className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 hover:opacity-90 transition-opacity"
+          >
+            <Image src={post.images[0]} alt="Post image" fill className="object-cover" />
+            {post.images.length > 1 && (
+              <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                +{post.images.length - 1}
+              </div>
+            )}
+          </button>
+          <div className="flex-1 min-w-0 flex flex-col justify-between">
+            <p className="text-gray-300 text-sm line-clamp-3">{post.description}</p>
+            <button
+              onClick={() => setViewingPost(post)}
+              className="text-blue-400 hover:text-blue-300 text-xs font-medium mt-1 text-left"
+            >
+              View Details →
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Text Only Post */
+        <div className="px-3 pb-2">
+          <p className="text-gray-300 text-sm line-clamp-3">{post.description}</p>
         </div>
       )}
 
@@ -903,7 +951,127 @@ export default function FeedPage() {
         </div>
       </div>
 
-      {/* Image Overlay Modal */}
+      {/* Post Detail Modal */}
+      {viewingPost && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setViewingPost(null)}
+        >
+          <div 
+            className="relative bg-slate-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setViewingPost(null)}
+              className="absolute top-3 right-3 z-10 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+            >
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            <div className="flex flex-col md:flex-row max-h-[90vh]">
+              {/* Image Section */}
+              {viewingPost.images && viewingPost.images.length > 0 && (
+                <div className="md:w-2/3 bg-black flex items-center justify-center relative">
+                  <div className="relative w-full aspect-square md:aspect-auto md:h-[90vh]">
+                    <Image
+                      src={viewingPost.images[0]}
+                      alt="Post image"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  {viewingPost.images.length > 1 && (
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                      {viewingPost.images.map((_, idx) => (
+                        <div key={idx} className="w-2 h-2 rounded-full bg-white/50" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Content Section */}
+              <div className="md:w-1/3 flex flex-col max-h-[50vh] md:max-h-[90vh]">
+                {/* User Info */}
+                <div className="p-4 border-b border-gray-700">
+                  <Link href={`/user/${viewingPost.user.id}`} className="flex items-center gap-3 hover:opacity-80">
+                    {viewingPost.user.avatar ? (
+                      <Image 
+                        src={viewingPost.user.avatar} 
+                        alt={viewingPost.user.username} 
+                        width={40} 
+                        height={40} 
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        <span className="text-white font-semibold">
+                          {viewingPost.user.firstName[0]}{viewingPost.user.lastName[0]}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-white font-medium">{viewingPost.user.firstName} {viewingPost.user.lastName}</p>
+                      <p className="text-gray-400 text-sm">@{viewingPost.user.username}</p>
+                    </div>
+                  </Link>
+                </div>
+                
+                {/* Description */}
+                <div className="flex-1 overflow-y-auto p-4">
+                  <p className="text-gray-300 text-sm whitespace-pre-wrap">{viewingPost.description}</p>
+                  <p className="text-gray-500 text-xs mt-3">
+                    {new Date(viewingPost.createdAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                </div>
+                
+                {/* Actions */}
+                <div className="p-4 border-t border-gray-700">
+                  <div className="flex items-center justify-around">
+                    <button
+                      onClick={() => {
+                        handleLike(viewingPost.id);
+                        setViewingPost({...viewingPost, isLiked: !viewingPost.isLiked});
+                      }}
+                      className="flex flex-col items-center gap-1 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      {viewingPost.isLiked ? (
+                        <IoHeart className="w-6 h-6 text-red-500" />
+                      ) : (
+                        <IoHeartOutline className="w-6 h-6" />
+                      )}
+                      <span className="text-xs">{viewingPost._count.likes}</span>
+                    </button>
+                    <button className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors">
+                      <IoChatbubbleOutline className="w-6 h-6" />
+                      <span className="text-xs">{viewingPost._count.comments}</span>
+                    </button>
+                    <button 
+                      onClick={() => handleBookmark(viewingPost.id)}
+                      className="flex flex-col items-center gap-1 text-gray-400 hover:text-yellow-500 transition-colors"
+                    >
+                      {viewingPost.isBookmarked ? (
+                        <IoBookmark className="w-6 h-6 text-yellow-500" />
+                      ) : (
+                        <IoBookmarkOutline className="w-6 h-6" />
+                      )}
+                      <span className="text-xs">Save</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Overlay Modal (for backward compatibility) */}
       {viewingImage && (
         <div 
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
