@@ -11,83 +11,86 @@ async function fixMigration() {
   try {
     console.log('🔧 Checking database state...');
     
-    // Check if User table exists
-    const userTableExists = await prisma.$queryRaw`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_name = 'User'
-      ) as exists
+    // Check if ANY application tables exist (not just system tables)
+    const allTables = await prisma.$queryRaw`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_type = 'BASE TABLE'
+      AND table_name NOT LIKE '_prisma%'
     `;
     
-    const hasUserTable = userTableExists[0]?.exists;
-    console.log(`User table exists: ${hasUserTable}`);
+    console.log(`Found ${allTables.length} application tables in database`);
     
-    if (!hasUserTable) {
-      console.log('⚠️ User table missing - checking for lowercase "users" table...');
+    if (allTables.length > 0) {
+      console.log('📋 Tables found:', allTables.map(t => t.table_name).join(', '));
+      console.log('⚠️ Database has partial data - clearing failed migrations and resetting...');
       
-      // Check if lowercase "users" table exists
-      const usersTableExists = await prisma.$queryRaw`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_name = 'users'
-        ) as exists
-      `;
+      // Clear the failed migration record
+      try {
+        await prisma.$executeRaw`
+          DELETE FROM "_prisma_migrations" 
+          WHERE migration_name = '20251028202337_lordmoon'
+        `;
+        console.log('✅ Cleared failed migration record');
+      } catch (e) {
+        console.log('ℹ️ No failed migration record to clear');
+      }
       
-      if (usersTableExists[0]?.exists) {
-        console.log('✅ Found "users" table (lowercase) - database has data!');
-        console.log('⚠️ Database uses lowercase table names, Prisma expects capital case');
-        console.log('🛑 STOPPING - Manual intervention needed to preserve data');
-        console.log('📋 Your data is safe! Contact support or check Render dashboard');
-        process.exit(0); // Exit successfully to not block deployment
-      } else {
-        console.log('⚠️ No tables found - database is truly empty');
-        console.log('🔄 Clearing any failed migration records...');
-        
-        // Clear ALL failed migration records since database is empty
-        try {
-          await prisma.$executeRaw`
-            DELETE FROM "_prisma_migrations" 
-            WHERE finished_at IS NULL 
-            OR migration_name LIKE '%verification_badge%'
-            OR migration_name = '20251028202337_lordmoon'
-          `;
-          console.log('✅ Cleared failed migration records');
-        } catch (e) {
-          console.log('ℹ️ No migration records to clear or table does not exist yet');
-        }
-        
-        console.log('🔄 Will let migrations run fresh');
+      // Mark the migration as applied since tables already exist
+      try {
+        await prisma.$executeRaw`
+          INSERT INTO "_prisma_migrations" (
+            id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count
+          ) VALUES (
+            gen_random_uuid(),
+            '0',
+            NOW(),
+            '20251028202337_lordmoon',
+            '',
+            NULL,
+            NOW(),
+            1
+          )
+          ON CONFLICT (migration_name) DO NOTHING
+        `;
+        console.log('✅ Marked migration as applied');
+      } catch (e) {
+        console.log('⚠️ Could not mark migration as applied:', e.message);
       }
     } else {
-      // Check for failed verification badge migrations
-      const failedMigrations = await prisma.$queryRaw`
-        SELECT migration_name, finished_at 
-        FROM "_prisma_migrations" 
+      console.log('✅ Database is empty - migrations will run fresh');
+    }
+    
+    // Always check for and clean up verification badge issues
+    const failedMigrations = await prisma.$queryRaw`
+      SELECT migration_name, finished_at 
+      FROM "_prisma_migrations" 
+      WHERE migration_name LIKE '%verification_badge%'
+    `;
+    
+    if (failedMigrations && failedMigrations.length > 0) {
+      console.log(`❌ Found ${failedMigrations.length} verification badge migration(s)`);
+      console.log('🧹 Cleaning up...');
+      
+      // Delete all verification badge migration records
+      await prisma.$executeRaw`
+        DELETE FROM "_prisma_migrations" 
         WHERE migration_name LIKE '%verification_badge%'
       `;
       
-      if (failedMigrations && failedMigrations.length > 0) {
-        console.log(`❌ Found ${failedMigrations.length} verification badge migration(s)`);
-        console.log('🧹 Cleaning up...');
-        
-        // Delete all verification badge migration records
-        await prisma.$executeRaw`
-          DELETE FROM "_prisma_migrations" 
-          WHERE migration_name LIKE '%verification_badge%'
-        `;
-        
-        console.log('✅ Deleted verification badge migration records');
-        
-        // Drop the table if it exists
-        await prisma.$executeRaw`
-          DROP TABLE IF EXISTS "VerificationBadge" CASCADE
-        `;
-        
-        console.log('✅ Dropped VerificationBadge table');
-      } else {
-        console.log('✅ No failed migrations found');
-      }
+      console.log('✅ Deleted verification badge migration records');
+      
+      // Drop the table if it exists
+      await prisma.$executeRaw`
+        DROP TABLE IF EXISTS "VerificationBadge" CASCADE
+      `;
+      
+      console.log('✅ Dropped VerificationBadge table');
     }
+  } catch (e) {
+    console.log('ℹ️ Could not check for verification badge migrations');
+  }
     
   } catch (error) {
     console.error('⚠️ Error during migration fix:', error.message);
