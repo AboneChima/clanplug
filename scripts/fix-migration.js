@@ -43,23 +43,6 @@ async function fixMigration() {
       }
       console.log('✅ Dropped all existing types');
       
-      // Drop all tables in public schema
-      const tables = await prisma.$queryRaw`
-        SELECT tablename FROM pg_tables 
-        WHERE schemaname = 'public' 
-        AND tablename != '_prisma_migrations'
-      `;
-      
-      console.log(`Found ${tables.length} tables to drop`);
-      for (const tableRow of tables) {
-        try {
-          await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS "${tableRow.tablename}" CASCADE`);
-        } catch (e) {
-          console.log(`Could not drop ${tableRow.tablename}:`, e.message);
-        }
-      }
-      console.log('✅ Dropped all existing tables');
-      
       // Clear all migration records to force fresh migration
       await prisma.$executeRaw`
         TRUNCATE TABLE "_prisma_migrations"
