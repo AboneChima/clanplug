@@ -313,17 +313,17 @@ export default function ProfilePage() {
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Hero Header - Compact */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-6 mb-4">
+        {/* Hero Header - Clean Modern Design */}
+        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm py-4 sm:py-5 mb-4">
           <div className="max-w-4xl mx-auto px-3 sm:px-4">
-            <Link href="/feed" className="inline-flex items-center gap-1.5 text-white/80 hover:text-white mb-2 sm:mb-3 transition-colors">
+            <Link href="/feed" className="inline-flex items-center gap-1.5 text-gray-400 hover:text-white mb-3 transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span className="text-xs sm:text-sm">Back to Feed</span>
+              <span className="text-sm">Back to Feed</span>
             </Link>
-            <h1 className="text-lg sm:text-2xl font-bold text-white">My Profile</h1>
-            <p className="text-xs sm:text-sm text-white/80 mt-0.5">Manage your account and view your activity</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5">My Profile</h1>
+            <p className="text-xs sm:text-sm text-gray-400">Manage your account and view your activity</p>
           </div>
         </div>
 

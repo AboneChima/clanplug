@@ -708,32 +708,32 @@ export default function FeedPage() {
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Hero Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 mb-4">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6">
+        {/* Hero Header - Clean Modern Design */}
+        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm mb-4">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl sm:text-3xl font-bold text-white mb-1">Dashboard</h1>
-                <p className="text-xs sm:text-base text-white/90">Your social feed</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5">Dashboard</h1>
+                <p className="text-xs sm:text-sm text-gray-400">Your social feed</p>
               </div>
               <Link
                 href="/profile"
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg transition-colors border border-white/30"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-600/50"
               >
                 {user?.avatar ? (
                   <img 
                     src={user.avatar} 
                     alt={user.username} 
-                    className="w-6 h-6 sm:w-7 sm:h-7 rounded-full object-cover border-2 border-white/50"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center border-2 border-white/50">
-                    <span className="text-xs font-bold text-white">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-600 flex items-center justify-center">
+                    <span className="text-xs font-semibold text-white">
                       {user?.firstName?.[0] || user?.username?.[0] || 'U'}
                     </span>
                   </div>
                 )}
-                <span className="hidden sm:inline text-sm sm:text-base font-medium">Profile</span>
+                <span className="hidden sm:inline text-sm font-medium">Profile</span>
               </Link>
             </div>
           </div>
