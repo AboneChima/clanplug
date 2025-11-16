@@ -25,6 +25,7 @@ import cryptoRoutes from './routes/crypto.routes';
 import testRoutes from './routes/test.routes';
 import escrowRoutes from './routes/escrow.routes';
 import adminKycRoutes from './routes/admin-kyc.routes';
+import verificationRoutes from './routes/verification.routes';
 
 const app = express();
 
@@ -142,6 +143,7 @@ app.use('/api/crypto', cryptoRoutes);
 app.use('/api/test', testRoutes);
 app.use('/api/escrow', escrowRoutes);
 app.use('/api/admin-temp', adminKycRoutes); // TEMPORARY - DELETE AFTER USE
+app.use('/api/verification', verificationRoutes);
 
 // Proxy middleware for frontend - only in development
 if (config.NODE_ENV === 'development') {

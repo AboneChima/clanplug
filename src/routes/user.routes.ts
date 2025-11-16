@@ -41,9 +41,49 @@ const handleValidationErrors = (req: Request, res: Response, next: NextFunction)
 
 // GET /api/users/profile - Get user profile
 router.get('/profile', authenticate, asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?.id || 'unknown';
-  const profile = profiles.get(userId) || getDefaultProfile(userId);
-  profiles.set(userId, profile);
+  const userId = (req as any).user?.id;
+  
+  // Fetch user with verification badge
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      verificationBadge: true,
+    },
+  });
+  
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+  
+  // Check verification status
+  let verificationStatus = 'none';
+  let daysRemaining = 0;
+  
+  if (user.verificationBadge) {
+    verificationStatus = user.verificationBadge.status;
+    
+    if (verificationStatus === 'active' && user.verificationBadge.expiresAt) {
+      const diff = user.verificationBadge.expiresAt.getTime() - new Date().getTime();
+      daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      
+      // Auto-expire if needed
+      if (daysRemaining <= 0) {
+        await prisma.verificationBadge.update({
+          where: { userId },
+          data: { status: 'expired' },
+        });
+        verificationStatus = 'expired';
+        daysRemaining = 0;
+      }
+    }
+  }
+  
+  const profile = {
+    ...user,
+    verificationStatus,
+    verificationDaysRemaining: daysRemaining,
+  };
+  
   res.json({ success: true, data: profile });
 }));
 

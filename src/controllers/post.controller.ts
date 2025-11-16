@@ -104,6 +104,23 @@ export const postController = {
       }
 
       const authorId = (req as any).user.id;
+      
+      // Check if user is trying to post media
+      const hasMedia = (images && images.length > 0) || (videos && videos.length > 0);
+      
+      if (hasMedia) {
+        // Import verification service
+        const { verificationService } = await import('../services/verification.service');
+        const canPostMedia = await verificationService.canPostMedia(authorId);
+        
+        if (!canPostMedia) {
+          res.status(403).json({
+            success: false,
+            message: 'Image posting is only available for verified accounts. Purchase verification badge to unlock.',
+          });
+          return;
+        }
+      }
 
       const payload: CreatePostPayload = {
         title,
