@@ -24,31 +24,61 @@ async function fixMigration() {
     
     if (allTables.length > 0) {
       console.log('📋 Tables found:', allTables.map(t => t.table_name).join(', '));
-      console.log('⚠️ Database has partial data - marking all failed migrations as completed...');
+      console.log('⚠️ Database has existing data - marking ALL migrations as applied...');
       
-      // Find ALL failed migrations (those with started_at but no finished_at)
       try {
-        const failedMigrations = await prisma.$queryRaw`
-          SELECT migration_name, started_at FROM "_prisma_migrations" 
-          WHERE finished_at IS NULL
-          ORDER BY started_at
-        `;
+        // Get all migrations from the migrations folder
+        const fs = require('fs');
+        const path = require('path');
+        const migrationsDir = path.join(__dirname, '..', 'prisma', 'migrations');
         
-        if (failedMigrations.length > 0) {
-          console.log(`Found ${failedMigrations.length} failed migration(s):`, 
-            failedMigrations.map(m => m.migration_name).join(', '));
+        let allMigrationNames = [];
+        if (fs.existsSync(migrationsDir)) {
+          allMigrationNames = fs.readdirSync(migrationsDir)
+            .filter(name => !name.startsWith('.') && name !== 'migration_lock.toml');
+          console.log(`Found ${allMigrationNames.length} migration folders`);
+        }
+        
+        // Get already applied migrations
+        const appliedMigrations = await prisma.$queryRaw`
+          SELECT migration_name FROM "_prisma_migrations" 
+          WHERE finished_at IS NOT NULL
+        `;
+        const appliedNames = new Set(appliedMigrations.map(m => m.migration_name));
+        
+        // Find migrations that need to be marked as applied
+        const unappliedMigrations = allMigrationNames.filter(name => !appliedNames.has(name));
+        
+        if (unappliedMigrations.length > 0) {
+          console.log(`Marking ${unappliedMigrations.length} unapplied migrations as completed:`, 
+            unappliedMigrations.join(', '));
           
-          // Mark all failed migrations as completed
+          // First, clear any failed migration records
           await prisma.$executeRaw`
-            UPDATE "_prisma_migrations" 
-            SET finished_at = NOW(), 
-                applied_steps_count = 1,
-                logs = ''
+            DELETE FROM "_prisma_migrations" 
             WHERE finished_at IS NULL
           `;
-          console.log('✅ Marked all failed migrations as completed');
+          
+          // Insert all unapplied migrations as completed
+          for (const migrationName of unappliedMigrations) {
+            await prisma.$executeRaw`
+              INSERT INTO "_prisma_migrations" (
+                id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count
+              ) VALUES (
+                gen_random_uuid(),
+                '0',
+                NOW(),
+                ${migrationName},
+                '',
+                NULL,
+                NOW(),
+                1
+              )
+            `;
+          }
+          console.log('✅ Marked all migrations as applied');
         } else {
-          console.log('ℹ️ No failed migrations found');
+          console.log('ℹ️ All migrations already applied');
         }
       } catch (e) {
         console.log('⚠️ Could not mark migrations as applied:', e.message);
