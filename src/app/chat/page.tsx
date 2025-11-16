@@ -28,9 +28,24 @@ function ChatContent() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load chats on mount
+  // Load chats on mount and when returning to page
   useEffect(() => {
-    if (accessToken) loadChats();
+    if (accessToken) {
+      loadChats();
+      
+      // Reload chats when page becomes visible (user returns to tab/app)
+      const handleVisibilityChange = () => {
+        if (!document.hidden && accessToken) {
+          loadChats();
+        }
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    }
   }, [accessToken]);
 
   // Open specific chat from URL
@@ -78,7 +93,16 @@ function ChatContent() {
         const data = await response.json();
         if (data.success && data.data) {
           setCurrentChat(data.data);
-          setChats(prev => [...prev, data.data]);
+          // Only add if not already in list (prevent duplicates)
+          setChats(prev => {
+            const exists = prev.find(c => c.id === data.data.id);
+            if (exists) {
+              // Update existing chat
+              return prev.map(c => c.id === data.data.id ? data.data : c);
+            }
+            // Add new chat
+            return [...prev, data.data];
+          });
         }
       }
     } catch (error) {
@@ -137,7 +161,16 @@ function ChatContent() {
     return other?.user?.avatar;
   };
 
+  const getLastMessage = (chat: Chat) => {
+    const messages = (chat as any).messages;
+    if (messages && messages.length > 0) {
+      return messages[0];
+    }
+    return null;
+  };
+
   const formatTime = (date: string) => {
+    if (!date) return '';
     const d = new Date(date);
     const now = new Date();
     const diff = now.getTime() - d.getTime();
@@ -192,10 +225,12 @@ function ChatContent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <h3 className="font-semibold text-white truncate">{getDisplayName(chat)}</h3>
-                          <span className="text-[11px] text-gray-500 flex-shrink-0 ml-2">{formatTime(chat.updatedAt)}</span>
+                          <span className="text-[11px] text-gray-500 flex-shrink-0 ml-2">
+                            {formatTime(getLastMessage(chat)?.createdAt || chat.updatedAt)}
+                          </span>
                         </div>
                         <p className="text-sm text-gray-400 truncate">
-                          {(chat as any).lastMessage?.content || 'Start a conversation'}
+                          {getLastMessage(chat)?.content || 'Start a conversation'}
                         </p>
                       </div>
                     </div>
