@@ -14,13 +14,15 @@ CREATE TABLE IF NOT EXISTS "VerificationBadge" (
 -- CreateIndex
 CREATE UNIQUE INDEX IF NOT EXISTS "VerificationBadge_userId_key" ON "VerificationBadge"("userId");
 
--- AddForeignKey
+-- AddForeignKey (only if User table exists)
 DO $$ 
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'VerificationBadge_userId_fkey'
-    ) THEN
-        ALTER TABLE "VerificationBadge" ADD CONSTRAINT "VerificationBadge_userId_fkey" 
-        FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'User') THEN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_constraint WHERE conname = 'VerificationBadge_userId_fkey'
+        ) THEN
+            ALTER TABLE "VerificationBadge" ADD CONSTRAINT "VerificationBadge_userId_fkey" 
+            FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        END IF;
     END IF;
 END $$;
