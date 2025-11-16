@@ -167,17 +167,17 @@ export default function NotificationsPage() {
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Header - Compact */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-4 mb-3">
+        {/* Header - Clean Modern Design */}
+        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm py-4 mb-3">
           <div className="max-w-6xl mx-auto px-3 sm:px-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                    <IoNotificationsOutline className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                  <div className="w-10 h-10 rounded-lg bg-slate-700/50 border border-slate-600 flex items-center justify-center">
+                    <IoNotificationsOutline className="w-5 h-5 text-white" />
                   </div>
                   {unreadCount > 0 && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center border-2 border-slate-800">
                       <span className="text-[10px] font-bold text-white">{unreadCount}</span>
                     </div>
                   )}

@@ -329,27 +329,31 @@ export default function ProfilePage() {
 
         <div className="max-w-4xl mx-auto px-3 sm:px-4">
 
-          {/* Profile Card - Clean & Simple */}
+          {/* Profile Card - Modern Clean Design */}
           <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl">
-            {/* Simple gradient header */}
-            <div className="h-16 sm:h-20 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+            {/* Modern pattern cover */}
+            <div className="h-24 sm:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
+              </div>
+            </div>
 
             {/* Profile Content */}
-            <div className="px-3 sm:px-4 lg:px-6 pb-4 sm:pb-6">
+            <div className="px-4 sm:px-6 lg:px-8 pb-6">
               {/* Avatar and Change Picture Button */}
-              <div className="flex items-end justify-between -mt-8 sm:-mt-10 mb-3 sm:mb-4">
+              <div className="flex items-end justify-between -mt-12 sm:-mt-16 mb-4">
                 <div className="relative group">
                   {avatarPreview ? (
                     <Image
                       src={avatarPreview}
                       alt={user?.username || 'User'}
-                      width={64}
-                      height={64}
-                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-3 border-slate-900 object-cover shadow-xl"
+                      width={96}
+                      height={96}
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 object-cover shadow-xl ring-2 ring-slate-700"
                     />
                   ) : (
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-3 border-slate-900 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl">
-                      <svg className="w-8 h-8 sm:w-10 sm:h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 bg-slate-700 flex items-center justify-center shadow-xl ring-2 ring-slate-700">
+                      <svg className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>
                     </div>
@@ -361,7 +365,7 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <label className="px-3 sm:px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm rounded-lg font-medium transition-colors cursor-pointer">
+                <label className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg font-medium transition-colors cursor-pointer border border-slate-600">
                   {isUploading ? 'Uploading...' : 'Change Picture'}
                   <input
                     type="file"
@@ -475,29 +479,29 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="flex gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-slate-700">
-                <div>
-                  <p className="text-base sm:text-lg font-bold text-white">{stats.posts}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-400">Posts</p>
+              {/* Stats - Modern Grid Layout */}
+              <div className="grid grid-cols-4 gap-2 sm:gap-4 pt-4 border-t border-slate-700">
+                <div className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                  <p className="text-lg sm:text-xl font-bold text-white">{stats.posts}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Posts</p>
                 </div>
                 <button 
                   onClick={handleShowFollowers}
-                  className="text-left hover:opacity-80 transition-opacity"
+                  className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
                 >
-                  <p className="text-base sm:text-lg font-bold text-white">{stats.followers}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-400">Followers</p>
+                  <p className="text-lg sm:text-xl font-bold text-white">{stats.followers}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Followers</p>
                 </button>
                 <button 
                   onClick={handleShowFollowing}
-                  className="text-left hover:opacity-80 transition-opacity"
+                  className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
                 >
-                  <p className="text-base sm:text-lg font-bold text-white">{stats.following}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-400">Following</p>
+                  <p className="text-lg sm:text-xl font-bold text-white">{stats.following}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Following</p>
                 </button>
-                <div>
-                  <p className="text-base sm:text-lg font-bold text-white">{stats.likes}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-400">Likes</p>
+                <div className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                  <p className="text-lg sm:text-xl font-bold text-white">{stats.likes}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Likes</p>
                 </div>
               </div>
             </div>
