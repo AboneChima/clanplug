@@ -70,16 +70,27 @@ function ChatContent() {
   useEffect(() => {
     if (currentChat) {
       loadMessages(currentChat.id);
+    } else {
+      // Reload chats when returning to list view
+      if (accessToken) {
+        loadChats();
+      }
     }
   }, [currentChat?.id]);
 
   const loadChats = async () => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      console.log('⚠️ No access token, cannot load chats');
+      return;
+    }
     try {
+      console.log('🔄 Loading chats...');
       const data = await chatService.getChats(accessToken);
+      console.log('✅ Loaded chats:', data.length, 'chats');
+      console.log('📋 Chats data:', data);
       setChats(data);
     } catch (error) {
-      console.error('Load chats error:', error);
+      console.error('❌ Load chats error:', error);
     }
   };
 
@@ -191,8 +202,21 @@ function ChatContent() {
           {/* Chat List */}
           <div className={`${currentChat ? 'hidden' : 'flex'} lg:flex lg:w-80 flex-col bg-slate-800 lg:rounded-xl border-r lg:border border-slate-700 overflow-hidden`}>
             <div className="p-4 border-b border-slate-700 flex-shrink-0 bg-slate-800/95 backdrop-blur-sm">
-              <h2 className="text-lg font-bold text-white">Messages</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Your conversations</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Messages</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Your conversations</p>
+                </div>
+                <button
+                  onClick={loadChats}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                  title="Refresh chats"
+                >
+                  <svg className="w-5 h-5 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
             </div>
             
             <div className="flex-1 overflow-y-auto overscroll-contain bg-slate-900/50">
