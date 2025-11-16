@@ -122,14 +122,20 @@ function ChatContent() {
   };
 
   const loadMessages = async (chatId: string) => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      console.log('⚠️ No access token for loading messages');
+      return;
+    }
     try {
+      console.log('🔄 Loading messages for chat:', chatId);
       setLoading(true);
       const msgs = await chatService.getMessages(chatId, accessToken);
+      console.log('✅ Loaded messages:', msgs.length, 'messages');
+      console.log('📋 Messages:', msgs);
       setMessages(msgs);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     } catch (error) {
-      console.error('Load messages error:', error);
+      console.error('❌ Load messages error:', error);
     } finally {
       setLoading(false);
     }
