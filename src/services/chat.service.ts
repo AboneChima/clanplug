@@ -106,21 +106,17 @@ export class ChatService {
     try {
       console.log('🔍 Fetching chats from API...');
       const response = await authApi.get('/api/chats');
-      console.log('📥 Chat API response:', response);
-      console.log('📥 Response.data:', response.data);
+      console.log('📥 Chat API full response:', response);
       
-      if (response.data) {
-        if (response.data.success) {
-          const chatsData = response.data.data || response.data.chats || [];
-          console.log('✅ Extracted chats data:', chatsData);
-          return Array.isArray(chatsData) ? chatsData : [];
-        } else {
-          console.error('⚠️ API returned success: false', response.data.message);
-          return [];
-        }
+      // authApi returns the response directly, not wrapped in .data
+      if (response.success) {
+        const chatsData = response.data || [];
+        console.log('✅ Extracted chats data:', chatsData);
+        return Array.isArray(chatsData) ? chatsData : [];
+      } else {
+        console.error('⚠️ API returned success: false', response.message);
+        return [];
       }
-      console.error('⚠️ No data in response');
-      return [];
     } catch (error: any) {
       console.error('❌ Error fetching chats:', error);
       console.error('❌ Error response:', error.response?.data);
