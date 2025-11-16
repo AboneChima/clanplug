@@ -13,7 +13,7 @@ async function fixMigration() {
     
     // Check if the failed migration exists
     const failedMigration = await prisma.$queryRaw`
-      SELECT migration_name, finished_at, success 
+      SELECT migration_name, finished_at 
       FROM "_prisma_migrations" 
       WHERE migration_name = 'add_verification_badge'
       LIMIT 1
