@@ -887,47 +887,47 @@ export default function FeedPage() {
         </div>
       </div>
 
-      {/* Create Post Modal */}
+      {/* Create Post Modal - Compact */}
       {commentingOnPost === 'create-post-modal' && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3"
           onClick={() => setCommentingOnPost(null)}
         >
           <div 
-            className="bg-slate-800 rounded-xl max-w-lg w-full p-6 border border-slate-700"
+            className="bg-slate-800 rounded-xl max-w-md w-full p-4 border border-slate-700"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Create Post</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-white">Create Post</h2>
               <button
                 onClick={() => setCommentingOnPost(null)}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <div className="flex gap-3 mb-4">
+            <div className="flex gap-2 mb-3">
               {user?.avatar ? (
                 <Image 
                   src={user.avatar} 
                   alt={user.username || 'User'} 
-                  width={48} 
-                  height={48} 
-                  className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                  width={40} 
+                  height={40} 
+                  className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-semibold">
+                <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-sm font-semibold">
                     {user?.firstName?.[0]}{user?.lastName?.[0]}
                   </span>
                 </div>
               )}
               <div className="flex-1">
-                <p className="text-white font-medium">{user?.firstName} {user?.lastName}</p>
-                <p className="text-gray-400 text-sm">@{user?.username}</p>
+                <p className="text-white text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                <p className="text-gray-400 text-xs">@{user?.username}</p>
               </div>
             </div>
 
@@ -935,19 +935,19 @@ export default function FeedPage() {
               value={newPostContent}
               onChange={(e) => setNewPostContent(e.target.value)}
               placeholder="What's on your mind?"
-              className="w-full bg-slate-700/50 text-white rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 border border-slate-600 mb-4"
-              rows={6}
+              className="w-full bg-slate-700/50 text-white text-sm rounded-lg p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 border border-slate-600 mb-3"
+              rows={4}
               autoFocus
             />
 
             {newPostImage && (
-              <div className="mb-4 relative">
-                <img src={URL.createObjectURL(newPostImage)} alt="Preview" className="w-full rounded-lg" />
+              <div className="mb-3 relative">
+                <img src={URL.createObjectURL(newPostImage)} alt="Preview" className="w-full max-h-48 object-cover rounded-lg" />
                 <button
                   onClick={() => setNewPostImage(null)}
-                  className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+                  className="absolute top-1.5 right-1.5 p-1.5 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
                 >
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -955,9 +955,9 @@ export default function FeedPage() {
             )}
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg cursor-pointer transition-colors">
-                <IoImageOutline className="w-5 h-5" />
-                <span className="text-sm">Add Photo</span>
+              <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg cursor-pointer transition-colors">
+                <IoImageOutline className="w-4 h-4" />
+                <span>Photo</span>
                 <input
                   type="file"
                   accept="image/*"
