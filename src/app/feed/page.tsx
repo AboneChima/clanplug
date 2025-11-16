@@ -519,30 +519,30 @@ export default function FeedPage() {
       {post.type === 'MARKETPLACE_LISTING' ? (
         /* Marketplace Listing - Horizontal Layout */
         <div className="px-3 pb-2">
-          <div className="flex gap-3 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-lg p-2 border border-green-700/30">
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
+          <div className="flex gap-2 sm:gap-3 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-lg p-2 border border-green-700/30">
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
               {post.images && post.images[0] ? (
                 <Image src={post.images[0]} alt="Listing image" fill className="object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                  <IoImageOutline className="w-8 h-8 text-gray-500" />
+                  <IoImageOutline className="w-6 h-6 text-gray-500" />
                 </div>
               )}
-              <div className="absolute top-1 left-1 bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
+              <div className="absolute top-0.5 left-0.5 bg-green-600 text-white text-[9px] px-1 py-0.5 rounded font-medium">
                 LISTING
               </div>
             </div>
-            <div className="flex-1 min-w-0 flex flex-col justify-between">
+            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
               <div>
-                <p className="text-white font-medium text-sm line-clamp-1">{post.title || 'Game Listing'}</p>
-                <p className="text-gray-400 text-xs line-clamp-2 mt-0.5">{post.description}</p>
+                <p className="text-white font-medium text-xs sm:text-sm line-clamp-1">{post.title || 'Game Listing'}</p>
+                <p className="text-gray-400 text-[11px] sm:text-xs line-clamp-2 mt-0.5">{post.description}</p>
                 {post.price && (
-                  <p className="text-green-400 font-bold text-sm mt-1">₦{post.price.toLocaleString()}</p>
+                  <p className="text-green-400 font-bold text-xs sm:text-sm mt-0.5">₦{post.price.toLocaleString()}</p>
                 )}
               </div>
               <Link
                 href={`/marketplace/${post.listingId || post.id}`}
-                className="text-blue-400 hover:text-blue-300 text-xs font-medium text-left inline-flex items-center gap-1"
+                className="text-blue-400 hover:text-blue-300 text-[11px] font-medium text-left inline-flex items-center gap-1 mt-1"
               >
                 View Listing →
               </Link>
@@ -551,23 +551,23 @@ export default function FeedPage() {
         </div>
       ) : post.images && post.images.length > 0 ? (
         /* Image Post - Horizontal Layout */
-        <div className="px-3 pb-2 flex gap-3">
+        <div className="px-3 pb-2 flex gap-2 sm:gap-3">
           <button
             onClick={() => setViewingPost(post)}
-            className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 hover:opacity-90 transition-opacity"
+            className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 hover:opacity-90 transition-opacity"
           >
             <Image src={post.images[0]} alt="Post image" fill className="object-cover" />
             {post.images.length > 1 && (
-              <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+              <div className="absolute top-0.5 right-0.5 bg-black/70 text-white text-[10px] px-1 py-0.5 rounded">
                 +{post.images.length - 1}
               </div>
             )}
           </button>
-          <div className="flex-1 min-w-0 flex flex-col justify-between">
-            <p className="text-gray-300 text-sm line-clamp-3">{post.description}</p>
+          <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+            <p className="text-gray-300 text-xs sm:text-sm line-clamp-3">{post.description}</p>
             <button
               onClick={() => setViewingPost(post)}
-              className="text-blue-400 hover:text-blue-300 text-xs font-medium mt-1 text-left"
+              className="text-blue-400 hover:text-blue-300 text-[11px] font-medium mt-1 text-left"
             >
               View Details →
             </button>
