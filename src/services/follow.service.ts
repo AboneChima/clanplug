@@ -47,6 +47,51 @@ export class FollowService {
         });
       }
 
+      // Check if they're now mutual followers (friends)
+      const mutualFollow = await prisma.follow.findUnique({
+        where: {
+          followerId_followingId: {
+            followerId: followingId,
+            followingId: followerId,
+          },
+        },
+      });
+
+      // If mutual followers, auto-create a chat if it doesn't exist
+      if (mutualFollow) {
+        try {
+          // Check if chat already exists
+          const existingChat = await prisma.chat.findFirst({
+            where: {
+              type: 'DIRECT',
+              AND: [
+                { participants: { some: { userId: followerId } } },
+                { participants: { some: { userId: followingId } } },
+              ],
+            },
+          });
+
+          if (!existingChat) {
+            // Create chat for mutual followers
+            await prisma.chat.create({
+              data: {
+                type: 'DIRECT',
+                participants: {
+                  create: [
+                    { userId: followerId },
+                    { userId: followingId },
+                  ],
+                },
+              },
+            });
+            console.log(`✅ Auto-created chat for mutual followers: ${followerId} & ${followingId}`);
+          }
+        } catch (chatError) {
+          console.error('⚠️ Failed to auto-create chat for mutual followers:', chatError);
+          // Don't fail the follow operation if chat creation fails
+        }
+      }
+
       return { success: true, message: 'Successfully followed user' };
     } catch (error) {
       console.error('Error following user:', error);
