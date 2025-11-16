@@ -258,8 +258,11 @@ export default function ProfilePage() {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setFollowers(data.followers || []);
+        const result = await response.json();
+        console.log('Followers response:', result);
+        setFollowers(result.data || result.followers || []);
+      } else {
+        console.error('Failed to load followers:', response.status);
       }
     } catch (error) {
       console.error('Error loading followers:', error);
@@ -282,8 +285,11 @@ export default function ProfilePage() {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setFollowing(data.following || []);
+        const result = await response.json();
+        console.log('Following response:', result);
+        setFollowing(result.data || result.following || []);
+      } else {
+        console.error('Failed to load following:', response.status);
       }
     } catch (error) {
       console.error('Error loading following:', error);

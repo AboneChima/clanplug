@@ -151,20 +151,23 @@ function ChatContent() {
 
   return (
     <AppShell>
-      <div className="fixed inset-0 top-16 bottom-[84px] lg:static lg:inset-auto lg:bottom-auto lg:h-[calc(100vh-10rem)] -m-4 sm:-m-6 lg:m-0">
-        <div className="h-full flex lg:max-w-7xl lg:mx-auto lg:gap-4 lg:p-4">
+      <div className="h-screen flex flex-col lg:h-auto lg:block">
+        {/* Mobile: Full screen chat container */}
+        <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:gap-4 lg:p-4 lg:h-[calc(100vh-8rem)] overflow-hidden">
           
           {/* Chat List */}
-          <div className={`${currentChat ? 'hidden lg:flex' : 'flex'} lg:w-80 flex-col bg-slate-800 lg:rounded-lg border-r lg:border border-slate-700 h-full overflow-hidden`}>
-            <div className="p-3 sm:p-4 border-b border-slate-700 flex-shrink-0">
-              <h2 className="text-base sm:text-lg font-bold text-white">Messages</h2>
+          <div className={`${currentChat ? 'hidden' : 'flex'} lg:flex lg:w-80 flex-col bg-slate-800 lg:rounded-xl border-r lg:border border-slate-700 overflow-hidden`}>
+            <div className="p-4 border-b border-slate-700 flex-shrink-0 bg-slate-800/95 backdrop-blur-sm">
+              <h2 className="text-lg font-bold text-white">Messages</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Your conversations</p>
             </div>
             
-            <div className="flex-1 overflow-y-auto overscroll-contain">
+            <div className="flex-1 overflow-y-auto overscroll-contain bg-slate-900/50">
               {chats.length === 0 ? (
-                <div className="text-center py-12 px-4">
-                  <IoChatbubbleEllipsesOutline className="w-12 h-12 text-gray-500 mx-auto mb-2" />
-                  <p className="text-gray-400 text-sm">No messages yet</p>
+                <div className="text-center py-16 px-4">
+                  <IoChatbubbleEllipsesOutline className="w-16 h-16 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400 text-sm">No conversations yet</p>
+                  <p className="text-gray-500 text-xs mt-1">Follow friends to start chatting</p>
                 </div>
               ) : (
                 chats.map((chat) => (
@@ -174,24 +177,24 @@ function ChatContent() {
                       setCurrentChat(chat);
                       window.history.pushState({}, '', `/chat?id=${chat.id}`);
                     }}
-                    className={`w-full p-3 sm:p-3.5 hover:bg-slate-700 border-b border-slate-700 transition-colors text-left ${
-                      currentChat?.id === chat.id ? 'bg-slate-700' : ''
+                    className={`w-full p-4 hover:bg-slate-700/50 border-b border-slate-700/50 transition-all text-left ${
+                      currentChat?.id === chat.id ? 'bg-slate-700/70' : ''
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       {getAvatar(chat) ? (
-                        <img src={getAvatar(chat)!} alt="" className="w-12 h-12 sm:w-11 sm:h-11 rounded-full object-cover flex-shrink-0" />
+                        <img src={getAvatar(chat)!} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-700" />
                       ) : (
-                        <div className="w-12 h-12 sm:w-11 sm:h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                          <span className="text-white font-semibold text-sm">{getDisplayName(chat).charAt(0)}</span>
+                        <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-600">
+                          <span className="text-white font-semibold">{getDisplayName(chat).charAt(0)}</span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-semibold text-white truncate text-sm sm:text-[15px]">{getDisplayName(chat)}</h3>
-                          <span className="text-[10px] sm:text-[11px] text-gray-400 flex-shrink-0 ml-2">{formatTime(chat.updatedAt)}</span>
+                          <h3 className="font-semibold text-white truncate">{getDisplayName(chat)}</h3>
+                          <span className="text-[11px] text-gray-500 flex-shrink-0 ml-2">{formatTime(chat.updatedAt)}</span>
                         </div>
-                        <p className="text-xs text-gray-400 truncate">
+                        <p className="text-sm text-gray-400 truncate">
                           {(chat as any).lastMessage?.content || 'Start a conversation'}
                         </p>
                       </div>
@@ -203,60 +206,65 @@ function ChatContent() {
           </div>
 
           {/* Chat Conversation */}
-          <div className={`${!currentChat ? 'hidden lg:flex' : 'flex'} flex-1 flex-col bg-slate-900 lg:rounded-lg lg:border border-slate-700 h-full overflow-hidden`}>
+          <div className={`${!currentChat ? 'hidden' : 'flex'} lg:flex flex-1 flex-col bg-slate-900 lg:rounded-xl lg:border border-slate-700 overflow-hidden`}>
             {!currentChat ? (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center p-8">
                 <div className="text-center">
-                  <IoChatbubbleEllipsesOutline className="w-16 h-16 text-gray-500 mx-auto mb-3" />
-                  <p className="text-gray-400">Select a chat to start messaging</p>
+                  <IoChatbubbleEllipsesOutline className="w-20 h-20 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg font-medium">Select a chat</p>
+                  <p className="text-gray-500 text-sm mt-1">Choose a conversation to start messaging</p>
                 </div>
               </div>
             ) : (
               <>
                 {/* Chat Header */}
-                <div className="bg-slate-800 border-b border-slate-700 p-3 sm:p-3.5 flex items-center gap-3 flex-shrink-0">
+                <div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-4 flex items-center gap-3 flex-shrink-0">
                   <button
                     onClick={() => {
                       setCurrentChat(null);
                       window.history.pushState({}, '', '/chat');
                     }}
-                    className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0 -ml-1"
+                    className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
                   >
                     <IoArrowBackOutline className="w-5 h-5 text-white" />
                   </button>
                   {getAvatar(currentChat) ? (
-                    <img src={getAvatar(currentChat)!} alt="" className="w-10 h-10 sm:w-9 sm:h-9 rounded-full object-cover flex-shrink-0" />
+                    <img src={getAvatar(currentChat)!} alt="" className="w-11 h-11 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-700" />
                   ) : (
-                    <div className="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-semibold text-sm">{getDisplayName(currentChat).charAt(0)}</span>
+                    <div className="w-11 h-11 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-600">
+                      <span className="text-white font-semibold">{getDisplayName(currentChat).charAt(0)}</span>
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-white text-[15px] sm:text-sm truncate">{getDisplayName(currentChat)}</h2>
-                    <p className="text-[11px] text-green-400">Online</p>
+                    <h2 className="font-semibold text-white text-base truncate">{getDisplayName(currentChat)}</h2>
+                    <p className="text-xs text-emerald-400 flex items-center gap-1">
+                      <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                      Online
+                    </p>
                   </div>
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4 space-y-2.5">
+                <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3 bg-slate-900/50">
                   {loading ? (
-                    <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                    <div className="text-center py-16">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto"></div>
+                      <p className="text-gray-400 text-sm mt-3">Loading messages...</p>
                     </div>
                   ) : messages.length === 0 ? (
-                    <div className="text-center py-12 px-4">
-                      <p className="text-gray-400 text-sm">No messages yet. Say hi! 👋</p>
+                    <div className="text-center py-16 px-4">
+                      <p className="text-gray-400">No messages yet. Say hi! 👋</p>
                     </div>
                   ) : (
                     messages.map((msg) => {
                       const isOwn = msg.userId === user?.id;
                       return (
                         <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[80%] sm:max-w-[75%] md:max-w-[70%] rounded-2xl px-3 py-2 shadow-sm ${
-                            isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-slate-800 text-white rounded-bl-md'
+                          <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 shadow-md ${
+                            isOwn ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-slate-800 text-white rounded-bl-sm border border-slate-700'
                           }`}>
-                            <p className="text-[14px] sm:text-[13px] break-words leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                            <div className="flex items-center justify-end gap-1 mt-1">
+                            <p className="text-[15px] break-words leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                            <div className="flex items-center justify-end gap-1.5 mt-1.5">
                               <span className="text-[10px] opacity-70">
                                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
@@ -270,9 +278,9 @@ function ChatContent() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Message Input */}
-                <div className="bg-slate-800 border-t border-slate-700 p-3 sm:p-3.5 flex-shrink-0">
-                  <div className="flex items-center gap-2.5">
+                {/* Message Input - Fixed at bottom on mobile */}
+                <div className="bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 p-4 flex-shrink-0 safe-bottom">
+                  <div className="flex items-center gap-3">
                     <input
                       type="text"
                       value={messageText}
@@ -280,12 +288,12 @@ function ChatContent() {
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                       placeholder="Type a message..."
                       disabled={sending}
-                      className="flex-1 px-4 py-2.5 sm:py-2 border border-slate-600 rounded-full bg-slate-700 text-white text-[15px] sm:text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      className="flex-1 px-4 py-3 border border-slate-600 rounded-full bg-slate-700 text-white text-[15px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                     />
                     <button
                       onClick={handleSend}
                       disabled={!messageText.trim() || sending}
-                      className="p-2.5 sm:p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-lg"
+                      className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-lg"
                     >
                       <IoSendOutline className="w-5 h-5" />
                     </button>
