@@ -716,25 +716,14 @@ export default function FeedPage() {
                 <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5">Dashboard</h1>
                 <p className="text-xs sm:text-sm text-gray-400">Your social feed</p>
               </div>
-              <Link
-                href="/profile"
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-600/50"
+              <button
+                onClick={() => setCommentingOnPost('create-post-modal')}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
               >
-                {user?.avatar ? (
-                  <img 
-                    src={user.avatar} 
-                    alt={user.username} 
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-600 flex items-center justify-center">
-                    <span className="text-xs font-semibold text-white">
-                      {user?.firstName?.[0] || user?.username?.[0] || 'U'}
-                    </span>
-                  </div>
-                )}
-                <span className="hidden sm:inline text-sm font-medium">Profile</span>
-              </Link>
+                <IoImageOutline className="w-5 h-5" />
+                <span className="hidden sm:inline text-sm">Create Post</span>
+                <span className="sm:hidden text-sm">Post</span>
+              </button>
             </div>
           </div>
         </div>
@@ -876,60 +865,7 @@ export default function FeedPage() {
               )}
             </div>
           ) : (
-            /* For You Feed */
             <div className="w-full max-w-3xl mx-auto space-y-3">
-              {/* Create Post - Compact */}
-              <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                <div className="flex gap-2">
-                  {user?.avatar ? (
-                    <Image 
-                      src={user.avatar} 
-                      alt={user.username || 'User'} 
-                      width={32} 
-                      height={32} 
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white text-xs font-semibold">
-                        {user?.firstName?.[0]}{user?.lastName?.[0]}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <textarea
-                      value={newPostContent}
-                      onChange={(e) => setNewPostContent(e.target.value)}
-                      placeholder="What's on your mind?"
-                      className="w-full bg-gray-700/50 text-white text-sm rounded-lg p-2 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      rows={2}
-                    />
-                    <div className="flex items-center justify-between mt-2">
-                      <label className="flex items-center gap-1.5 text-gray-400 hover:text-blue-500 cursor-pointer text-xs">
-                        <IoImageOutline className="w-4 h-4" />
-                        <span className="hidden sm:inline">Photo</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => setNewPostImage(e.target.files?.[0] || null)}
-                          className="hidden"
-                        />
-                      </label>
-                      <button
-                        onClick={handleCreatePost}
-                        disabled={!newPostContent.trim()}
-                        className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Post
-                      </button>
-                    </div>
-                    {newPostImage && (
-                      <p className="text-green-500 text-xs mt-1">✓ {newPostImage.name}</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
               {/* Posts */}
               {loading ? (
                 <div className="text-center py-12">
@@ -950,6 +886,99 @@ export default function FeedPage() {
           )}
         </div>
       </div>
+
+      {/* Create Post Modal */}
+      {commentingOnPost === 'create-post-modal' && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setCommentingOnPost(null)}
+        >
+          <div 
+            className="bg-slate-800 rounded-xl max-w-lg w-full p-6 border border-slate-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-white">Create Post</h2>
+              <button
+                onClick={() => setCommentingOnPost(null)}
+                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex gap-3 mb-4">
+              {user?.avatar ? (
+                <Image 
+                  src={user.avatar} 
+                  alt={user.username || 'User'} 
+                  width={48} 
+                  height={48} 
+                  className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-semibold">
+                    {user?.firstName?.[0]}{user?.lastName?.[0]}
+                  </span>
+                </div>
+              )}
+              <div className="flex-1">
+                <p className="text-white font-medium">{user?.firstName} {user?.lastName}</p>
+                <p className="text-gray-400 text-sm">@{user?.username}</p>
+              </div>
+            </div>
+
+            <textarea
+              value={newPostContent}
+              onChange={(e) => setNewPostContent(e.target.value)}
+              placeholder="What's on your mind?"
+              className="w-full bg-slate-700/50 text-white rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 border border-slate-600 mb-4"
+              rows={6}
+              autoFocus
+            />
+
+            {newPostImage && (
+              <div className="mb-4 relative">
+                <img src={URL.createObjectURL(newPostImage)} alt="Preview" className="w-full rounded-lg" />
+                <button
+                  onClick={() => setNewPostImage(null)}
+                  className="absolute top-2 right-2 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg cursor-pointer transition-colors">
+                <IoImageOutline className="w-5 h-5" />
+                <span className="text-sm">Add Photo</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setNewPostImage(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+              </label>
+              <button
+                onClick={() => {
+                  handleCreatePost();
+                  setCommentingOnPost(null);
+                }}
+                disabled={!newPostContent.trim()}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Post Detail Modal */}
       {viewingPost && (

@@ -313,42 +313,46 @@ export default function UserProfilePage() {
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Header - Compact for small screens */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-3 sm:py-6 mb-4">
+        {/* Header - Clean Modern Design */}
+        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm py-4 sm:py-5 mb-4">
           <div className="max-w-4xl mx-auto px-3 sm:px-4">
             <button
               onClick={() => router.back()}
-              className="inline-flex items-center gap-1.5 text-white/80 hover:text-white mb-2 sm:mb-3 transition-colors text-sm"
+              className="inline-flex items-center gap-1.5 text-gray-400 hover:text-white mb-3 transition-colors text-sm"
             >
               <IoArrowBack className="w-4 h-4" />
               <span>Back</span>
             </button>
-            <h1 className="text-lg sm:text-2xl font-bold text-white">Profile</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">Profile</h1>
           </div>
         </div>
 
         <div className="max-w-4xl mx-auto px-3 sm:px-4">
-          {/* Profile Card - Optimized for small screens */}
+          {/* Profile Card - Modern Clean Design */}
           <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl mb-4">
-            {/* Cover - Smaller on mobile */}
-            <div className="h-20 sm:h-32 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+            {/* Modern pattern cover */}
+            <div className="h-24 sm:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
+              </div>
+            </div>
 
             {/* Profile Info */}
-            <div className="px-3 sm:px-4 pb-4">
+            <div className="px-4 sm:px-6 pb-6">
               {/* Avatar and Actions */}
-              <div className="flex items-end justify-between -mt-10 sm:-mt-16 mb-3">
+              <div className="flex items-end justify-between -mt-12 sm:-mt-16 mb-4">
                 <div className="relative">
                   {profile.avatar ? (
                     <Image
                       src={profile.avatar}
                       alt={profile.username}
-                      width={80}
-                      height={80}
-                      className="w-16 h-16 sm:w-24 sm:h-24 rounded-full border-3 border-slate-900 object-cover shadow-xl"
+                      width={96}
+                      height={96}
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 object-cover shadow-xl ring-2 ring-slate-700"
                     />
                   ) : (
-                    <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full border-3 border-slate-900 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl">
-                      <span className="text-xl sm:text-3xl font-bold text-white">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 bg-slate-700 flex items-center justify-center shadow-xl ring-2 ring-slate-700">
+                      <span className="text-2xl sm:text-3xl font-bold text-gray-400">
                         {profile.firstName[0]}{profile.lastName[0]}
                       </span>
                     </div>
@@ -411,19 +415,19 @@ export default function UserProfilePage() {
                 </div>
               </div>
 
-              {/* Stats - Compact */}
-              <div className="flex gap-3 sm:gap-4 pt-3 border-t border-slate-700">
-                <div>
-                  <p className="text-base sm:text-lg font-bold text-white">{profile._count.posts}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-400">Posts</p>
+              {/* Stats - Modern Grid Layout */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t border-slate-700">
+                <div className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                  <p className="text-lg sm:text-xl font-bold text-white">{profile._count.posts}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Posts</p>
                 </div>
-                <div>
-                  <p className="text-base sm:text-lg font-bold text-white">{profile._count.followers}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-400">Followers</p>
+                <div className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                  <p className="text-lg sm:text-xl font-bold text-white">{profile._count.followers}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Followers</p>
                 </div>
-                <div>
-                  <p className="text-base sm:text-lg font-bold text-white">{profile._count.following}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-400">Following</p>
+                <div className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                  <p className="text-lg sm:text-xl font-bold text-white">{profile._count.following}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Following</p>
                 </div>
               </div>
             </div>
