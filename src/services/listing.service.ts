@@ -85,6 +85,29 @@ class ListingService {
         },
       });
 
+      // Automatically create a social post for this listing
+      try {
+        const postDescription = `🎮 New ${data.category} Listing!\n\n${data.title}\n\n${data.description.substring(0, 150)}${data.description.length > 150 ? '...' : ''}\n\n💰 Price: ${data.currency} ${data.price.toLocaleString()}`;
+        
+        await prisma.post.create({
+          data: {
+            userId: data.sellerId,
+            title: `${data.title} - Marketplace Listing`,
+            description: postDescription,
+            type: 'MARKETPLACE_LISTING',
+            images: data.images.slice(0, 1), // Use first image only
+            videos: [],
+            listingId: listing.id,
+            price: data.price,
+            category: data.category,
+          },
+        });
+        console.log('✅ Auto-created social post for listing:', listing.id);
+      } catch (postError) {
+        console.error('⚠️ Failed to create social post for listing:', postError);
+        // Don't fail the listing creation if post creation fails
+      }
+
       return listing;
     } catch (error) {
       console.error('Error creating listing:', error);

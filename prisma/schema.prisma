@@ -215,6 +215,7 @@ model Post {
   gameId         String?
   hasRareItems   Boolean    @default(false)
   isVerified     Boolean    @default(false)
+  listingId      String?    // Link to marketplace listing
   comments       Comment[]
   escrows        Escrow[]
   likes          Like[]
@@ -512,6 +513,7 @@ enum Currency {
 enum PostType {
   GAME_ACCOUNT
   SOCIAL_POST
+  MARKETPLACE_LISTING
   SERVICE_OFFER
 }
 
