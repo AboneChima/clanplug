@@ -28,9 +28,9 @@ async function fixMigration() {
       
       // Mark the migration as applied since tables already exist
       try {
-        // First check if migration record exists
+        // First check if migration record exists and its status
         const existingMigration = await prisma.$queryRaw`
-          SELECT migration_name FROM "_prisma_migrations" 
+          SELECT migration_name, finished_at FROM "_prisma_migrations" 
           WHERE migration_name = '20251028202337_lordmoon'
         `;
         
@@ -50,9 +50,19 @@ async function fixMigration() {
               1
             )
           `;
-          console.log('✅ Marked migration as applied');
+          console.log('✅ Marked migration as applied (inserted)');
+        } else if (!existingMigration[0].finished_at) {
+          // Update the failed migration to mark it as completed
+          await prisma.$executeRaw`
+            UPDATE "_prisma_migrations" 
+            SET finished_at = NOW(), 
+                applied_steps_count = 1,
+                logs = ''
+            WHERE migration_name = '20251028202337_lordmoon'
+          `;
+          console.log('✅ Marked failed migration as completed');
         } else {
-          console.log('ℹ️ Migration record already exists');
+          console.log('ℹ️ Migration already completed');
         }
       } catch (e) {
         console.log('⚠️ Could not mark migration as applied:', e.message);
