@@ -105,19 +105,36 @@ export const postController = {
 
       const authorId = (req as any).user.id;
       
-      // ONLY check verification for SOCIAL_POST with media, NOT marketplace posts
+      // Check KYC verification for MARKETPLACE posts
+      const isMarketplacePost = type === 'MARKETPLACE_LISTING' || type === 'GAME_ACCOUNT';
+      
+      if (isMarketplacePost) {
+        const user = await import('../config/database').then(m => m.prisma.user.findUnique({
+          where: { id: authorId },
+          select: { isKYCVerified: true }
+        }));
+        
+        if (!user?.isKYCVerified) {
+          res.status(403).json({
+            success: false,
+            message: 'KYC verification required to post on marketplace. Please complete KYC verification.',
+          });
+          return;
+        }
+      }
+      
+      // Check verification badge for SOCIAL_POST with media
       const hasMedia = (images && images.length > 0) || (videos && videos.length > 0);
       const isSocialPost = type === 'SOCIAL_POST';
       
       if (hasMedia && isSocialPost) {
-        // Import verification service
         const { verificationService } = await import('../services/verification.service');
         const canPostMedia = await verificationService.canPostMedia(authorId);
         
         if (!canPostMedia) {
           res.status(403).json({
             success: false,
-            message: 'Image posting on social feed requires verification. Marketplace posts are allowed.',
+            message: 'Verification badge required to post images on social feed. Text posts are allowed.',
           });
           return;
         }
