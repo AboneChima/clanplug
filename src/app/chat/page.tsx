@@ -6,7 +6,11 @@ import {
   IoChatbubbleEllipsesOutline, 
   IoSendOutline, 
   IoArrowBackOutline,
-  IoCheckmarkDoneOutline
+  IoCheckmarkDoneOutline,
+  IoHappyOutline,
+  IoArrowUndoOutline,
+  IoImageOutline,
+  IoCloseOutline
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,7 +30,17 @@ function ChatContent() {
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [showChatMenu, setShowChatMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [customReason, setCustomReason] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const emojis = ['😀', '😂', '😍', '🥰', '😎', '🤔', '😢', '😭', '😡', '🤯', '👍', '👎', '❤️', '🔥', '💯', '🎉', '✨', '💪', '🙏', '👏', '🤝', '💀', '😴', '🤗', '😇', '🥳', '😱', '🤩', '😋', '🤤'];
 
   // Load chats on mount and when returning to page
   useEffect(() => {
@@ -142,19 +156,50 @@ function ChatContent() {
   };
 
   const handleSend = async () => {
-    if (!messageText.trim() || !currentChat || !accessToken || sending) return;
+    if ((!messageText.trim() && !selectedImage) || !currentChat || !accessToken || sending) return;
     
-    const content = messageText.trim();
-    setMessageText('');
     setSending(true);
     
     try {
-      const newMsg = await chatService.sendMessage(currentChat.id, { content, type: 'TEXT' }, accessToken);
+      let imageUrl = '';
+      
+      // Upload image first if selected
+      if (selectedImage) {
+        try {
+          const uploadResult = await chatService.uploadFile(accessToken, selectedImage);
+          if (uploadResult.success && uploadResult.data?.url) {
+            imageUrl = uploadResult.data.url;
+          } else {
+            throw new Error('Failed to upload image');
+          }
+        } catch (uploadError: any) {
+          showToast(uploadError.message || 'Failed to upload image', 'error');
+          setSending(false);
+          return;
+        }
+      }
+      
+      const content = messageText.trim() || ''; // Don't add "Image" text
+      const messageData: any = { 
+        content, 
+        type: imageUrl ? 'IMAGE' : 'TEXT',
+        attachments: imageUrl ? [imageUrl] : []
+      };
+      
+      if (replyingTo) {
+        messageData.replyToId = replyingTo.id;
+      }
+      
+      setMessageText('');
+      setSelectedImage(null);
+      setShowEmojiPicker(false);
+      
+      const newMsg = await chatService.sendMessage(currentChat.id, messageData, accessToken);
       setMessages(prev => [...prev, newMsg]);
+      setReplyingTo(null);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     } catch (error: any) {
       showToast(error.message || 'Failed to send', 'error');
-      setMessageText(content);
     } finally {
       setSending(false);
     }
@@ -284,7 +329,7 @@ function ChatContent() {
             ) : (
               <>
                 {/* Chat Header */}
-                <div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-4 flex items-center gap-3 flex-shrink-0">
+                <div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-2 sm:p-3 flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={() => {
                       setCurrentChat(null);
@@ -295,23 +340,67 @@ function ChatContent() {
                     <IoArrowBackOutline className="w-5 h-5 text-white" />
                   </button>
                   {getAvatar(currentChat) ? (
-                    <img src={getAvatar(currentChat)!} alt="" className="w-11 h-11 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-700" />
+                    <img src={getAvatar(currentChat)!} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-700" />
                   ) : (
-                    <div className="w-11 h-11 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-600">
-                      <span className="text-white font-semibold">{getDisplayName(currentChat).charAt(0)}</span>
+                    <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-600">
+                      <span className="text-white text-sm font-semibold">{getDisplayName(currentChat).charAt(0)}</span>
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-white text-base truncate">{getDisplayName(currentChat)}</h2>
+                    <h2 className="font-semibold text-white text-sm truncate">{getDisplayName(currentChat)}</h2>
                     <p className="text-xs text-emerald-400 flex items-center gap-1">
-                      <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
                       Online
                     </p>
+                  </div>
+                  
+                  {/* 3-Dot Menu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowChatMenu(!showChatMenu)}
+                      className="p-2 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
+                    >
+                      <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                    
+                    {showChatMenu && (
+                      <>
+                        <div className="fixed inset-0 z-[60]" onClick={() => setShowChatMenu(false)}></div>
+                        <div className="absolute right-0 top-full mt-1 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-[70] overflow-hidden">
+                          <button
+                            onClick={() => {
+                              setShowChatMenu(false);
+                              setShowReportModal(true);
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm text-white hover:bg-gray-800 transition-colors flex items-center gap-3 bg-gray-900"
+                          >
+                            <svg className="w-5 h-5 text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span className="font-medium">Report User</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowChatMenu(false);
+                              setShowBlockModal(true);
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-gray-800 transition-colors flex items-center gap-3 border-t border-gray-700 bg-gray-900"
+                          >
+                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
+                            <span className="font-medium">Block User</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-2 bg-slate-900/50">
+                <div className="flex-1 overflow-y-auto overscroll-contain p-3 space-y-1.5 bg-slate-900/50">
                   {loading ? (
                     <div className="text-center py-16">
                       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto"></div>
@@ -325,16 +414,147 @@ function ChatContent() {
                     messages.map((msg) => {
                       const isOwn = msg.userId === user?.id;
                       return (
-                        <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[75%] rounded-2xl px-3 py-1.5 shadow-sm ${
-                            isOwn ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-slate-800 text-white rounded-bl-sm border border-slate-700'
-                          }`}>
-                            <p className="text-[13px] break-words leading-snug whitespace-pre-wrap">{msg.content}</p>
-                            <div className="flex items-center justify-end gap-1 mt-0.5">
-                              <span className="text-[9px] opacity-70">
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                              {isOwn && <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />}
+                        <div 
+                          key={msg.id} 
+                          className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group px-1`}
+                        >
+                          <div 
+                            className={`relative max-w-[70%] sm:max-w-[65%] touch-pan-y`}
+                            onTouchStart={(e) => {
+                              const touch = e.touches[0];
+                              const startX = touch.clientX;
+                              const startY = touch.clientY;
+                              const element = e.currentTarget as HTMLElement;
+                              const messageElement = element.querySelector('.message-bubble') as HTMLElement;
+                              const replyIcon = element.querySelector('.reply-icon') as HTMLElement;
+                              let isDragging = false;
+                              
+                              const handleTouchMove = (moveEvent: TouchEvent) => {
+                                const moveTouch = moveEvent.touches[0];
+                                const diffX = moveTouch.clientX - startX;
+                                const diffY = moveTouch.clientY - startY;
+                                
+                                // Only trigger horizontal swipe if moving more horizontally than vertically
+                                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+                                  isDragging = true;
+                                  moveEvent.preventDefault();
+                                  
+                                  // Determine swipe direction based on message ownership
+                                  const maxSwipe = 80;
+                                  let swipeAmount = 0;
+                                  
+                                  if (isOwn) {
+                                    // Own messages: swipe left (negative)
+                                    swipeAmount = Math.max(Math.min(diffX, 0), -maxSwipe);
+                                  } else {
+                                    // Other's messages: swipe right (positive)
+                                    swipeAmount = Math.min(Math.max(diffX, 0), maxSwipe);
+                                  }
+                                  
+                                  // Apply transform with smooth transition
+                                  if (messageElement) {
+                                    messageElement.style.transform = `translateX(${swipeAmount}px)`;
+                                    messageElement.style.transition = 'none';
+                                  }
+                                  
+                                  // Show reply icon with fade in
+                                  if (replyIcon && Math.abs(swipeAmount) > 20) {
+                                    replyIcon.style.opacity = String(Math.min(Math.abs(swipeAmount) / 60, 1));
+                                  }
+                                  
+                                  // Trigger reply at threshold
+                                  if (Math.abs(swipeAmount) >= 60) {
+                                    setReplyingTo(msg);
+                                    // Haptic feedback if available
+                                    if (navigator.vibrate) {
+                                      navigator.vibrate(50);
+                                    }
+                                    // Auto snap back immediately when reply triggers
+                                    if (messageElement) {
+                                      messageElement.style.transition = 'transform 0.3s ease-out';
+                                      messageElement.style.transform = 'translateX(0)';
+                                    }
+                                    if (replyIcon) {
+                                      replyIcon.style.transition = 'opacity 0.3s ease-out';
+                                      replyIcon.style.opacity = '0';
+                                    }
+                                    cleanup();
+                                  }
+                                }
+                              };
+                              
+                              const handleTouchEnd = () => {
+                                if (isDragging && messageElement) {
+                                  // Smooth snap back
+                                  messageElement.style.transition = 'transform 0.3s ease-out';
+                                  messageElement.style.transform = 'translateX(0)';
+                                  if (replyIcon) {
+                                    replyIcon.style.opacity = '0';
+                                  }
+                                }
+                                cleanup();
+                              };
+                              
+                              const cleanup = () => {
+                                document.removeEventListener('touchmove', handleTouchMove);
+                                document.removeEventListener('touchend', handleTouchEnd);
+                              };
+                              
+                              document.addEventListener('touchmove', handleTouchMove, { passive: false });
+                              document.addEventListener('touchend', handleTouchEnd);
+                            }}
+                          >
+                            {/* Reply Icon - Shows during swipe */}
+                            <div 
+                              className={`reply-icon absolute top-1/2 -translate-y-1/2 ${isOwn ? 'right-full mr-2' : 'left-full ml-2'} opacity-0 transition-opacity pointer-events-none`}
+                            >
+                              <div className="p-2 bg-blue-500/20 rounded-full">
+                                <IoArrowUndoOutline className="w-4 h-4 text-blue-400" />
+                              </div>
+                            </div>
+                            
+                            {/* Desktop hover reply button */}
+                            <button
+                              onClick={() => setReplyingTo(msg)}
+                              className="absolute -left-7 top-1/2 -translate-y-1/2 p-1 bg-slate-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block"
+                              title="Reply"
+                            >
+                              <IoArrowUndoOutline className="w-3.5 h-3.5 text-gray-300" />
+                            </button>
+                            
+                            <div className={`message-bubble inline-block rounded-2xl shadow-sm ${
+                              msg.type === 'IMAGE' && msg.attachments?.length && !msg.content ? 'p-0.5' : 'px-2.5 py-1.5'
+                            } ${
+                              isOwn ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-slate-800 text-white rounded-bl-sm border border-slate-700'
+                            }`}>
+                              {msg.replyTo && (
+                                <div className="mb-1 pb-1 border-b border-white/20">
+                                  <p className="text-[9px] opacity-70 flex items-center gap-0.5">
+                                    <IoArrowUndoOutline className="w-2.5 h-2.5" />
+                                    Reply to {msg.replyTo.sender?.firstName || 'User'}
+                                  </p>
+                                  <p className="text-[10px] opacity-80 truncate">{msg.replyTo.content}</p>
+                                </div>
+                              )}
+                              
+                              {/* Display image if message type is IMAGE and has attachments - Minimal padding */}
+                              {msg.type === 'IMAGE' && msg.attachments && msg.attachments.length > 0 && (
+                                <img 
+                                  src={msg.attachments[0]} 
+                                  alt="Shared image" 
+                                  className="max-w-[140px] sm:max-w-[160px] max-h-[140px] sm:max-h-[160px] rounded object-cover cursor-pointer block"
+                                  onClick={() => window.open(msg.attachments[0], '_blank')}
+                                />
+                              )}
+                              
+                              {msg.content && <p className={`text-xs break-words leading-[1.4] whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-1' : ''}`}>{msg.content}</p>}
+                              
+                              <div className="flex items-center justify-end gap-0.5 mt-0.5">
+                                <span className="text-[9px] opacity-70">
+                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                {isOwn && <IoCheckmarkDoneOutline className="w-2.5 h-2.5 opacity-70" />}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -345,21 +565,100 @@ function ChatContent() {
                 </div>
 
                 {/* Message Input - Fixed at bottom on mobile */}
-                <div className="bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 p-4 flex-shrink-0 safe-bottom">
-                  <div className="flex items-center gap-3">
+                <div className="bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 p-2 sm:p-3 flex-shrink-0 safe-bottom">
+                  {/* Reply Preview */}
+                  {replyingTo && (
+                    <div className="mb-2 flex items-center gap-2 bg-slate-700/50 rounded-lg p-2 border-l-2 border-blue-500">
+                      <IoArrowUndoOutline className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] text-blue-400 font-medium">Replying to {replyingTo.sender?.firstName || replyingTo.user?.firstName || 'User'}</p>
+                        <p className="text-xs text-gray-300 truncate">{replyingTo.content}</p>
+                      </div>
+                      <button
+                        onClick={() => setReplyingTo(null)}
+                        className="p-0.5 hover:bg-slate-600 rounded transition-colors"
+                      >
+                        <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Emoji Picker */}
+                  {showEmojiPicker && (
+                    <div className="mb-2 bg-slate-700 rounded-lg p-2 border border-slate-600">
+                      <div className="grid grid-cols-10 gap-1">
+                        {emojis.map((emoji, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setMessageText(prev => prev + emoji);
+                              setShowEmojiPicker(false);
+                            }}
+                            className="text-xl hover:bg-slate-600 rounded p-1 transition-colors"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Image Preview */}
+                  {selectedImage && (
+                    <div className="mb-2 relative inline-block">
+                      <img 
+                        src={URL.createObjectURL(selectedImage)} 
+                        alt="Preview" 
+                        className="max-h-20 rounded-lg"
+                      />
+                      <button
+                        onClick={() => setSelectedImage(null)}
+                        className="absolute -top-1 -right-1 p-1 bg-red-500 hover:bg-red-600 rounded-full transition-colors"
+                      >
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                      className="p-1.5 hover:bg-slate-700 text-gray-400 hover:text-white rounded-full transition-colors flex-shrink-0"
+                    >
+                      <IoHappyOutline className="w-5 h-5" />
+                    </button>
+                    <label className="p-1.5 hover:bg-slate-700 text-gray-400 hover:text-white rounded-full transition-colors flex-shrink-0 cursor-pointer">
+                      <IoImageOutline className="w-5 h-5" />
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setSelectedImage(file);
+                            showToast('Image selected', 'success');
+                          }
+                        }}
+                        className="hidden" 
+                      />
+                    </label>
                     <input
                       type="text"
                       value={messageText}
                       onChange={(e) => setMessageText(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                      placeholder="Type a message..."
+                      placeholder={replyingTo ? "Reply..." : "Message..."}
                       disabled={sending}
-                      className="flex-1 px-4 py-3 border border-slate-600 rounded-full bg-slate-700 text-white text-[15px] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      className="flex-1 min-w-0 px-3 py-1.5 border border-slate-600 rounded-full bg-slate-700 text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                     />
                     <button
                       onClick={handleSend}
-                      disabled={!messageText.trim() || sending}
-                      className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-lg"
+                      disabled={(!messageText.trim() && !selectedImage) || sending}
+                      className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                     >
                       <IoSendOutline className="w-5 h-5" />
                     </button>
@@ -370,6 +669,228 @@ function ChatContent() {
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-800 rounded-2xl w-full max-w-md border border-slate-700 shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <h2 className="text-lg font-semibold text-white">Report User</h2>
+              <button
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportReason('');
+                  setCustomReason('');
+                }}
+                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <IoCloseOutline className="w-6 h-6 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-gray-300">Why are you reporting {getDisplayName(currentChat!)}?</p>
+              
+              <div className="space-y-2">
+                {['Spam', 'Harassment', 'Inappropriate Content', 'Scam/Fraud', 'Other'].map((reason) => (
+                  <label key={reason} className="flex items-center gap-3 p-3 bg-slate-700/30 hover:bg-slate-700/50 rounded-lg cursor-pointer transition-colors">
+                    <input
+                      type="radio"
+                      name="reportReason"
+                      value={reason}
+                      checked={reportReason === reason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <span className="text-sm text-white">{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              {reportReason === 'Other' && (
+                <textarea
+                  value={customReason}
+                  onChange={(e) => setCustomReason(e.target.value)}
+                  placeholder="Please describe the issue..."
+                  rows={3}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                />
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowReportModal(false);
+                    setReportReason('');
+                    setCustomReason('');
+                  }}
+                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!reportReason) {
+                      showToast('Please select a reason', 'error');
+                      return;
+                    }
+                    if (reportReason === 'Other' && !customReason.trim()) {
+                      showToast('Please describe the issue', 'error');
+                      return;
+                    }
+                    
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/reports`, {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          reportedUserId: getOtherUser(currentChat!)?.userId,
+                          reason: reportReason === 'Other' ? customReason : reportReason,
+                          type: 'USER',
+                          chatId: currentChat?.id,
+                        }),
+                      });
+                      
+                      if (response.ok) {
+                        showToast('Report submitted successfully', 'success');
+                        setShowReportModal(false);
+                        setReportReason('');
+                        setCustomReason('');
+                      } else {
+                        showToast('Failed to submit report', 'error');
+                      }
+                    } catch (error) {
+                      showToast('Error submitting report', 'error');
+                    }
+                  }}
+                  disabled={!reportReason || (reportReason === 'Other' && !customReason.trim())}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
+                >
+                  Submit Report
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Block Modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-800 rounded-2xl w-full max-w-md border border-slate-700 shadow-2xl">
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <h2 className="text-lg font-semibold text-white">Block User</h2>
+              <button
+                onClick={() => {
+                  setShowBlockModal(false);
+                  setReportReason('');
+                  setCustomReason('');
+                }}
+                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <IoCloseOutline className="w-6 h-6 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-gray-300">Why are you blocking {getDisplayName(currentChat!)}?</p>
+              
+              <div className="space-y-2">
+                {['Spam', 'Harassment', 'Unwanted Contact', 'Inappropriate Behavior', 'Other'].map((reason) => (
+                  <label key={reason} className="flex items-center gap-3 p-3 bg-slate-700/30 hover:bg-slate-700/50 rounded-lg cursor-pointer transition-colors">
+                    <input
+                      type="radio"
+                      name="blockReason"
+                      value={reason}
+                      checked={reportReason === reason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      className="w-4 h-4 text-red-600"
+                    />
+                    <span className="text-sm text-white">{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              {reportReason === 'Other' && (
+                <textarea
+                  value={customReason}
+                  onChange={(e) => setCustomReason(e.target.value)}
+                  placeholder="Please describe why you're blocking this user..."
+                  rows={3}
+                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none text-sm"
+                />
+              )}
+
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                <p className="text-xs text-red-400">
+                  ⚠️ Blocking will prevent this user from contacting you. This action can be undone in settings.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowBlockModal(false);
+                    setReportReason('');
+                    setCustomReason('');
+                  }}
+                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!reportReason) {
+                      showToast('Please select a reason', 'error');
+                      return;
+                    }
+                    if (reportReason === 'Other' && !customReason.trim()) {
+                      showToast('Please describe the reason', 'error');
+                      return;
+                    }
+                    
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/block`, {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          blockedUserId: getOtherUser(currentChat!)?.userId,
+                          reason: reportReason === 'Other' ? customReason : reportReason,
+                        }),
+                      });
+                      
+                      if (response.ok) {
+                        showToast('User blocked successfully', 'success');
+                        setShowBlockModal(false);
+                        setReportReason('');
+                        setCustomReason('');
+                        setCurrentChat(null);
+                        window.history.pushState({}, '', '/chat');
+                      } else {
+                        showToast('Failed to block user', 'error');
+                      }
+                    } catch (error) {
+                      showToast('Error blocking user', 'error');
+                    }
+                  }}
+                  disabled={!reportReason || (reportReason === 'Other' && !customReason.trim())}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm"
+                >
+                  Block User
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
