@@ -105,10 +105,11 @@ export const postController = {
 
       const authorId = (req as any).user.id;
       
-      // Check if user is trying to post media
+      // ONLY check verification for SOCIAL_POST with media, NOT marketplace posts
       const hasMedia = (images && images.length > 0) || (videos && videos.length > 0);
+      const isSocialPost = type === 'SOCIAL_POST';
       
-      if (hasMedia) {
+      if (hasMedia && isSocialPost) {
         // Import verification service
         const { verificationService } = await import('../services/verification.service');
         const canPostMedia = await verificationService.canPostMedia(authorId);
@@ -116,7 +117,7 @@ export const postController = {
         if (!canPostMedia) {
           res.status(403).json({
             success: false,
-            message: 'Image posting is only available for verified accounts. Purchase verification badge to unlock.',
+            message: 'Image posting on social feed requires verification. Marketplace posts are allowed.',
           });
           return;
         }
