@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec \"ts-node --project tsconfig-node.json\" src/server.ts",
     "build": "prisma generate && tsc",
-    "postbuild": "node sync-database-schema.js",
+    "postbuild": "node emergency-db-check.js",
     "start": "node dist/server.js",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -23,7 +23,8 @@
     "fix-migration": "node scripts/fix-migration.js",
     "migrate:safe": "npm run fix-migration && npx prisma migrate deploy",
     "fix-render-db": "node fix-render-db.js",
-    "sync-db": "node sync-database-schema.js"
+    "sync-db": "node sync-database-schema.js",
+    "emergency-check": "node emergency-db-check.js"
   },
   "keywords": [
     "marketplace",
