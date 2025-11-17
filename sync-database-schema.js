@@ -51,9 +51,44 @@ async function syncDatabaseSchema() {
     const requiredColumns = ['status', 'type', 'amount', 'fee', 'netAmount', 'currency', 'reference'];
     const missingColumns = requiredColumns.filter(col => !existingColumns.includes(col));
     
+    // Check if status column exists but is wrong type
+    console.log('\n3️⃣ Checking column types...');
+    const statusColumn = result.find(r => r.column_name === 'status');
+    if (statusColumn && statusColumn.data_type === 'text') {
+      console.log('   ⚠️ status column is TEXT, converting to enum...');
+      await prisma.$executeRaw`
+        ALTER TABLE transactions 
+        ALTER COLUMN status TYPE "TransactionStatus" 
+        USING status::"TransactionStatus";
+      `;
+      console.log('   ✅ status column converted to enum');
+    }
+    
+    const typeColumn = result.find(r => r.column_name === 'type');
+    if (typeColumn && typeColumn.data_type === 'text') {
+      console.log('   ⚠️ type column is TEXT, converting to enum...');
+      await prisma.$executeRaw`
+        ALTER TABLE transactions 
+        ALTER COLUMN type TYPE "TransactionType" 
+        USING type::"TransactionType";
+      `;
+      console.log('   ✅ type column converted to enum');
+    }
+    
+    const currencyColumn = result.find(r => r.column_name === 'currency');
+    if (currencyColumn && currencyColumn.data_type === 'text') {
+      console.log('   ⚠️ currency column is TEXT, converting to enum...');
+      await prisma.$executeRaw`
+        ALTER TABLE transactions 
+        ALTER COLUMN currency TYPE "Currency" 
+        USING currency::"Currency";
+      `;
+      console.log('   ✅ currency column converted to enum\n');
+    }
+    
     if (missingColumns.length > 0) {
       console.log(`\n⚠️ Missing columns: ${missingColumns.join(', ')}`);
-      console.log('\n3️⃣ Adding missing columns...\n');
+      console.log('\n4️⃣ Adding missing columns...\n');
       
       // Add status column if missing
       if (missingColumns.includes('status')) {
@@ -110,7 +145,7 @@ async function syncDatabaseSchema() {
     }
     
     // Verify the fix
-    console.log('\n4️⃣ Verifying schema...');
+    console.log('\n5️⃣ Verifying schema...');
     const transactionCount = await prisma.transaction.count();
     console.log(`✅ Transactions table working! Count: ${transactionCount}`);
     
