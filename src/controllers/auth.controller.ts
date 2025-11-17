@@ -39,6 +39,26 @@ export async function register(req: Request, res: Response) {
       return res.status(409).json({ success: false, message: 'Email or username already exists', code: 'CONFLICT' });
     }
 
+    // Check if username is reserved by a verified user
+    const reservedUsername = await prisma.user.findFirst({
+      where: { 
+        username: { equals: username, mode: 'insensitive' },
+        verificationBadge: {
+          status: 'active',
+          expiresAt: { gt: new Date() }
+        }
+      },
+      include: { verificationBadge: true }
+    });
+
+    if (reservedUsername) {
+      return res.status(409).json({ 
+        success: false, 
+        message: 'This username is reserved by a verified user', 
+        code: 'USERNAME_RESERVED' 
+      });
+    }
+
     console.log('Hashing password...');
     const hashedPassword = await passwordUtils.hash(password);
     const referralCode = codeUtils.generateReferralCode(8);

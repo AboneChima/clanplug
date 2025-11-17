@@ -77,19 +77,31 @@ export const postService = {
         const oneDayAgo = new Date();
         oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-        const recentPostsCount = await prisma.post.count({
-          where: {
-            userId: authorId,
-            createdAt: { gte: oneDayAgo },
-          },
+        // Check if user is verified
+        const verificationBadge = await prisma.verificationBadge.findUnique({
+          where: { userId: authorId },
         });
 
-        if (recentPostsCount >= 10) {
-          return { 
-            success: false, 
-            message: 'Daily post limit reached (10 posts). Get verified for unlimited posts!', 
-            error: 'POST_LIMIT_REACHED' 
-          };
+        const isVerified = verificationBadge?.status === 'active' && 
+                          verificationBadge?.expiresAt && 
+                          new Date() < verificationBadge.expiresAt;
+
+        // Only apply post limit to non-verified users
+        if (!isVerified) {
+          const recentPostsCount = await prisma.post.count({
+            where: {
+              userId: authorId,
+              createdAt: { gte: oneDayAgo },
+            },
+          });
+
+          if (recentPostsCount >= 10) {
+            return { 
+              success: false, 
+              message: 'Daily post limit reached (10 posts). Get verified for unlimited posts!', 
+              error: 'POST_LIMIT_REACHED' 
+            };
+          }
         }
       }
 
