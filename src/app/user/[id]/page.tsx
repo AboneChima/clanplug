@@ -164,7 +164,7 @@ export default function UserProfilePage() {
     try {
       const token = localStorage.getItem('accessToken');
       // Fetch both social posts and marketplace listings
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts?userId=${params.id}&type=all`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts?userId=${params.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -172,9 +172,12 @@ export default function UserProfilePage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('User posts response:', data);
         // Handle different response formats
         const postsData = data.posts || data.data || data;
         setPosts(Array.isArray(postsData) ? postsData : []);
+      } else {
+        console.error('Failed to fetch posts:', response.status);
       }
     } catch (error) {
       console.error('Error fetching user posts:', error);
@@ -187,15 +190,14 @@ export default function UserProfilePage() {
 
     try {
       const token = localStorage.getItem('accessToken');
-      const endpoint = profile.isFollowing ? '/api/follow/unfollow' : '/api/follow';
+      const method = profile.isFollowing ? 'DELETE' : 'POST';
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-        method: 'POST',
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${profile.id}`, {
+        method,
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: profile.id }),
       });
 
       if (response.ok) {
@@ -207,7 +209,10 @@ export default function UserProfilePage() {
             followers: profile.isFollowing ? profile._count.followers - 1 : profile._count.followers + 1,
           },
         });
-        showToast(profile.isFollowing ? 'Unfollowed' : 'Following', 'success');
+        showToast(profile.isFollowing ? 'Unfollowed' : 'Now following!', 'success');
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Failed to update follow status', 'error');
       }
     } catch (error) {
       console.error('Error following user:', error);
