@@ -163,7 +163,8 @@ export default function UserProfilePage() {
   const fetchUserPosts = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts?userId=${params.id}`, {
+      // Fetch both social posts and marketplace listings
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts?userId=${params.id}&type=all`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
