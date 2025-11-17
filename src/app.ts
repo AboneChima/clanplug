@@ -143,7 +143,9 @@ app.use('/api/crypto', cryptoRoutes);
 app.use('/api/test', testRoutes);
 app.use('/api/escrow', escrowRoutes);
 app.use('/api/admin-temp', adminKycRoutes); // TEMPORARY - DELETE AFTER USE
+console.log('🔵 Registering verification routes at /api/verification');
 app.use('/api/verification', verificationRoutes);
+console.log('✅ Verification routes registered');
 
 // Proxy middleware for frontend - only in development
 if (config.NODE_ENV === 'development') {
