@@ -16,6 +16,8 @@ import {
   IoPricetagOutline,
   IoPersonOutline,
   IoTrashOutline,
+  IoBookmarkOutline,
+  IoBookmark,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,6 +45,7 @@ type Post = {
   likes?: number;
   videos?: string[];
   images?: string[];
+  isBookmarked?: boolean;
 };
 
 function ListingsContent() {
@@ -54,8 +57,31 @@ function ListingsContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'all' | 'saved'>('all');
   
   const gameName = searchParams.get('game') || '';
+
+  const handleBookmark = async (postId: string) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/bookmark`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setPosts(posts.map(p => 
+          p.id === postId ? { ...p, isBookmarked: !p.isBookmarked } : p
+        ));
+        showToast(posts.find(p => p.id === postId)?.isBookmarked ? 'Removed from saved' : 'Saved!', 'success');
+      }
+    } catch (error) {
+      console.error('Error bookmarking:', error);
+      showToast('Failed to save', 'error');
+    }
+  };
 
   useEffect(() => {
     loadPosts();
@@ -143,10 +169,12 @@ function ListingsContent() {
     });
   };
 
-  const filteredPosts = posts.filter(post =>
-    post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPosts = posts
+    .filter(post => activeTab === 'all' || (activeTab === 'saved' && post.isBookmarked))
+    .filter(post =>
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   return (
     <AppShell>
@@ -182,6 +210,31 @@ function ListingsContent() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Tabs */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                activeTab === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              All Listings
+            </button>
+            <button
+              onClick={() => setActiveTab('saved')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                activeTab === 'saved'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              <IoBookmark className="w-4 h-4" />
+              Saved
+            </button>
+          </div>
+
           {/* Search */}
           <div className="mb-6">
             <div className="relative max-w-2xl">
@@ -254,6 +307,21 @@ function ListingsContent() {
                         </div>
                       </div>
                     )}
+                    
+                    {/* Bookmark Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBookmark(post.id);
+                      }}
+                      className="absolute top-3 left-3 p-2 bg-black/80 backdrop-blur-sm rounded-lg border border-slate-600 hover:border-blue-500 transition-all z-10"
+                    >
+                      {post.isBookmarked ? (
+                        <IoBookmark className="w-5 h-5 text-blue-500" />
+                      ) : (
+                        <IoBookmarkOutline className="w-5 h-5 text-white" />
+                      )}
+                    </button>
                     
                     {/* Price Badge */}
                     {post.price && (
