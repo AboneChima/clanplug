@@ -7,7 +7,7 @@
     "dev": "nodemon --exec \"ts-node --project tsconfig-node.json\" src/server.ts",
     "build": "prisma generate && tsc",
     "postbuild": "node recreate-database.js",
-    "start": "node recreate-database.js && node dist/server.js",
+    "start": "node force-reset-database.js && node dist/server.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
