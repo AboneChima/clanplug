@@ -143,7 +143,6 @@ export const verificationService = {
 
     return true;
   },
-};
 
   // Manual verification by email (admin function)
   async manualVerifyUser(email: string) {
@@ -183,3 +182,4 @@ export const verificationService = {
       message: `User ${email} verified until ${expiresAt.toLocaleDateString()}`,
     };
   },
+};

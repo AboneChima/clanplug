@@ -49,7 +49,6 @@ export const verificationController = {
       return res.status(400).json({ success: false, message: error.message });
     }
   },
-};
 
   // Manual verification (admin only) - verify user by email
   async manualVerify(req: Request, res: Response) {
@@ -72,3 +71,4 @@ export const verificationController = {
       return res.status(400).json({ success: false, message: error.message });
     }
   },
+};
