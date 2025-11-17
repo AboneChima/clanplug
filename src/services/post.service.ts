@@ -77,56 +77,32 @@ export const postService = {
                         verificationBadge?.expiresAt && 
                         new Date() < verificationBadge.expiresAt;
 
-      // Apply post limits to non-verified users
-      if (!isVerified) {
-        // For MARKETPLACE posts (all types), check monthly limit - 10 posts per month
-        if (payload.type === 'MARKETPLACE_LISTING' || payload.type === 'GAME_ACCOUNT') {
-          const oneMonthAgo = new Date();
-          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-          
-          const monthlyMarketplaceCount = await prisma.post.count({
-            where: { 
-              userId: authorId,
-              type: { in: ['MARKETPLACE_LISTING', 'GAME_ACCOUNT'] },
-              createdAt: { gte: oneMonthAgo }
-            },
-          });
+      // MARKETPLACE: No restrictions - all users can post with images/videos
+      // Only apply limits to SOCIAL FEED posts
+      if (!isVerified && payload.type === 'SOCIAL_POST') {
+        // For SOCIAL FEED posts, check total limit (20 posts) and image restriction
+        const totalSocialPostsCount = await prisma.post.count({
+          where: { 
+            userId: authorId,
+            type: 'SOCIAL_POST'
+          },
+        });
 
-          if (monthlyMarketplaceCount >= 10) {
-            return { 
-              success: false, 
-              message: 'Marketplace post limit reached (10 posts per month). Get verified for unlimited posts!', 
-              error: 'POST_LIMIT_REACHED' 
-            };
-          }
-          // MARKETPLACE posts can have images/videos regardless of verification
+        if (totalSocialPostsCount >= 20) {
+          return { 
+            success: false, 
+            message: 'Social post limit reached (20 posts). Get verified for unlimited posts!', 
+            error: 'POST_LIMIT_REACHED' 
+          };
         }
         
-        // For SOCIAL FEED posts, check total limit (20 posts) and image restriction
-        if (payload.type === 'SOCIAL_POST') {
-          const totalSocialPostsCount = await prisma.post.count({
-            where: { 
-              userId: authorId,
-              type: 'SOCIAL_POST'
-            },
-          });
-
-          if (totalSocialPostsCount >= 20) {
-            return { 
-              success: false, 
-              message: 'Social post limit reached (20 posts). Get verified for unlimited posts!', 
-              error: 'POST_LIMIT_REACHED' 
-            };
-          }
-          
-          // SOCIAL FEED: Block images for non-verified users
-          if (payload.images && payload.images.length > 0) {
-            return {
-              success: false,
-              message: 'Image posting on social feed requires verification. Text posts are allowed.',
-              error: 'VERIFICATION_REQUIRED'
-            };
-          }
+        // SOCIAL FEED: Block images for non-verified users
+        if (payload.images && payload.images.length > 0) {
+          return {
+            success: false,
+            message: 'Image posting on social feed requires verification. Text posts are allowed.',
+            error: 'VERIFICATION_REQUIRED'
+          };
         }
       }
 
