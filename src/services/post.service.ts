@@ -68,41 +68,37 @@ export const postService = {
         include: { verificationBadge: true },
       });
 
-      const isVerified = user?.verificationBadge?.status === 'active' && 
-        user.verificationBadge.expiresAt && 
-        new Date() < user.verificationBadge.expiresAt;
+      // Check if user is verified
+      const verificationBadge = await prisma.verificationBadge.findUnique({
+        where: { userId: authorId },
+      });
 
-      // If not verified, check post limit (e.g., 10 posts per day)
+      const isVerified = verificationBadge?.status === 'active' && 
+                        verificationBadge?.expiresAt && 
+                        new Date() < verificationBadge.expiresAt;
+
+      // Apply post limit to non-verified users (20 total posts, not daily)
       if (!isVerified) {
-        const oneDayAgo = new Date();
-        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-
-        // Check if user is verified
-        const verificationBadge = await prisma.verificationBadge.findUnique({
+        const totalPostsCount = await prisma.post.count({
           where: { userId: authorId },
         });
 
-        const isVerified = verificationBadge?.status === 'active' && 
-                          verificationBadge?.expiresAt && 
-                          new Date() < verificationBadge.expiresAt;
-
-        // Only apply post limit to non-verified users
-        if (!isVerified) {
-          const recentPostsCount = await prisma.post.count({
-            where: {
-              userId: authorId,
-              createdAt: { gte: oneDayAgo },
-            },
-          });
-
-          if (recentPostsCount >= 10) {
-            return { 
-              success: false, 
-              message: 'Daily post limit reached (10 posts). Get verified for unlimited posts!', 
-              error: 'POST_LIMIT_REACHED' 
-            };
-          }
+        if (totalPostsCount >= 20) {
+          return { 
+            success: false, 
+            message: 'Post limit reached (20 posts). Get verified for unlimited posts!', 
+            error: 'POST_LIMIT_REACHED' 
+          };
         }
+      }
+
+      // For social posts with images, require verification
+      if (payload.type === 'SOCIAL_POST' && payload.images && payload.images.length > 0 && !isVerified) {
+        return {
+          success: false,
+          message: 'Image posting on social feed requires verification. Marketplace posts are allowed.',
+          error: 'VERIFICATION_REQUIRED'
+        };
       }
 
       const post = await prisma.post.create({
