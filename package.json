@@ -20,7 +20,8 @@
     "db:seed": "ts-node prisma/seed.ts",
     "db:deploy": "prisma migrate deploy",
     "fix-migration": "node scripts/fix-migration.js",
-    "migrate:safe": "npm run fix-migration && npx prisma migrate deploy"
+    "migrate:safe": "npm run fix-migration && npx prisma migrate deploy",
+    "fix-render-db": "node fix-render-db.js"
   },
   "keywords": [
     "marketplace",
