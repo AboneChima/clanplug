@@ -520,8 +520,8 @@ export const postService = {
 
       const isVideo = filename.match(/\.(mp4|mov|avi|wmv|flv|webm)$/i);
       
-      // Check if it's a social media marketplace post (should only allow images)
-      if (postType === 'SOCIAL_ACCOUNT' && isVideo) {
+      // Check if it's a social media marketplace listing (should only allow images)
+      if (postType === 'SOCIAL_MEDIA_LISTING' && isVideo) {
         return { 
           success: false, 
           message: 'Social media marketplace only allows images, not videos', 
