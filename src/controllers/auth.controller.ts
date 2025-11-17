@@ -12,13 +12,18 @@ function toPublicUser(user: any) {
     id: user.id,
     email: user.email,
     username: user.username,
+    firstName: user.firstName,
+    lastName: user.lastName,
     fullName: `${user.firstName} ${user.lastName}`.trim(),
     phone: user.phone,
     role: user.role,
     status: user.status,
+    avatar: user.avatar,
     referralCode: user.referralCode,
     emailVerified: user.isEmailVerified,
     phoneVerified: user.isPhoneVerified,
+    isKYCVerified: user.isKYCVerified,
+    verificationBadge: user.verificationBadge,
     createdAt: user.createdAt,
   };
 }
@@ -89,6 +94,7 @@ export async function register(req: Request, res: Response) {
         status: UserStatus.PENDING_VERIFICATION,
         verificationToken,
       },
+      include: { verificationBadge: true }
     });
     console.log('User created successfully:', user.id);
 
@@ -160,7 +166,10 @@ export async function login(req: Request, res: Response) {
   }
 
   try {
-    const user = await prisma.user.findFirst({ where: { OR: [{ email: email || undefined }, { username: username || undefined }] } });
+    const user = await prisma.user.findFirst({ 
+      where: { OR: [{ email: email || undefined }, { username: username || undefined }] },
+      include: { verificationBadge: true }
+    });
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
     }
