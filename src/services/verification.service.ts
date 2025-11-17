@@ -144,3 +144,42 @@ export const verificationService = {
     return true;
   },
 };
+
+  // Manual verification by email (admin function)
+  async manualVerifyUser(email: string) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + VERIFICATION_DURATION_DAYS * 24 * 60 * 60 * 1000);
+
+    const badge = await prisma.verificationBadge.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        status: 'active',
+        purchasedAt: now,
+        expiresAt,
+      },
+      update: {
+        status: 'active',
+        purchasedAt: now,
+        expiresAt,
+      },
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      },
+      badge,
+      message: `User ${email} verified until ${expiresAt.toLocaleDateString()}`,
+    };
+  },
