@@ -87,6 +87,55 @@ async function fixMigration() {
       console.log('✅ Database is empty - migrations will run fresh');
     }
     
+    // Check if User table exists and create if missing
+    try {
+      const userTableExists = await prisma.$queryRaw`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'User'
+        ) as exists
+      `;
+      
+      if (!userTableExists[0]?.exists) {
+        console.log('⚠️ User table missing! Creating it now...');
+        
+        // Create User table based on schema
+        await prisma.$executeRaw`
+          CREATE TABLE "User" (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            "firstName" TEXT,
+            "lastName" TEXT,
+            "phoneNumber" TEXT,
+            bio TEXT,
+            "profilePicture" TEXT,
+            "coverPhoto" TEXT,
+            "isVerified" BOOLEAN DEFAULT false,
+            "isEmailVerified" BOOLEAN DEFAULT false,
+            "emailVerificationToken" TEXT,
+            "emailVerificationExpires" TIMESTAMP(3),
+            "passwordResetToken" TEXT,
+            "passwordResetExpires" TIMESTAMP(3),
+            role TEXT DEFAULT 'user',
+            "accountAge" INTEGER DEFAULT 0,
+            "lastActive" TIMESTAMP(3),
+            "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
+          )
+        `;
+        
+        console.log('✅ User table created successfully');
+        console.log('⚠️ NOTE: Previous user data was lost. Users will need to re-register.');
+      } else {
+        console.log('✅ User table exists');
+      }
+    } catch (e) {
+      console.log('⚠️ Could not check/create User table:', e.message);
+    }
+    
     // Always check for and clean up verification badge issues
     try {
       const failedMigrations = await prisma.$queryRaw`

@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "nodemon --exec \"ts-node --project tsconfig-node.json\" src/server.ts",
     "build": "prisma generate && tsc",
-    "postbuild": "node recreate-database.js",
-    "start": "node force-reset-database.js && node dist/server.js",
+    "start": "node dist/server.js",
+    "reset-db": "node force-reset-database.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -19,12 +19,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "ts-node prisma/seed.ts",
-    "db:deploy": "prisma migrate deploy",
-    "fix-migration": "node scripts/fix-migration.js",
-    "migrate:safe": "npm run fix-migration && npx prisma migrate deploy",
-    "fix-render-db": "node fix-render-db.js",
-    "sync-db": "node sync-database-schema.js",
-    "emergency-check": "node emergency-db-check.js"
+    "db:deploy": "prisma migrate deploy"
   },
   "keywords": [
     "marketplace",
