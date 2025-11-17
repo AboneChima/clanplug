@@ -21,7 +21,8 @@
     "db:deploy": "prisma migrate deploy",
     "fix-migration": "node scripts/fix-migration.js",
     "migrate:safe": "npm run fix-migration && npx prisma migrate deploy",
-    "fix-render-db": "node fix-render-db.js"
+    "fix-render-db": "node fix-render-db.js",
+    "sync-db": "node sync-database-schema.js"
   },
   "keywords": [
     "marketplace",
