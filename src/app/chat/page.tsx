@@ -317,7 +317,7 @@ function ChatContent() {
           </div>
 
           {/* Chat Conversation */}
-          <div className={`${!currentChat ? 'hidden' : 'flex'} lg:flex flex-1 flex-col bg-slate-900 lg:rounded-xl lg:border border-slate-700 overflow-hidden`}>
+          <div className={`${!currentChat ? 'hidden' : 'flex'} lg:flex flex-1 flex-col bg-slate-900 lg:rounded-xl lg:border border-slate-700`}>
             {!currentChat ? (
               <div className="flex-1 flex items-center justify-center p-8">
                 <div className="text-center">
@@ -355,7 +355,7 @@ function ChatContent() {
                   </div>
                   
                   {/* 3-Dot Menu */}
-                  <div className="relative">
+                  <div className="relative z-50">
                     <button
                       onClick={() => setShowChatMenu(!showChatMenu)}
                       className="p-2 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
@@ -367,8 +367,8 @@ function ChatContent() {
                     
                     {showChatMenu && (
                       <>
-                        <div className="fixed inset-0 z-[60]" onClick={() => setShowChatMenu(false)}></div>
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-[70] overflow-hidden">
+                        <div className="fixed inset-0 z-[100]" onClick={() => setShowChatMenu(false)}></div>
+                        <div className="fixed right-4 top-20 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-[110] overflow-hidden">
                           <button
                             onClick={() => {
                               setShowChatMenu(false);

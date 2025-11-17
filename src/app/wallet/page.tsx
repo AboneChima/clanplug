@@ -440,45 +440,45 @@ function WalletContent() {
         {/* Balance and Transactions Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Balance Section */}
-          <div className="card-modern p-4 sm:p-6 animate-fade-in hover:shadow-brand-lg transition-all duration-300" style={{animationDelay: '0.2s'}}>
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 sm:p-6 animate-fade-in transition-all duration-300" style={{animationDelay: '0.2s'}}>
             <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-success/20 to-success/30 border border-success/30 flex items-center justify-center">
-                <IoCardOutline className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+                <IoCardOutline className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-semibold text-heading">Portfolio Balance</h3>
-                <p className="text-xs sm:text-sm text-body">Your available digital assets</p>
+                <h3 className="text-base sm:text-lg font-semibold text-white">Wallet Balance</h3>
+                <p className="text-xs sm:text-sm text-gray-400">Your available funds</p>
               </div>
             </div>
             
             <div className="space-y-4">
               {balance ? (
                 Object.entries(balance).map(([currency, amount], index) => (
-                  <div key={currency} className="card-gradient p-3 sm:p-4 hover:shadow-md transition-all duration-200 animate-fade-in" style={{animationDelay: `${0.3 + index * 0.1}s`}}>
+                  <div key={currency} className="bg-slate-700/30 border border-slate-600 rounded-lg p-3 sm:p-4 hover:bg-slate-700/50 transition-all duration-200 animate-fade-in" style={{animationDelay: `${0.3 + index * 0.1}s`}}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-gradient-to-br from-brand-500/20 to-brand-600/20 border border-brand-500/30 flex items-center justify-center">
-                          <span className="text-xs sm:text-sm font-bold text-brand-500">{currency.charAt(0)}</span>
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+                          <span className="text-xs sm:text-sm font-bold text-blue-400">{currency.charAt(0)}</span>
                         </div>
                         <div>
-                          <p className="text-sm sm:text-base font-semibold text-heading uppercase tracking-wider">{currency}</p>
-                          <p className="text-xs sm:text-sm text-body">Available Balance</p>
+                          <p className="text-sm sm:text-base font-semibold text-white uppercase tracking-wider">{currency}</p>
+                          <p className="text-xs sm:text-sm text-gray-400">Available Balance</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg sm:text-xl font-bold text-heading">{amount.toLocaleString()}</p>
-                        <p className="text-xs sm:text-sm text-body">{currency}</p>
+                        <p className="text-lg sm:text-xl font-bold text-white">{amount.toLocaleString()}</p>
+                        <p className="text-xs sm:text-sm text-gray-400">{currency}</p>
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="text-center py-8 sm:py-12">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-muted/20 to-muted/10 border border-muted/30 flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                    <IoCardOutline className="w-6 h-6 sm:w-8 sm:h-8 text-muted" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-slate-700/30 border border-slate-600 flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                    <IoCardOutline className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
                   </div>
-                  <h4 className="text-base sm:text-lg font-semibold text-heading mb-2">No Balance Data</h4>
-                  <p className="text-sm sm:text-base text-body">Connect your wallet to view your portfolio balance</p>
+                  <h4 className="text-base sm:text-lg font-semibold text-white mb-2">No Balance Data</h4>
+                  <p className="text-sm sm:text-base text-gray-400">Your wallet balance will appear here</p>
                 </div>
               )}
             </div>

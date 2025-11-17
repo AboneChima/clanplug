@@ -114,7 +114,7 @@ export default function MessageBubble({
     return (
       <div className="mb-2 p-2 border-l-2 border-blue-400 bg-slate-800/50 rounded-r-lg">
         <p className="text-xs text-blue-400 font-medium">
-          Replying to {message.replyTo.user?.username || 'Unknown'}
+          Replying to {message.replyTo.sender?.firstName || 'User'}
         </p>
         <p className="text-sm text-gray-300 truncate">
           {message.replyTo.content}

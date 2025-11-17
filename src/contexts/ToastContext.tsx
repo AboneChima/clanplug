@@ -25,11 +25,11 @@ export function useToast() {
 
 function ToastContainer({ toasts, remove }: { toasts: Toast[]; remove: (id: string) => void }) {
   return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] space-y-2 pointer-events-none w-full max-w-[90vw] sm:max-w-sm px-4">
+    <div className="fixed top-20 right-4 z-[9999] space-y-2 pointer-events-none w-full max-w-[90vw] sm:max-w-sm">
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="pointer-events-auto animate-[slideDown_0.3s_ease-out]"
+          className="pointer-events-auto animate-[slideInRight_0.3s_ease-out]"
         >
           <div className={`
             flex items-center gap-2 px-3 py-2 rounded-full shadow-xl backdrop-blur-md

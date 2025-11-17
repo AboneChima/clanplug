@@ -24,6 +24,7 @@ import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
+import VerificationModal from '@/components/VerificationModal';
 
 interface UserStats {
   posts: number;
@@ -78,8 +79,18 @@ export default function ProfilePage() {
   const [loadingFollowing, setLoadingFollowing] = useState(false);
   const [editingBio, setEditingBio] = useState(false);
   const [bioText, setBioText] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstName: '',
+    lastName: '',
+    bio: '',
+    avatar: null as File | null
+  });
+  const [verificationStatus, setVerificationStatus] = useState<'none' | 'active' | 'expired'>('none');
+  const [verificationDays, setVerificationDays] = useState(0);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
-  // Update avatar preview and bio when user data is available
+  // Update avatar preview, bio, and form when user data is available
   useEffect(() => {
     if (user?.avatar) {
       setAvatarPreview(user.avatar);
@@ -87,7 +98,15 @@ export default function ProfilePage() {
     if (user?.bio) {
       setBioText(user.bio);
     }
-  }, [user?.avatar, user?.bio]);
+    if (user) {
+      setEditForm({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        bio: user.bio || '',
+        avatar: null
+      });
+    }
+  }, [user]);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -238,6 +257,23 @@ export default function ProfilePage() {
         views: 0,
       });
       
+      // Load verification status
+      try {
+        const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/verification/status`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (verifyResponse.ok) {
+          const verifyData = await verifyResponse.json();
+          setVerificationStatus(verifyData.data?.status || 'none');
+          setVerificationDays(verifyData.data?.daysRemaining || 0);
+        }
+      } catch (err) {
+        console.error('Error fetching verification status:', err);
+      }
+      
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -346,8 +382,8 @@ export default function ProfilePage() {
 
             {/* Profile Content */}
             <div className="px-4 sm:px-6 lg:px-8 pb-6">
-              {/* Avatar and Change Picture Button */}
-              <div className="flex items-end justify-between -mt-12 sm:-mt-16 mb-4">
+              {/* Avatar and Edit Profile Button */}
+              <div className="flex items-start justify-between -mt-8 sm:-mt-12 mb-4">
                 <div className="relative group">
                   {avatarPreview ? (
                     <Image
@@ -371,16 +407,21 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <label className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg font-medium transition-colors cursor-pointer border border-slate-600">
-                  {isUploading ? 'Uploading...' : 'Change Picture'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    disabled={isUploading}
-                    className="hidden"
-                  />
-                </label>
+                <button
+                  onClick={() => {
+                    setEditForm({
+                      firstName: user?.firstName || '',
+                      lastName: user?.lastName || '',
+                      bio: user?.bio || '',
+                      avatar: null
+                    });
+                    setShowEditModal(true);
+                  }}
+                  className="mt-12 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg font-medium transition-colors border border-slate-600 flex items-center gap-2"
+                >
+                  <IoCreateOutline className="w-4 h-4" />
+                  Edit Profile
+                </button>
               </div>
 
               {/* User Info */}
@@ -389,80 +430,49 @@ export default function ProfilePage() {
                   <h1 className="text-base sm:text-xl font-bold text-white">
                     {user?.firstName} {user?.lastName}
                   </h1>
-                  {user?.isKYCVerified && (
-                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  {verificationStatus === 'active' && (
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                   )}
                 </div>
-                <p className="text-xs sm:text-sm text-gray-400 mb-1.5 sm:mb-2">@{user?.username}</p>
-                {editingBio ? (
-                  <div className="space-y-2">
-                    <textarea
-                      value={bioText}
-                      onChange={(e) => setBioText(e.target.value)}
-                      maxLength={160}
-                      rows={3}
-                      placeholder="Write something about yourself..."
-                      className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    />
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400">{bioText.length}/160</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setBioText(user?.bio || '');
-                            setEditingBio(false);
-                          }}
-                          className="px-3 py-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded-md transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={async () => {
-                            try {
-                              const token = localStorage.getItem('accessToken');
-                              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
-                                method: 'PUT',
-                                headers: {
-                                  'Authorization': `Bearer ${token}`,
-                                  'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({ bio: bioText }),
-                              });
-
-                              if (response.ok) {
-                                updateUser({ bio: bioText });
-                                showToast('Bio updated successfully!', 'success');
-                                setEditingBio(false);
-                              } else {
-                                showToast('Failed to update bio', 'error');
-                              }
-                            } catch (error) {
-                              showToast('Error updating bio', 'error');
-                            }
-                          }}
-                          className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start gap-2">
-                    <p className="text-xs sm:text-sm text-gray-300 leading-relaxed flex-1">
-                      {user?.bio || 'No bio yet'}
-                    </p>
-                    <button
-                      onClick={() => setEditingBio(true)}
-                      className="p-1 hover:bg-slate-700 rounded transition-colors flex-shrink-0"
-                      title="Edit bio"
-                    >
-                      <IoCreateOutline className="w-4 h-4 text-gray-400 hover:text-white" />
-                    </button>
-                  </div>
+                <p className="text-xs sm:text-sm text-gray-400 mb-1">@{user?.username}</p>
+                
+                {/* KYC Status */}
+                <p className="text-xs text-gray-500 mb-1">
+                  KYC Status: {user?.isKYCVerified ? '✔ Verified' : '⚠ Not Yet Verified'}
+                </p>
+                
+                {/* Verification Badge Status */}
+                {verificationStatus === 'active' && (
+                  <p className="text-xs text-blue-400 mb-2">
+                    🟦 Verified — {verificationDays} days left
+                  </p>
                 )}
+                {verificationStatus === 'expired' && (
+                  <p className="text-xs text-orange-400 mb-2">
+                    ⚠ Verification expired — tap to renew
+                  </p>
+                )}
+                {verificationStatus === 'none' && (
+                  <p className="text-xs text-gray-500 mb-2">
+                    Get Verified to unlock premium features
+                  </p>
+                )}
+                
+                {/* Verification Button */}
+                {verificationStatus !== 'active' && (
+                  <button
+                    onClick={() => setShowVerificationModal(true)}
+                    className="mb-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium transition-colors"
+                  >
+                    {verificationStatus === 'expired' ? 'Renew Verification' : 'Get Verified'}
+                  </button>
+                )}
+                
+                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                  {user?.bio || 'No bio yet'}
+                </p>
               </div>
 
               {/* User Details */}
@@ -796,6 +806,154 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* Edit Profile Modal - Centered and Smaller */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-800 rounded-2xl w-full max-w-sm sm:max-w-md border border-slate-700 shadow-2xl max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-700 sticky top-0 bg-slate-800 z-10">
+              <h2 className="text-base sm:text-lg font-semibold text-white">Edit Profile</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-1.5 sm:p-2 hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <IoCloseOutline className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+              {/* Avatar Upload - Smaller */}
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  {editForm.avatar ? (
+                    <img src={URL.createObjectURL(editForm.avatar)} alt="Preview" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" />
+                  ) : avatarPreview ? (
+                    <Image src={avatarPreview} alt="Avatar" width={64} height={64} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-700 flex items-center justify-center">
+                      <IoPersonOutline className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                <label className="px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs sm:text-sm rounded-lg font-medium transition-colors cursor-pointer">
+                  Change
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setEditForm({...editForm, avatar: file});
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {/* First Name - Smaller */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1.5">First Name</label>
+                <input
+                  type="text"
+                  value={editForm.firstName}
+                  onChange={(e) => setEditForm({...editForm, firstName: e.target.value})}
+                  className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Last Name - Smaller */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1.5">Last Name</label>
+                <input
+                  type="text"
+                  value={editForm.lastName}
+                  onChange={(e) => setEditForm({...editForm, lastName: e.target.value})}
+                  className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Bio - Smaller */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1.5">Bio</label>
+                <textarea
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
+                  maxLength={160}
+                  rows={2}
+                  placeholder="Write something about yourself..."
+                  className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-1">{editForm.bio.length}/160</p>
+              </div>
+
+              {/* Action Buttons - Smaller */}
+              <div className="flex gap-2 sm:gap-3 pt-2 pb-safe">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-3 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      setIsUploading(true);
+                      const token = localStorage.getItem('accessToken');
+                      const formData = new FormData();
+                      
+                      formData.append('firstName', editForm.firstName);
+                      formData.append('lastName', editForm.lastName);
+                      formData.append('bio', editForm.bio);
+                      if (editForm.avatar) {
+                        formData.append('avatar', editForm.avatar);
+                      }
+
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
+                        method: 'PUT',
+                        headers: {
+                          'Authorization': `Bearer ${token}`,
+                        },
+                        body: formData,
+                      });
+
+                      if (response.ok) {
+                        const data = await response.json();
+                        updateUser({
+                          firstName: editForm.firstName,
+                          lastName: editForm.lastName,
+                          bio: editForm.bio,
+                          avatar: data.user?.avatar || data.avatar || user?.avatar
+                        });
+                        showToast('Profile updated successfully!', 'success');
+                        setShowEditModal(false);
+                        setTimeout(() => window.location.reload(), 500);
+                      } else {
+                        showToast('Failed to update profile', 'error');
+                      }
+                    } catch (error) {
+                      showToast('Error updating profile', 'error');
+                    } finally {
+                      setIsUploading(false);
+                    }
+                  }}
+                  disabled={isUploading}
+                  className="flex-1 px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isUploading ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Modal */}
+      <VerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onSuccess={() => {
+          loadProfileData();
+        }}
+        isRenewal={verificationStatus === 'expired'}
+      />
 
     </AppShell>
   );

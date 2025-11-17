@@ -83,8 +83,8 @@ export default function AppShell({ children }: AppShellProps) {
 
   return (
     <VTUContext.Provider value={{ activeVTUService, setActiveVTUService }}>
-      <div className="min-h-screen bg-slate-950 pb-safe">
-        <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-safe">
+        <header className="sticky top-0 z-[70] bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
           <div className="flex items-center justify-between h-16 px-4 lg:px-6">
             <div className="flex items-center gap-4">
               <button
@@ -168,9 +168,9 @@ export default function AppShell({ children }: AppShellProps) {
           </div>
         </header>
 
-        <div className="flex">
+        <div className="flex relative">
           <div className={`
-            fixed top-16 bottom-0 left-0 z-40 w-80 transform transition-all duration-300 ease-out lg:translate-x-0 lg:static lg:top-0
+            fixed top-16 bottom-0 left-0 z-[65] w-80 transform transition-all duration-300 ease-out lg:translate-x-0 lg:static lg:top-0 lg:z-auto
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}>
             <Sidebar user={user} onLogout={handleLogout} />
@@ -178,7 +178,7 @@ export default function AppShell({ children }: AppShellProps) {
 
           {sidebarOpen && (
             <div 
-              className="fixed inset-0 z-30 bg-black/60 backdrop-blur-md lg:hidden transition-opacity duration-300"
+              className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md lg:hidden transition-opacity duration-300"
               onClick={() => setSidebarOpen(false)}
             />
           )}

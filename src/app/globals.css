@@ -2,6 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent white space and ensure full coverage */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: #0f172a;
+  touch-action: manipulation;
+}
+
+body {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
+  background: linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a);
+  background-attachment: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
+  touch-action: manipulation;
+}
+
+/* Enable smooth scrolling and pull-to-refresh */
+html, body {
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for iOS Safari bottom white space */
+@supports (-webkit-touch-callout: none) {
+  body {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Prevent iOS Safari zoom on input focus */
+input, textarea, select {
+  font-size: 16px !important;
+  touch-action: manipulation;
+}
+
+/* Prevent double-tap zoom on buttons and links */
+button, a {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* Very Small Screen Optimizations (320px - 375px) */
 @media (max-width: 375px) {
   /* Reduce all padding and margins */
@@ -103,13 +164,13 @@
 }
 
 /* Toast Animation */
-@keyframes slideDown {
+@keyframes slideInRight {
   from {
-    transform: translate(-50%, -20px);
+    transform: translateX(100%);
     opacity: 0;
   }
   to {
-    transform: translate(-50%, 0);
+    transform: translateX(0);
     opacity: 1;
   }
 }

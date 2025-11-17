@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { 
   IoHomeOutline,
   IoHome,
@@ -51,9 +52,36 @@ const navItems = [
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const [unreadChats, setUnreadChats] = useState(0);
+
+  useEffect(() => {
+    const checkUnreadChats = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const chats = data.data || data.chats || [];
+          const unread = chats.filter((chat: any) => chat.unreadCount > 0).length;
+          setUnreadChats(unread);
+        }
+      } catch (error) {
+        console.error('Error checking unread chats:', error);
+      }
+    };
+
+    checkUnreadChats();
+    const interval = setInterval(checkUnreadChats, 10000); // Check every 10s
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] px-4 pb-safe">
       <div className="mx-auto max-w-md mb-4">
         <div className="bg-slate-900/80 backdrop-blur-2xl border border-slate-700/50 rounded-[28px] shadow-2xl shadow-black/40">
           <div className="flex items-center justify-around px-2 py-3">
@@ -78,6 +106,12 @@ export default function MobileBottomNav() {
                     <IconComponent className="w-6 h-6" />
                     {active && (
                       <div className="absolute -inset-2 bg-blue-500/20 rounded-full blur-md"></div>
+                    )}
+                    {/* Unread indicator for chat */}
+                    {href === '/chat' && unreadChats > 0 && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-[8px] font-bold text-white">{unreadChats > 9 ? '9+' : unreadChats}</span>
+                      </div>
                     )}
                   </div>
                   <span className={`relative text-[10px] font-semibold transition-all duration-300 ${

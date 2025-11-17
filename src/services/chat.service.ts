@@ -41,8 +41,24 @@ export interface ChatMessage {
   isEdited: boolean;
   isDeleted: boolean;
   replyToId?: string;
+  replyTo?: {
+    id: string;
+    content: string;
+    sender?: {
+      id: string;
+      firstName?: string;
+      lastName?: string;
+    };
+  };
   createdAt: string;
   updatedAt: string;
+  sender?: {
+    id: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+  };
   user?: {
     id: string;
     username: string;
@@ -50,7 +66,6 @@ export interface ChatMessage {
     lastName?: string;
     avatar?: string;
   };
-  replyTo?: ChatMessage;
   reactions?: MessageReaction[];
 }
 
@@ -212,19 +227,30 @@ export class ChatService {
     }
   }
 
-  // File Upload
+  // File Upload - Use post media upload endpoint
   async uploadFile(accessToken: string, file: File): Promise<FileUploadResponse> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('media', file); // Changed from 'file' to 'media'
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}` },
       body: formData,
     });
 
     const data = await response.json();
-    return data;
+    if (data.success && data.data?.urls && data.data.urls.length > 0) {
+      return {
+        success: true,
+        data: {
+          url: data.data.urls[0], // Get first URL from array
+          filename: file.name,
+          size: file.size,
+          type: file.type
+        }
+      };
+    }
+    return { success: false, message: data.message || 'Upload failed' };
   }
 
   // Real-time Communication

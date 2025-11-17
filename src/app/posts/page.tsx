@@ -142,11 +142,11 @@ function MarketplaceContent() {
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         {/* Hero Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 mb-4">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6">
-            <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-white mb-1">Marketplace</h1>
-              <p className="text-xs sm:text-base text-white/90">Buy and sell accounts</p>
+        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm mb-4">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5">Marketplace</h1>
+              <p className="text-xs sm:text-sm text-gray-400">Buy and sell accounts</p>
             </div>
           </div>
         </div>

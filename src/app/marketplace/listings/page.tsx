@@ -152,29 +152,30 @@ function ListingsContent() {
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         {/* Header */}
-        <div className="bg-slate-900/50 border-b border-slate-800 mb-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm mb-4">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
             <button
               onClick={() => router.push('/posts')}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+              className="inline-flex items-center gap-1.5 text-gray-400 hover:text-white mb-3 transition-colors"
             >
-              <IoArrowBack className="w-5 h-5" />
-              <span>Back to Marketplace</span>
+              <IoArrowBack className="w-4 h-4" />
+              <span className="text-sm">Back to Marketplace</span>
             </button>
             
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 capitalize">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5 capitalize">
                   {gameName.replace(/-/g, ' ')} Accounts
                 </h1>
-                <p className="text-sm text-gray-400">{filteredPosts.length} listings available</p>
+                <p className="text-xs sm:text-sm text-gray-400">{filteredPosts.length} listings available</p>
               </div>
               <button
                 onClick={() => router.push(`/marketplace/create?game=${gameName}`)}
-                className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-medium transition-all flex items-center gap-2"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
               >
                 <IoAddOutline className="w-5 h-5" />
-                <span className="hidden sm:inline">Create Listing</span>
+                <span className="hidden sm:inline text-sm">Create Listing</span>
+                <span className="sm:hidden text-sm">Create</span>
               </button>
             </div>
           </div>

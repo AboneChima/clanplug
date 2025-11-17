@@ -66,6 +66,10 @@ export default function FeedPage() {
   const [loadingFollowing, setLoadingFollowing] = useState(false);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
   const [viewingPost, setViewingPost] = useState<Post | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [favoritePosts, setFavoritePosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -709,27 +713,134 @@ export default function FeedPage() {
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         {/* Hero Header - Clean Modern Design */}
-        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm mb-4">
+        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm mb-4 relative z-20">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5">Dashboard</h1>
                 <p className="text-xs sm:text-sm text-gray-400">Your social feed</p>
               </div>
-              <button
-                onClick={() => setCommentingOnPost('create-post-modal')}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
-              >
-                <IoImageOutline className="w-5 h-5" />
-                <span className="hidden sm:inline text-sm">Create Post</span>
-                <span className="sm:hidden text-sm">Post</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowSearch(!showSearch)}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                  title="Search users"
+                >
+                  <svg className="w-5 h-5 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setCommentingOnPost('create-post-modal')}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                >
+                  <IoImageOutline className="w-5 h-5" />
+                  <span className="hidden sm:inline text-sm">Create Post</span>
+                  <span className="sm:hidden text-sm">Post</span>
+                </button>
+              </div>
             </div>
+
+            {/* Search Bar */}
+            {showSearch && (
+              <div className="mt-3 relative z-[30]">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={async (e) => {
+                    const query = e.target.value;
+                    setSearchQuery(query);
+                    
+                    if (query.trim().length > 1) {
+                      setSearching(true);
+                      try {
+                        const token = localStorage.getItem('accessToken');
+                        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/search?q=${encodeURIComponent(query)}`, {
+                          headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (response.ok) {
+                          const data = await response.json();
+                          setSearchResults(data.data || data.users || []);
+                        }
+                      } catch (error) {
+                        console.error('Search error:', error);
+                      } finally {
+                        setSearching(false);
+                      }
+                    } else {
+                      setSearchResults([]);
+                    }
+                  }}
+                  placeholder="Search users..."
+                  className="w-full px-4 py-2 bg-slate-700/50 text-white text-sm rounded-lg border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                />
+                
+                {/* Search Results Dropdown */}
+                {searchQuery.trim().length > 1 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl max-h-[400px] overflow-y-auto z-[30]">
+                    {searching ? (
+                      <div className="p-6 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
+                        <p className="text-gray-400 text-sm">Searching...</p>
+                      </div>
+                    ) : searchResults.length === 0 ? (
+                      <div className="p-6 text-center">
+                        <svg className="w-12 h-12 text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <p className="text-gray-400 text-sm">No users found</p>
+                      </div>
+                    ) : (
+                      <div className="py-1">
+                        {searchResults.map((user: any) => (
+                          <Link
+                            key={user.id}
+                            href={`/user/${user.id}`}
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-slate-700/70 transition-all duration-200 border-b border-slate-700/50 last:border-0"
+                            onClick={() => {
+                              setShowSearch(false);
+                              setSearchQuery('');
+                              setSearchResults([]);
+                            }}
+                          >
+                            {user.avatar ? (
+                              <img src={user.avatar} alt={user.username} className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-600" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ring-1 ring-slate-600">
+                                <span className="text-white text-xs font-bold">
+                                  {user.firstName?.[0]}{user.lastName?.[0]}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1">
+                                <p className="text-white font-medium text-sm truncate">
+                                  {user.firstName} {user.lastName}
+                                </p>
+                                {user.isKYCVerified && (
+                                  <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                              <p className="text-gray-400 text-xs truncate">@{user.username}</p>
+                            </div>
+                            <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700">
+        <div className="sticky top-0 z-[5] bg-slate-900/95 backdrop-blur-sm border-b border-slate-700">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex gap-6 sm:gap-8">
               <button
@@ -961,7 +1072,31 @@ export default function FeedPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setNewPostImage(e.target.files?.[0] || null)}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    
+                    // Check verification status
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/verification/status`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                      });
+                      
+                      if (response.ok) {
+                        const data = await response.json();
+                        if (data.data?.status !== 'active') {
+                          showToast('Image posting is only available for verified accounts. Purchase verification badge to unlock.', 'error');
+                          e.target.value = '';
+                          return;
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error checking verification:', error);
+                    }
+                    
+                    setNewPostImage(file);
+                  }}
                   className="hidden"
                 />
               </label>
