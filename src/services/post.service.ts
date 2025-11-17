@@ -253,6 +253,12 @@ export const postService = {
               firstName: true,
               lastName: true,
               isKYCVerified: true,
+              verificationBadge: {
+                select: {
+                  status: true,
+                  expiresAt: true,
+                },
+              },
             },
           },
           _count: {

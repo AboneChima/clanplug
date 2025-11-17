@@ -135,6 +135,12 @@ class ChatService {
                 firstName: true,
                 lastName: true,
                 avatar: true,
+                verificationBadge: {
+                  select: {
+                    status: true,
+                    expiresAt: true,
+                  },
+                },
               },
             },
           },
@@ -150,6 +156,12 @@ class ChatService {
                 firstName: true,
                 lastName: true,
                 avatar: true,
+                verificationBadge: {
+                  select: {
+                    status: true,
+                    expiresAt: true,
+                  },
+                },
               },
             },
           },
