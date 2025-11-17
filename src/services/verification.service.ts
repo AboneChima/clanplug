@@ -1,4 +1,4 @@
-import { prisma } from '../config/database';
+import prisma from '../config/database';
 
 const VERIFICATION_COST = 2000; // ₦2,000
 const VERIFICATION_DURATION_DAYS = 30;
