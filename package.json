@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec \"ts-node --project tsconfig-node.json\" src/server.ts",
     "build": "prisma generate && tsc",
-    "start": "node dist/server.js",
+    "start": "node initialize-database.js && node dist/server.js",
     "reset-db": "node force-reset-database.js",
     "test": "jest",
     "test:watch": "jest --watch",
