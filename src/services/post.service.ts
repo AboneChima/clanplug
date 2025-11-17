@@ -77,18 +77,46 @@ export const postService = {
                         verificationBadge?.expiresAt && 
                         new Date() < verificationBadge.expiresAt;
 
-      // Apply post limit to non-verified users (20 total posts, not daily)
+      // Apply post limit to non-verified users (10 posts per month for marketplace)
       if (!isVerified) {
-        const totalPostsCount = await prisma.post.count({
-          where: { userId: authorId },
-        });
+        // For marketplace posts, check monthly limit
+        if (payload.type === 'MARKETPLACE_LISTING' || payload.type === 'GAME_ACCOUNT') {
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+          
+          const monthlyMarketplaceCount = await prisma.post.count({
+            where: { 
+              userId: authorId,
+              type: { in: ['MARKETPLACE_LISTING', 'GAME_ACCOUNT'] },
+              createdAt: { gte: oneMonthAgo }
+            },
+          });
 
-        if (totalPostsCount >= 20) {
-          return { 
-            success: false, 
-            message: 'Post limit reached (20 posts). Get verified for unlimited posts!', 
-            error: 'POST_LIMIT_REACHED' 
-          };
+          if (monthlyMarketplaceCount >= 10) {
+            return { 
+              success: false, 
+              message: 'Marketplace post limit reached (10 posts per month). Get verified for unlimited posts!', 
+              error: 'POST_LIMIT_REACHED' 
+            };
+          }
+        }
+        
+        // For social posts, check total limit (20 posts)
+        if (payload.type === 'SOCIAL_POST') {
+          const totalSocialPostsCount = await prisma.post.count({
+            where: { 
+              userId: authorId,
+              type: 'SOCIAL_POST'
+            },
+          });
+
+          if (totalSocialPostsCount >= 20) {
+            return { 
+              success: false, 
+              message: 'Social post limit reached (20 posts). Get verified for unlimited posts!', 
+              error: 'POST_LIMIT_REACHED' 
+            };
+          }
         }
       }
 

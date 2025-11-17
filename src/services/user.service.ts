@@ -263,7 +263,19 @@ export const userService = {
         },
         skip,
         take: limit,
-        select: { id: true, username: true, avatar: true, firstName: true, lastName: true },
+        select: { 
+          id: true, 
+          username: true, 
+          avatar: true, 
+          firstName: true, 
+          lastName: true,
+          verificationBadge: {
+            select: {
+              status: true,
+              expiresAt: true,
+            },
+          },
+        },
         orderBy: { createdAt: 'desc' },
       }),
       prisma.user.count({
