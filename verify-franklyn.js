@@ -1,3 +1,4 @@
+// Run this on Render: node verify-franklyn.js
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -11,6 +12,8 @@ async function verifyUser() {
       console.log('❌ User not found');
       process.exit(1);
     }
+    
+    console.log('Found user:', user.email, user.id);
     
     const badge = await prisma.verificationBadge.upsert({
       where: { userId: user.id },

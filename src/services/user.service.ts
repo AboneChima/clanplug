@@ -295,10 +295,24 @@ export const userService = {
   async getUserPublicById(userId: string): Promise<Pick<User, 'id' | 'email' | 'username' | 'firstName' | 'lastName' | 'avatar' | 'bio'>> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, username: true, firstName: true, lastName: true, avatar: true, bio: true },
+      select: { 
+        id: true, 
+        email: true, 
+        username: true, 
+        firstName: true, 
+        lastName: true, 
+        avatar: true, 
+        bio: true,
+        verificationBadge: {
+          select: {
+            status: true,
+            expiresAt: true,
+          },
+        },
+      },
     });
     if (!user) throw new Error('User not found');
-    return user;
+    return user as any;
   },
 
   async updateUserProfile(userId: string, data: Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'city' | 'state' | 'country' | 'avatar'>>): Promise<{ success: boolean; message?: string; user?: any; error?: string }> {
