@@ -74,7 +74,7 @@ if (config.NODE_ENV !== 'test') {
 app.get('/', (req: any, res: any) => {
   res.status(200).json({
     name: 'Lordmoon API',
-    version: '1.0.0',
+    version: '1.0.1',
     status: 'running',
     message: 'API is operational',
     endpoints: {
