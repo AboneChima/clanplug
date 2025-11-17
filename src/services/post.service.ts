@@ -904,6 +904,12 @@ export const postService = {
                 lastName: true,
                 avatar: true,
                 isKYCVerified: true,
+                verificationBadge: {
+                  select: {
+                    status: true,
+                    expiresAt: true,
+                  },
+                },
               },
             },
             _count: {
