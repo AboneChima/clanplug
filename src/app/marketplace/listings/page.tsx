@@ -179,72 +179,71 @@ function ListingsContent() {
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Header */}
-        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm mb-4">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
+        {/* Header - Ultra Compact */}
+        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm mb-2">
+          <div className="max-w-7xl mx-auto px-2 py-1.5 sm:px-3 sm:py-3">
             <button
               onClick={() => router.push('/posts')}
-              className="inline-flex items-center gap-1.5 text-gray-400 hover:text-white mb-3 transition-colors"
+              className="inline-flex items-center gap-0.5 text-gray-400 hover:text-white mb-1 transition-colors"
             >
-              <IoArrowBack className="w-4 h-4" />
-              <span className="text-sm">Back to Marketplace</span>
+              <IoArrowBack className="w-3 h-3" />
+              <span className="text-[10px] sm:text-xs">Back</span>
             </button>
             
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5 capitalize">
+            <div className="flex items-center justify-between gap-1.5">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xs sm:text-lg font-bold text-white mb-0 sm:mb-0.5 capitalize truncate">
                   {gameName.replace(/-/g, ' ')} Accounts
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-400">{filteredPosts.length} listings available</p>
+                <p className="text-[9px] sm:text-xs text-gray-400">{filteredPosts.length} listings</p>
               </div>
               <button
                 onClick={() => router.push(`/marketplace/create?game=${gameName}`)}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                className="flex items-center gap-0.5 px-1.5 sm:px-3 py-1 sm:py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md sm:rounded-lg transition-colors text-[10px] sm:text-xs font-medium"
               >
-                <IoAddOutline className="w-5 h-5" />
-                <span className="hidden sm:inline text-sm">Create Listing</span>
-                <span className="sm:hidden text-sm">Create</span>
+                <IoAddOutline className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden xs:inline sm:inline">Create</span>
               </button>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          {/* Tabs */}
-          <div className="flex gap-2 mb-6">
+        <div className="max-w-7xl mx-auto px-2 sm:px-3">
+          {/* Tabs - Ultra Compact */}
+          <div className="flex gap-1 mb-2">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium transition-colors ${
                 activeTab === 'all'
                   ? 'bg-blue-600 text-white'
                   : 'bg-slate-800 text-gray-400 hover:text-white'
               }`}
             >
-              All Listings
+              All
             </button>
             <button
               onClick={() => setActiveTab('saved')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+              className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md sm:rounded-lg text-[10px] sm:text-xs font-medium transition-colors flex items-center gap-0.5 sm:gap-1 ${
                 activeTab === 'saved'
                   ? 'bg-blue-600 text-white'
                   : 'bg-slate-800 text-gray-400 hover:text-white'
               }`}
             >
-              <IoBookmark className="w-4 h-4" />
+              <IoBookmark className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               Saved
             </button>
           </div>
 
-          {/* Search */}
-          <div className="mb-6">
+          {/* Search - Ultra Compact */}
+          <div className="mb-2">
             <div className="relative max-w-2xl">
-              <IoSearchOutline className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <IoSearchOutline className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3 sm:w-4 sm:h-4" />
               <input
                 type="text"
-                placeholder="Search listings..."
+                placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-7 sm:pl-9 pr-2 sm:pr-3 py-1.5 sm:py-2 bg-slate-800/80 border border-slate-700 rounded-md sm:rounded-lg text-white text-xs sm:text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -269,16 +268,22 @@ function ListingsContent() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {filteredPosts.map((post) => (
+            <div className={`grid gap-3 sm:gap-4 ${
+              gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i)
+                ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // Portrait for social media
+                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' // Landscape for games
+            }`}>
+              {filteredPosts.map((post) => {
+                const isSocialMedia = gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i);
+                return (
                 <div
                   key={post.id}
-                  className={`bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-2xl overflow-hidden hover:border-slate-600 hover:shadow-xl hover:shadow-blue-500/10 transition-all group relative ${
+                  className={`bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-xl overflow-hidden hover:border-slate-600 hover:shadow-xl hover:shadow-blue-500/10 transition-all group relative ${
                     post.status === 'SOLD' ? 'opacity-60' : ''
                   }`}
                 >
-                  {/* Video Preview */}
-                  <div className="relative aspect-video bg-slate-900">
+                  {/* Video/Image Preview */}
+                  <div className={`relative bg-slate-900 ${isSocialMedia ? 'aspect-[3/4]' : 'aspect-video'}`}>
                     {post.videos && post.videos.length > 0 ? (
                       <video
                         src={post.videos[0]}
@@ -333,10 +338,10 @@ function ListingsContent() {
                     )}
                   </div>
 
-                  {/* Content */}
-                  <div className="p-4">
-                    {/* Seller Info */}
-                    <div className="flex items-center gap-2 mb-3">
+                  {/* Content - Compact */}
+                  <div className="p-2 sm:p-3">
+                    {/* Seller Info - Compact */}
+                    <div className="flex items-center gap-1.5 mb-2">
                       <div className="relative">
                         {post.user?.avatar ? (
                           <img 
@@ -352,7 +357,7 @@ function ListingsContent() {
                           </div>
                         )}
                         {/* Verification Badge */}
-                        {(post.user as any)?.isKYCVerified && (
+                        {(post.user as any)?.verificationBadge?.status === 'active' && (
                           <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-slate-800">
                             <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -365,8 +370,10 @@ function ListingsContent() {
                           <p className="text-white text-sm font-medium truncate">
                             {post.user?.firstName} {post.user?.lastName}
                           </p>
-                          {(post.user as any)?.isKYCVerified && (
-                            <span className="text-blue-400 text-xs font-semibold">✓</span>
+                          {(post.user as any)?.verificationBadge?.status === 'active' && (
+                            <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
                           )}
                         </div>
                         <p className="text-gray-400 text-xs truncate">
@@ -375,53 +382,54 @@ function ListingsContent() {
                       </div>
                     </div>
 
-                    {/* Title */}
-                    <h3 className="text-white font-semibold text-base mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
+                    {/* Title - Compact */}
+                    <h3 className="text-white font-semibold text-xs sm:text-sm mb-1.5 line-clamp-2 group-hover:text-blue-400 transition-colors">
                       {post.title}
                     </h3>
 
-                    {/* Stats */}
-                    <div className="flex items-center justify-between text-gray-400 text-xs mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center gap-1">
-                          <IoEyeOutline className="w-3.5 h-3.5" />
+                    {/* Stats - Compact */}
+                    <div className="flex items-center justify-between text-gray-400 text-[10px] sm:text-xs mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="flex items-center gap-0.5">
+                          <IoEyeOutline className="w-3 h-3" />
                           {post.views || 0}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <IoHeartOutline className="w-3.5 h-3.5" />
+                        <span className="flex items-center gap-0.5">
+                          <IoHeartOutline className="w-3 h-3" />
                           {post.likes || 0}
                         </span>
                       </div>
-                      <span className="flex items-center gap-1">
-                        <IoTimeOutline className="w-3.5 h-3.5" />
+                      <span className="flex items-center gap-0.5">
+                        <IoTimeOutline className="w-3 h-3" />
                         {formatDate(post.createdAt)}
                       </span>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
+                    {/* Action Buttons - Compact */}
+                    <div className="flex gap-1.5">
                       <button 
                         onClick={() => router.push(`/marketplace/${post.id}`)}
-                        className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2"
+                        className="flex-1 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1"
                       >
-                        <span>View Details</span>
-                        <IoCreateOutline className="w-4 h-4" />
+                        <span>View</span>
+                        <IoCreateOutline className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                       
                       {/* Delete button for owner */}
                       {post.userId === user?.id && (
                         <button 
                           onClick={() => deletePost(post.id)}
-                          className="px-3 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
+                          className="px-2 py-1.5 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
                           title="Delete listing"
                         >
-                          <IoTrashOutline className="w-4 h-4" />
+                          <IoTrashOutline className="w-3 h-3 sm:w-4 sm:h-4" />
                         </button>
                       )}
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>

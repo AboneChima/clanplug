@@ -63,7 +63,8 @@ function CreateListingForm() {
       setFormData(prev => ({ 
         ...prev, 
         gameTitle: gameFromUrl,
-        type: isSocialMedia ? 'SOCIAL_ACCOUNT' : 'GAME_ACCOUNT'
+        // All marketplace listings use MARKETPLACE_LISTING type (not SOCIAL_ACCOUNT)
+        type: isSocialMedia ? 'MARKETPLACE_LISTING' : 'GAME_ACCOUNT'
       }));
     }
   }, [searchParams]);
@@ -72,9 +73,11 @@ function CreateListingForm() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const isSocialMedia = formData.type === 'SOCIAL_ACCOUNT';
+    // Check if it's a social media marketplace listing (based on game title)
+    const socialMediaTypes = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter', 'google', 'vpn'];
+    const isSocialMedia = socialMediaTypes.includes(formData.gameTitle);
 
-    // For social media, only allow images
+    // For social media marketplace, only allow images
     if (isSocialMedia && !file.type.startsWith('image/')) {
       showToast('Social media accounts only allow images', 'error');
       return;
@@ -128,7 +131,7 @@ function CreateListingForm() {
     }
 
     if (!selectedMedia) {
-      showToast(`Please upload ${formData.type === 'SOCIAL_ACCOUNT' ? 'an image' : 'a video or image'}`, 'error');
+      showToast(`Please upload ${formData.type === 'MARKETPLACE_LISTING' ? 'an image' : 'a video or image'}`, 'error');
       return;
     }
 
@@ -136,11 +139,15 @@ function CreateListingForm() {
 
     try {
       const token = localStorage.getItem('accessToken');
+      // No verification checks for marketplace - all users can post
       
       // Step 1: Upload media first
       const mediaFormData = new FormData();
       mediaFormData.append('media', selectedMedia);
-      mediaFormData.append('postType', formData.type);
+      // Send a flag to indicate if it's social media (images only) or game (videos allowed)
+      const socialMediaTypes = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter', 'google', 'vpn'];
+      const isSocialMedia = socialMediaTypes.includes(formData.gameTitle);
+      mediaFormData.append('postType', isSocialMedia ? 'SOCIAL_MEDIA_LISTING' : formData.type);
 
       console.log('Step 1: Uploading media...');
       const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
@@ -238,30 +245,30 @@ function CreateListingForm() {
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="max-w-3xl mx-auto px-3 sm:px-6">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             {/* Game/Social Media Selection */}
             <div>
-              <label className="block text-white font-medium mb-2">
-                {formData.type === 'SOCIAL_ACCOUNT' ? 'Social Media Platform' : 'Game'} <span className="text-red-500">*</span>
+              <label className="block text-white text-sm font-medium mb-1.5">
+                {formData.type === 'MARKETPLACE_LISTING' ? 'Social Media Platform' : 'Game'} <span className="text-red-500">*</span>
               </label>
-              <div className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white">
+              <div className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm">
                 {formData.gameTitle ? (
-                  formData.type === 'SOCIAL_ACCOUNT' 
+                  formData.type === 'MARKETPLACE_LISTING' 
                     ? socialMediaNames[formData.gameTitle] || formData.gameTitle 
                     : gameNames[formData.gameTitle] || formData.gameTitle
                 ) : (
-                  formData.type === 'SOCIAL_ACCOUNT' ? 'No platform selected' : 'No game selected'
+                  formData.type === 'MARKETPLACE_LISTING' ? 'No platform selected' : 'No game selected'
                 )}
               </div>
-              <p className="text-xs text-gray-400 mt-1">
-                To change {formData.type === 'SOCIAL_ACCOUNT' ? 'platform' : 'game'}, go back and select a different card
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-1">
+                To change {formData.type === 'MARKETPLACE_LISTING' ? 'platform' : 'game'}, go back and select a different card
               </p>
             </div>
 
             {/* Title */}
             <div>
-              <label className="block text-white font-medium mb-2">
+              <label className="block text-white text-sm font-medium mb-1.5">
                 Listing Title <span className="text-red-500">*</span>
               </label>
               <input
@@ -269,35 +276,35 @@ function CreateListingForm() {
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g., Legendary Account with Rare Skins"
-                className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-white font-medium mb-2">
+              <label className="block text-white text-sm font-medium mb-1.5">
                 Description <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe your account in detail..."
-                rows={6}
-                className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                rows={4}
+                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 required
               />
             </div>
 
             {/* Account Region/Country */}
             <div>
-              <label className="block text-white font-medium mb-2">
+              <label className="block text-white text-sm font-medium mb-1.5">
                 Account Region/Country <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.accountRegion}
                 onChange={(e) => setFormData({ ...formData, accountRegion: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="">Select region/country</option>
@@ -316,13 +323,13 @@ function CreateListingForm() {
             {/* Login Method (Only for Game Accounts) */}
             {formData.type === 'GAME_ACCOUNT' && (
               <div>
-                <label className="block text-white font-medium mb-2">
+                <label className="block text-white text-sm font-medium mb-1.5">
                   Login Method <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.loginMethod}
                   onChange={(e) => setFormData({ ...formData, loginMethod: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
                   <option value="">Select login method</option>
@@ -340,8 +347,8 @@ function CreateListingForm() {
 
             {/* Price (Optional) */}
             <div>
-              <label className="block text-white font-medium mb-2">
-                Price (NGN) <span className="text-gray-400 text-sm">(Optional)</span>
+              <label className="block text-white text-sm font-medium mb-1.5">
+                Price (NGN) <span className="text-gray-400 text-xs">(Optional)</span>
               </label>
               <input
                 type="number"
@@ -349,37 +356,37 @@ function CreateListingForm() {
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 placeholder="e.g., 50000"
                 min="0"
-                className="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             {/* Media Upload */}
             <div>
-              <label className="block text-white font-medium mb-2">
-                {formData.type === 'SOCIAL_ACCOUNT' ? 'Image' : 'Video/Image'} <span className="text-red-500">*</span>
-                <span className="text-gray-400 text-sm ml-2">
-                  {formData.type === 'SOCIAL_ACCOUNT' 
-                    ? '(Images only, Max 10MB)' 
-                    : '(Video max 2 minutes, Max 50MB)'}
+              <label className="block text-white text-sm font-medium mb-1.5">
+                {formData.type === 'MARKETPLACE_LISTING' ? 'Image' : 'Video/Image'} <span className="text-red-500">*</span>
+                <span className="text-gray-400 text-xs ml-2">
+                  {formData.type === 'MARKETPLACE_LISTING' 
+                    ? '(Max 10MB)' 
+                    : '(Max 2 min, 50MB)'}
                 </span>
               </label>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {!mediaPreview ? (
-                  <label className="flex flex-col items-center justify-center w-full px-4 py-12 bg-slate-800/80 border-2 border-dashed border-slate-700 rounded-xl cursor-pointer hover:border-blue-500 transition-colors">
-                    <IoVideocamOutline className="w-16 h-16 text-gray-400 mb-3" />
-                    <span className="text-gray-300 font-medium mb-1">
-                      {formData.type === 'SOCIAL_ACCOUNT' 
+                  <label className="flex flex-col items-center justify-center w-full px-3 py-8 sm:py-10 bg-slate-800/80 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                    <IoVideocamOutline className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mb-2" />
+                    <span className="text-gray-300 text-sm font-medium mb-0.5">
+                      {formData.type === 'MARKETPLACE_LISTING' 
                         ? 'Click to upload image' 
                         : 'Click to upload video or image'}
                     </span>
-                    <span className="text-gray-500 text-sm">
-                      {formData.type === 'SOCIAL_ACCOUNT' 
-                        ? 'JPG, PNG, GIF (Max 10MB)' 
-                        : 'MP4, MOV, AVI or JPG, PNG (Max 50MB)'}
+                    <span className="text-gray-500 text-xs">
+                      {formData.type === 'MARKETPLACE_LISTING' 
+                        ? 'JPG, PNG, GIF' 
+                        : 'MP4, MOV, AVI or JPG, PNG'}
                     </span>
                     <input
                       type="file"
-                      accept={formData.type === 'SOCIAL_ACCOUNT' ? 'image/*' : 'image/*,video/*'}
+                      accept={formData.type === 'MARKETPLACE_LISTING' ? 'image/*' : 'image/*,video/*'}
                       onChange={handleMediaSelect}
                       className="hidden"
                     />
@@ -389,22 +396,22 @@ function CreateListingForm() {
                     {mediaType === 'video' ? (
                       <video
                         src={mediaPreview}
-                        className="w-full h-64 object-contain rounded-xl bg-black"
+                        className="w-full h-48 sm:h-56 object-contain rounded-lg bg-black"
                         controls
                       />
                     ) : (
                       <img
                         src={mediaPreview}
                         alt="Preview"
-                        className="w-full h-64 object-contain rounded-xl bg-black"
+                        className="w-full h-48 sm:h-56 object-contain rounded-lg bg-black"
                       />
                     )}
                     <button
                       type="button"
                       onClick={removeMedia}
-                      className="absolute top-3 right-3 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
+                      className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
                     >
-                      <IoCloseOutline className="w-5 h-5" />
+                      <IoCloseOutline className="w-4 h-4" />
                     </button>
                   </div>
                 )}
@@ -412,24 +419,24 @@ function CreateListingForm() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex gap-4 pt-6">
+            <div className="flex gap-2 sm:gap-3 pt-4">
               <button
                 type="button"
                 onClick={() => router.back()}
                 disabled={loading}
-                className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 sm:px-6 sm:py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 sm:px-6 sm:py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Creating...
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-xs sm:text-sm">Creating...</span>
                   </span>
                 ) : 'Create Listing'}
               </button>

@@ -246,10 +246,10 @@ function ChatContent() {
 
   return (
     <AppShell>
-      {/* Mobile: Much smaller height to avoid bottom menu */}
-      <div className="h-[calc(100vh-180px)] lg:h-auto flex flex-col lg:block">
+      {/* Fixed height container - no scrolling on outer container */}
+      <div className="fixed inset-0 top-16 bottom-20 lg:bottom-0 flex flex-col lg:block">
         {/* Chat container */}
-        <div className="flex-1 flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:gap-4 lg:p-4 lg:h-[calc(100vh-8rem)] overflow-hidden">
+        <div className="h-full flex flex-col lg:flex-row lg:max-w-7xl lg:mx-auto lg:gap-4 lg:p-4 overflow-hidden">
           
           {/* Chat List */}
           <div className={`${currentChat ? 'hidden' : 'flex'} lg:flex lg:w-80 flex-col bg-slate-800 lg:rounded-xl border-r lg:border border-slate-700 overflow-hidden`}>
@@ -300,7 +300,14 @@ function ChatContent() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-semibold text-white truncate">{getDisplayName(chat)}</h3>
+                          <div className="flex items-center gap-1 flex-1 min-w-0">
+                            <h3 className="font-semibold text-white truncate">{getDisplayName(chat)}</h3>
+                            {(getOtherUser(chat)?.user as any)?.verificationBadge?.status === 'active' && (
+                              <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
                           <span className="text-[11px] text-gray-500 flex-shrink-0 ml-2">
                             {formatTime(getLastMessage(chat)?.createdAt || chat.updatedAt)}
                           </span>
@@ -317,7 +324,7 @@ function ChatContent() {
           </div>
 
           {/* Chat Conversation */}
-          <div className={`${!currentChat ? 'hidden' : 'flex'} lg:flex flex-1 flex-col bg-slate-900 lg:rounded-xl lg:border border-slate-700`}>
+          <div className={`${!currentChat ? 'hidden' : 'flex'} lg:flex flex-1 flex-col bg-slate-900 lg:rounded-xl lg:border border-slate-700 overflow-hidden`}>
             {!currentChat ? (
               <div className="flex-1 flex items-center justify-center p-8">
                 <div className="text-center">
@@ -328,28 +335,35 @@ function ChatContent() {
               </div>
             ) : (
               <>
-                {/* Chat Header */}
-                <div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-2 sm:p-3 flex items-center gap-2 flex-shrink-0">
+                {/* Chat Header - Compact */}
+                <div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 p-1.5 sm:p-2 flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={() => {
                       setCurrentChat(null);
                       window.history.pushState({}, '', '/chat');
                     }}
-                    className="lg:hidden p-2 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
+                    className="lg:hidden p-1.5 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0"
                   >
-                    <IoArrowBackOutline className="w-5 h-5 text-white" />
+                    <IoArrowBackOutline className="w-4 h-4 text-white" />
                   </button>
                   {getAvatar(currentChat) ? (
-                    <img src={getAvatar(currentChat)!} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-700" />
+                    <img src={getAvatar(currentChat)!} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-700" />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-600">
-                      <span className="text-white text-sm font-semibold">{getDisplayName(currentChat).charAt(0)}</span>
+                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-600">
+                      <span className="text-white text-xs font-semibold">{getDisplayName(currentChat).charAt(0)}</span>
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-white text-sm truncate">{getDisplayName(currentChat)}</h2>
-                    <p className="text-xs text-emerald-400 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+                    <div className="flex items-center gap-1">
+                      <h2 className="font-semibold text-white text-xs sm:text-sm truncate">{getDisplayName(currentChat)}</h2>
+                      {(getOtherUser(currentChat)?.user as any)?.verificationBadge?.status === 'active' && (
+                        <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
+                    <p className="text-[10px] sm:text-xs text-emerald-400 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-emerald-400 rounded-full"></span>
                       Online
                     </p>
                   </div>
@@ -522,18 +536,18 @@ function ChatContent() {
                               <IoArrowUndoOutline className="w-3.5 h-3.5 text-gray-300" />
                             </button>
                             
-                            <div className={`message-bubble inline-block rounded-2xl shadow-sm ${
-                              msg.type === 'IMAGE' && msg.attachments?.length && !msg.content ? 'p-0.5' : 'px-2.5 py-1.5'
+                            <div className={`message-bubble inline-block rounded-xl shadow-sm ${
+                              msg.type === 'IMAGE' && msg.attachments?.length && !msg.content ? 'p-0.5' : 'px-2 py-1'
                             } ${
                               isOwn ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-slate-800 text-white rounded-bl-sm border border-slate-700'
                             }`}>
                               {msg.replyTo && (
-                                <div className="mb-1 pb-1 border-b border-white/20">
-                                  <p className="text-[9px] opacity-70 flex items-center gap-0.5">
-                                    <IoArrowUndoOutline className="w-2.5 h-2.5" />
+                                <div className="mb-0.5 pb-0.5 border-b border-white/20">
+                                  <p className="text-[8px] opacity-70 flex items-center gap-0.5">
+                                    <IoArrowUndoOutline className="w-2 h-2" />
                                     Reply to {msg.replyTo.sender?.firstName || 'User'}
                                   </p>
-                                  <p className="text-[10px] opacity-80 truncate">{msg.replyTo.content}</p>
+                                  <p className="text-[9px] opacity-80 truncate">{msg.replyTo.content}</p>
                                 </div>
                               )}
                               
@@ -542,18 +556,18 @@ function ChatContent() {
                                 <img 
                                   src={msg.attachments[0]} 
                                   alt="Shared image" 
-                                  className="max-w-[140px] sm:max-w-[160px] max-h-[140px] sm:max-h-[160px] rounded object-cover cursor-pointer block"
+                                  className="max-w-[120px] sm:max-w-[140px] max-h-[120px] sm:max-h-[140px] rounded object-cover cursor-pointer block"
                                   onClick={() => window.open(msg.attachments[0], '_blank')}
                                 />
                               )}
                               
-                              {msg.content && <p className={`text-xs break-words leading-[1.4] whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-1' : ''}`}>{msg.content}</p>}
+                              {msg.content && <p className={`text-[11px] sm:text-xs break-words leading-[1.3] whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-0.5' : ''}`}>{msg.content}</p>}
                               
                               <div className="flex items-center justify-end gap-0.5 mt-0.5">
-                                <span className="text-[9px] opacity-70">
+                                <span className="text-[8px] opacity-70">
                                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
-                                {isOwn && <IoCheckmarkDoneOutline className="w-2.5 h-2.5 opacity-70" />}
+                                {isOwn && <IoCheckmarkDoneOutline className="w-2 h-2 opacity-70" />}
                               </div>
                             </div>
                           </div>
@@ -564,21 +578,21 @@ function ChatContent() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Message Input - Fixed at bottom on mobile */}
-                <div className="bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 p-2 sm:p-3 flex-shrink-0 safe-bottom">
-                  {/* Reply Preview */}
+                {/* Message Input - Fixed at bottom with proper spacing */}
+                <div className="bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 p-2 sm:p-3 flex-shrink-0 mb-2 lg:mb-0">
+                  {/* Reply Preview - Compact */}
                   {replyingTo && (
-                    <div className="mb-2 flex items-center gap-2 bg-slate-700/50 rounded-lg p-2 border-l-2 border-blue-500">
-                      <IoArrowUndoOutline className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                    <div className="mb-1.5 flex items-center gap-1.5 bg-slate-700/50 rounded-lg p-1.5 border-l-2 border-blue-500">
+                      <IoArrowUndoOutline className="w-2.5 h-2.5 text-blue-400 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] text-blue-400 font-medium">Replying to {replyingTo.sender?.firstName || replyingTo.user?.firstName || 'User'}</p>
-                        <p className="text-xs text-gray-300 truncate">{replyingTo.content}</p>
+                        <p className="text-[9px] text-blue-400 font-medium">Replying to {replyingTo.sender?.firstName || replyingTo.user?.firstName || 'User'}</p>
+                        <p className="text-[10px] text-gray-300 truncate">{replyingTo.content}</p>
                       </div>
                       <button
                         onClick={() => setReplyingTo(null)}
                         className="p-0.5 hover:bg-slate-600 rounded transition-colors"
                       >
-                        <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-2.5 h-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
@@ -624,15 +638,15 @@ function ChatContent() {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                      className="p-1.5 hover:bg-slate-700 text-gray-400 hover:text-white rounded-full transition-colors flex-shrink-0"
+                      className="p-1 hover:bg-slate-700 text-gray-400 hover:text-white rounded-full transition-colors flex-shrink-0"
                     >
-                      <IoHappyOutline className="w-5 h-5" />
+                      <IoHappyOutline className="w-4 h-4" />
                     </button>
-                    <label className="p-1.5 hover:bg-slate-700 text-gray-400 hover:text-white rounded-full transition-colors flex-shrink-0 cursor-pointer">
-                      <IoImageOutline className="w-5 h-5" />
+                    <label className="p-1 hover:bg-slate-700 text-gray-400 hover:text-white rounded-full transition-colors flex-shrink-0 cursor-pointer">
+                      <IoImageOutline className="w-4 h-4" />
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -653,14 +667,14 @@ function ChatContent() {
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                       placeholder={replyingTo ? "Reply..." : "Message..."}
                       disabled={sending}
-                      className="flex-1 min-w-0 px-3 py-1.5 border border-slate-600 rounded-full bg-slate-700 text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                      className="flex-1 min-w-0 px-2.5 py-1.5 border border-slate-600 rounded-full bg-slate-700 text-white text-xs placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                     />
                     <button
                       onClick={handleSend}
                       disabled={(!messageText.trim() && !selectedImage) || sending}
-                      className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                     >
-                      <IoSendOutline className="w-5 h-5" />
+                      <IoSendOutline className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

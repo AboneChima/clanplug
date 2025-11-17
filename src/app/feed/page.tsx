@@ -477,9 +477,11 @@ export default function FeedPage() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => handleFollow(post.user.id, (post.user as any).isFollowing || false)}
-              className="px-3 py-1 text-xs font-medium rounded-md transition-colors bg-blue-600 hover:bg-blue-700 text-white"
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                (post.user as any).isMutual ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+              } text-white`}
             >
-              {(post.user as any).isFollowing ? 'Following' : 'Follow'}
+              {(post.user as any).isMutual ? 'Friends' : (post.user as any).isFollowing ? 'Following' : 'Follow'}
             </button>
             <button
               onClick={() => handleStartChat(post.user.id, post.user)}
@@ -815,8 +817,8 @@ export default function FeedPage() {
                                 <p className="text-white font-medium text-sm truncate">
                                   {user.firstName} {user.lastName}
                                 </p>
-                                {user.isKYCVerified && (
-                                  <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                {user.verificationBadge?.status === 'active' && user.verificationBadge?.expiresAt && new Date(user.verificationBadge.expiresAt) > new Date() && (
+                                  <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                   </svg>
                                 )}
@@ -1113,30 +1115,30 @@ export default function FeedPage() {
         </div>
       )}
 
-      {/* Post Detail Modal */}
+      {/* Post Detail Modal - Mobile Optimized (Much Smaller) */}
       {viewingPost && (
         <div 
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
           onClick={() => setViewingPost(null)}
         >
           <div 
-            className="relative bg-slate-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            className="relative bg-slate-800 rounded-lg sm:rounded-xl max-w-sm sm:max-w-2xl md:max-w-3xl w-full max-h-[85vh] sm:max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setViewingPost(null)}
-              className="absolute top-3 right-3 z-10 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+              className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 p-1.5 sm:p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
             >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
             
-            <div className="flex flex-col md:flex-row max-h-[90vh]">
+            <div className="flex flex-col md:flex-row max-h-[85vh] sm:max-h-[90vh]">
               {/* Image Section */}
               {viewingPost.images && viewingPost.images.length > 0 && (
                 <div className="md:w-2/3 bg-black flex items-center justify-center relative">
-                  <div className="relative w-full aspect-square md:aspect-auto md:h-[90vh]">
+                  <div className="relative w-full h-[40vh] sm:h-[50vh] md:aspect-auto md:h-[90vh]">
                     <Image
                       src={viewingPost.images[0]}
                       alt="Post image"
@@ -1145,9 +1147,9 @@ export default function FeedPage() {
                     />
                   </div>
                   {viewingPost.images.length > 1 && (
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                    <div className="absolute bottom-2 sm:bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1 sm:gap-1.5">
                       {viewingPost.images.map((_, idx) => (
-                        <div key={idx} className="w-2 h-2 rounded-full bg-white/50" />
+                        <div key={idx} className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-white/50" />
                       ))}
                     </div>
                   )}
@@ -1155,36 +1157,43 @@ export default function FeedPage() {
               )}
               
               {/* Content Section */}
-              <div className="md:w-1/3 flex flex-col max-h-[50vh] md:max-h-[90vh]">
+              <div className="md:w-1/3 flex flex-col max-h-[45vh] sm:max-h-[50vh] md:max-h-[90vh]">
                 {/* User Info */}
-                <div className="p-4 border-b border-gray-700">
-                  <Link href={`/user/${viewingPost.user.id}`} className="flex items-center gap-3 hover:opacity-80">
+                <div className="p-3 sm:p-4 border-b border-gray-700">
+                  <Link href={`/user/${viewingPost.user.id}`} className="flex items-center gap-2 sm:gap-3 hover:opacity-80">
                     {viewingPost.user.avatar ? (
                       <Image 
                         src={viewingPost.user.avatar} 
                         alt={viewingPost.user.username} 
-                        width={40} 
-                        height={40} 
-                        className="w-10 h-10 rounded-full object-cover"
+                        width={36} 
+                        height={36} 
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                        <span className="text-white font-semibold">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                        <span className="text-white text-sm font-semibold">
                           {viewingPost.user.firstName[0]}{viewingPost.user.lastName[0]}
                         </span>
                       </div>
                     )}
-                    <div>
-                      <p className="text-white font-medium">{viewingPost.user.firstName} {viewingPost.user.lastName}</p>
-                      <p className="text-gray-400 text-sm">@{viewingPost.user.username}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1">
+                        <p className="text-white font-medium text-sm sm:text-base truncate">{viewingPost.user.firstName} {viewingPost.user.lastName}</p>
+                        {(viewingPost.user as any)?.verificationBadge?.status === 'active' && (
+                          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <p className="text-gray-400 text-xs sm:text-sm truncate">@{viewingPost.user.username}</p>
                     </div>
                   </Link>
                 </div>
                 
                 {/* Description */}
-                <div className="flex-1 overflow-y-auto p-4">
-                  <p className="text-gray-300 text-sm whitespace-pre-wrap">{viewingPost.description}</p>
-                  <p className="text-gray-500 text-xs mt-3">
+                <div className="flex-1 overflow-y-auto p-3 sm:p-4">
+                  <p className="text-gray-300 text-xs sm:text-sm whitespace-pre-wrap">{viewingPost.description}</p>
+                  <p className="text-gray-500 text-[10px] sm:text-xs mt-2 sm:mt-3">
                     {new Date(viewingPost.createdAt).toLocaleDateString('en-US', { 
                       year: 'numeric', 
                       month: 'long', 
@@ -1194,36 +1203,36 @@ export default function FeedPage() {
                 </div>
                 
                 {/* Actions */}
-                <div className="p-4 border-t border-gray-700">
+                <div className="p-3 sm:p-4 border-t border-gray-700">
                   <div className="flex items-center justify-around">
                     <button
                       onClick={() => {
                         handleLike(viewingPost.id);
                         setViewingPost({...viewingPost, isLiked: !viewingPost.isLiked});
                       }}
-                      className="flex flex-col items-center gap-1 text-gray-400 hover:text-red-500 transition-colors"
+                      className="flex flex-col items-center gap-0.5 sm:gap-1 text-gray-400 hover:text-red-500 transition-colors"
                     >
                       {viewingPost.isLiked ? (
-                        <IoHeart className="w-6 h-6 text-red-500" />
+                        <IoHeart className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
                       ) : (
-                        <IoHeartOutline className="w-6 h-6" />
+                        <IoHeartOutline className="w-5 h-5 sm:w-6 sm:h-6" />
                       )}
-                      <span className="text-xs">{viewingPost._count.likes}</span>
+                      <span className="text-[10px] sm:text-xs">{viewingPost._count.likes}</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 text-gray-400 hover:text-blue-500 transition-colors">
-                      <IoChatbubbleOutline className="w-6 h-6" />
-                      <span className="text-xs">{viewingPost._count.comments}</span>
+                    <button className="flex flex-col items-center gap-0.5 sm:gap-1 text-gray-400 hover:text-blue-500 transition-colors">
+                      <IoChatbubbleOutline className="w-5 h-5 sm:w-6 sm:h-6" />
+                      <span className="text-[10px] sm:text-xs">{viewingPost._count.comments}</span>
                     </button>
                     <button 
                       onClick={() => handleBookmark(viewingPost.id)}
-                      className="flex flex-col items-center gap-1 text-gray-400 hover:text-yellow-500 transition-colors"
+                      className="flex flex-col items-center gap-0.5 sm:gap-1 text-gray-400 hover:text-yellow-500 transition-colors"
                     >
                       {viewingPost.isBookmarked ? (
-                        <IoBookmark className="w-6 h-6 text-yellow-500" />
+                        <IoBookmark className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
                       ) : (
-                        <IoBookmarkOutline className="w-6 h-6" />
+                        <IoBookmarkOutline className="w-5 h-5 sm:w-6 sm:h-6" />
                       )}
-                      <span className="text-xs">Save</span>
+                      <span className="text-[10px] sm:text-xs">Save</span>
                     </button>
                   </div>
                 </div>

@@ -200,10 +200,10 @@ export default function KYCPage() {
                 ))}
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
                 {/* Step 1: Personal Information */}
                 {step === 1 && (
-                  <div className="space-y-6 animate-fade-in">
+                  <div className="space-y-3 sm:space-y-4 animate-fade-in">
                     <div className="flex items-center gap-3 mb-6">
                       <IoPersonOutline className="w-6 h-6 text-blue-400" />
                       <h3 className="text-xl font-bold text-white">Personal Information</h3>
@@ -217,7 +217,7 @@ export default function KYCPage() {
                           name="firstName"
                           value={formData.firstName}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                           required
                         />
                       </div>
@@ -228,7 +228,7 @@ export default function KYCPage() {
                           name="lastName"
                           value={formData.lastName}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                           required
                         />
                       </div>
@@ -243,7 +243,7 @@ export default function KYCPage() {
                             const [year, month] = formData.dateOfBirth.split('-');
                             setFormData({ ...formData, dateOfBirth: `${year || '2000'}-${month || '01'}-${e.target.value.padStart(2, '0')}` });
                           }}
-                          className="px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                           required
                         >
                           <option value="">Day</option>
@@ -257,7 +257,7 @@ export default function KYCPage() {
                             const [year, , day] = formData.dateOfBirth.split('-');
                             setFormData({ ...formData, dateOfBirth: `${year || '2000'}-${e.target.value.padStart(2, '0')}-${day || '01'}` });
                           }}
-                          className="px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                           required
                         >
                           <option value="">Month</option>
@@ -271,7 +271,7 @@ export default function KYCPage() {
                             const [, month, day] = formData.dateOfBirth.split('-');
                             setFormData({ ...formData, dateOfBirth: `${e.target.value}-${month || '01'}-${day || '01'}` });
                           }}
-                          className="px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                           required
                         >
                           <option value="">Year</option>
@@ -290,7 +290,7 @@ export default function KYCPage() {
                         value={formData.address}
                         onChange={handleInputChange}
                         placeholder="Street address"
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         required
                       />
                     </div>
@@ -303,7 +303,7 @@ export default function KYCPage() {
                           name="city"
                           value={formData.city}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                           required
                         />
                       </div>
@@ -314,7 +314,7 @@ export default function KYCPage() {
                           name="state"
                           value={formData.state}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                           required
                         />
                       </div>
@@ -324,7 +324,7 @@ export default function KYCPage() {
                           name="country"
                           value={formData.country}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                          className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                           required
                         >
                           <option value="Nigeria">Nigeria</option>
@@ -338,7 +338,7 @@ export default function KYCPage() {
 
                 {/* Step 2: ID Verification */}
                 {step === 2 && (
-                  <div className="space-y-6 animate-fade-in">
+                  <div className="space-y-3 sm:space-y-4 animate-fade-in">
                     <div className="flex items-center gap-3 mb-6">
                       <IoCardOutline className="w-6 h-6 text-blue-400" />
                       <h3 className="text-xl font-bold text-white">ID Verification</h3>
@@ -350,7 +350,7 @@ export default function KYCPage() {
                         name="idType"
                         value={formData.idType}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         required
                       >
                         <option value="nin">National ID (NIN)</option>
@@ -368,7 +368,7 @@ export default function KYCPage() {
                         value={formData.idNumber}
                         onChange={handleInputChange}
                         placeholder="Enter your ID number"
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                         required
                       />
                     </div>
@@ -381,7 +381,7 @@ export default function KYCPage() {
                         value={formData.bvn}
                         onChange={handleInputChange}
                         placeholder="Bank Verification Number"
-                        className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                        className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                       />
                     </div>
 
@@ -399,7 +399,7 @@ export default function KYCPage() {
 
                 {/* Step 3: Document Upload */}
                 {step === 3 && (
-                  <div className="space-y-6 animate-fade-in">
+                  <div className="space-y-3 sm:space-y-4 animate-fade-in">
                     <div className="flex items-center gap-3 mb-6">
                       <IoDocumentTextOutline className="w-6 h-6 text-blue-400" />
                       <h3 className="text-xl font-bold text-white">Upload Documents</h3>
