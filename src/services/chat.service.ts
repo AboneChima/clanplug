@@ -229,28 +229,37 @@ export class ChatService {
 
   // File Upload - Use post media upload endpoint
   async uploadFile(accessToken: string, file: File): Promise<FileUploadResponse> {
-    const formData = new FormData();
-    formData.append('media', file); // Changed from 'file' to 'media'
+    try {
+      const formData = new FormData();
+      formData.append('media', file);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
-      body: formData,
-    });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: formData,
+      });
 
-    const data = await response.json();
-    if (data.success && data.data?.urls && data.data.urls.length > 0) {
-      return {
-        success: true,
-        data: {
-          url: data.data.urls[0], // Get first URL from array
-          filename: file.name,
-          size: file.size,
-          type: file.type
-        }
-      };
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success && data.data?.urls && data.data.urls.length > 0) {
+        return {
+          success: true,
+          data: {
+            url: data.data.urls[0],
+            filename: file.name,
+            size: file.size,
+            type: file.type
+          }
+        };
+      }
+      return { success: false, message: data.message || 'Upload failed' };
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      return { success: false, message: error.message || 'Network error - unable to reach server' };
     }
-    return { success: false, message: data.message || 'Upload failed' };
   }
 
   // Real-time Communication

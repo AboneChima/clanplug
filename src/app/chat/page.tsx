@@ -368,13 +368,13 @@ function ChatContent() {
                     {showChatMenu && (
                       <>
                         <div className="fixed inset-0 z-[100]" onClick={() => setShowChatMenu(false)}></div>
-                        <div className="fixed right-4 top-20 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-[110] overflow-hidden">
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-slate-800 border border-slate-600 rounded-lg shadow-2xl z-[110] overflow-hidden backdrop-blur-none">
                           <button
                             onClick={() => {
                               setShowChatMenu(false);
                               setShowReportModal(true);
                             }}
-                            className="w-full px-4 py-3 text-left text-sm text-white hover:bg-gray-800 transition-colors flex items-center gap-3 bg-gray-900"
+                            className="w-full px-4 py-3 text-left text-sm text-white hover:bg-slate-700 transition-colors flex items-center gap-3"
                           >
                             <svg className="w-5 h-5 text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -386,7 +386,7 @@ function ChatContent() {
                               setShowChatMenu(false);
                               setShowBlockModal(true);
                             }}
-                            className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-gray-800 transition-colors flex items-center gap-3 border-t border-gray-700 bg-gray-900"
+                            className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-slate-700 transition-colors flex items-center gap-3 border-t border-slate-600"
                           >
                             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />

@@ -109,9 +109,7 @@ export default function MobileBottomNav() {
                     )}
                     {/* Unread indicator for chat */}
                     {href === '/chat' && unreadChats > 0 && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white">{unreadChats > 9 ? '9+' : unreadChats}</span>
-                      </div>
+                      <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border border-slate-900"></div>
                     )}
                   </div>
                   <span className={`relative text-[10px] font-semibold transition-all duration-300 ${
