@@ -6,8 +6,38 @@ async function syncDatabaseSchema() {
   console.log('🔄 Syncing database schema with Prisma...\n');
 
   try {
+    // First, create missing enum types
+    console.log('1️⃣ Creating enum types...');
+    
+    await prisma.$executeRaw`
+      DO $$ BEGIN
+        CREATE TYPE "TransactionStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED', 'PROCESSING');
+      EXCEPTION
+        WHEN duplicate_object THEN null;
+      END $$;
+    `;
+    console.log('   ✅ TransactionStatus enum created');
+    
+    await prisma.$executeRaw`
+      DO $$ BEGIN
+        CREATE TYPE "TransactionType" AS ENUM ('DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PURCHASE', 'SALE', 'VTU_PURCHASE', 'ESCROW_DEPOSIT', 'ESCROW_RELEASE', 'FEE_CHARGE', 'REFUND');
+      EXCEPTION
+        WHEN duplicate_object THEN null;
+      END $$;
+    `;
+    console.log('   ✅ TransactionType enum created');
+    
+    await prisma.$executeRaw`
+      DO $$ BEGIN
+        CREATE TYPE "Currency" AS ENUM ('NGN', 'USD', 'LMC');
+      EXCEPTION
+        WHEN duplicate_object THEN null;
+      END $$;
+    `;
+    console.log('   ✅ Currency enum created\n');
+    
     // Check what columns exist in transactions table
-    console.log('1️⃣ Checking transactions table structure...');
+    console.log('2️⃣ Checking transactions table structure...');
     const result = await prisma.$queryRaw`
       SELECT column_name, data_type 
       FROM information_schema.columns 
@@ -23,14 +53,14 @@ async function syncDatabaseSchema() {
     
     if (missingColumns.length > 0) {
       console.log(`\n⚠️ Missing columns: ${missingColumns.join(', ')}`);
-      console.log('\n2️⃣ Adding missing columns...\n');
+      console.log('\n3️⃣ Adding missing columns...\n');
       
       // Add status column if missing
       if (missingColumns.includes('status')) {
         console.log('   Adding status column...');
         await prisma.$executeRaw`
           ALTER TABLE transactions 
-          ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'PENDING';
+          ADD COLUMN IF NOT EXISTS status "TransactionStatus" NOT NULL DEFAULT 'PENDING'::"TransactionStatus";
         `;
         console.log('   ✅ status column added');
       }
@@ -40,9 +70,19 @@ async function syncDatabaseSchema() {
         console.log('   Adding type column...');
         await prisma.$executeRaw`
           ALTER TABLE transactions 
-          ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'DEPOSIT';
+          ADD COLUMN IF NOT EXISTS type "TransactionType" NOT NULL DEFAULT 'DEPOSIT'::"TransactionType";
         `;
         console.log('   ✅ type column added');
+      }
+      
+      // Add currency column if missing
+      if (missingColumns.includes('currency')) {
+        console.log('   Adding currency column...');
+        await prisma.$executeRaw`
+          ALTER TABLE transactions 
+          ADD COLUMN IF NOT EXISTS currency "Currency" NOT NULL DEFAULT 'NGN'::"Currency";
+        `;
+        console.log('   ✅ currency column added');
       }
       
       // Add other missing columns
@@ -70,7 +110,7 @@ async function syncDatabaseSchema() {
     }
     
     // Verify the fix
-    console.log('\n3️⃣ Verifying schema...');
+    console.log('\n4️⃣ Verifying schema...');
     const transactionCount = await prisma.transaction.count();
     console.log(`✅ Transactions table working! Count: ${transactionCount}`);
     
@@ -79,6 +119,9 @@ async function syncDatabaseSchema() {
     
     const walletCount = await prisma.wallet.count();
     console.log(`✅ Wallets: ${walletCount}`);
+    
+    const badgeCount = await prisma.verificationBadge.count();
+    console.log(`✅ VerificationBadges: ${badgeCount}`);
     
     console.log('\n✅ Database schema synced successfully!');
     
