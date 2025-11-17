@@ -8,42 +8,11 @@ import { cleanupExpiredTransactions } from '../utils/transaction-cleanup';
 export function startTransactionCleanupJob() {
   console.log('🕐 Starting transaction cleanup job scheduler...');
   console.log('⚠️ Transaction cleanup temporarily disabled due to database schema migration');
+  console.log('✅ Transaction cleanup job scheduler initialized (cleanup disabled)');
   
   // TEMPORARILY DISABLED - Will re-enable after database schema is fixed
-  // TODO: Re-enable after running database sync
-  
-  /*
-  // Run every 15 minutes
-  cron.schedule('*/15 * * * *', async () => {
-    console.log('🧹 Running scheduled transaction cleanup...');
-    
-    try {
-      const result = await cleanupExpiredTransactions();
-      
-      if (result.success) {
-        console.log(`✅ Cleanup completed: ${result.expiredCount} transactions processed`);
-      } else {
-        console.error('❌ Cleanup failed:', result.error);
-      }
-    } catch (error) {
-      console.error('❌ Cleanup job error:', error);
-    }
-  });
-
-  // Run cleanup immediately on startup
-  setTimeout(async () => {
-    console.log('🧹 Running initial transaction cleanup...');
-    const result = await cleanupExpiredTransactions();
-    
-    if (result.success) {
-      console.log(`✅ Initial cleanup completed: ${result.expiredCount} transactions processed`);
-    } else {
-      console.error('❌ Initial cleanup failed:', result.error);
-    }
-  }, 5000); // Wait 5 seconds after startup
-  */
-
-  console.log('✅ Transaction cleanup job scheduler initialized (cleanup disabled)');
+  // The cleanup job has been disabled to prevent errors during database migration
+  // Re-enable by uncommenting the code below after running database sync
 }
 
 /**
