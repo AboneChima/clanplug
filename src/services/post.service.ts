@@ -77,9 +77,9 @@ export const postService = {
                         verificationBadge?.expiresAt && 
                         new Date() < verificationBadge.expiresAt;
 
-      // Apply post limit to non-verified users (10 posts per month for marketplace)
+      // Apply post limits to non-verified users
       if (!isVerified) {
-        // For marketplace posts, check monthly limit
+        // For MARKETPLACE posts (all types), check monthly limit - 10 posts per month
         if (payload.type === 'MARKETPLACE_LISTING' || payload.type === 'GAME_ACCOUNT') {
           const oneMonthAgo = new Date();
           oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -99,9 +99,10 @@ export const postService = {
               error: 'POST_LIMIT_REACHED' 
             };
           }
+          // MARKETPLACE posts can have images/videos regardless of verification
         }
         
-        // For social posts, check total limit (20 posts)
+        // For SOCIAL FEED posts, check total limit (20 posts) and image restriction
         if (payload.type === 'SOCIAL_POST') {
           const totalSocialPostsCount = await prisma.post.count({
             where: { 
@@ -117,16 +118,16 @@ export const postService = {
               error: 'POST_LIMIT_REACHED' 
             };
           }
+          
+          // SOCIAL FEED: Block images for non-verified users
+          if (payload.images && payload.images.length > 0) {
+            return {
+              success: false,
+              message: 'Image posting on social feed requires verification. Text posts are allowed.',
+              error: 'VERIFICATION_REQUIRED'
+            };
+          }
         }
-      }
-
-      // For social posts with images, require verification
-      if (payload.type === 'SOCIAL_POST' && payload.images && payload.images.length > 0 && !isVerified) {
-        return {
-          success: false,
-          message: 'Image posting on social feed requires verification. Marketplace posts are allowed.',
-          error: 'VERIFICATION_REQUIRED'
-        };
       }
 
       const post = await prisma.post.create({
