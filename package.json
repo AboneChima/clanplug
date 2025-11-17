@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon --exec \"ts-node --project tsconfig-node.json\" src/server.ts",
     "build": "prisma generate && tsc",
+    "postbuild": "node sync-database-schema.js",
     "start": "node dist/server.js",
     "test": "jest",
     "test:watch": "jest --watch",
