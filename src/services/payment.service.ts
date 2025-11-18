@@ -445,11 +445,25 @@ class PaymentService {
 
       const reference = `FLW-${uuidv4()}`;
 
+      // Calculate fees (gross-up mode - user pays all fees)
+      const userAmount = request.amount; // Amount user wants in wallet
+      const flutterwaveFee = userAmount * 0.02; // 2% Flutterwave fee
+      const platformFee = userAmount * 0.005; // 0.5% platform fee
+      const totalToCharge = userAmount + flutterwaveFee + platformFee; // Total user pays
+
+      console.log('Payment calculation:', {
+        userAmount,
+        flutterwaveFee,
+        platformFee,
+        totalToCharge,
+        reference
+      });
+
       const response = await axios.post(
         `${this.flutterwaveBaseUrl}/payments`,
         {
           tx_ref: reference,
-          amount: request.amount,
+          amount: totalToCharge, // Charge the total including fees
           currency: request.currency,
           redirect_url: `${config.APP_URL}/api/payments/flutterwave/callback`,
           customer: {
@@ -500,14 +514,18 @@ class PaymentService {
             walletId: userWallet.id,
             type: TransactionType.DEPOSIT,
             status: TransactionStatus.PENDING,
-            amount: request.amount,
-            fee: 0,
-            netAmount: request.amount,
+            amount: totalToCharge, // Total charged to user
+            fee: flutterwaveFee + platformFee, // Combined fees
+            netAmount: userAmount, // Amount to credit to wallet
             currency: request.currency,
             reference,
             description: request.description || 'Wallet deposit via Flutterwave',
             metadata: {
-              gateway: 'flutterwave'
+              gateway: 'flutterwave',
+              userAmount,
+              flutterwaveFee,
+              platformFee,
+              totalToCharge
             }
           }
         });
@@ -648,7 +666,8 @@ class PaymentService {
           }
         });
 
-        // Credit the wallet in the SAME currency as the deposit
+        // Credit the wallet with netAmount (user's requested amount, excluding fees)
+        const amountToCredit = transaction.netAmount || transaction.amount;
         await tx.wallet.upsert({
           where: {
             userId_currency: {
@@ -657,14 +676,14 @@ class PaymentService {
             }
           },
           update: {
-            balance: { increment: transaction.amount },
-            totalDeposits: { increment: transaction.amount }
+            balance: { increment: amountToCredit },
+            totalDeposits: { increment: amountToCredit }
           },
           create: {
             userId: transaction.userId,
             currency: transaction.currency,
-            balance: transaction.amount,
-            totalDeposits: transaction.amount
+            balance: amountToCredit,
+            totalDeposits: amountToCredit
           }
         });
       });
