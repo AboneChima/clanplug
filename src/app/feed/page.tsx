@@ -1252,7 +1252,10 @@ export default function FeedPage() {
                       <span className="text-[10px] sm:text-xs">{viewingPost._count.comments}</span>
                     </button>
                     <button 
-                      onClick={() => handleBookmark(viewingPost.id)}
+                      onClick={() => {
+                        handleBookmark(viewingPost.id);
+                        setViewingPost({...viewingPost, isBookmarked: !viewingPost.isBookmarked});
+                      }}
                       className="flex flex-col items-center gap-0.5 sm:gap-1 text-gray-400 hover:text-yellow-500 transition-colors"
                     >
                       {viewingPost.isBookmarked ? (
