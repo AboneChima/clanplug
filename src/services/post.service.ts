@@ -285,7 +285,14 @@ export const postService = {
               username: true,
               firstName: true,
               lastName: true,
+              avatar: true,
               isKYCVerified: true,
+              verificationBadge: {
+                select: {
+                  status: true,
+                  expiresAt: true,
+                },
+              },
             },
           },
           _count: {
