@@ -132,8 +132,15 @@ export default function FeedPage() {
         const data = await response.json();
         const postsData = Array.isArray(data.data) ? data.data : Array.isArray(data.posts) ? data.posts : Array.isArray(data) ? data : [];
         
-        // Load bookmarked state from localStorage
-        const bookmarkedIds = JSON.parse(localStorage.getItem('bookmarkedPosts') || '[]');
+        // Fetch bookmarked posts from backend
+        const bookmarksResponse = await authFetch('/api/posts/bookmarks');
+        let bookmarkedIds: string[] = [];
+        if (bookmarksResponse.ok) {
+          const bookmarksData = await bookmarksResponse.json();
+          const bookmarkedPosts = Array.isArray(bookmarksData.data) ? bookmarksData.data : [];
+          bookmarkedIds = bookmarkedPosts.map((post: any) => post.id);
+        }
+        
         const postsWithBookmarks = postsData.map((post: Post) => ({
           ...post,
           isBookmarked: bookmarkedIds.includes(post.id),
@@ -157,27 +164,20 @@ export default function FeedPage() {
   const fetchFavoritePosts = async () => {
     try {
       setLoading(true);
-      // Get bookmarked IDs from localStorage
-      const bookmarkedIds = JSON.parse(localStorage.getItem('bookmarkedPosts') || '[]');
-      
-      if (bookmarkedIds.length === 0) {
-        setFavoritePosts([]);
-        setLoading(false);
-        return;
-      }
-      
-      // Fetch all posts and filter by bookmarked IDs
-      const endpoint = '/api/posts/feed';
-      const response = await authFetch(endpoint);
+      // Fetch bookmarked posts directly from backend
+      const response = await authFetch('/api/posts/bookmarks');
       if (response.ok) {
         const data = await response.json();
-        const postsData = Array.isArray(data.data) ? data.data : Array.isArray(data.posts) ? data.posts : Array.isArray(data) ? data : [];
+        const postsData = Array.isArray(data.data) ? data.data : [];
         
-        // Filter to only bookmarked posts
-        const bookmarked = postsData.filter((post: Post) => bookmarkedIds.includes(post.id));
-        const postsWithBookmarks = bookmarked.map((post: Post) => ({
+        const postsWithBookmarks = postsData.map((post: Post) => ({
           ...post,
-          isBookmarked: true
+          isBookmarked: true,
+          // Add timestamp to avatar to prevent caching
+          user: {
+            ...post.user,
+            avatar: post.user.avatar ? `${post.user.avatar}?t=${Date.now()}` : undefined
+          }
         }));
         
         setFavoritePosts(postsWithBookmarks);
@@ -326,28 +326,37 @@ export default function FeedPage() {
           : p
       ));
       
-      // Save to localStorage as fallback
-      const bookmarkedIds = JSON.parse(localStorage.getItem('bookmarkedPosts') || '[]');
-      if (newBookmarkState) {
-        bookmarkedIds.push(postId);
+      // Sync with backend
+      const response = await authFetch(`/api/posts/${postId}/bookmark`, {
+        method: 'POST',
+      });
+      
+      if (response.ok) {
+        showToast(newBookmarkState ? 'Added to favorites' : 'Removed from favorites', 'success');
+        
+        // Refresh posts to ensure persistence
+        setTimeout(() => {
+          fetchPosts();
+        }, 500);
       } else {
-        const index = bookmarkedIds.indexOf(postId);
-        if (index > -1) bookmarkedIds.splice(index, 1);
-      }
-      localStorage.setItem('bookmarkedPosts', JSON.stringify(bookmarkedIds));
-      
-      showToast(newBookmarkState ? 'Added to favorites' : 'Removed from favorites', 'success');
-      
-      // Try to sync with backend (will fail gracefully if table doesn't exist)
-      try {
-        await authFetch(`/api/posts/${postId}/bookmark`, {
-          method: 'POST',
-        });
-      } catch (err) {
-        console.log('Backend bookmark sync failed, using localStorage');
+        // Revert on error
+        setPosts(posts.map(p => 
+          p.id === postId 
+            ? { ...p, isBookmarked: !newBookmarkState }
+            : p
+        ));
+        showToast('Failed to update bookmark', 'error');
       }
     } catch (error) {
       console.error('Error bookmarking post:', error);
+      // Revert on error
+      const post = posts.find(p => p.id === postId);
+      setPosts(posts.map(p => 
+        p.id === postId 
+          ? { ...p, isBookmarked: !post?.isBookmarked }
+          : p
+      ));
+      showToast('Failed to update bookmark', 'error');
     }
   };
 
@@ -438,46 +447,46 @@ export default function FeedPage() {
   };
 
   const renderPost = (post: Post) => (
-    <div key={post.id} className="bg-gray-800/50 rounded-lg border border-gray-700 overflow-hidden">
-      {/* Post Header */}
-      <div className="p-3 flex items-center justify-between">
-        <Link href={`/user/${post.user.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="relative">
+    <div key={post.id} className="bg-gray-800/50 rounded-md xs:rounded-lg border border-gray-700 overflow-hidden w-full">
+      {/* Post Header - Extra Small for 0-360px */}
+      <div className="p-1.5 xs:p-2.5 sm:p-3 flex items-center justify-between">
+        <Link href={`/user/${post.user.id}`} className="flex items-center gap-1 xs:gap-2 hover:opacity-80 transition-opacity flex-1 min-w-0">
+          <div className="relative flex-shrink-0">
             {post.user.avatar ? (
               <Image 
                 src={post.user.avatar} 
                 alt={post.user.username} 
                 width={32} 
                 height={32} 
-                className="w-8 h-8 rounded-full object-cover"
+                className="w-6 h-6 xs:w-8 xs:h-8 rounded-full object-cover"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <span className="text-white text-xs font-semibold">
+              <div className="w-6 h-6 xs:w-8 xs:h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <span className="text-white text-[9px] xs:text-xs font-semibold">
                   {post.user.firstName[0]}{post.user.lastName[0]}
                 </span>
               </div>
             )}
           </div>
-          <div>
-            <div className="flex items-center gap-1">
-              <p className="text-white text-sm font-medium">{post.user.firstName} {post.user.lastName}</p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-0.5 xs:gap-1">
+              <p className="text-white text-[10px] xs:text-xs sm:text-sm font-medium truncate">{post.user.firstName} {post.user.lastName}</p>
               {(post.user as any)?.verificationBadge?.status === 'active' && (
-                <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-2.5 h-2.5 xs:w-3.5 xs:h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               )}
             </div>
-            <p className="text-gray-400 text-xs">@{post.user.username}</p>
+            <p className="text-gray-400 text-[9px] xs:text-[11px] truncate">@{post.user.username}</p>
           </div>
         </Link>
         
-        {/* Follow and Message buttons - only show if not own post */}
+        {/* Follow and Message buttons - Extra Small for 0-360px */}
         {post.user.id !== user?.id ? (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5 xs:gap-1.5 flex-shrink-0">
             <button
               onClick={() => handleFollow(post.user.id, (post.user as any).isFollowing || false)}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+              className={`px-1.5 xs:px-2.5 py-0.5 xs:py-1 text-[9px] xs:text-xs font-medium rounded transition-colors ${
                 (post.user as any).isMutual ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
               } text-white`}
             >
@@ -485,9 +494,9 @@ export default function FeedPage() {
             </button>
             <button
               onClick={() => handleStartChat(post.user.id, post.user)}
-              className="p-1.5 hover:bg-gray-700 rounded-md transition-colors"
+              className="p-0.5 xs:p-1.5 hover:bg-gray-700 rounded transition-colors"
             >
-              <IoMailOutline className="w-4 h-4 text-gray-400" />
+              <IoMailOutline className="w-3 h-3 xs:w-4 xs:h-4 text-gray-400" />
             </button>
           </div>
         ) : (
@@ -554,33 +563,36 @@ export default function FeedPage() {
           </div>
         </div>
       ) : post.images && post.images.length > 0 ? (
-        /* Image Post - Horizontal Layout */
-        <div className="px-3 pb-2 flex gap-2 sm:gap-3">
+        /* Image Post - Extra Small for 0-360px */
+        <div className="px-1.5 xs:px-2.5 sm:px-3 pb-1.5 xs:pb-2 flex gap-1.5 xs:gap-2.5 sm:gap-3">
           <button
             onClick={() => setViewingPost(post)}
-            className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 hover:opacity-90 transition-opacity"
+            className="relative w-16 h-16 xs:w-24 xs:h-24 sm:w-28 sm:h-28 rounded-md xs:rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 hover:opacity-90 transition-opacity"
           >
             <Image src={post.images[0]} alt="Post image" fill className="object-cover" />
             {post.images.length > 1 && (
-              <div className="absolute top-0.5 right-0.5 bg-black/70 text-white text-[10px] px-1 py-0.5 rounded">
+              <div className="absolute top-0.5 right-0.5 xs:top-1 xs:right-1 bg-black/80 text-white text-[8px] xs:text-[10px] px-1 xs:px-1.5 py-0.5 rounded font-medium">
                 +{post.images.length - 1}
               </div>
             )}
           </button>
-          <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-            <p className="text-gray-300 text-xs sm:text-sm line-clamp-3">{post.description}</p>
+          <div className="flex-1 min-w-0 flex flex-col justify-between">
+            <p className="text-gray-300 text-[10px] xs:text-xs sm:text-sm line-clamp-4 leading-tight xs:leading-snug">{post.description}</p>
             <button
               onClick={() => setViewingPost(post)}
-              className="text-blue-400 hover:text-blue-300 text-[11px] font-medium mt-1 text-left"
+              className="text-blue-400 hover:text-blue-300 text-[9px] xs:text-[11px] font-medium mt-0.5 xs:mt-1 text-left inline-flex items-center gap-0.5"
             >
-              View Details →
+              <span>View</span>
+              <svg className="w-2.5 h-2.5 xs:w-3 xs:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </div>
         </div>
       ) : (
-        /* Text Only Post */
-        <div className="px-3 pb-2">
-          <p className="text-gray-300 text-sm line-clamp-3">{post.description}</p>
+        /* Text Only Post - Extra Small for 0-360px */
+        <div className="px-1.5 xs:px-2.5 sm:px-3 pb-1.5 xs:pb-2">
+          <p className="text-gray-300 text-[10px] xs:text-xs sm:text-sm line-clamp-4 leading-tight xs:leading-snug">{post.description}</p>
         </div>
       )}
 
@@ -712,38 +724,64 @@ export default function FeedPage() {
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Hero Header - Clean Modern Design */}
-        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm mb-4 relative z-20">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-5">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5">Dashboard</h1>
-                <p className="text-xs sm:text-sm text-gray-400">Your social feed</p>
+        {/* TikTok-Style Compact Header - No Hero Section */}
+        <div className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700">
+          <div className="max-w-7xl mx-auto">
+            {/* Top Row: Tabs Left + Icons Right */}
+            <div className="flex items-center justify-between px-3 xs:px-4 py-2 xs:py-2.5">
+              {/* Tabs - Left Aligned with Logo Font */}
+              <div className="flex gap-4 xs:gap-6">
+                <button
+                  onClick={() => setActiveTab('forYou')}
+                  className={`pb-1 px-1 text-sm xs:text-base font-bold tracking-tight transition-colors relative ${
+                    activeTab === 'forYou' ? 'text-white' : 'text-gray-400'
+                  }`}
+                  style={{ fontFamily: 'Cal Sans, Inter, sans-serif' }}
+                >
+                  For You
+                  {activeTab === 'forYou' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab('favorites')}
+                  className={`pb-1 px-1 text-sm xs:text-base font-bold tracking-tight transition-colors relative ${
+                    activeTab === 'favorites' ? 'text-white' : 'text-gray-400'
+                  }`}
+                  style={{ fontFamily: 'Cal Sans, Inter, sans-serif' }}
+                >
+                  Favorites
+                  {activeTab === 'favorites' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+                  )}
+                </button>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Right Icons */}
+              <div className="flex items-center gap-1 xs:gap-1.5">
                 <button
                   onClick={() => setShowSearch(!showSearch)}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-                  title="Search users"
+                  className="p-1 xs:p-1.5 hover:bg-slate-700 rounded-md transition-colors"
+                  title="Search"
                 >
-                  <svg className="w-5 h-5 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 xs:w-5 xs:h-5 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </button>
                 <button
                   onClick={() => setCommentingOnPost('create-post-modal')}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                  className="flex items-center gap-0.5 xs:gap-1 px-1.5 xs:px-2.5 py-1 xs:py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-[10px] xs:text-xs font-medium"
+                  title="Create Post"
                 >
-                  <IoImageOutline className="w-5 h-5" />
-                  <span className="hidden sm:inline text-sm">Create Post</span>
-                  <span className="sm:hidden text-sm">Post</span>
+                  <span className="text-sm xs:text-base font-bold leading-none">+</span>
+                  <span>Post</span>
                 </button>
               </div>
             </div>
 
-            {/* Search Bar */}
+            {/* Search Bar - Collapsible */}
             {showSearch && (
-              <div className="mt-3 relative z-[30]">
+              <div className="px-3 xs:px-4 pb-2 relative z-[30]">
                 <input
                   type="text"
                   value={searchQuery}
@@ -839,52 +877,11 @@ export default function FeedPage() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="sticky top-0 z-[5] bg-slate-900/95 backdrop-blur-sm border-b border-slate-700">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="flex gap-6 sm:gap-8">
-              <button
-                onClick={() => setActiveTab('forYou')}
-                className={`pb-3 px-2 text-sm sm:text-base font-semibold transition-colors relative ${
-                  activeTab === 'forYou' ? 'text-white' : 'text-gray-400 hover:text-gray-300'
-                }`}
-              >
-                For You
-                {activeTab === 'forYou' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"></div>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('favorites')}
-                className={`pb-3 px-2 text-sm sm:text-base font-semibold transition-colors relative ${
-                  activeTab === 'favorites' ? 'text-white' : 'text-gray-400 hover:text-gray-300'
-                }`}
-              >
-                Favorites
-                {activeTab === 'favorites' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"></div>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('following')}
-                className={`pb-3 px-2 text-sm sm:text-base font-semibold transition-colors relative ${
-                  activeTab === 'following' ? 'text-white' : 'text-gray-400 hover:text-gray-300'
-                }`}
-              >
-                Following
-                {activeTab === 'following' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"></div>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Main Content - Full Width */}
+        <div className="w-full px-0 pt-2 xs:pt-2.5 sm:pt-3">
           {activeTab === 'following' ? (
-            /* Following View */
-            <div className="w-full max-w-3xl mx-auto space-y-3">
+            /* Following View - Full Width */
+            <div className="w-full space-y-2 xs:space-y-2.5 sm:space-y-3 px-2 xs:px-3 sm:px-4">
               {loadingFollowing ? (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
@@ -958,35 +955,35 @@ export default function FeedPage() {
               )}
             </div>
           ) : activeTab === 'favorites' ? (
-            /* Favorites View */
-            <div className="w-full max-w-3xl mx-auto space-y-3">
+            /* Favorites View - Full Width */
+            <div className="w-full space-y-2 xs:space-y-2.5 sm:space-y-3 px-0">
               {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                  <p className="text-gray-400 mt-4">Loading favorites...</p>
+                <div className="text-center py-10 xs:py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 xs:h-12 xs:w-12 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="text-gray-400 mt-3 xs:mt-4 text-sm xs:text-base">Loading favorites...</p>
                 </div>
               ) : favoritePosts.length === 0 ? (
-                <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
-                  <IoBookmarkOutline className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">No favorite posts yet</p>
-                  <p className="text-gray-500 text-sm mt-2">Bookmark posts to see them here</p>
+                <div className="text-center py-10 xs:py-12 bg-gray-800/50 rounded-lg xs:rounded-xl border border-gray-700">
+                  <IoBookmarkOutline className="w-12 h-12 xs:w-16 xs:h-16 text-gray-600 mx-auto mb-3 xs:mb-4" />
+                  <p className="text-gray-400 text-sm xs:text-base">No favorite posts yet</p>
+                  <p className="text-gray-500 text-xs xs:text-sm mt-2">Bookmark posts to see them here</p>
                 </div>
               ) : (
                 favoritePosts.map(renderPost)
               )}
             </div>
           ) : (
-            <div className="w-full max-w-3xl mx-auto space-y-3">
-              {/* Posts */}
+            <div className="w-full space-y-2 xs:space-y-2.5 sm:space-y-3 px-0">
+              {/* Posts - Full Width */}
               {loading ? (
                 <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                  <p className="text-gray-400 mt-4">Loading feed...</p>
+                  <div className="animate-spin rounded-full h-10 w-10 xs:h-12 xs:w-12 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="text-gray-400 mt-3 xs:mt-4 text-sm xs:text-base">Loading feed...</p>
                 </div>
               ) : posts.length === 0 ? (
-                <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
-                  <IoPeopleOutline className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">
+                <div className="text-center py-10 xs:py-12 bg-gray-800/50 rounded-lg xs:rounded-xl border border-gray-700">
+                  <IoPeopleOutline className="w-12 h-12 xs:w-16 xs:h-16 text-gray-600 mx-auto mb-3 xs:mb-4" />
+                  <p className="text-gray-400 text-sm xs:text-base">
                     No posts available right now. Be the first to post!
                   </p>
                 </div>

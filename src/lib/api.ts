@@ -27,6 +27,15 @@ export interface TokenPair {
   refreshToken: string;
 }
 
+export interface VerificationBadge {
+  id: string;
+  userId: string;
+  status: string;
+  expiresAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface PublicUser {
   id: string;
   email: string;
@@ -44,6 +53,7 @@ export interface PublicUser {
   phone?: string;
   isKYCVerified?: boolean;
   kycStatus?: string;
+  verificationBadge?: VerificationBadge;
   createdAt?: string;
   updatedAt?: string;
 }

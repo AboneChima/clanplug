@@ -20,6 +20,73 @@ import {
   IoGameControllerOutline
 } from 'react-icons/io5';
 
+// Notification Badge Component with real-time updates
+function NotificationBadge() {
+  const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const checkUnreadNotifications = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications?limit=50`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const notifications = data.data || [];
+          const unread = notifications.filter((n: any) => !n.isRead).length;
+          setUnreadCount(unread);
+        }
+      } catch (error) {
+        console.error('Error checking notifications:', error);
+      }
+    };
+
+    checkUnreadNotifications();
+    const interval = setInterval(checkUnreadNotifications, 3000); // Check every 3s for real-time
+    
+    // Also check when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkUnreadNotifications();
+      }
+    };
+    
+    // Check when window gains focus
+    const handleFocus = () => {
+      checkUnreadNotifications();
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  return (
+    <button 
+      onClick={() => router.push('/notifications')}
+      className="p-2.5 text-gray-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors relative" 
+      aria-label="Notifications"
+    >
+      <IoNotificationsOutline className="w-6 h-6" />
+      {unreadCount > 0 && (
+        <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white px-1">
+          {unreadCount > 9 ? '9+' : unreadCount}
+        </span>
+      )}
+    </button>
+  );
+}
+
 // Create VTU Context
 interface VTUContextType {
   activeVTUService: string | null;
@@ -38,9 +105,11 @@ export const useVTU = () => {
 
 type AppShellProps = {
   children: React.ReactNode;
+  hideNavOnMobile?: boolean;
+  hideBottomNavOnMobile?: boolean;
 };
 
-export default function AppShell({ children }: AppShellProps) {
+export default function AppShell({ children, hideNavOnMobile = false, hideBottomNavOnMobile = false }: AppShellProps) {
   const { user, logout, isLoading } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
@@ -84,7 +153,7 @@ export default function AppShell({ children }: AppShellProps) {
   return (
     <VTUContext.Provider value={{ activeVTUService, setActiveVTUService }}>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-safe">
-        <header className="sticky top-0 z-[70] bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
+        <header className={`sticky top-0 z-[70] bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 ${hideNavOnMobile ? 'hidden lg:block' : ''}`}>
           <div className="flex items-center justify-between h-16 px-4 lg:px-6">
             <div className="flex items-center gap-4">
               <button
@@ -155,15 +224,8 @@ export default function AppShell({ children }: AppShellProps) {
                 <IoLogOutOutline className="w-6 h-6" />
               </button>
 
-              {/* Notification Icon - Top Right */}
-              <button 
-                onClick={() => router.push('/notifications')}
-                className="p-2.5 text-gray-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors relative" 
-                aria-label="Notifications"
-              >
-                <IoNotificationsOutline className="w-6 h-6" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              {/* Notification Icon - Top Right with dynamic badge */}
+              <NotificationBadge />
             </div>
           </div>
         </header>
@@ -172,6 +234,7 @@ export default function AppShell({ children }: AppShellProps) {
           <div className={`
             fixed top-16 bottom-0 left-0 z-[65] w-80 transform transition-all duration-300 ease-out lg:translate-x-0 lg:static lg:top-0 lg:z-auto
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            ${hideNavOnMobile ? 'hidden lg:block' : ''}
           `}>
             <Sidebar user={user} onLogout={handleLogout} />
           </div>
@@ -193,7 +256,7 @@ export default function AppShell({ children }: AppShellProps) {
         </div>
 
         {/* Mobile Bottom Navigation */}
-        <MobileBottomNav />
+        {!hideBottomNavOnMobile && <MobileBottomNav />}
       </div>
     </VTUContext.Provider>
   );

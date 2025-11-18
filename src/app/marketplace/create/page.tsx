@@ -227,32 +227,32 @@ function CreateListingForm() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-24 lg:pb-8">
         {/* Header */}
         <div className="bg-slate-900/50 border-b border-slate-800 mb-6">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+          <div className="max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+              className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 text-gray-400 hover:text-white transition-colors mb-2 xs:mb-3 sm:mb-4 text-xs xs:text-sm"
             >
-              <IoArrowBack className="w-5 h-5" />
+              <IoArrowBack className="w-4 h-4 xs:w-5 xs:h-5" />
               <span>Back</span>
             </button>
             
-            <h1 className="text-2xl sm:text-3xl font-bold text-white">
+            <h1 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white">
               Create New Listing
             </h1>
-            <p className="text-sm text-gray-400 mt-2">
+            <p className="text-xs xs:text-sm text-gray-400 mt-1 xs:mt-1.5 sm:mt-2 hidden xs:block">
               Fill in the details to create your marketplace listing
             </p>
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto px-3 sm:px-6">
-          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <div className="max-w-3xl mx-auto px-2 xs:px-3 sm:px-4 md:px-6">
+          <form onSubmit={handleSubmit} className="space-y-2 xs:space-y-2.5 sm:space-y-3 md:space-y-4">
             {/* Game/Social Media Selection */}
             <div>
-              <label className="block text-white text-sm font-medium mb-1.5">
+              <label className="block text-white text-[11px] xs:text-xs sm:text-sm font-medium mb-1 xs:mb-1.5">
                 {formData.type === 'MARKETPLACE_LISTING' ? 'Social Media Platform' : 'Game'} <span className="text-red-500">*</span>
               </label>
-              <div className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm">
+              <div className="w-full px-2 py-1.5 xs:px-3 xs:py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-md xs:rounded-lg text-white text-xs xs:text-sm">
                 {formData.gameTitle ? (
                   formData.type === 'MARKETPLACE_LISTING' 
                     ? socialMediaNames[formData.gameTitle] || formData.gameTitle 

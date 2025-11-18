@@ -355,35 +355,21 @@ export default function ProfilePage() {
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Hero Header - Clean Modern Design */}
-        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm py-4 sm:py-5 mb-4">
-          <div className="max-w-4xl mx-auto px-3 sm:px-4">
-            <Link href="/feed" className="inline-flex items-center gap-1.5 text-gray-400 hover:text-white mb-3 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="text-sm">Back to Feed</span>
-            </Link>
-            <h1 className="text-xl sm:text-2xl font-bold text-white mb-0.5">My Profile</h1>
-            <p className="text-xs sm:text-sm text-gray-400">Manage your account and view your activity</p>
-          </div>
-        </div>
+        <div className="max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 pt-2 xs:pt-3">
 
-        <div className="max-w-4xl mx-auto px-3 sm:px-4">
-
-          {/* Profile Card - Modern Clean Design */}
+          {/* Profile Card - Compact Mobile Design */}
           <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl">
-            {/* Modern pattern cover */}
-            <div className="h-24 sm:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
+            {/* Minimal cover - Ultra compact for mobile */}
+            <div className="h-16 xs:h-20 sm:h-24 md:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
               <div className="absolute inset-0 opacity-10">
                 <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
               </div>
             </div>
 
             {/* Profile Content */}
-            <div className="px-4 sm:px-6 lg:px-8 pb-6">
-              {/* Avatar and Edit Profile Button */}
-              <div className="flex items-start justify-between -mt-8 sm:-mt-12 mb-4">
+            <div className="px-3 xs:px-4 sm:px-6 lg:px-8 pb-4 xs:pb-5 sm:pb-6">
+              {/* Avatar and Edit Profile Button - Compact */}
+              <div className="flex items-start justify-between -mt-6 xs:-mt-7 sm:-mt-10 md:-mt-12 mb-3 xs:mb-3.5 sm:mb-4">
                 <div className="relative group">
                   {avatarPreview ? (
                     <Image
@@ -391,18 +377,18 @@ export default function ProfilePage() {
                       alt={user?.username || 'User'}
                       width={96}
                       height={96}
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 object-cover shadow-xl ring-2 ring-slate-700"
+                      className="w-16 h-16 xs:w-18 xs:h-18 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-3 xs:border-4 border-slate-800 object-cover shadow-xl ring-2 ring-slate-700"
                     />
                   ) : (
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 bg-slate-700 flex items-center justify-center shadow-xl ring-2 ring-slate-700">
-                      <svg className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="w-16 h-16 xs:w-18 xs:h-18 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-3 xs:border-4 border-slate-800 bg-slate-700 flex items-center justify-center shadow-xl ring-2 ring-slate-700">
+                      <svg className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                       </svg>
                     </div>
                   )}
                   {isUploading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-5 w-5 xs:h-6 xs:w-6 border-b-2 border-white"></div>
                     </div>
                   )}
                 </div>
@@ -417,10 +403,11 @@ export default function ProfilePage() {
                     });
                     setShowEditModal(true);
                   }}
-                  className="mt-12 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg font-medium transition-colors border border-slate-600 flex items-center gap-2"
+                  className="mt-8 xs:mt-9 sm:mt-10 md:mt-12 px-3 xs:px-3.5 sm:px-4 py-1.5 xs:py-1.5 sm:py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs xs:text-sm rounded-md xs:rounded-lg font-medium transition-colors border border-slate-600 flex items-center gap-1.5 xs:gap-2"
                 >
-                  <IoCreateOutline className="w-4 h-4" />
-                  Edit Profile
+                  <IoCreateOutline className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
+                  <span className="hidden xs:inline">Edit Profile</span>
+                  <span className="xs:hidden">Edit</span>
                 </button>
               </div>
 
@@ -455,39 +442,39 @@ export default function ProfilePage() {
                   </p>
                 )}
                 {verificationStatus === 'none' && (
-                  <p className="text-[10px] sm:text-xs text-gray-500 mb-1.5">
+                  <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-500 mb-1.5">
                     Get Verified to unlock premium features
                   </p>
                 )}
                 
-                {/* Verification Button - Ultra Compact */}
+                {/* Verification Button - Ultra Compact for 0-360px, Compact for 360px+ */}
                 {verificationStatus !== 'active' && (
                   <button
                     onClick={() => setShowVerificationModal(true)}
-                    className="mb-1.5 px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] sm:text-xs rounded-md sm:rounded-lg font-medium transition-colors"
+                    className="mb-1.5 px-2 xs:px-2.5 sm:px-3 py-1 xs:py-1 sm:py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[9px] xs:text-[10px] sm:text-xs rounded-md sm:rounded-lg font-medium transition-colors"
                   >
                     {verificationStatus === 'expired' ? 'Renew Badge' : 'Get Badge'}
                   </button>
                 )}
                 
-                {/* KYC Verification Status - Ultra Compact */}
-                <div className="mb-2 p-1.5 sm:p-2 rounded-md sm:rounded-lg bg-slate-700/30 border border-slate-600">
-                  <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-                    <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {/* KYC Verification Status - Ultra Compact for 0-360px, Compact for 360px+ */}
+                <div className="mb-2 p-1.5 xs:p-1.5 sm:p-2 rounded-md sm:rounded-lg bg-slate-700/30 border border-slate-600">
+                  <div className="flex items-center justify-between gap-1.5 xs:gap-1.5 sm:gap-2">
+                    <div className="flex items-center gap-1 xs:gap-1 sm:gap-1.5 flex-1 min-w-0">
+                      <svg className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                       </svg>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] sm:text-xs font-medium text-white">KYC</p>
-                        <p className="text-[9px] sm:text-[10px] text-gray-400 truncate">For marketplace</p>
+                        <p className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-white">KYC</p>
+                        <p className="text-[8px] xs:text-[9px] sm:text-[10px] text-gray-400 truncate">For marketplace</p>
                       </div>
                     </div>
                     {user?.isKYCVerified ? (
-                      <span className="px-1.5 sm:px-2 py-0.5 bg-green-500/20 text-green-400 text-[9px] sm:text-[10px] font-medium rounded">
+                      <span className="px-1.5 xs:px-1.5 sm:px-2 py-0.5 bg-green-500/20 text-green-400 text-[8px] xs:text-[9px] sm:text-[10px] font-medium rounded">
                         Verified
                       </span>
                     ) : (
-                      <Link href="/kyc" className="px-1.5 sm:px-2 py-0.5 bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 text-[9px] sm:text-[10px] font-medium rounded transition-colors whitespace-nowrap">
+                      <Link href="/kyc" className="px-1.5 xs:px-1.5 sm:px-2 py-0.5 bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 text-[8px] xs:text-[9px] sm:text-[10px] font-medium rounded transition-colors whitespace-nowrap">
                         Verify
                       </Link>
                     )}
@@ -519,31 +506,33 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Stats - Modern Grid Layout */}
-              <div className="grid grid-cols-4 gap-2 sm:gap-4 pt-4 border-t border-slate-700">
-                <div className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
-                  <p className="text-lg sm:text-xl font-bold text-white">{stats.posts}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Posts</p>
+              {/* Stats - Ultra Compact for 0-360px, Compact for 360px+ */}
+              <div className="grid grid-cols-4 gap-1 xs:gap-1.5 sm:gap-4 pt-2 xs:pt-3 sm:pt-4 border-t border-slate-700 mb-3">
+                <div className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                  <p className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">{stats.posts}</p>
+                  <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5">Posts</p>
                 </div>
                 <button 
                   onClick={handleShowFollowers}
-                  className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                  className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
                 >
-                  <p className="text-lg sm:text-xl font-bold text-white">{stats.followers}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Followers</p>
+                  <p className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">{stats.followers}</p>
+                  <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5">Followers</p>
                 </button>
                 <button 
                   onClick={handleShowFollowing}
-                  className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
+                  className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors"
                 >
-                  <p className="text-lg sm:text-xl font-bold text-white">{stats.following}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Following</p>
+                  <p className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">{stats.following}</p>
+                  <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5">Following</p>
                 </button>
-                <div className="text-center p-3 rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
-                  <p className="text-lg sm:text-xl font-bold text-white">{stats.likes}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Likes</p>
+                <div className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                  <p className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">{stats.likes}</p>
+                  <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5">Likes</p>
                 </div>
               </div>
+
+
             </div>
           </div>
 
@@ -580,8 +569,7 @@ export default function ProfilePage() {
                       <div key={post.id} className="p-2 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all group">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            {post.title && <h3 className="text-white text-xs font-semibold mb-1 group-hover:text-blue-400 transition-colors truncate">{post.title}</h3>}
-                            <p className="text-gray-300 text-xs line-clamp-1 mb-1">{post.description}</p>
+                            <p className="text-gray-300 text-xs line-clamp-2 mb-1">{post.description}</p>
                             <div className="flex items-center gap-3 text-xs text-gray-400">
                               <span className="flex items-center gap-1">
                                 <IoHeartOutline className="w-3 h-3" />

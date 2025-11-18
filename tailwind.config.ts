@@ -9,6 +9,14 @@ export default {
   ],
   darkMode: 'class',
   theme: {
+    screens: {
+      'xs': '360px',   // Very small phones (0-360px is default mobile-first)
+      'sm': '640px',   // Small devices (360-640px uses xs:)
+      'md': '768px',   // Medium devices
+      'lg': '1024px',  // Large devices
+      'xl': '1280px',  // Extra large devices
+      '2xl': '1536px', // 2X Extra large devices
+    },
     extend: {
       colors: {
         // Base system colors

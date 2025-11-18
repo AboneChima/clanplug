@@ -76,9 +76,32 @@ export default function MobileBottomNav() {
     };
 
     checkUnreadChats();
-    const interval = setInterval(checkUnreadChats, 10000); // Check every 10s
-    return () => clearInterval(interval);
-  }, []);
+    const interval = setInterval(checkUnreadChats, 3000); // Check every 3s for real-time updates
+    
+    // Also check when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkUnreadChats();
+      }
+    };
+    
+    // Check when window gains focus
+    const handleFocus = () => {
+      checkUnreadChats();
+    };
+    
+    // Check when pathname changes (navigating between pages)
+    checkUnreadChats();
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [pathname]); // Re-run when pathname changes
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] px-4 pb-safe">
@@ -107,9 +130,13 @@ export default function MobileBottomNav() {
                     {active && (
                       <div className="absolute -inset-2 bg-blue-500/20 rounded-full blur-md"></div>
                     )}
-                    {/* Unread indicator for chat */}
+                    {/* Unread indicator for chat - only show when there are unread messages */}
                     {href === '/chat' && unreadChats > 0 && (
-                      <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full border border-slate-900"></div>
+                      <div className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] bg-red-500 rounded-full border border-slate-900 flex items-center justify-center">
+                        <span className="text-[8px] font-bold text-white px-0.5">
+                          {unreadChats > 9 ? '9+' : unreadChats}
+                        </span>
+                      </div>
                     )}
                   </div>
                   <span className={`relative text-[10px] font-semibold transition-all duration-300 ${

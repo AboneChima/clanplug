@@ -170,31 +170,22 @@ export default function InternalTransfer() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-3">
-          <IoWalletOutline className="w-6 h-6 text-white" />
-        </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Send Money</h2>
-        <p className="text-sm text-gray-600">Transfer instantly</p>
-      </div>
-
-      {/* Tab Navigation */}
-      <div className="flex bg-gray-50 rounded-xl p-1 mb-6">
+      {/* Tab Navigation - Clean and simple */}
+      <div className="flex bg-gray-50 rounded-lg p-0.5 sm:p-1 mb-3 sm:mb-4">
         <button
           onClick={() => setActiveTab('send')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
+          className={`flex-1 py-1.5 sm:py-2 md:py-2.5 px-2 sm:px-3 md:px-4 rounded-md text-[10px] sm:text-xs md:text-sm font-semibold transition-all ${
             activeTab === 'send'
               ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-600'
           }`}
         >
-          <IoSendOutline className="w-4 h-4 inline mr-1.5" />
+          <IoSendOutline className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 inline mr-0.5 sm:mr-1" />
           Send
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
+          className={`flex-1 py-1.5 sm:py-2 md:py-2.5 px-2 sm:px-3 md:px-4 rounded-md text-[10px] sm:text-xs md:text-sm font-semibold transition-all ${
             activeTab === 'history'
               ? 'bg-white text-blue-600 shadow-sm'
               : 'text-gray-600'
@@ -206,52 +197,52 @@ export default function InternalTransfer() {
       </div>
 
       {activeTab === 'send' ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-3 sm:p-4 md:p-6">
           {/* Error/Success Messages */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 text-sm">{error}</p>
+            <div className="mb-3 p-2 sm:p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-800 text-xs sm:text-sm">{error}</p>
             </div>
           )}
           {success && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-green-800 text-sm">{success}</p>
+            <div className="mb-3 p-2 sm:p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-green-800 text-xs sm:text-sm">{success}</p>
             </div>
           )}
 
-          {/* Currency Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
+          {/* Currency Selection - Compact for Extra Small */}
+          <div className="mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">
+            <label className="block text-[10px] xs:text-xs sm:text-sm font-semibold text-gray-900 mb-1 xs:mb-1.5 sm:mb-2">
               Currency
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-1.5 xs:gap-2 sm:gap-2.5 md:gap-3">
               {wallets.filter(wallet => wallet.currency === 'NGN' || wallet.currency === 'USD').map((wallet) => (
                 <button
                   key={wallet.currency}
                   onClick={() => setSelectedCurrency(wallet.currency)}
-                  className={`p-3 rounded-lg border-2 transition-all ${
+                  className={`p-1.5 xs:p-2 sm:p-2.5 md:p-3 rounded-md xs:rounded-lg border border-2 transition-all ${
                     selectedCurrency === wallet.currency
                       ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200'
                   }`}
                 >
                   <div className="text-center">
-                    <p className="font-semibold text-gray-900">{wallet.currency}</p>
-                    <p className="text-sm text-gray-600 mt-1">{formatCurrency(wallet.balance, wallet.currency)}</p>
+                    <p className="font-semibold text-gray-900 text-[11px] xs:text-xs sm:text-sm">{wallet.currency}</p>
+                    <p className="text-[10px] xs:text-xs sm:text-sm text-gray-600 mt-0.5 xs:mt-1">{formatCurrency(wallet.balance, wallet.currency)}</p>
                   </div>
                 </button>
               ))}
               {wallets.filter(wallet => wallet.currency === 'NGN' || wallet.currency === 'USD').length === 0 && (
-                <div className="p-4 rounded-xl border-2 border-gray-200 bg-gray-50">
-                  <p className="text-gray-600 text-center">No wallet found. Please fund your wallet first.</p>
+                <div className="p-2 xs:p-3 sm:p-4 rounded-lg xs:rounded-xl border-2 border-gray-200 bg-gray-50">
+                  <p className="text-gray-600 text-center text-[10px] xs:text-xs sm:text-sm">No wallet found. Please fund your wallet first.</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Amount Input */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
+          {/* Amount Input - Compact for Extra Small */}
+          <div className="mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">
+            <label className="block text-[10px] xs:text-xs sm:text-sm font-semibold text-gray-900 mb-1 xs:mb-1.5 sm:mb-2">
               Amount
             </label>
             <div className="relative">
@@ -260,26 +251,26 @@ export default function InternalTransfer() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                className="w-full px-4 py-3 text-lg font-semibold text-gray-900 placeholder-gray-400 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-2 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 text-sm xs:text-base sm:text-lg font-semibold text-gray-900 placeholder-gray-400 bg-white border border-gray-300 rounded-md xs:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {selectedCurrency && (
-                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                  <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-sm font-medium">
+                <div className="absolute right-2 xs:right-3 sm:right-4 top-1/2 transform -translate-y-1/2">
+                  <span className="bg-gray-100 text-gray-700 px-1.5 xs:px-2 sm:px-3 py-0.5 xs:py-1 rounded-md xs:rounded-lg text-[10px] xs:text-xs sm:text-sm font-medium">
                     {selectedCurrency}
                   </span>
                 </div>
               )}
             </div>
             {selectedWallet && amount && parseFloat(amount) > selectedWallet.balance && (
-              <p className="text-sm text-red-600 mt-2">
+              <p className="text-[10px] xs:text-xs sm:text-sm text-red-600 mt-1 xs:mt-1.5 sm:mt-2">
                 Insufficient balance. Available: {formatCurrency(selectedWallet.balance, selectedCurrency)}
               </p>
             )}
           </div>
 
           {/* Recipient Input */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
+          <div className="mb-3 sm:mb-4">
+            <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-2">
               Recipient
             </label>
             <div className="mb-3">

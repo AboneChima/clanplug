@@ -188,10 +188,10 @@ export class EscrowService {
   }
 
   /**
-   * Calculate escrow fee (3% of amount)
+   * Calculate escrow fee (0.5% of amount)
    */
   static calculateFee(amount: number): number {
-    return Math.round(amount * 0.03 * 100) / 100; // 3% fee, rounded to 2 decimal places
+    return Math.round(amount * 0.005 * 100) / 100; // 0.5% fee, rounded to 2 decimal places
   }
 
   /**

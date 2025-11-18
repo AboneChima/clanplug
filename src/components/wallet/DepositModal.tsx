@@ -60,38 +60,38 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center">
-              <IoWallet className="w-5 h-5 text-white" />
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-md animate-fade-in max-h-[95vh] overflow-y-auto">
+        {/* Header - Compact on mobile */}
+        <div className="flex items-center justify-between p-3 sm:p-6 border-b border-gray-100">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center">
+              <IoWallet className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Fund Wallet</h2>
-              <p className="text-sm text-gray-600">Add money via Flutterwave</p>
+              <h2 className="text-base sm:text-xl font-bold text-gray-900">Fund Wallet</h2>
+              <p className="text-xs sm:text-sm text-gray-600">Add money via Flutterwave</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
           >
-            <IoClose className="w-5 h-5 text-gray-600" />
+            <IoClose className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
           </button>
         </div>
 
-        {/* Form */}
-        <div className="p-6 space-y-6">
-          {/* Flutterwave Info */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-100 border border-green-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <IoCard className="w-4 h-4 text-white" />
+        {/* Form - Compact on mobile */}
+        <div className="p-3 sm:p-6 space-y-3 sm:space-y-6">
+          {/* Flutterwave Info - Compact on mobile */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-100 border border-green-200 rounded-lg sm:rounded-xl p-2 sm:p-4">
+            <div className="flex items-start gap-2 sm:gap-3">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 rounded-md sm:rounded-lg flex items-center justify-center flex-shrink-0">
+                <IoCard className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>
               <div>
-                <h4 className="font-semibold text-green-900 mb-1">Flutterwave Payment</h4>
-                <p className="text-sm text-green-700">
+                <h4 className="text-sm sm:text-base font-semibold text-green-900 mb-0.5 sm:mb-1">Flutterwave Payment</h4>
+                <p className="text-xs sm:text-sm text-green-700">
                   Deposit Nigerian Naira (NGN) directly to your wallet. Secure and instant.
                 </p>
               </div>

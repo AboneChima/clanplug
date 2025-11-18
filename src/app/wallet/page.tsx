@@ -269,24 +269,23 @@ function WalletContent() {
       )}
       
       <div className="mb-4 animate-fade-in">
-        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 rounded-xl p-3 sm:p-4 text-white shadow-xl">
+        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-700 rounded-xl max-[360px]:p-2.5 p-3 sm:p-4 text-white shadow-xl">
           <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center flex-shrink-0">
-                <IoWalletOutline className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-2 mb-2 max-[360px]:mb-2.5">
+              <div className="max-[360px]:w-9 max-[360px]:h-9 w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center flex-shrink-0">
+                <IoWalletOutline className="max-[360px]:w-5 max-[360px]:h-5 w-5 h-5 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl font-bold text-white">Wallet</h1>
-                <p className="text-xs text-white/80">Manage your funds</p>
+                <h1 className="max-[360px]:text-lg text-lg sm:text-xl font-bold text-white">Wallet</h1>
               </div>
             </div>
             
-            {/* Balance Display - Compact */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+            {/* Balance Display - Compact and clean */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg max-[360px]:p-2.5 p-3 border border-white/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-white/70 mb-0.5">Total Balance</p>
-                  <p className="text-xl sm:text-2xl font-bold text-white">
+                  <p className="max-[360px]:text-xs text-xs text-white/70 mb-0.5">Total Balance</p>
+                  <p className="max-[360px]:text-2xl text-xl sm:text-2xl font-bold text-white">
                     {balance ? 
                       `₦${Object.values(balance).reduce((sum, amount) => sum + amount, 0).toLocaleString()}` : 
                       '₦0.00'
@@ -294,9 +293,50 @@ function WalletContent() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-white/70 mb-0.5">Transactions</p>
-                  <p className="text-lg font-bold text-white">{transactions.length}</p>
+                  <p className="max-[360px]:text-xs text-xs text-white/70 mb-0.5">Transactions</p>
+                  <p className="max-[360px]:text-xl text-lg font-bold text-white">{transactions.length}</p>
                 </div>
+              </div>
+              
+              {/* Quick Actions for screens < 360px ONLY - Bigger buttons */}
+              <div className="hidden max-[360px]:flex gap-1 mt-3">
+                <button 
+                  onClick={() => setDepositModalOpen(true)}
+                  className="flex-1 flex flex-col items-center gap-1 p-2 bg-white/20 hover:bg-white/30 rounded-md text-white transition-all min-w-0" 
+                >
+                  <IoArrowDownOutline className="w-4 h-4" />
+                  <span className="text-[9px] font-semibold leading-none">Deposit</span>
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    setShowSendMoney(!showSendMoney);
+                    if (!showSendMoney) setShowWalletAddresses(false);
+                  }}
+                  className="flex-1 flex flex-col items-center gap-1 p-2 bg-white/20 hover:bg-white/30 rounded-md text-white transition-all min-w-0" 
+                >
+                  <IoSwapHorizontalOutline className="w-4 h-4" />
+                  <span className="text-[9px] font-semibold leading-none">Transfer</span>
+                </button>
+                
+                <button 
+                  onClick={() => {
+                    setShowWalletAddresses(!showWalletAddresses);
+                    if (!showWalletAddresses) setShowSendMoney(false);
+                  }}
+                  className="flex-1 flex flex-col items-center gap-1 p-2 bg-white/20 hover:bg-white/30 rounded-md text-white transition-all min-w-0" 
+                >
+                  <IoWalletOutline className="w-4 h-4" />
+                  <span className="text-[9px] font-semibold leading-none">Receive</span>
+                </button>
+
+                <button 
+                  onClick={() => setWithdrawalModalOpen(true)}
+                  className="flex-1 flex flex-col items-center gap-1 p-2 bg-white/20 hover:bg-white/30 rounded-md text-white transition-all min-w-0" 
+                >
+                  <IoArrowUpOutline className="w-4 h-4" />
+                  <span className="text-[9px] font-semibold leading-none">Withdraw</span>
+                </button>
               </div>
             </div>
           </div>
@@ -304,8 +344,8 @@ function WalletContent() {
       </div>
 
       <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
-        {/* Quick Actions Section */}
-        <div className="bg-gradient-to-br from-white/80 to-gray-50/80 backdrop-blur-sm rounded-2xl lg:rounded-3xl p-6 lg:p-8 border border-gray-200/50 shadow-xl hover:shadow-2xl transition-all duration-500 animate-fade-in" style={{animationDelay: '0.1s'}}>
+        {/* Quick Actions Section - Hidden on screens < 360px */}
+        <div className="hidden xs:block bg-gradient-to-br from-white/80 to-gray-50/80 backdrop-blur-sm rounded-2xl lg:rounded-3xl p-6 lg:p-8 border border-gray-200/50 shadow-xl hover:shadow-2xl transition-all duration-500 animate-fade-in" style={{animationDelay: '0.1s'}}>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 lg:mb-8">
             <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg">
               <IoWalletOutline className="w-5 h-5 lg:w-6 lg:h-6 text-white" />

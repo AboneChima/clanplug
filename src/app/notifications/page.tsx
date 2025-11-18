@@ -71,16 +71,25 @@ export default function NotificationsPage() {
   const markAsRead = async (notificationId: string) => {
     try {
       const token = localStorage.getItem('accessToken');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/${notificationId}/read`, {
-        method: 'PATCH',
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/${notificationId}/read`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
-      );
+      
+      if (response.ok) {
+        // Update local state
+        setNotifications(prev => 
+          prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+        );
+        
+        // Refresh from server to ensure persistence
+        setTimeout(() => {
+          fetchNotifications();
+        }, 500);
+      }
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
     }
@@ -89,17 +98,30 @@ export default function NotificationsPage() {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/mark-all-read`, {
-        method: 'PATCH',
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/read-all`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      showToast('All notifications marked as read', 'success');
+      
+      if (response.ok) {
+        // Update local state
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        showToast('All notifications marked as read', 'success');
+        
+        // Refresh from server to ensure persistence
+        setTimeout(() => {
+          fetchNotifications();
+        }, 500);
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Failed to mark all as read', 'error');
+      }
     } catch (error) {
       console.error('Failed to mark all notifications as read:', error);
+      showToast('Failed to mark all as read', 'error');
     }
   };
 
