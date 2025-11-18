@@ -288,8 +288,8 @@ function ListingsContent() {
           ) : (
             <div className={`grid gap-2 xs:gap-2.5 sm:gap-4 ${
               gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i)
-                ? 'grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // Portrait for social media
-                : 'grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' // Landscape for games
+                ? 'grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // Portrait for social media
+                : 'grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' // Landscape for games - 2 cols on mobile
             }`}>
               {filteredPosts.map((post) => {
                 const isSocialMedia = gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i);

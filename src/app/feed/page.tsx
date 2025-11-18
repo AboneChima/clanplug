@@ -318,9 +318,16 @@ export default function FeedPage() {
     try {
       // Optimistically update UI
       const post = posts.find(p => p.id === postId);
+      const favPost = favoritePosts.find(p => p.id === postId);
       const newBookmarkState = !post?.isBookmarked;
       
       setPosts(posts.map(p => 
+        p.id === postId 
+          ? { ...p, isBookmarked: newBookmarkState }
+          : p
+      ));
+      
+      setFavoritePosts(favoritePosts.map(p => 
         p.id === postId 
           ? { ...p, isBookmarked: newBookmarkState }
           : p
@@ -333,14 +340,15 @@ export default function FeedPage() {
       
       if (response.ok) {
         showToast(newBookmarkState ? 'Added to favorites' : 'Removed from favorites', 'success');
-        
-        // Refresh posts to ensure persistence
-        setTimeout(() => {
-          fetchPosts();
-        }, 500);
+        // Don't refresh - keep the optimistic update
       } else {
         // Revert on error
         setPosts(posts.map(p => 
+          p.id === postId 
+            ? { ...p, isBookmarked: !newBookmarkState }
+            : p
+        ));
+        setFavoritePosts(favoritePosts.map(p => 
           p.id === postId 
             ? { ...p, isBookmarked: !newBookmarkState }
             : p
@@ -352,6 +360,11 @@ export default function FeedPage() {
       // Revert on error
       const post = posts.find(p => p.id === postId);
       setPosts(posts.map(p => 
+        p.id === postId 
+          ? { ...p, isBookmarked: !post?.isBookmarked }
+          : p
+      ));
+      setFavoritePosts(favoritePosts.map(p => 
         p.id === postId 
           ? { ...p, isBookmarked: !post?.isBookmarked }
           : p
@@ -622,7 +635,22 @@ export default function FeedPage() {
             <IoChatbubbleOutline className="w-4 h-4" />
             <span className="text-xs">{post._count.comments}</span>
           </button>
-          <button className="flex items-center gap-1.5 text-gray-400 hover:text-green-500 transition-colors">
+          <button 
+            onClick={() => {
+              const postUrl = `${window.location.origin}/post/${post.id}`;
+              if (navigator.share) {
+                navigator.share({
+                  title: post.title || 'Check out this post',
+                  text: post.description,
+                  url: postUrl
+                }).catch(() => {});
+              } else {
+                navigator.clipboard.writeText(postUrl);
+                showToast('Link copied to clipboard!', 'success');
+              }
+            }}
+            className="flex items-center gap-1.5 text-gray-400 hover:text-green-500 transition-colors"
+          >
             <IoShareSocialOutline className="w-4 h-4" />
           </button>
         </div>
@@ -770,10 +798,10 @@ export default function FeedPage() {
                 </button>
                 <button
                   onClick={() => setCommentingOnPost('create-post-modal')}
-                  className="flex items-center gap-0.5 xs:gap-1 px-1.5 xs:px-2.5 py-1 xs:py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors text-[10px] xs:text-xs font-medium"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all shadow-md text-xs font-semibold"
                   title="Create Post"
                 >
-                  <span className="text-sm xs:text-base font-bold leading-none">+</span>
+                  <span className="text-base font-bold leading-none">+</span>
                   <span>Post</span>
                 </button>
               </div>

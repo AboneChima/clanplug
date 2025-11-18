@@ -425,16 +425,16 @@ function ChatContent() {
                     )}
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center gap-1">
-                        <h2 className="font-semibold text-white text-sm xs:text-base sm:text-lg truncate">{getDisplayName(currentChat)}</h2>
+                        <h2 className="font-semibold text-white text-xs xs:text-base sm:text-lg truncate">{getDisplayName(currentChat)}</h2>
                         {(getOtherUser(currentChat)?.user as any)?.verificationBadge?.status === 'active' && (
                           <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
                         )}
                       </div>
-                      <p className="text-[10px] xs:text-xs text-emerald-400 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
-                        Online
+                      <p className="text-[9px] xs:text-xs text-emerald-400 flex items-center gap-1">
+                        <span className="w-1 h-1 xs:w-1.5 xs:h-1.5 bg-emerald-400 rounded-full"></span>
+                        <span className="hidden xs:inline">Online</span>
                       </p>
                     </div>
                   </button>
@@ -762,7 +762,7 @@ function ChatContent() {
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                       placeholder={replyingTo ? "Reply..." : "Type a message"}
                       disabled={sending}
-                      className="flex-1 min-w-0 px-3 xs:px-4 py-2 xs:py-2.5 border border-slate-600 rounded-full bg-slate-700 text-white text-sm xs:text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      className="flex-1 min-w-0 px-2 xs:px-4 py-1.5 xs:py-2.5 border border-slate-600 rounded-full bg-slate-700 text-white text-xs xs:text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                     />
                     <button
                       onClick={handleSend}
