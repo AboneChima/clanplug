@@ -79,9 +79,9 @@ export const config = {
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@lordmoon.com',
   
   // Service Fees Configuration
-  DEPOSIT_FEE: parseFloat(process.env.DEPOSIT_FEE || '3'),
-  WITHDRAWAL_FEE: parseFloat(process.env.WITHDRAWAL_FEE || '3'),
-  TRANSACTION_FEE: parseFloat(process.env.TRANSACTION_FEE || '3'),
+  DEPOSIT_FEE: parseFloat(process.env.DEPOSIT_FEE || '0.5'),
+  WITHDRAWAL_FEE: parseFloat(process.env.WITHDRAWAL_FEE || '0.5'),
+  TRANSACTION_FEE: parseFloat(process.env.TRANSACTION_FEE || '0.5'),
   
   // Currency Configuration
   DEFAULT_CURRENCY: process.env.DEFAULT_CURRENCY || 'NGN',
