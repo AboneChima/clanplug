@@ -1,5 +1,42 @@
 # Project Context & Deployment Guide
 
+## ✅ LATEST SESSION UPDATES (Nov 18, 2025)
+
+### Completed Optimizations:
+1. ✅ **Settings Page** - Much smaller on mobile (0-360px optimized)
+   - Reduced header padding: `py-2.5` (360px) vs `py-6` (desktop)
+   - Compact inputs: `py-1.5` (360px) vs `py-3` (desktop)
+   - Smaller icons and text throughout
+   - Tighter spacing on all sections
+
+2. ✅ **User Profile Buttons** - Extra small for 0-360px devices
+   - Social/Marketplace buttons: `text-[9px]` (0-360px) vs `text-xs` (360px+)
+   - Reduced padding: `px-1.5 py-1` (0-360px) vs `px-3 py-2` (desktop)
+   - Shortened text: "Hide Social" / "Market" on smallest screens
+
+3. ✅ **Chat User Header** - Now clickable to visit profile
+   - Click on user avatar/name in chat header to visit their profile
+   - Smooth hover effect for better UX
+
+4. ✅ **Notification Persistence** - Fixed mark all as read
+   - Changed endpoint from `/mark-all-read` to `/read-all` (PUT method)
+   - Added server refresh after marking to ensure persistence
+   - Fixed individual notification mark as read (PUT method)
+   - Notifications now stay read after page refresh
+
+5. ✅ **Favorites Functionality** - Already working correctly
+   - Backend bookmark API properly synced
+   - Favorites tab shows bookmarked posts
+   - Add/remove from favorites works seamlessly
+
+### Still Pending:
+- Message read status indicators (red dot removal from chat icon)
+- Profile page duplicate text issue (need to investigate posts rendering)
+- Real-time notification counters on navbar
+- VTU page already optimized in previous session
+
+---
+
 ## 🚀 DEPLOYMENT INSTRUCTIONS
 
 ### Backend Deployment (Render)
