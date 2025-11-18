@@ -59,7 +59,7 @@ export default function UserProfilePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [marketplacePosts, setMarketplacePosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showPosts, setShowPosts] = useState(true); // Default to social
+  const [showPosts, setShowPosts] = useState(false); // Start with both hidden
   const [showMarketplace, setShowMarketplace] = useState(false);
 
   useEffect(() => {
@@ -469,14 +469,14 @@ export default function UserProfilePage() {
                 </div>
               </div>
 
-              {/* View Posts Buttons - Toggle between Social and Marketplace */}
+              {/* View Posts Buttons - Toggle Social and Marketplace */}
               <div className="flex gap-1 xs:gap-1.5 sm:gap-2 pb-2 xs:pb-2.5 sm:pb-3 border-b border-slate-700">
                 <button
                   onClick={() => {
-                    setShowPosts(true);
+                    setShowPosts(!showPosts);
                     setShowMarketplace(false);
                   }}
-                  className={`flex-1 flex items-center justify-center gap-0.5 xs:gap-1 sm:gap-1.5 px-1.5 xs:px-2 sm:px-3 py-1 xs:py-1.5 sm:py-2 rounded-md xs:rounded-lg transition-colors text-[9px] xs:text-[10px] sm:text-xs md:text-sm font-medium ${
+                  className={`flex-1 flex items-center justify-center gap-0.5 xs:gap-1 sm:gap-1.5 px-1.5 xs:px-2 sm:px-3 py-1 xs:py-1.5 sm:py-2 rounded-md xs:rounded-lg transition-colors text-[9px] xs:text-[11px] sm:text-sm md:text-base font-medium ${
                     showPosts 
                       ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                       : 'bg-slate-700 hover:bg-slate-600 text-gray-300'
@@ -489,10 +489,10 @@ export default function UserProfilePage() {
                 </button>
                 <button
                   onClick={() => {
+                    setShowMarketplace(!showMarketplace);
                     setShowPosts(false);
-                    setShowMarketplace(true);
                   }}
-                  className={`flex-1 flex items-center justify-center gap-0.5 xs:gap-1 sm:gap-1.5 px-1.5 xs:px-2 sm:px-3 py-1 xs:py-1.5 sm:py-2 rounded-md xs:rounded-lg transition-colors text-[9px] xs:text-[10px] sm:text-xs md:text-sm font-medium ${
+                  className={`flex-1 flex items-center justify-center gap-0.5 xs:gap-1 sm:gap-1.5 px-1.5 xs:px-2 sm:px-3 py-1 xs:py-1.5 sm:py-2 rounded-md xs:rounded-lg transition-colors text-[9px] xs:text-[11px] sm:text-sm md:text-base font-medium ${
                     showMarketplace 
                       ? 'bg-purple-600 hover:bg-purple-700 text-white' 
                       : 'bg-slate-700 hover:bg-slate-600 text-gray-300'

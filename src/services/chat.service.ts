@@ -227,20 +227,24 @@ export class ChatService {
     }
   }
 
-  // File Upload - Use post media upload endpoint
+  // File Upload - Use backend upload endpoint
   async uploadFile(accessToken: string, file: File): Promise<FileUploadResponse> {
     try {
       const formData = new FormData();
       formData.append('media', file);
+      formData.append('postType', 'CHAT'); // Mark as chat upload
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: { 
+          Authorization: `Bearer ${accessToken}`
+        },
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Upload failed: ${response.status}`);
       }
 
       const data = await response.json();
