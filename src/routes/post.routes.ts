@@ -49,8 +49,8 @@ router.post('/:postId/bookmark', authenticate, asyncHandler(postController.toggl
 // GET /api/posts/:postId/comments - Get post comments
 router.get('/:postId/comments', optionalAuthenticate, asyncHandler(commentController.getPostComments));
 
-// POST /api/posts/:postId/comments - Add comment to post
-router.post('/:postId/comments', authenticate, requireKYC, asyncHandler(commentController.createComment));
+// POST /api/posts/:postId/comments - Add comment to post (KYC not required)
+router.post('/:postId/comments', authenticate, asyncHandler(commentController.createComment));
 
 // PUT /api/posts/:postId/comments/:commentId - Update comment
 router.put('/:postId/comments/:commentId', authenticate, asyncHandler(commentController.updateComment));
