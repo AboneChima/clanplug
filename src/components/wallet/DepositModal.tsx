@@ -61,7 +61,7 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-md animate-fade-in max-h-[95vh] overflow-y-auto">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-[340px] xs:max-w-sm sm:max-w-md animate-fade-in max-h-[95vh] overflow-y-auto">
         {/* Header - Compact on mobile */}
         <div className="flex items-center justify-between p-3 sm:p-6 border-b border-gray-100">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -123,16 +123,30 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
             </p>
           </div>
 
-          {/* Amount Preview */}
+          {/* Amount Preview with Fee */}
           {amount && parseFloat(amount) >= 100 && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-blue-700">You will receive:</span>
-                <span className="font-semibold text-blue-900">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg sm:rounded-xl p-2 sm:p-4 space-y-1 sm:space-y-2">
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <span className="text-blue-700">Deposit amount:</span>
+                <span className="font-medium text-blue-900">
                   ₦{parseFloat(amount).toFixed(2)}
                 </span>
               </div>
-              <p className="text-xs text-blue-600 mt-1">
+              <div className="flex items-center justify-between text-xs sm:text-sm">
+                <span className="text-blue-700">Platform fee (0.5%):</span>
+                <span className="font-medium text-blue-900">
+                  -₦{(parseFloat(amount) * 0.005).toFixed(2)}
+                </span>
+              </div>
+              <div className="pt-1 sm:pt-2 border-t border-blue-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs sm:text-sm font-semibold text-blue-700">You will receive:</span>
+                  <span className="font-bold text-sm sm:text-base text-blue-900">
+                    ₦{(parseFloat(amount) * 0.995).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              <p className="text-[10px] sm:text-xs text-blue-600 mt-1">
                 Amount will be added to your NGN wallet
               </p>
             </div>

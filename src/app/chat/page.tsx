@@ -601,7 +601,7 @@ function ChatContent() {
                                 ? (msg.content && msg.content.trim() ? 'p-1.5' : 'p-0 overflow-hidden') 
                                 : 'px-3 py-2 sm:px-4 sm:py-2.5'
                             } ${
-                              isOwn ? 'bg-emerald-600 text-white rounded-br-md' : 'bg-slate-800 text-white rounded-bl-md border border-slate-700'
+                              isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-slate-800 text-white rounded-bl-md border border-slate-700'
                             }`}>
                               {msg.replyTo && (
                                 <div className="mb-0.5 pb-0.5 border-b border-white/20">
@@ -636,16 +636,31 @@ function ChatContent() {
                                 </div>
                               )}
                               
-                              {msg.content && msg.content.trim() && <p className={`${fontSizes[fontSize].text} break-words leading-relaxed whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-1 px-1.5' : ''}`}>{msg.content}</p>}
+                              {/* Message content with inline timestamp */}
+                              {msg.content && msg.content.trim() && (
+                                <div className={`${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-1 px-1.5' : ''}`}>
+                                  <p className={`${fontSizes[fontSize].text} break-words leading-relaxed whitespace-pre-wrap inline`}>
+                                    {msg.content}
+                                    <span className="inline-flex items-center gap-1 ml-2 align-bottom">
+                                      <span className="text-[10px] opacity-70 whitespace-nowrap">
+                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                      {isOwn && (
+                                        <IoCheckmarkDoneOutline className={`w-3.5 h-3.5 font-bold ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'opacity-70'}`} strokeWidth={2} />
+                                      )}
+                                    </span>
+                                  </p>
+                                </div>
+                              )}
                               
-                              {/* Regular timestamp - only show if there's text content or no image */}
-                              {((msg.content && msg.content.trim()) || !msg.attachments?.length) && (
-                                <div className={`flex items-center justify-end gap-1 mt-1 ${msg.type === 'IMAGE' && msg.attachments?.length ? 'px-1.5 pb-0.5' : ''}`}>
+                              {/* Timestamp only - for messages without text */}
+                              {(!msg.content || !msg.content.trim()) && !msg.attachments?.length && (
+                                <div className="flex items-center justify-end gap-1 mt-1">
                                   <span className="text-[10px] opacity-70">
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                   {isOwn && (
-                                    <IoCheckmarkDoneOutline className={`w-3.5 h-3.5 ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'opacity-70'}`} />
+                                    <IoCheckmarkDoneOutline className={`w-3.5 h-3.5 font-bold ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'opacity-70'}`} strokeWidth={2} />
                                   )}
                                 </div>
                               )}
@@ -752,7 +767,7 @@ function ChatContent() {
                     <button
                       onClick={handleSend}
                       disabled={(!messageText.trim() && !selectedImage) || sending}
-                      className="p-2 xs:p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      className="p-2 xs:p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                     >
                       <IoSendOutline className="w-5 h-5 xs:w-6 xs:h-6" />
                     </button>

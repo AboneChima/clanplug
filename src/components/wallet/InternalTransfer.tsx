@@ -328,6 +328,32 @@ export default function InternalTransfer() {
             )}
           </div>
 
+          {/* Transfer Preview with Fee */}
+          {amount && parseFloat(amount) > 0 && (
+            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-blue-700">Transfer amount:</span>
+                <span className="font-medium text-blue-900">
+                  {formatCurrency(parseFloat(amount), selectedCurrency)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-blue-700">Platform fee (0.5%):</span>
+                <span className="font-medium text-blue-900">
+                  -{formatCurrency(parseFloat(amount) * 0.005, selectedCurrency)}
+                </span>
+              </div>
+              <div className="pt-2 border-t border-blue-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-blue-700">Recipient receives:</span>
+                  <span className="font-bold text-base text-blue-900">
+                    {formatCurrency(parseFloat(amount) * 0.995, selectedCurrency)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Description Input */}
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-900 mb-2">
