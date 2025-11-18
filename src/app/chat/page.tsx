@@ -571,9 +571,9 @@ function ChatContent() {
                             </button>
                             
                             <div className={`message-bubble inline-block rounded-2xl shadow-md ${
-                              msg.type === 'IMAGE' && msg.attachments?.length && !msg.content ? 'p-1' : 'px-2.5 xs:px-3 py-1.5 xs:py-2'
+                              msg.type === 'IMAGE' && msg.attachments?.length && !msg.content ? 'p-0.5 overflow-hidden' : 'px-3 py-2 sm:px-4 sm:py-2.5'
                             } ${
-                              isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-slate-800 text-white rounded-bl-md border border-slate-700'
+                              isOwn ? 'bg-emerald-600 text-white rounded-br-md' : 'bg-slate-800 text-white rounded-bl-md border border-slate-700'
                             }`}>
                               {msg.replyTo && (
                                 <div className="mb-0.5 pb-0.5 border-b border-white/20">
@@ -585,26 +585,42 @@ function ChatContent() {
                                 </div>
                               )}
                               
-                              {/* Display image if message type is IMAGE and has attachments - Minimal padding */}
+                              {/* Display image if message type is IMAGE and has attachments - WhatsApp style with overlay timestamp */}
                               {msg.type === 'IMAGE' && msg.attachments && msg.attachments.length > 0 && (
-                                <img 
-                                  src={msg.attachments[0]} 
-                                  alt="Shared image" 
-                                  className="max-w-[120px] sm:max-w-[140px] max-h-[120px] sm:max-h-[140px] rounded object-cover cursor-pointer block"
-                                  onClick={() => window.open(msg.attachments[0], '_blank')}
-                                />
+                                <div className="relative">
+                                  <img 
+                                    src={msg.attachments[0]} 
+                                    alt="Shared image" 
+                                    className="max-w-[180px] xs:max-w-[220px] sm:max-w-[280px] md:max-w-[320px] max-h-[180px] xs:max-h-[220px] sm:max-h-[280px] md:max-h-[320px] rounded-lg object-cover cursor-pointer block"
+                                    onClick={() => window.open(msg.attachments[0], '_blank')}
+                                  />
+                                  {/* Timestamp overlay on image - only if no text content */}
+                                  {!msg.content && (
+                                    <div className="absolute bottom-1 right-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
+                                      <span className="text-[10px] text-white">
+                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                      {isOwn && (
+                                        <IoCheckmarkDoneOutline className={`w-3 h-3 ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'text-white/70'}`} />
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                               )}
                               
-                              {msg.content && <p className={`text-[11px] sm:text-sm break-words leading-[1.3] whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-0.5' : ''}`}>{msg.content}</p>}
+                              {msg.content && <p className={`text-sm sm:text-base break-words leading-relaxed whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-1' : ''}`}>{msg.content}</p>}
                               
-                              <div className="flex items-center justify-end gap-0.5 mt-0.5">
-                                <span className="text-[8px] opacity-70">
-                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                                {isOwn && (
-                                  <IoCheckmarkDoneOutline className={`w-3 h-3 ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'opacity-70'}`} />
-                                )}
-                              </div>
+                              {/* Regular timestamp - only show if there's text content or no image */}
+                              {(msg.content || !msg.attachments?.length) && (
+                                <div className="flex items-center justify-end gap-1 mt-1">
+                                  <span className="text-[10px] opacity-70">
+                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                  {isOwn && (
+                                    <IoCheckmarkDoneOutline className={`w-3.5 h-3.5 ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'opacity-70'}`} />
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -708,7 +724,7 @@ function ChatContent() {
                     <button
                       onClick={handleSend}
                       disabled={(!messageText.trim() && !selectedImage) || sending}
-                      className="p-2 xs:p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      className="p-2 xs:p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                     >
                       <IoSendOutline className="w-5 h-5 xs:w-6 xs:h-6" />
                     </button>
