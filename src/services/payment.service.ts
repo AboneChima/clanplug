@@ -445,17 +445,21 @@ class PaymentService {
 
       const reference = `FLW-${uuidv4()}`;
 
-      // Calculate fees (gross-up mode - user pays all fees)
-      const userAmount = request.amount; // Amount user wants in wallet
-      const flutterwaveFee = userAmount * 0.02; // 2% Flutterwave fee
+      // User wants to deposit this amount to their wallet
+      const userAmount = request.amount;
+      
+      // Calculate our fees
       const platformFee = userAmount * 0.005; // 0.5% platform fee
-      const totalToCharge = userAmount + flutterwaveFee + platformFee; // Total user pays
+      const flutterwaveFeeWeCharge = userAmount * 0.02; // 2% we charge user
+      
+      // Total the user will pay (this is what we show in UI)
+      const totalUserPays = userAmount + platformFee + flutterwaveFeeWeCharge;
 
       console.log('Payment calculation:', {
         userAmount,
-        flutterwaveFee,
         platformFee,
-        totalToCharge,
+        flutterwaveFeeWeCharge,
+        totalUserPays,
         reference
       });
 
@@ -463,7 +467,7 @@ class PaymentService {
         `${this.flutterwaveBaseUrl}/payments`,
         {
           tx_ref: reference,
-          amount: totalToCharge, // Charge the total including fees
+          amount: totalUserPays, // User pays exactly this amount
           currency: request.currency,
           redirect_url: `${config.APP_URL}/api/payments/flutterwave/callback`,
           customer: {
@@ -475,9 +479,10 @@ class PaymentService {
           },
           meta: {
             userId: request.userId,
+            consumer_id: request.userId,
             ...request.metadata
           },
-          payment_options: "card,banktransfer,ussd",
+          payment_options: "card,banktransfer,ussd,account",
           payment_plan: null
         },
         {
@@ -514,8 +519,8 @@ class PaymentService {
             walletId: userWallet.id,
             type: TransactionType.DEPOSIT,
             status: TransactionStatus.PENDING,
-            amount: totalToCharge, // Total charged to user
-            fee: flutterwaveFee + platformFee, // Combined fees
+            amount: totalUserPays, // Total user pays
+            fee: flutterwaveFeeWeCharge + platformFee, // Combined fees we charge
             netAmount: userAmount, // Amount to credit to wallet
             currency: request.currency,
             reference,
@@ -523,9 +528,9 @@ class PaymentService {
             metadata: {
               gateway: 'flutterwave',
               userAmount,
-              flutterwaveFee,
+              flutterwaveFeeWeCharge,
               platformFee,
-              totalToCharge
+              totalUserPays
             }
           }
         });
