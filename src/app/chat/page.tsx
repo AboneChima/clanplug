@@ -46,10 +46,10 @@ function ChatContent() {
 
   // Font size configurations
   const fontSizes = {
-    small: { text: 'text-[10px] xs:text-xs sm:text-sm', label: 'Small' },
-    medium: { text: 'text-[11px] xs:text-sm sm:text-base', label: 'Medium' },
-    large: { text: 'text-xs xs:text-base sm:text-lg', label: 'Large' },
-    xlarge: { text: 'text-sm xs:text-lg sm:text-xl', label: 'X-Large' }
+    small: { text: 'text-[9px] xs:text-xs sm:text-sm', label: 'Small' },
+    medium: { text: 'text-[10px] xs:text-sm sm:text-base', label: 'Medium' },
+    large: { text: 'text-[11px] xs:text-base sm:text-lg', label: 'Large' },
+    xlarge: { text: 'text-xs xs:text-lg sm:text-xl', label: 'X-Large' }
   };
 
   const cycleFontSize = () => {
@@ -397,15 +397,15 @@ function ChatContent() {
             ) : (
               <>
                 {/* Chat Header - WhatsApp Style */}
-                <div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 px-2 py-2 xs:px-3 xs:py-2.5 sm:px-4 sm:py-3 flex items-center gap-2 xs:gap-3 flex-shrink-0">
+                <div className="bg-slate-800/95 backdrop-blur-sm border-b border-slate-700 px-1.5 py-1.5 xs:px-3 xs:py-2.5 sm:px-4 sm:py-3 flex items-center gap-1.5 xs:gap-3 flex-shrink-0">
                   <button
                     onClick={() => {
                       setCurrentChat(null);
                       window.history.pushState({}, '', '/chat');
                     }}
-                    className="lg:hidden p-1 xs:p-1.5 hover:bg-slate-700 rounded-full transition-colors flex-shrink-0"
+                    className="lg:hidden p-0.5 xs:p-1.5 hover:bg-slate-700 rounded-full transition-colors flex-shrink-0"
                   >
-                    <IoArrowBackOutline className="w-5 h-5 xs:w-6 xs:h-6 text-white" />
+                    <IoArrowBackOutline className="w-4 h-4 xs:w-6 xs:h-6 text-white" />
                   </button>
                   <button
                     onClick={() => {
@@ -414,35 +414,35 @@ function ChatContent() {
                         window.location.href = `/user/${otherUser.user.id}`;
                       }
                     }}
-                    className="flex items-center gap-2 xs:gap-2.5 sm:gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                    className="flex items-center gap-1.5 xs:gap-2.5 sm:gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
                   >
                     {getAvatar(currentChat) ? (
-                      <img src={getAvatar(currentChat)!} alt="" className="w-9 h-9 xs:w-10 xs:h-10 sm:w-11 sm:h-11 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-700" />
+                      <img src={getAvatar(currentChat)!} alt="" className="w-7 h-7 xs:w-10 xs:h-10 sm:w-11 sm:h-11 rounded-full object-cover flex-shrink-0 ring-1 xs:ring-2 ring-slate-700" />
                     ) : (
-                      <div className="w-9 h-9 xs:w-10 xs:h-10 sm:w-11 sm:h-11 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-600">
-                        <span className="text-white text-sm xs:text-base font-semibold">{getDisplayName(currentChat).charAt(0)}</span>
+                      <div className="w-7 h-7 xs:w-10 xs:h-10 sm:w-11 sm:h-11 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-1 xs:ring-2 ring-slate-600">
+                        <span className="text-white text-xs xs:text-base font-semibold">{getDisplayName(currentChat).charAt(0)}</span>
                       </div>
                     )}
                     <div className="flex-1 min-w-0 text-left">
-                      <div className="flex items-center gap-1">
-                        <h2 className="font-semibold text-white text-xs xs:text-base sm:text-lg truncate">{getDisplayName(currentChat)}</h2>
+                      <div className="flex items-center gap-0.5 xs:gap-1">
+                        <h2 className="font-semibold text-white text-[11px] xs:text-base sm:text-lg truncate">{getDisplayName(currentChat)}</h2>
                         {(getOtherUser(currentChat)?.user as any)?.verificationBadge?.status === 'active' && (
-                          <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="w-2.5 h-2.5 xs:w-4 xs:h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
                         )}
                       </div>
-                      <p className="text-[8px] xs:text-xs text-emerald-400 flex items-center gap-0.5 xs:gap-1">
-                        <span className="w-1 h-1 xs:w-1.5 xs:h-1.5 bg-emerald-400 rounded-full"></span>
+                      <p className="text-[7px] xs:text-xs text-emerald-400 flex items-center gap-0.5 xs:gap-1">
+                        <span className="w-0.5 h-0.5 xs:w-1.5 xs:h-1.5 bg-emerald-400 rounded-full"></span>
                         <span>Online</span>
                       </p>
                     </div>
                   </button>
                   
-                  {/* Font Size Toggle Button */}
+                  {/* Font Size Toggle Button - Hidden on extra small */}
                   <button
                     onClick={cycleFontSize}
-                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0 flex items-center gap-1"
+                    className="hidden xs:flex p-2 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0 items-center gap-1"
                     title={`Text size: ${fontSizes[fontSize].label}`}
                   >
                     <span className="text-white font-bold text-base">A</span>
@@ -598,8 +598,8 @@ function ChatContent() {
                             
                             <div className={`message-bubble inline-block rounded-2xl shadow-md ${
                               msg.type === 'IMAGE' && msg.attachments?.length 
-                                ? (msg.content && msg.content.trim() ? 'p-1' : 'p-0 overflow-hidden') 
-                                : 'px-2 py-1.5 xs:px-3 xs:py-2 sm:px-4 sm:py-2.5'
+                                ? (msg.content && msg.content.trim() ? 'p-0.5 xs:p-1' : 'p-0 overflow-hidden') 
+                                : 'px-1.5 py-1 xs:px-3 xs:py-2 sm:px-4 sm:py-2.5'
                             } ${
                               isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-slate-800 text-white rounded-bl-md border border-slate-700'
                             }`}>
@@ -619,7 +619,7 @@ function ChatContent() {
                                   <img 
                                     src={msg.attachments[0]} 
                                     alt="Shared image" 
-                                    className="max-w-[140px] xs:max-w-[200px] sm:max-w-[280px] md:max-w-[320px] max-h-[140px] xs:max-h-[200px] sm:max-h-[280px] md:max-h-[320px] rounded-lg object-cover cursor-pointer block"
+                                    className="max-w-[120px] xs:max-w-[200px] sm:max-w-[280px] md:max-w-[320px] max-h-[120px] xs:max-h-[200px] sm:max-h-[280px] md:max-h-[320px] rounded-lg object-cover cursor-pointer block"
                                     onClick={() => window.open(msg.attachments[0], '_blank')}
                                   />
                                   {/* Timestamp overlay on image - only if no text content */}
@@ -674,7 +674,7 @@ function ChatContent() {
                 </div>
 
                 {/* Message Input - WhatsApp Style */}
-                <div className="bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 px-2 py-2 xs:px-3 xs:py-2.5 sm:px-4 sm:py-3 flex-shrink-0">
+                <div className="bg-slate-800/95 backdrop-blur-sm border-t border-slate-700 px-1.5 py-1.5 xs:px-3 xs:py-2.5 sm:px-4 sm:py-3 flex-shrink-0">
                   {/* Reply Preview - Compact */}
                   {replyingTo && (
                     <div className="mb-1.5 flex items-center gap-1.5 bg-slate-700/50 rounded-lg p-1.5 border-l-2 border-blue-500">
@@ -762,7 +762,7 @@ function ChatContent() {
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                       placeholder={replyingTo ? "Reply..." : "Type a message"}
                       disabled={sending}
-                      className="flex-1 min-w-0 px-2 xs:px-4 py-1.5 xs:py-2.5 border border-slate-600 rounded-full bg-slate-700 text-white text-xs xs:text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      className="flex-1 min-w-0 px-2 xs:px-4 py-1 xs:py-2.5 border border-slate-600 rounded-full bg-slate-700 text-white text-[11px] xs:text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                     />
                     <button
                       onClick={handleSend}
