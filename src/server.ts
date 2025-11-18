@@ -33,6 +33,7 @@ import kycRoutes from './routes/kyc.routes';
 import escrowRoutes from './routes/escrow.routes';
 import verificationRoutes from './routes/verification.routes';
 import adminVerifyUserRoutes from './routes/admin-verify-user.routes';
+import migrationRoutes from './routes/migration.routes';
 
 const app = express();
 
@@ -149,6 +150,7 @@ app.use('/api/kyc', kycRoutes);
 app.use('/api/escrow', escrowRoutes);
 app.use('/api/verification', verificationRoutes);
 app.use('/api/admin-verify', adminVerifyUserRoutes);
+app.use('/api/migration', migrationRoutes);
 
 // Proxy middleware for frontend - only in development
 if (config.NODE_ENV === 'development' && config.FRONTEND_URL) {
