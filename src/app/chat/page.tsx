@@ -40,8 +40,24 @@ function ChatContent() {
   const [reportReason, setReportReason] = useState('');
   const [customReason, setCustomReason] = useState('');
   const [menuButtonRect, setMenuButtonRect] = useState<DOMRect | null>(null);
+  const [fontSize, setFontSize] = useState<'small' | 'medium' | 'large' | 'xlarge'>('medium');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Font size configurations
+  const fontSizes = {
+    small: { text: 'text-xs sm:text-sm', label: 'Small' },
+    medium: { text: 'text-sm sm:text-base', label: 'Medium' },
+    large: { text: 'text-base sm:text-lg', label: 'Large' },
+    xlarge: { text: 'text-lg sm:text-xl', label: 'X-Large' }
+  };
+
+  const cycleFontSize = () => {
+    const sizes: Array<'small' | 'medium' | 'large' | 'xlarge'> = ['small', 'medium', 'large', 'xlarge'];
+    const currentIndex = sizes.indexOf(fontSize);
+    const nextIndex = (currentIndex + 1) % sizes.length;
+    setFontSize(sizes[nextIndex]);
+  };
 
   const emojis = ['😀', '😂', '😍', '🥰', '😎', '🤔', '😢', '😭', '😡', '🤯', '👍', '👎', '❤️', '🔥', '💯', '🎉', '✨', '💪', '🙏', '👏', '🤝', '💀', '😴', '🤗', '😇', '🥳', '😱', '🤩', '😋', '🤤'];
 
@@ -210,7 +226,7 @@ function ChatContent() {
         }
       }
       
-      const content = messageText.trim() || (imageUrl ? '📷 Image' : ''); // Provide default for images
+      const content = messageText.trim() || (imageUrl ? ' ' : ''); // Empty space for images without text
       const messageData: any = { 
         content, 
         type: imageUrl ? 'IMAGE' : 'TEXT',
@@ -423,6 +439,16 @@ function ChatContent() {
                     </div>
                   </button>
                   
+                  {/* Font Size Toggle Button */}
+                  <button
+                    onClick={cycleFontSize}
+                    className="p-2 hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0 flex items-center gap-1"
+                    title={`Text size: ${fontSizes[fontSize].label}`}
+                  >
+                    <span className="text-white font-bold text-base">A</span>
+                    <span className="text-[10px] text-gray-400">{fontSizes[fontSize].label[0]}</span>
+                  </button>
+                  
                   {/* 3-Dot Menu */}
                   <div className="relative">
                     <button
@@ -571,7 +597,9 @@ function ChatContent() {
                             </button>
                             
                             <div className={`message-bubble inline-block rounded-2xl shadow-md ${
-                              msg.type === 'IMAGE' && msg.attachments?.length && !msg.content ? 'p-0.5 overflow-hidden' : 'px-3 py-2 sm:px-4 sm:py-2.5'
+                              msg.type === 'IMAGE' && msg.attachments?.length 
+                                ? (msg.content && msg.content.trim() ? 'p-1.5' : 'p-0 overflow-hidden') 
+                                : 'px-3 py-2 sm:px-4 sm:py-2.5'
                             } ${
                               isOwn ? 'bg-emerald-600 text-white rounded-br-md' : 'bg-slate-800 text-white rounded-bl-md border border-slate-700'
                             }`}>
@@ -595,7 +623,7 @@ function ChatContent() {
                                     onClick={() => window.open(msg.attachments[0], '_blank')}
                                   />
                                   {/* Timestamp overlay on image - only if no text content */}
-                                  {!msg.content && (
+                                  {(!msg.content || !msg.content.trim()) && (
                                     <div className="absolute bottom-1 right-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
                                       <span className="text-[10px] text-white">
                                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -608,11 +636,11 @@ function ChatContent() {
                                 </div>
                               )}
                               
-                              {msg.content && <p className={`text-sm sm:text-base break-words leading-relaxed whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-1' : ''}`}>{msg.content}</p>}
+                              {msg.content && msg.content.trim() && <p className={`${fontSizes[fontSize].text} break-words leading-relaxed whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-1 px-1.5' : ''}`}>{msg.content}</p>}
                               
                               {/* Regular timestamp - only show if there's text content or no image */}
-                              {(msg.content || !msg.attachments?.length) && (
-                                <div className="flex items-center justify-end gap-1 mt-1">
+                              {((msg.content && msg.content.trim()) || !msg.attachments?.length) && (
+                                <div className={`flex items-center justify-end gap-1 mt-1 ${msg.type === 'IMAGE' && msg.attachments?.length ? 'px-1.5 pb-0.5' : ''}`}>
                                   <span className="text-[10px] opacity-70">
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
