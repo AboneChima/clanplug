@@ -63,6 +63,16 @@ function ListingsContent() {
 
   const handleBookmark = async (postId: string) => {
     try {
+      const post = posts.find(p => p.id === postId);
+      const newBookmarkState = !post?.isBookmarked;
+      
+      console.log('🔖 [Marketplace] Toggling bookmark:', postId, 'New state:', newBookmarkState);
+      
+      // Optimistically update UI
+      setPosts(posts.map(p => 
+        p.id === postId ? { ...p, isBookmarked: newBookmarkState } : p
+      ));
+      
       const token = localStorage.getItem('accessToken');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/bookmark`, {
         method: 'POST',
@@ -71,14 +81,28 @@ function ListingsContent() {
         },
       });
 
+      console.log('🔖 [Marketplace] Bookmark response:', response.status);
+
       if (response.ok) {
+        const data = await response.json();
+        console.log('✅ [Marketplace] Bookmark saved:', data);
+        showToast(newBookmarkState ? 'Saved!' : 'Removed from saved', 'success');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ [Marketplace] Bookmark failed:', errorData);
+        // Revert on error
         setPosts(posts.map(p => 
-          p.id === postId ? { ...p, isBookmarked: !p.isBookmarked } : p
+          p.id === postId ? { ...p, isBookmarked: !newBookmarkState } : p
         ));
-        showToast(posts.find(p => p.id === postId)?.isBookmarked ? 'Removed from saved' : 'Saved!', 'success');
+        showToast('Failed to save', 'error');
       }
     } catch (error) {
-      console.error('Error bookmarking:', error);
+      console.error('❌ [Marketplace] Error bookmarking:', error);
+      // Revert on error
+      const post = posts.find(p => p.id === postId);
+      setPosts(posts.map(p => 
+        p.id === postId ? { ...p, isBookmarked: !post?.isBookmarked } : p
+      ));
       showToast('Failed to save', 'error');
     }
   };
@@ -288,8 +312,8 @@ function ListingsContent() {
           ) : (
             <div className={`grid gap-2 xs:gap-2.5 sm:gap-4 ${
               gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i)
-                ? 'grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // Portrait for social media
-                : 'grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' // Landscape for games - 2 cols on mobile
+                ? 'grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // Portrait for social media - 2 cols on mobile
+                : 'grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' // Landscape for games - 1 col on mobile
             }`}>
               {filteredPosts.map((post) => {
                 const isSocialMedia = gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i);

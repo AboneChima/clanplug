@@ -164,11 +164,16 @@ export default function FeedPage() {
   const fetchFavoritePosts = async () => {
     try {
       setLoading(true);
+      console.log('📚 Fetching bookmarked posts...');
       // Fetch bookmarked posts directly from backend
       const response = await authFetch('/api/posts/bookmarks');
+      console.log('📚 Bookmarks response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
-        const postsData = Array.isArray(data.data) ? data.data : [];
+        console.log('📚 Bookmarks data:', data);
+        const postsData = Array.isArray(data.data) ? data.data : Array.isArray(data.posts) ? data.posts : [];
+        console.log('📚 Found', postsData.length, 'bookmarked posts');
         
         const postsWithBookmarks = postsData.map((post: Post) => ({
           ...post,
@@ -182,10 +187,12 @@ export default function FeedPage() {
         
         setFavoritePosts(postsWithBookmarks);
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Failed to fetch bookmarks:', response.status, errorData);
         setFavoritePosts([]);
       }
     } catch (error) {
-      console.error('Error fetching favorites:', error);
+      console.error('❌ Error fetching favorites:', error);
       setFavoritePosts([]);
     } finally {
       setLoading(false);
@@ -317,46 +324,58 @@ export default function FeedPage() {
   const handleBookmark = async (postId: string) => {
     try {
       // Optimistically update UI
-      const post = posts.find(p => p.id === postId);
-      const favPost = favoritePosts.find(p => p.id === postId);
+      const post = posts.find(p => p.id === postId) || favoritePosts.find(p => p.id === postId);
       const newBookmarkState = !post?.isBookmarked;
       
+      console.log('🔖 Toggling bookmark for post:', postId, 'New state:', newBookmarkState);
+      
+      // Update posts list
       setPosts(posts.map(p => 
         p.id === postId 
           ? { ...p, isBookmarked: newBookmarkState }
           : p
       ));
       
-      setFavoritePosts(favoritePosts.map(p => 
-        p.id === postId 
-          ? { ...p, isBookmarked: newBookmarkState }
-          : p
-      ));
+      // Update favorites list - remove if unbookmarking
+      if (!newBookmarkState) {
+        console.log('🗑️ Removing from favorites list');
+        setFavoritePosts(favoritePosts.filter(p => p.id !== postId));
+      } else {
+        // Add to favorites if bookmarking and not already there
+        if (post && !favoritePosts.find(p => p.id === postId)) {
+          console.log('➕ Adding to favorites list');
+          setFavoritePosts([{ ...post, isBookmarked: true }, ...favoritePosts]);
+        }
+      }
       
       // Sync with backend
       const response = await authFetch(`/api/posts/${postId}/bookmark`, {
         method: 'POST',
       });
       
+      console.log('🔖 Bookmark API response:', response.status);
+      
       if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Bookmark saved:', data);
         showToast(newBookmarkState ? 'Added to favorites' : 'Removed from favorites', 'success');
-        // Don't refresh - keep the optimistic update
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Bookmark failed:', response.status, errorData);
         // Revert on error
         setPosts(posts.map(p => 
           p.id === postId 
             ? { ...p, isBookmarked: !newBookmarkState }
             : p
         ));
-        setFavoritePosts(favoritePosts.map(p => 
-          p.id === postId 
-            ? { ...p, isBookmarked: !newBookmarkState }
-            : p
-        ));
+        // Revert favorites list
+        if (activeTab === 'favorites') {
+          fetchFavoritePosts();
+        }
         showToast('Failed to update bookmark', 'error');
       }
     } catch (error) {
-      console.error('Error bookmarking post:', error);
+      console.error('❌ Error bookmarking post:', error);
       // Revert on error
       const post = posts.find(p => p.id === postId);
       setPosts(posts.map(p => 
@@ -364,11 +383,10 @@ export default function FeedPage() {
           ? { ...p, isBookmarked: !post?.isBookmarked }
           : p
       ));
-      setFavoritePosts(favoritePosts.map(p => 
-        p.id === postId 
-          ? { ...p, isBookmarked: !post?.isBookmarked }
-          : p
-      ));
+      // Revert favorites list
+      if (activeTab === 'favorites') {
+        fetchFavoritePosts();
+      }
       showToast('Failed to update bookmark', 'error');
     }
   };
@@ -798,11 +816,13 @@ export default function FeedPage() {
                 </button>
                 <button
                   onClick={() => setCommentingOnPost('create-post-modal')}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all shadow-md text-xs font-semibold"
+                  className="flex items-center justify-center gap-0.5 xs:gap-1 w-7 h-7 xs:w-auto xs:h-auto xs:px-2.5 xs:py-1.5 sm:px-3 sm:py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full xs:rounded-lg transition-all shadow-lg hover:shadow-xl text-xs xs:text-xs sm:text-sm font-semibold"
                   title="Create Post"
                 >
-                  <span className="text-base font-bold leading-none">+</span>
-                  <span>Post</span>
+                  <svg className="w-4 h-4 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="hidden xs:inline">Post</span>
                 </button>
               </div>
             </div>

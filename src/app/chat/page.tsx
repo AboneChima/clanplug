@@ -46,10 +46,10 @@ function ChatContent() {
 
   // Font size configurations
   const fontSizes = {
-    small: { text: 'text-xs sm:text-sm', label: 'Small' },
-    medium: { text: 'text-sm sm:text-base', label: 'Medium' },
-    large: { text: 'text-base sm:text-lg', label: 'Large' },
-    xlarge: { text: 'text-lg sm:text-xl', label: 'X-Large' }
+    small: { text: 'text-[10px] xs:text-xs sm:text-sm', label: 'Small' },
+    medium: { text: 'text-[11px] xs:text-sm sm:text-base', label: 'Medium' },
+    large: { text: 'text-xs xs:text-base sm:text-lg', label: 'Large' },
+    xlarge: { text: 'text-sm xs:text-lg sm:text-xl', label: 'X-Large' }
   };
 
   const cycleFontSize = () => {
@@ -432,9 +432,9 @@ function ChatContent() {
                           </svg>
                         )}
                       </div>
-                      <p className="text-[9px] xs:text-xs text-emerald-400 flex items-center gap-1">
+                      <p className="text-[8px] xs:text-xs text-emerald-400 flex items-center gap-0.5 xs:gap-1">
                         <span className="w-1 h-1 xs:w-1.5 xs:h-1.5 bg-emerald-400 rounded-full"></span>
-                        <span className="hidden xs:inline">Online</span>
+                        <span>Online</span>
                       </p>
                     </div>
                   </button>
@@ -598,8 +598,8 @@ function ChatContent() {
                             
                             <div className={`message-bubble inline-block rounded-2xl shadow-md ${
                               msg.type === 'IMAGE' && msg.attachments?.length 
-                                ? (msg.content && msg.content.trim() ? 'p-1.5' : 'p-0 overflow-hidden') 
-                                : 'px-3 py-2 sm:px-4 sm:py-2.5'
+                                ? (msg.content && msg.content.trim() ? 'p-1' : 'p-0 overflow-hidden') 
+                                : 'px-2 py-1.5 xs:px-3 xs:py-2 sm:px-4 sm:py-2.5'
                             } ${
                               isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-slate-800 text-white rounded-bl-md border border-slate-700'
                             }`}>
@@ -619,7 +619,7 @@ function ChatContent() {
                                   <img 
                                     src={msg.attachments[0]} 
                                     alt="Shared image" 
-                                    className="max-w-[180px] xs:max-w-[220px] sm:max-w-[280px] md:max-w-[320px] max-h-[180px] xs:max-h-[220px] sm:max-h-[280px] md:max-h-[320px] rounded-lg object-cover cursor-pointer block"
+                                    className="max-w-[140px] xs:max-w-[200px] sm:max-w-[280px] md:max-w-[320px] max-h-[140px] xs:max-h-[200px] sm:max-h-[280px] md:max-h-[320px] rounded-lg object-cover cursor-pointer block"
                                     onClick={() => window.open(msg.attachments[0], '_blank')}
                                   />
                                   {/* Timestamp overlay on image - only if no text content */}
