@@ -68,11 +68,6 @@ function ListingsContent() {
       
       console.log('🔖 [Marketplace] Toggling bookmark:', postId, 'New state:', newBookmarkState);
       
-      // Optimistically update UI
-      setPosts(posts.map(p => 
-        p.id === postId ? { ...p, isBookmarked: newBookmarkState } : p
-      ));
-      
       const token = localStorage.getItem('accessToken');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/bookmark`, {
         method: 'POST',
@@ -86,23 +81,20 @@ function ListingsContent() {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ [Marketplace] Bookmark saved:', data);
+        
+        // Update UI after successful backend update
+        setPosts(posts.map(p => 
+          p.id === postId ? { ...p, isBookmarked: newBookmarkState } : p
+        ));
+        
         showToast(newBookmarkState ? 'Saved!' : 'Removed from saved', 'success');
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('❌ [Marketplace] Bookmark failed:', errorData);
-        // Revert on error
-        setPosts(posts.map(p => 
-          p.id === postId ? { ...p, isBookmarked: !newBookmarkState } : p
-        ));
         showToast('Failed to save', 'error');
       }
     } catch (error) {
       console.error('❌ [Marketplace] Error bookmarking:', error);
-      // Revert on error
-      const post = posts.find(p => p.id === postId);
-      setPosts(posts.map(p => 
-        p.id === postId ? { ...p, isBookmarked: !post?.isBookmarked } : p
-      ));
       showToast('Failed to save', 'error');
     }
   };
@@ -159,8 +151,11 @@ function ListingsContent() {
             isBookmarked: bookmarkedIds.includes(p.id)
           }));
         
-        console.log('Filtered posts:', filtered.length);
-        setPosts(filtered);
+        // Randomize order (TikTok-style algorithm)
+        const randomized = filtered.sort(() => Math.random() - 0.5);
+        
+        console.log('Filtered posts:', randomized.length);
+        setPosts(randomized);
       }
     } catch (error) {
       console.error('Error loading posts:', error);
@@ -241,10 +236,13 @@ function ListingsContent() {
               </div>
               <button
                 onClick={() => router.push(`/marketplace/create?game=${gameName}`)}
-                className="flex items-center gap-0.5 xs:gap-1 px-1.5 xs:px-2 sm:px-3 py-1 xs:py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md sm:rounded-lg transition-colors text-[10px] xs:text-xs font-medium"
+                className="flex items-center justify-center gap-0.5 xs:gap-1 w-7 h-7 xs:w-auto xs:h-auto xs:px-2.5 xs:py-1.5 sm:px-3 sm:py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md xs:rounded-lg transition-all shadow-lg hover:shadow-xl text-xs xs:text-xs sm:text-sm font-semibold"
+                title="Create Listing"
               >
-                <IoAddOutline className="w-3 h-3 xs:w-3.5 xs:h-3.5" />
-                <span className="hidden xs:inline">Create</span>
+                <svg className="w-4 h-4 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="hidden xs:inline">Post</span>
               </button>
             </div>
           </div>

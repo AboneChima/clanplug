@@ -401,7 +401,8 @@ function ChatContent() {
                   <button
                     onClick={() => {
                       setCurrentChat(null);
-                      // Don't change URL, just close chat
+                      // Remove chat ID from URL
+                      window.history.replaceState({}, '', '/chat');
                     }}
                     className="lg:hidden p-0.5 xs:p-1.5 hover:bg-slate-700 rounded-full transition-colors flex-shrink-0"
                   >

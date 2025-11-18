@@ -323,32 +323,15 @@ export default function FeedPage() {
 
   const handleBookmark = async (postId: string) => {
     try {
-      // Optimistically update UI
-      const post = posts.find(p => p.id === postId) || favoritePosts.find(p => p.id === postId);
-      const newBookmarkState = !post?.isBookmarked;
+      // Get current state from both lists
+      const postInFeed = posts.find(p => p.id === postId);
+      const postInFavorites = favoritePosts.find(p => p.id === postId);
+      const currentPost = postInFeed || postInFavorites;
+      const newBookmarkState = !currentPost?.isBookmarked;
       
       console.log('🔖 Toggling bookmark for post:', postId, 'New state:', newBookmarkState);
       
-      // Update posts list
-      setPosts(posts.map(p => 
-        p.id === postId 
-          ? { ...p, isBookmarked: newBookmarkState }
-          : p
-      ));
-      
-      // Update favorites list - remove if unbookmarking
-      if (!newBookmarkState) {
-        console.log('🗑️ Removing from favorites list');
-        setFavoritePosts(favoritePosts.filter(p => p.id !== postId));
-      } else {
-        // Add to favorites if bookmarking and not already there
-        if (post && !favoritePosts.find(p => p.id === postId)) {
-          console.log('➕ Adding to favorites list');
-          setFavoritePosts([{ ...post, isBookmarked: true }, ...favoritePosts]);
-        }
-      }
-      
-      // Sync with backend
+      // Sync with backend first
       const response = await authFetch(`/api/posts/${postId}/bookmark`, {
         method: 'POST',
       });
@@ -358,35 +341,35 @@ export default function FeedPage() {
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Bookmark saved:', data);
+        
+        // Update posts list
+        setPosts(posts.map(p => 
+          p.id === postId 
+            ? { ...p, isBookmarked: newBookmarkState }
+            : p
+        ));
+        
+        // Update favorites list
+        if (!newBookmarkState) {
+          // Remove from favorites
+          console.log('🗑️ Removing from favorites list');
+          setFavoritePosts(favoritePosts.filter(p => p.id !== postId));
+        } else {
+          // Add to favorites if not already there
+          if (currentPost && !postInFavorites) {
+            console.log('➕ Adding to favorites list');
+            setFavoritePosts([{ ...currentPost, isBookmarked: true }, ...favoritePosts]);
+          }
+        }
+        
         showToast(newBookmarkState ? 'Added to favorites' : 'Removed from favorites', 'success');
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('❌ Bookmark failed:', response.status, errorData);
-        // Revert on error
-        setPosts(posts.map(p => 
-          p.id === postId 
-            ? { ...p, isBookmarked: !newBookmarkState }
-            : p
-        ));
-        // Revert favorites list
-        if (activeTab === 'favorites') {
-          fetchFavoritePosts();
-        }
         showToast('Failed to update bookmark', 'error');
       }
     } catch (error) {
       console.error('❌ Error bookmarking post:', error);
-      // Revert on error
-      const post = posts.find(p => p.id === postId);
-      setPosts(posts.map(p => 
-        p.id === postId 
-          ? { ...p, isBookmarked: !post?.isBookmarked }
-          : p
-      ));
-      // Revert favorites list
-      if (activeTab === 'favorites') {
-        fetchFavoritePosts();
-      }
       showToast('Failed to update bookmark', 'error');
     }
   };
@@ -512,12 +495,12 @@ export default function FeedPage() {
           </div>
         </Link>
         
-        {/* Follow and Message buttons - Extra Small for 0-360px */}
+        {/* Follow and Message buttons - Optimized for extra small */}
         {post.user.id !== user?.id ? (
-          <div className="flex items-center gap-0.5 xs:gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-1 xs:gap-1.5 flex-shrink-0">
             <button
               onClick={() => handleFollow(post.user.id, (post.user as any).isFollowing || false)}
-              className={`px-1.5 xs:px-2.5 py-0.5 xs:py-1 text-[9px] xs:text-xs font-medium rounded transition-colors ${
+              className={`px-1.5 xs:px-2.5 py-0.5 xs:py-1 text-[8px] xs:text-xs font-medium rounded transition-colors ${
                 (post.user as any).isMutual ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
               } text-white`}
             >
@@ -525,9 +508,9 @@ export default function FeedPage() {
             </button>
             <button
               onClick={() => handleStartChat(post.user.id, post.user)}
-              className="p-0.5 xs:p-1.5 hover:bg-gray-700 rounded transition-colors"
+              className="p-1 xs:p-1.5 hover:bg-gray-700 rounded transition-colors"
             >
-              <IoMailOutline className="w-3 h-3 xs:w-4 xs:h-4 text-gray-400" />
+              <IoMailOutline className="w-4 h-4 xs:w-4 xs:h-4 text-gray-400" />
             </button>
           </div>
         ) : (
@@ -804,7 +787,7 @@ export default function FeedPage() {
               </div>
 
               {/* Right Icons */}
-              <div className="flex items-center gap-1 xs:gap-1.5">
+              <div className="flex items-center gap-1.5 xs:gap-2">
                 <button
                   onClick={() => setShowSearch(!showSearch)}
                   className="p-1 xs:p-1.5 hover:bg-slate-700 rounded-md transition-colors"
@@ -816,7 +799,7 @@ export default function FeedPage() {
                 </button>
                 <button
                   onClick={() => setCommentingOnPost('create-post-modal')}
-                  className="flex items-center justify-center gap-0.5 xs:gap-1 w-7 h-7 xs:w-auto xs:h-auto xs:px-2.5 xs:py-1.5 sm:px-3 sm:py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full xs:rounded-lg transition-all shadow-lg hover:shadow-xl text-xs xs:text-xs sm:text-sm font-semibold"
+                  className="flex items-center justify-center gap-0.5 xs:gap-1 w-7 h-7 xs:w-auto xs:h-auto xs:px-2.5 xs:py-1.5 sm:px-3 sm:py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md xs:rounded-lg transition-all shadow-lg hover:shadow-xl text-xs xs:text-xs sm:text-sm font-semibold"
                   title="Create Post"
                 >
                   <svg className="w-4 h-4 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
