@@ -210,7 +210,7 @@ function ChatContent() {
         }
       }
       
-      const content = messageText.trim() || ''; // Don't add "Image" text
+      const content = messageText.trim() || (imageUrl ? '📷 Image' : ''); // Provide default for images
       const messageData: any = { 
         content, 
         type: imageUrl ? 'IMAGE' : 'TEXT',
@@ -335,20 +335,31 @@ function ChatContent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-1 flex-1 min-w-0">
-                            <h3 className="font-semibold text-white truncate">{getDisplayName(chat)}</h3>
+                            <h3 className={`font-semibold truncate ${chat.unreadCount && chat.unreadCount > 0 ? 'text-white' : 'text-gray-300'}`}>
+                              {getDisplayName(chat)}
+                            </h3>
                             {(getOtherUser(chat)?.user as any)?.verificationBadge?.status === 'active' && (
                               <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                               </svg>
                             )}
                           </div>
-                          <span className="text-[11px] text-gray-500 flex-shrink-0 ml-2">
-                            {formatTime(getLastMessage(chat)?.createdAt || chat.updatedAt)}
-                          </span>
+                          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                            <span className={`text-[11px] ${chat.unreadCount && chat.unreadCount > 0 ? 'text-emerald-400 font-semibold' : 'text-gray-500'}`}>
+                              {formatTime(getLastMessage(chat)?.createdAt || chat.updatedAt)}
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-400 truncate">
-                          {getLastMessage(chat)?.content || 'Start a conversation'}
-                        </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={`text-sm truncate flex-1 ${chat.unreadCount && chat.unreadCount > 0 ? 'text-white font-semibold' : 'text-gray-400'}`}>
+                            {getLastMessage(chat)?.content || 'Start a conversation'}
+                          </p>
+                          {chat.unreadCount && chat.unreadCount > 0 && (
+                            <span className="bg-emerald-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1.5 flex-shrink-0">
+                              {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </button>
@@ -584,13 +595,15 @@ function ChatContent() {
                                 />
                               )}
                               
-                              {msg.content && <p className={`text-[11px] sm:text-xs break-words leading-[1.3] whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-0.5' : ''}`}>{msg.content}</p>}
+                              {msg.content && <p className={`text-[11px] sm:text-sm break-words leading-[1.3] whitespace-pre-wrap ${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-0.5' : ''}`}>{msg.content}</p>}
                               
                               <div className="flex items-center justify-end gap-0.5 mt-0.5">
                                 <span className="text-[8px] opacity-70">
                                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
-                                {isOwn && <IoCheckmarkDoneOutline className="w-2 h-2 opacity-70" />}
+                                {isOwn && (
+                                  <IoCheckmarkDoneOutline className={`w-3 h-3 ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'opacity-70'}`} />
+                                )}
                               </div>
                             </div>
                           </div>
