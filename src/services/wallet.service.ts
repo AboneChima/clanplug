@@ -172,8 +172,8 @@ class WalletService {
       throw new Error('INVALID_AMOUNT');
     }
 
-    // Calculate 3% deposit fee
-    const feePercentage = 0.03; // 3% fee
+    // Calculate 0.5% deposit fee
+    const feePercentage = 0.005; // 0.5% fee
     const fee = amount * feePercentage;
     const netAmount = amount - fee; // User receives amount minus fee
 
@@ -686,8 +686,8 @@ class WalletService {
         throw new Error('WALLET_NOT_FOUND');
       }
 
-      // Calculate 3% fee and total deduction
-      const feePercentage = 0.03; // 3% fee
+      // Calculate 0.5% fee and total deduction
+      const feePercentage = 0.005; // 0.5% fee
       const fee = amount * feePercentage;
       const totalDeduction = amount + fee; // Deduct amount + fee from wallet
 
@@ -715,7 +715,7 @@ class WalletService {
           userId,
           walletId: lmcWallet.id,
           amount,
-          fee: fee, // 3% fee
+          fee: fee, // 0.5% fee
           netAmount: amount - fee, // User receives amount minus fee
           currency: 'LMC',
           type: 'WITHDRAWAL',

@@ -137,8 +137,8 @@ export class WithdrawalService {
       return { isValid: false, errors, warnings };
     }
 
-    // Calculate 3% fee - fee is deducted from the withdrawal amount
-    const feePercentage = 0.03; // 3% fee
+    // Calculate 0.5% fee - fee is deducted from the withdrawal amount
+    const feePercentage = 0.005; // 0.5% fee
     const fee = amount * feePercentage;
     const totalAmountNeeded = amount; // Only need the withdrawal amount in wallet
 
@@ -248,8 +248,8 @@ export class WithdrawalService {
       throw new Error(validation.errors.join(', '));
     }
 
-    // Calculate 3% fee and amounts
-    const feePercentage = 0.03; // 3% fee
+    // Calculate 0.5% fee and amounts
+    const feePercentage = 0.005; // 0.5% fee
     const fee = amount * feePercentage;
     const totalDeduction = amount; // Total to deduct from wallet (only the requested amount)
     const netAmount = amount - fee; // Amount to send to bank (after fee deduction)
@@ -292,7 +292,7 @@ export class WithdrawalService {
             type: 'WITHDRAWAL',
             status: 'PROCESSING', // Changed from 'PENDING' to 'PROCESSING' for automatic processing
             amount: amount, // Amount user requested to withdraw
-            fee: fee, // 3% fee
+            fee: fee, // 0.5% fee
             netAmount: netAmount, // Amount sent to bank (after fee deduction)
             currency: 'NGN',
             reference,

@@ -3,9 +3,9 @@ import { Currency, PurchaseStatus, TransactionType, TransactionStatus } from '@p
 import { notificationService } from './notification.service';
 
 class PurchaseService {
-  // Calculate 3% platform fee for sales
+  // Calculate 0.5% platform fee for sales
   private calculatePlatformFee(amount: number): number {
-    return Math.round(amount * 0.03 * 100) / 100; // 3% fee
+    return Math.round(amount * 0.005 * 100) / 100; // 0.5% fee
   }
 
   // Create a purchase (buyer initiates purchase)
@@ -54,7 +54,7 @@ class PurchaseService {
       if (Number(buyerWallet.balance) < totalAmount) {
         return {
           success: false,
-          message: `Insufficient balance. Required: ${totalAmount} ${listing.currency} (includes 3% platform fee)`,
+          message: `Insufficient balance. Required: ${totalAmount} ${listing.currency} (includes 0.5% platform fee)`,
           error: 'INSUFFICIENT_BALANCE',
         };
       }
@@ -134,7 +134,7 @@ class PurchaseService {
             netAmount: platformFee,
             currency: listing.currency,
             reference: `FEE-${purchase.id}`,
-            description: `Platform fee (3%) for: ${listing.title}`,
+            description: `Platform fee (0.5%) for: ${listing.title}`,
             metadata: {
               purchaseId: purchase.id,
               listingId: listing.id,
@@ -371,7 +371,7 @@ class PurchaseService {
           userId: purchase.sellerId,
           type: 'TRANSACTION',
           title: 'Payment Released',
-          message: `Buyer confirmed receipt. You received ${purchase.currency} ${sellerAmount} (after 3% platform fee).`,
+          message: `Buyer confirmed receipt. You received ${purchase.currency} ${sellerAmount} (after 0.5% platform fee).`,
           data: {
             purchaseId: purchase.id,
             listingId: purchase.listingId,

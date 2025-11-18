@@ -47,8 +47,8 @@ export interface EscrowListResponse {
 
 class EscrowService {
   private calculateFee(amount: number): number {
-    // 3% escrow fee
-    return Math.round(amount * 0.03 * 100) / 100;
+    // 0.5% escrow fee
+    return Math.round(amount * 0.005 * 100) / 100;
   }
 
   async createEscrow(request: CreateEscrowRequest): Promise<EscrowResponse> {

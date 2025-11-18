@@ -531,9 +531,9 @@ export class AdminService {
       kycRequired: configMap.kycRequired === 'true' || false,
       minWithdrawalAmount: parseFloat(configMap.minWithdrawalAmount) || 1000,
       maxWithdrawalAmount: parseFloat(configMap.maxWithdrawalAmount) || 1000000,
-      withdrawalFeePercentage: parseFloat(configMap.withdrawalFeePercentage) || 3.0, // 3% fee
-      escrowFeePercentage: parseFloat(configMap.escrowFeePercentage) || 2.0,
-      vtuFeePercentage: parseFloat(configMap.vtuFeePercentage) || 2.0,
+      withdrawalFeePercentage: parseFloat(configMap.withdrawalFeePercentage) || 0.5, // 0.5% fee
+      escrowFeePercentage: parseFloat(configMap.escrowFeePercentage) || 0.5,
+      vtuFeePercentage: parseFloat(configMap.vtuFeePercentage) || 0.5,
       supportEmail: configMap.supportEmail || 'support@lordmoon.com',
       supportPhone: configMap.supportPhone || '+234-000-000-0000',
       announcementMessage: configMap.announcementMessage || undefined
