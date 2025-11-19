@@ -129,10 +129,11 @@ router.get(
   '/flutterwave/callback',
   [
     query('transaction_id')
+      .optional()
       .isString()
       .trim()
       .isLength({ min: 1 })
-      .withMessage('Transaction ID is required')
+      .withMessage('Transaction ID must be a valid string')
   ],
   validateRequest,
   asyncHandler(paymentController.flutterwaveCallback.bind(paymentController))

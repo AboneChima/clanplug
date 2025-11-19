@@ -221,10 +221,12 @@ export const paymentController = {
   // POST /api/payments/flutterwave/callback - Flutterwave payment callback
   async flutterwaveCallback(req: Request, res: Response): Promise<void> {
     try {
-      const { transaction_id } = req.query;
+      const { transaction_id, status, tx_ref } = req.query;
 
+      // Handle cancellation - when user cancels, Flutterwave doesn't send transaction_id
       if (!transaction_id || typeof transaction_id !== 'string') {
-        const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=error&message=Invalid transaction ID`;
+        console.log('Payment cancelled or invalid transaction_id:', { transaction_id, status, tx_ref });
+        const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=cancelled&message=Payment was cancelled`;
         res.redirect(redirectUrl);
         return;
       }

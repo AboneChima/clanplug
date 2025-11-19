@@ -448,18 +448,26 @@ class PaymentService {
       // User wants to deposit this amount to their wallet
       const userAmount = request.amount;
       
-      // Calculate our fees
+      // Calculate our fees that user pays
       const platformFee = userAmount * 0.005; // 0.5% platform fee
-      const flutterwaveFeeWeCharge = userAmount * 0.02; // 2% we charge user
+      const flutterwaveFeeWeCharge = userAmount * 0.02; // 2% we charge user for Flutterwave
       
-      // Total the user will pay (this is what we show in UI)
+      // Total the user SHOULD pay (what we show in UI)
       const totalUserPays = userAmount + platformFee + flutterwaveFeeWeCharge;
+      
+      // Flutterwave charges 1.4% on the amount we send
+      // To make user pay EXACTLY totalUserPays, we need to calculate backwards
+      // If Flutterwave charges 1.4%, then: amountToSend * 1.014 = totalUserPays
+      // So: amountToSend = totalUserPays / 1.014
+      const flutterwaveActualFeeRate = 0.014; // 1.4%
+      const amountToSendFlutterwave = totalUserPays / (1 + flutterwaveActualFeeRate);
 
       console.log('Payment calculation:', {
         userAmount,
         platformFee,
         flutterwaveFeeWeCharge,
         totalUserPays,
+        amountToSendFlutterwave: Math.round(amountToSendFlutterwave * 100) / 100,
         reference
       });
 
@@ -467,7 +475,7 @@ class PaymentService {
         `${this.flutterwaveBaseUrl}/payments`,
         {
           tx_ref: reference,
-          amount: totalUserPays, // User pays exactly this amount
+          amount: Math.round(amountToSendFlutterwave * 100) / 100, // Round to 2 decimals
           currency: request.currency,
           redirect_url: `${config.APP_URL}/api/payments/flutterwave/callback`,
           customer: {
