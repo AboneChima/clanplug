@@ -332,6 +332,17 @@ export class AdminService {
       data: { isKYCVerified: true }
     });
 
+    // Create notification for user
+    await prisma.notification.create({
+      data: {
+        userId: kyc.userId,
+        type: 'KYC',
+        title: 'KYC Approved! ✅',
+        message: 'Your KYC verification has been approved. You can now post on the marketplace and access all features.',
+        data: { kycId: kyc.id }
+      }
+    });
+
     return updatedKyc;
   }
 
@@ -360,6 +371,17 @@ export class AdminService {
     const updatedKyc = await prisma.kYCVerification.update({
       where: { id: kycId },
       data: updateData
+    });
+
+    // Create notification for user
+    await prisma.notification.create({
+      data: {
+        userId: kyc.userId,
+        type: 'KYC',
+        title: 'KYC Rejected ❌',
+        message: `Your KYC verification was rejected. Reason: ${reason}. Please resubmit with correct information.`,
+        data: { kycId: kyc.id, reason }
+      }
     });
 
     return updatedKyc;
