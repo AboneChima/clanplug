@@ -31,6 +31,7 @@ interface UserProfile {
   country?: string;
   createdAt: string;
   isFollowing: boolean;
+  isKYCVerified?: boolean;
   _count: {
     posts: number;
     followers: number;
@@ -145,6 +146,7 @@ export default function UserProfilePage() {
           country: userData.country,
           createdAt: userData.createdAt,
           isFollowing: userData.isFollowing || false,
+          isKYCVerified: userData.isKYCVerified || false,
           verificationBadge: userData.verificationBadge, // Include verification badge
           _count: {
             posts: postsCount,
@@ -434,6 +436,14 @@ export default function UserProfilePage() {
                       <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                   )}
+                  {profile.isKYCVerified && (
+                    <div className="flex items-center gap-0.5 bg-green-500/20 border border-green-500/30 rounded-full px-1.5 py-0.5" title="KYC Verified">
+                      <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-[9px] text-green-400 font-medium">KYC</span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-gray-400 text-sm mb-2">@{profile.username}</p>
                 {profile.bio && (
@@ -517,35 +527,51 @@ export default function UserProfilePage() {
               </div>
             ) : (
               posts.map((post) => (
-                <div key={post.id} className="bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden">
-                  <div className="p-3">
-                    <p className="text-gray-300 text-sm whitespace-pre-wrap mb-2 line-clamp-3">{post.description}</p>
+                <div key={post.id} className="bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden hover:border-slate-600 transition-colors cursor-pointer" onClick={() => router.push(`/feed?postId=${post.id}`)}>
+                  <div className="p-2">
+                    <p className="text-gray-300 text-xs whitespace-pre-wrap mb-1.5 line-clamp-2">{post.description}</p>
                     {post.images && post.images.length > 0 && (
-                      <div className={`grid gap-1.5 mb-2 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                        {post.images.map((image, index) => (
-                          <div key={index} className="relative rounded-md overflow-hidden bg-slate-700 aspect-square">
+                      <div className={`grid gap-1 mb-1.5 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        {post.images.slice(0, 2).map((image, index) => (
+                          <div key={index} className="relative rounded-md overflow-hidden bg-slate-700 aspect-square max-h-32">
                             <Image src={image} alt="Post image" fill className="object-cover" />
                           </div>
                         ))}
                       </div>
                     )}
-                    <div className="flex items-center gap-4 text-gray-400 text-xs">
-                      <button
-                        onClick={() => handleLike(post.id)}
-                        className="flex items-center gap-1.5 hover:text-red-500 transition-colors"
-                      >
-                        {post.isLiked ? (
-                          <IoHeart className="w-4 h-4 text-red-500" />
-                        ) : (
-                          <IoHeartOutline className="w-4 h-4" />
-                        )}
-                        <span>{post._count.likes}</span>
-                      </button>
-                      <div className="flex items-center gap-1.5">
-                        <IoChatbubbleEllipsesOutline className="w-4 h-4" />
-                        <span>{post._count.comments}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-gray-400 text-[10px]">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLike(post.id);
+                          }}
+                          className="flex items-center gap-1 hover:text-red-500 transition-colors"
+                        >
+                          {post.isLiked ? (
+                            <IoHeart className="w-3.5 h-3.5 text-red-500" />
+                          ) : (
+                            <IoHeartOutline className="w-3.5 h-3.5" />
+                          )}
+                          <span>{post._count.likes}</span>
+                        </button>
+                        <div className="flex items-center gap-1">
+                          <IoChatbubbleEllipsesOutline className="w-3.5 h-3.5" />
+                          <span>{post._count.comments}</span>
+                        </div>
                       </div>
-                      <span className="ml-auto">{new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/feed?postId=${post.id}`);
+                        }}
+                        className="text-blue-400 hover:text-blue-300 text-[10px] font-medium flex items-center gap-0.5"
+                      >
+                        View Post
+                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -564,7 +590,11 @@ export default function UserProfilePage() {
               </div>
             ) : (
               marketplacePosts.map((post) => (
-                <div key={post.id} className="bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden">
+                <div 
+                  key={post.id} 
+                  onClick={() => router.push(`/marketplace/${post.id}`)}
+                  className="bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden cursor-pointer hover:border-blue-500 transition-all"
+                >
                   <div className="p-3">
                     <p className="text-gray-300 text-sm whitespace-pre-wrap mb-2 line-clamp-3">{post.description}</p>
                     {post.images && post.images.length > 0 && (

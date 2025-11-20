@@ -127,27 +127,33 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
           {amount && parseFloat(amount) >= 100 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg sm:rounded-xl p-2 sm:p-4 space-y-1 sm:space-y-2">
               <div className="flex items-center justify-between text-xs sm:text-sm">
-                <span className="text-blue-700">Deposit amount:</span>
+                <span className="text-blue-700">Amount to wallet:</span>
                 <span className="font-medium text-blue-900">
                   ₦{parseFloat(amount).toFixed(2)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs sm:text-sm">
+                <span className="text-blue-700">Flutterwave fee (2%):</span>
+                <span className="font-medium text-blue-900">
+                  +₦{(parseFloat(amount) * 0.02).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs sm:text-sm">
                 <span className="text-blue-700">Platform fee (0.5%):</span>
                 <span className="font-medium text-blue-900">
-                  -₦{(parseFloat(amount) * 0.005).toFixed(2)}
+                  +₦{(parseFloat(amount) * 0.005).toFixed(2)}
                 </span>
               </div>
               <div className="pt-1 sm:pt-2 border-t border-blue-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm font-semibold text-blue-700">You will receive:</span>
+                  <span className="text-xs sm:text-sm font-semibold text-blue-700">Total you pay:</span>
                   <span className="font-bold text-sm sm:text-base text-blue-900">
-                    ₦{(parseFloat(amount) * 0.995).toFixed(2)}
+                    ₦{(parseFloat(amount) * 1.025).toFixed(2)}
                   </span>
                 </div>
               </div>
               <p className="text-[10px] sm:text-xs text-blue-600 mt-1">
-                Amount will be added to your NGN wallet
+                ₦{parseFloat(amount).toFixed(2)} will be added to your NGN wallet
               </p>
             </div>
           )}

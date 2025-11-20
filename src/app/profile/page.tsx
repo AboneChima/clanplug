@@ -39,6 +39,7 @@ interface Post {
   title?: string;
   description: string;
   images?: string[];
+  type?: string;
   createdAt: string;
   _count: {
     likes: number;
@@ -566,7 +567,18 @@ export default function ProfilePage() {
                 ) : (
                   <div className="space-y-2">
                     {recentPosts.map((post) => (
-                      <div key={post.id} className="p-2 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all group">
+                      <div 
+                        key={post.id} 
+                        onClick={() => {
+                          // Navigate to marketplace if it's a marketplace listing
+                          if (post.type === 'MARKETPLACE_LISTING' || post.type === 'GAME_ACCOUNT') {
+                            window.location.href = `/marketplace/${post.id}`;
+                          }
+                        }}
+                        className={`p-2 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-all group ${
+                          (post.type === 'MARKETPLACE_LISTING' || post.type === 'GAME_ACCOUNT') ? 'cursor-pointer' : ''
+                        }`}
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <p className="text-gray-300 text-xs line-clamp-2 mb-1">{post.description}</p>
@@ -583,7 +595,8 @@ export default function ProfilePage() {
                             </div>
                           </div>
                           <button
-                            onClick={async () => {
+                            onClick={async (e) => {
+                              e.stopPropagation(); // Prevent navigation when deleting
                               if (confirm('Are you sure you want to delete this post?')) {
                                 try {
                                   const token = localStorage.getItem('accessToken');

@@ -110,21 +110,8 @@ export const resolveAccountName = async (
       };
     }
 
-    // Get API base URL
-    const getApiBaseUrl = () => {
-      if (typeof window !== 'undefined') {
-        const currentHost = window.location.host;
-        const currentProtocol = window.location.protocol;
-        
-        if (!currentHost.includes('localhost') && !currentHost.includes('127.0.0.1')) {
-          return `${currentProtocol}//${currentHost}`;
-        }
-      }
-      
-      return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    };
-
-    const API_BASE_URL = getApiBaseUrl();
+    // Use the backend API URL
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jobica-backend.onrender.com';
 
     // Call backend API to resolve account name via Flutterwave
     const response = await fetch(`${API_BASE_URL}/api/withdrawal/verify-account`, {

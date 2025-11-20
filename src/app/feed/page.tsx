@@ -137,7 +137,7 @@ export default function FeedPage() {
         let bookmarkedIds: string[] = [];
         if (bookmarksResponse.ok) {
           const bookmarksData = await bookmarksResponse.json();
-          const bookmarkedPosts = Array.isArray(bookmarksData.data) ? bookmarksData.data : [];
+          const bookmarkedPosts = Array.isArray(bookmarksData.posts) ? bookmarksData.posts : Array.isArray(bookmarksData.data) ? bookmarksData.data : [];
           bookmarkedIds = bookmarkedPosts.map((post: any) => post.id);
         }
         
@@ -607,6 +607,14 @@ export default function FeedPage() {
         /* Text Only Post - Extra Small for 0-360px */
         <div className="px-1.5 xs:px-2.5 sm:px-3 pb-1.5 xs:pb-2">
           <p className="text-gray-300 text-[10px] xs:text-xs sm:text-sm line-clamp-4 leading-tight xs:leading-snug">{post.description}</p>
+          {post.description.length > 200 && (
+            <button
+              onClick={() => setViewingPost(post)}
+              className="text-blue-400 hover:text-blue-300 text-[9px] xs:text-[11px] font-medium mt-1 inline-flex items-center gap-0.5"
+            >
+              View More
+            </button>
+          )}
         </div>
       )}
 
@@ -667,55 +675,55 @@ export default function FeedPage() {
         </button>
       </div>
 
-      {/* Comments Section - Twitter Style */}
+      {/* Comments Section - Compact */}
       {viewingCommentsFor === post.id && (
         <div className="border-t border-gray-700">
           {/* Existing Comments */}
           {loadingComments ? (
-            <div className="px-3 py-4 text-center text-gray-400 text-sm">
-              Loading comments...
+            <div className="max-[360px]:px-2 max-[360px]:py-2 max-[360px]:text-[11px] px-3 py-4 text-center text-gray-400 text-sm">
+              Loading...
             </div>
           ) : comments[post.id] && comments[post.id].length > 0 ? (
             <div className="max-h-96 overflow-y-auto">
               {comments[post.id].map((comment: any) => (
-                <div key={comment.id} className="px-3 py-3 border-b border-gray-700/50 hover:bg-gray-700/20">
-                  <div className="flex gap-2">
+                <div key={comment.id} className="max-[360px]:px-2 max-[360px]:py-2 px-3 py-3 border-b border-gray-700/50 hover:bg-gray-700/20">
+                  <div className="flex gap-1.5 max-[360px]:gap-1">
                     <div className="flex-shrink-0">
                       {comment.user.avatar ? (
                         <img
                           src={comment.user.avatar}
                           alt={comment.user.username}
-                          className="w-8 h-8 rounded-full object-cover"
+                          className="max-[360px]:w-6 max-[360px]:h-6 w-8 h-8 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                          <span className="text-white text-xs font-semibold">
+                        <div className="max-[360px]:w-6 max-[360px]:h-6 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                          <span className="text-white max-[360px]:text-[9px] text-xs font-semibold">
                             {comment.user.firstName?.[0]}{comment.user.lastName?.[0]}
                           </span>
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-white text-sm font-medium">
+                      <div className="flex items-center gap-1 max-[360px]:gap-0.5">
+                        <span className="text-white max-[360px]:text-[11px] text-sm font-medium truncate">
                           {comment.user.firstName} {comment.user.lastName}
                         </span>
-                        <span className="text-gray-400 text-xs">
+                        <span className="text-gray-400 max-[360px]:text-[9px] text-xs truncate">
                           @{comment.user.username}
                         </span>
-                        <span className="text-gray-500 text-xs">
-                          · {new Date(comment.createdAt).toLocaleDateString()}
+                        <span className="text-gray-500 max-[360px]:text-[9px] text-xs flex-shrink-0">
+                          · {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                       </div>
-                      <p className="text-gray-300 text-sm mt-1">{comment.content}</p>
+                      <p className="text-gray-300 max-[360px]:text-[11px] max-[360px]:mt-0.5 text-sm mt-1">{comment.content}</p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="px-3 py-4 text-center text-gray-400 text-sm">
-              No comments yet. Be the first to comment!
+            <div className="max-[360px]:px-2 max-[360px]:py-2 max-[360px]:text-[11px] px-3 py-4 text-center text-gray-400 text-sm">
+              No comments yet. Be first!
             </div>
           )}
         </div>
@@ -723,14 +731,14 @@ export default function FeedPage() {
 
       {/* Comment Input */}
       {commentingOnPost === post.id && (
-        <div className="px-3 pb-3 border-t border-gray-700">
-          <div className="flex gap-2 mt-2">
+        <div className="max-[360px]:px-2 max-[360px]:pb-2 px-3 pb-3 border-t border-gray-700">
+          <div className="flex gap-1.5 max-[360px]:gap-1 max-[360px]:mt-1.5 mt-2">
             <input
               type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Write a comment..."
-              className="flex-1 px-3 py-2 bg-gray-700/50 text-white text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="flex-1 max-[360px]:px-2 max-[360px]:py-1 max-[360px]:text-[11px] px-2 py-1.5 xs:px-3 xs:py-2 bg-gray-700/50 text-white text-xs xs:text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   handleComment(post.id);
@@ -740,7 +748,7 @@ export default function FeedPage() {
             <button
               onClick={() => handleComment(post.id)}
               disabled={!commentText.trim()}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+              className="max-[360px]:px-2 max-[360px]:py-1 max-[360px]:text-[11px] px-2.5 py-1.5 xs:px-4 xs:py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs xs:text-sm font-medium rounded-lg transition-colors"
             >
               Post
             </button>

@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import AppShell from '@/components/AppShell';
 import { useToast } from '@/contexts/ToastContext';
+import PostModal from '@/components/PostModal';
 
 interface Notification {
   id: string;
@@ -33,6 +34,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const fetchNotifications = async () => {
     if (!accessToken) {
@@ -161,6 +163,67 @@ export default function NotificationsPage() {
     }
   };
 
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read first
+    if (!notification.isRead) {
+      await markAsRead(notification.id);
+    }
+
+    const data = notification.data || {};
+    
+    // Route based on notification type
+    switch (notification.type) {
+      case 'CHAT':
+      case 'MESSAGE':
+        // Navigate to specific chat conversation
+        if (data.chatId) {
+          // Navigate to chat with specific conversation ID
+          window.location.href = `/chat?id=${data.chatId}`;
+        } else if (data.fromUserId) {
+          // If only userId, open chat with that user
+          window.location.href = `/chat?id=${data.fromUserId}`;
+        }
+        break;
+        
+      case 'LIKE':
+      case 'COMMENT':
+      case 'FAVORITE':
+      case 'POST':
+        // Open post directly in modal overlay
+        if (data.postId) {
+          setSelectedPostId(data.postId);
+        }
+        break;
+        
+      case 'FOLLOW':
+        // Navigate to user profile using router
+        if (data.fromUserId) {
+          window.location.href = `/user/${data.fromUserId}`;
+        }
+        break;
+        
+      case 'KYC':
+        // Navigate to KYC page or marketplace if approved
+        if (notification.title.includes('Approved')) {
+          window.location.href = '/marketplace';
+        } else {
+          window.location.href = '/kyc';
+        }
+        break;
+        
+      case 'ESCROW':
+        // Navigate to escrow page
+        if (data.escrowId) {
+          window.location.href = `/escrow?id=${data.escrowId}`;
+        }
+        break;
+        
+      default:
+        // For other types, just mark as read
+        break;
+    }
+  };
+
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -187,7 +250,11 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <AppShell>
+    <>
+      {selectedPostId && (
+        <PostModal postId={selectedPostId} onClose={() => setSelectedPostId(null)} />
+      )}
+      <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         {/* Header - Clean Modern Design */}
         <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm py-4 mb-3">
@@ -279,7 +346,8 @@ export default function NotificationsPage() {
                 {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-2.5 hover:bg-slate-700/30 transition-colors ${
+                    onClick={() => handleNotificationClick(notification)}
+                    className={`p-2.5 hover:bg-slate-700/30 transition-colors cursor-pointer ${
                       !notification.isRead ? 'bg-blue-600/5 border-l-2 border-l-blue-500' : ''
                     }`}
                   >
@@ -306,7 +374,10 @@ export default function NotificationsPage() {
                           <div className="flex items-center gap-0.5 flex-shrink-0">
                             {!notification.isRead && (
                               <button
-                                onClick={() => markAsRead(notification.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markAsRead(notification.id);
+                                }}
                                 className="p-1 text-gray-400 hover:text-green-400 hover:bg-slate-700 rounded transition-colors"
                                 title="Mark as read"
                               >
@@ -314,7 +385,10 @@ export default function NotificationsPage() {
                               </button>
                             )}
                             <button
-                              onClick={() => deleteNotification(notification.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(notification.id);
+                              }}
                               className="p-1 text-gray-400 hover:text-red-400 hover:bg-slate-700 rounded transition-colors"
                               title="Delete"
                             >
@@ -331,6 +405,7 @@ export default function NotificationsPage() {
           </div>
         </div>
       </div>
-    </AppShell>
+      </AppShell>
+    </>
   );
 }

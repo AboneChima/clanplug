@@ -69,10 +69,12 @@ function ListingsContent() {
       console.log('🔖 [Marketplace] Toggling bookmark:', postId, 'New state:', newBookmarkState);
       
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/bookmark`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jobica-backend.onrender.com';
+      const response = await fetch(`${API_URL}/api/posts/${postId}/bookmark`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
 
@@ -82,12 +84,12 @@ function ListingsContent() {
         const data = await response.json();
         console.log('✅ [Marketplace] Bookmark saved:', data);
         
-        // Update UI after successful backend update
+        // Update UI optimistically based on backend response
         setPosts(posts.map(p => 
-          p.id === postId ? { ...p, isBookmarked: newBookmarkState } : p
+          p.id === postId ? { ...p, isBookmarked: data.isBookmarked } : p
         ));
         
-        showToast(newBookmarkState ? 'Saved!' : 'Removed from saved', 'success');
+        showToast(data.isBookmarked ? 'Saved!' : 'Removed from saved', 'success');
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('❌ [Marketplace] Bookmark failed:', errorData);
@@ -119,7 +121,8 @@ function ListingsContent() {
         const postsData = Array.isArray(data.data) ? data.data : [];
         
         // Fetch bookmarked posts from backend
-        const bookmarksResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/bookmarks`, {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jobica-backend.onrender.com';
+        const bookmarksResponse = await fetch(`${API_URL}/api/posts/bookmarks`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -127,7 +130,7 @@ function ListingsContent() {
         let bookmarkedIds: string[] = [];
         if (bookmarksResponse.ok) {
           const bookmarksData = await bookmarksResponse.json();
-          const bookmarkedPosts = Array.isArray(bookmarksData.data) ? bookmarksData.data : [];
+          const bookmarkedPosts = Array.isArray(bookmarksData.posts) ? bookmarksData.posts : Array.isArray(bookmarksData.data) ? bookmarksData.data : [];
           bookmarkedIds = bookmarkedPosts.map((post: any) => post.id);
         }
         

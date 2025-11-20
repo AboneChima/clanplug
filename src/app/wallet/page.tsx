@@ -9,12 +9,13 @@ import DepositModal from '@/components/wallet/DepositModal';
 import InternalTransfer from '@/components/wallet/InternalTransfer';
 import WalletAddresses from '@/components/wallet/WalletAddresses';
 import WithdrawalModal from '@/components/wallet/WithdrawalModal';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useVisibilityRefresh } from '@/hooks/usePageVisibility';
 
 function WalletContent() {
   const { accessToken } = useAuth();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [status, setStatus] = useState<{ connected: boolean; provider?: string; address?: string } | null>(null);
   const [balance, setBalance] = useState<Record<string, number> | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -331,7 +332,7 @@ function WalletContent() {
                 </button>
 
                 <button 
-                  onClick={() => setWithdrawalModalOpen(true)}
+                  onClick={() => router.push('/withdrawal')}
                   className="flex-1 flex flex-col items-center gap-1 p-2 bg-white/20 hover:bg-white/30 rounded-md text-white transition-all min-w-0" 
                 >
                   <IoArrowUpOutline className="w-4 h-4" />
@@ -390,7 +391,7 @@ function WalletContent() {
             </button>
 
             <button 
-              onClick={() => setWithdrawalModalOpen(true)}
+              onClick={() => router.push('/withdrawal')}
               className="flex-1 flex flex-col items-center gap-1 p-2 sm:p-3 bg-gradient-to-br from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 rounded-lg text-white transition-all hover:scale-105 shadow-lg" 
             >
               <IoArrowUpOutline className="w-4 h-4 sm:w-5 sm:h-5" />

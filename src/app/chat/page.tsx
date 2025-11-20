@@ -640,7 +640,7 @@ function ChatContent() {
                               {/* Message content with inline timestamp */}
                               {msg.content && msg.content.trim() && (
                                 <div className={`${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-1 px-1.5' : ''}`}>
-                                  <p className={`${fontSizes[fontSize].text} break-words leading-relaxed whitespace-pre-wrap inline`}>
+                                  <p className={`${fontSizes[fontSize].text} break-words max-[360px]:leading-tight leading-relaxed whitespace-pre-wrap inline`}>
                                     {msg.content}
                                     <span className="inline-flex items-center gap-1 ml-2 align-bottom">
                                       <span className="text-[10px] opacity-70 whitespace-nowrap">
