@@ -12,10 +12,13 @@ import {
   IoHeartOutline,
   IoHeart,
   IoChatbubbleEllipsesOutline,
+  IoShieldCheckmarkOutline,
+  IoCloseCircleOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import PostModal from '@/components/PostModal';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -62,6 +65,7 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [showPosts, setShowPosts] = useState(false); // Start with both hidden
   const [showMarketplace, setShowMarketplace] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -449,6 +453,22 @@ export default function UserProfilePage() {
                 {profile.bio && (
                   <p className="text-gray-300 text-sm mb-2">{profile.bio}</p>
                 )}
+                
+                {/* KYC Status Badge - Prominent Display */}
+                <div className="mb-2">
+                  {profile.isKYCVerified ? (
+                    <div className="inline-flex items-center gap-1.5 bg-green-500/20 border border-green-500/40 rounded-lg px-2.5 py-1.5">
+                      <IoShieldCheckmarkOutline className="w-4 h-4 text-green-400" />
+                      <span className="text-xs font-medium text-green-400">KYC Verified</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1.5 bg-gray-500/20 border border-gray-500/40 rounded-lg px-2.5 py-1.5">
+                      <IoCloseCircleOutline className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs font-medium text-gray-400">KYC Unverified</span>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
                   {profile.city && (
                     <div className="flex items-center gap-1">
@@ -527,7 +547,7 @@ export default function UserProfilePage() {
               </div>
             ) : (
               posts.map((post) => (
-                <div key={post.id} className="bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden hover:border-slate-600 transition-colors cursor-pointer" onClick={() => router.push(`/feed?postId=${post.id}`)}>
+                <div key={post.id} className="bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden hover:border-slate-600 transition-colors cursor-pointer" onClick={() => setSelectedPostId(post.id)}>
                   <div className="p-2">
                     <p className="text-gray-300 text-xs whitespace-pre-wrap mb-1.5 line-clamp-2">{post.description}</p>
                     {post.images && post.images.length > 0 && (
@@ -563,7 +583,7 @@ export default function UserProfilePage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/feed?postId=${post.id}`);
+                          setSelectedPostId(post.id);
                         }}
                         className="text-blue-400 hover:text-blue-300 text-[10px] font-medium flex items-center gap-0.5"
                       >
@@ -632,6 +652,11 @@ export default function UserProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Post Modal */}
+      {selectedPostId && (
+        <PostModal postId={selectedPostId} onClose={() => setSelectedPostId(null)} />
+      )}
     </AppShell>
   );
 }

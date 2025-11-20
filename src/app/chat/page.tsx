@@ -99,6 +99,28 @@ function ChatContent() {
     }
   }, [chatId, chats]);
 
+  // Handle Android back button - go to message list instead of feed
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (currentChat) {
+        e.preventDefault();
+        setCurrentChat(null);
+        window.history.replaceState({}, '', '/chat');
+      }
+    };
+
+    // Push a state when opening a chat so back button works
+    if (currentChat) {
+      window.history.pushState({ chatOpen: true }, '');
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [currentChat]);
+
   // Load messages when chat changes
   useEffect(() => {
     if (currentChat) {

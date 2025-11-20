@@ -199,20 +199,20 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-slate-900 rounded-xl sm:rounded-2xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden shadow-2xl border border-slate-700">
+      <div className="bg-slate-900 rounded-lg max-[360px]:rounded-none sm:rounded-xl max-w-2xl w-full max-[360px]:h-full max-h-[98vh] sm:max-h-[90vh] overflow-hidden shadow-2xl border border-slate-700 flex flex-col">
         {/* Compact Header */}
-        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-700 bg-slate-800/50">
-          <h2 className="text-base sm:text-lg font-bold text-white">Post</h2>
+        <div className="flex items-center justify-between max-[360px]:p-2 p-2.5 sm:p-4 border-b border-slate-700 bg-slate-800/50 flex-shrink-0">
+          <h2 className="max-[360px]:text-sm text-base sm:text-lg font-bold text-white">Post</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition-colors"
+            className="max-[360px]:w-7 max-[360px]:h-7 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition-colors"
           >
-            <IoClose className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+            <IoClose className="max-[360px]:w-3.5 max-[360px]:h-3.5 w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(95vh-140px)] sm:max-h-[calc(90vh-140px)]">
+        {/* Content - Scrollable */}
+        <div className="overflow-y-auto flex-1">
           {loading ? (
             <div className="p-12 text-center">
               <div className="animate-spin w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -229,87 +229,87 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
               </button>
             </div>
           ) : post ? (
-            <div className="p-3 sm:p-4">
+            <div className="max-[360px]:p-2 p-2.5 sm:p-4">
               {/* Compact User Info */}
-              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+              <div className="flex items-center max-[360px]:gap-1.5 gap-2 sm:gap-3 max-[360px]:mb-2 mb-2.5 sm:mb-4">
                 {post.user.avatar ? (
                   <img
                     src={post.user.avatar}
                     alt={post.user.username}
-                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
+                    className="max-[360px]:w-8 max-[360px]:h-8 w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-white text-sm sm:text-base font-semibold">
+                  <div className="max-[360px]:w-8 max-[360px]:h-8 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <span className="text-white max-[360px]:text-xs text-sm sm:text-base font-semibold">
                       {post.user.firstName?.[0]}{post.user.lastName?.[0]}
                     </span>
                   </div>
                 )}
                 <div>
-                  <p className="text-white text-sm sm:text-base font-semibold">
+                  <p className="text-white max-[360px]:text-xs text-sm sm:text-base font-semibold">
                     {post.user.firstName} {post.user.lastName}
                   </p>
-                  <p className="text-gray-400 text-xs sm:text-sm">@{post.user.username}</p>
+                  <p className="text-gray-400 max-[360px]:text-[10px] text-xs sm:text-sm">@{post.user.username}</p>
                 </div>
               </div>
 
               {/* Post Content */}
-              <p className="text-white text-sm sm:text-base mb-3 sm:mb-4 whitespace-pre-wrap">{post.description}</p>
+              <p className="text-white max-[360px]:text-xs max-[360px]:leading-tight text-sm sm:text-base max-[360px]:mb-2 mb-2.5 sm:mb-4 whitespace-pre-wrap">{post.description}</p>
 
               {/* Compact Media */}
               {post.images && post.images.length > 0 && (
-                <div className="mb-3 sm:mb-4 rounded-lg sm:rounded-xl overflow-hidden">
+                <div className="max-[360px]:mb-2 mb-2.5 sm:mb-4 max-[360px]:rounded-md rounded-lg sm:rounded-xl overflow-hidden">
                   <img
                     src={post.images[0]}
                     alt="Post"
-                    className="w-full h-auto max-h-64 sm:max-h-96 object-cover"
+                    className="w-full h-auto max-[360px]:max-h-48 max-h-64 sm:max-h-96 object-cover"
                   />
                 </div>
               )}
 
               {post.videos && post.videos.length > 0 && (
-                <div className="mb-3 sm:mb-4 rounded-lg sm:rounded-xl overflow-hidden">
+                <div className="max-[360px]:mb-2 mb-2.5 sm:mb-4 max-[360px]:rounded-md rounded-lg sm:rounded-xl overflow-hidden">
                   <video
                     src={post.videos[0]}
                     controls
-                    className="w-full h-auto max-h-64 sm:max-h-96"
+                    className="w-full h-auto max-[360px]:max-h-48 max-h-64 sm:max-h-96"
                   />
                 </div>
               )}
 
               {/* Interactive Stats */}
-              <div className="flex items-center gap-4 sm:gap-6 py-2 sm:py-3 border-t border-slate-700 text-gray-400">
+              <div className="flex items-center max-[360px]:gap-3 gap-4 sm:gap-6 max-[360px]:py-1.5 py-2 sm:py-3 border-t border-slate-700 text-gray-400">
                 <button 
                   onClick={handleLike}
-                  className="flex items-center gap-1.5 sm:gap-2 hover:text-red-500 transition-colors active:scale-95"
+                  className="flex items-center max-[360px]:gap-1 gap-1.5 sm:gap-2 hover:text-red-500 transition-colors active:scale-95"
                 >
                   {post.isLiked ? (
-                    <IoHeart className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
+                    <IoHeart className="max-[360px]:w-4 max-[360px]:h-4 w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
                   ) : (
-                    <IoHeartOutline className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <IoHeartOutline className="max-[360px]:w-4 max-[360px]:h-4 w-5 h-5 sm:w-6 sm:h-6" />
                   )}
-                  <span className="text-xs sm:text-sm">{post._count.likes}</span>
+                  <span className="max-[360px]:text-[10px] text-xs sm:text-sm">{post._count.likes}</span>
                 </button>
                 
-                <button className="flex items-center gap-1.5 sm:gap-2 hover:text-blue-500 transition-colors">
-                  <IoChatbubbleOutline className="w-5 h-5 sm:w-6 sm:h-6" />
-                  <span className="text-xs sm:text-sm">{post._count.comments}</span>
+                <button className="flex items-center max-[360px]:gap-1 gap-1.5 sm:gap-2 hover:text-blue-500 transition-colors">
+                  <IoChatbubbleOutline className="max-[360px]:w-4 max-[360px]:h-4 w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="max-[360px]:text-[10px] text-xs sm:text-sm">{post._count.comments}</span>
                 </button>
                 
                 <button 
                   onClick={handleBookmark}
-                  className="flex items-center gap-1.5 sm:gap-2 hover:text-yellow-500 transition-colors ml-auto active:scale-95"
+                  className="flex items-center max-[360px]:gap-1 gap-1.5 sm:gap-2 hover:text-yellow-500 transition-colors ml-auto active:scale-95"
                 >
                   {post.isBookmarked ? (
-                    <IoBookmark className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
+                    <IoBookmark className="max-[360px]:w-4 max-[360px]:h-4 w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
                   ) : (
-                    <IoBookmarkOutline className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <IoBookmarkOutline className="max-[360px]:w-4 max-[360px]:h-4 w-5 h-5 sm:w-6 sm:h-6" />
                   )}
                 </button>
               </div>
 
               {/* Timestamp */}
-              <p className="text-gray-500 text-[10px] sm:text-xs mt-1 sm:mt-2">
+              <p className="text-gray-500 max-[360px]:text-[9px] text-[10px] sm:text-xs max-[360px]:mt-0.5 mt-1 sm:mt-2">
                 {new Date(post.createdAt).toLocaleString()}
               </p>
             </div>
@@ -318,8 +318,8 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
 
         {/* Comment Input - Fixed at bottom */}
         {post && (
-          <div className="border-t border-slate-700 p-2 sm:p-3 bg-slate-800/50">
-            <div className="flex gap-2">
+          <div className="border-t border-slate-700 max-[360px]:p-1.5 p-2 sm:p-3 bg-slate-800/50 flex-shrink-0">
+            <div className="flex max-[360px]:gap-1 gap-2">
               <input
                 type="text"
                 value={commentText}
@@ -330,18 +330,18 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
                   }
                 }}
                 placeholder="Write a comment..."
-                className="flex-1 px-3 py-2 text-sm bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+                className="flex-1 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs px-3 py-2 text-sm bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
               />
               <button
                 onClick={handleComment}
                 disabled={!commentText.trim() || submittingComment}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                className="max-[360px]:px-2 max-[360px]:py-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2 max-[360px]:text-xs text-sm font-medium"
               >
                 {submittingComment ? (
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  <div className="animate-spin max-[360px]:w-3 max-[360px]:h-3 w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
                 ) : (
                   <>
-                    <IoSendOutline className="w-4 h-4" />
+                    <IoSendOutline className="max-[360px]:w-3 max-[360px]:h-3 w-4 h-4" />
                     <span className="hidden sm:inline">Post</span>
                   </>
                 )}
