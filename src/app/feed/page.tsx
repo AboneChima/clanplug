@@ -12,6 +12,7 @@ import {
   IoPeopleOutline,
   IoMailOutline,
   IoTrashOutline,
+  IoArrowBackOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -90,6 +91,26 @@ export default function FeedPage() {
       fetchFollowing();
     }
   }, [activeTab]);
+
+  // Handle Android back button for viewing post modal
+  useEffect(() => {
+    if (viewingPost) {
+      document.body.style.overflow = 'hidden';
+      window.history.pushState({ postModal: true }, '');
+      
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        setViewingPost(null);
+      };
+      
+      window.addEventListener('popstate', handlePopState);
+      
+      return () => {
+        document.body.style.overflow = 'unset';
+        window.removeEventListener('popstate', handlePopState);
+      };
+    }
+  }, [viewingPost]);
 
   const fetchFollowing = async () => {
     if (!user?.id) {
@@ -1158,26 +1179,26 @@ export default function FeedPage() {
         </div>
       )}
 
-      {/* Post Detail Modal - Mobile Optimized (Much Smaller) */}
+      {/* Post Detail Modal - Fullscreen */}
       {viewingPost && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
-          onClick={() => setViewingPost(null)}
-        >
-          <div 
-            className="relative bg-slate-800 rounded-lg sm:rounded-xl max-w-sm sm:max-w-2xl md:max-w-3xl w-full max-h-[85vh] sm:max-h-[90vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-[100] bg-slate-900 flex flex-col overflow-hidden">
+          {/* Header with Back Button */}
+          <div className="flex items-center gap-3 px-3 py-3 border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm flex-shrink-0">
             <button
               onClick={() => setViewingPost(null)}
-              className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 p-1.5 sm:p-2 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+              className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <IoArrowBackOutline className="w-5 h-5 text-white" />
             </button>
+            <h2 className="text-base font-bold text-white">Post</h2>
+          </div>
             
-            <div className="flex flex-col md:flex-row max-h-[85vh] sm:max-h-[90vh]">
+          {/* Content - Fullscreen Scrollable */}
+          <div 
+            className="flex-1 overflow-y-auto overscroll-contain"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            <div className="flex flex-col md:flex-row md:h-full">
               {/* Image Section */}
               {viewingPost.images && viewingPost.images.length > 0 && (
                 <div className="md:w-2/3 bg-black flex items-center justify-center relative">

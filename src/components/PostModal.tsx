@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { 
-  IoClose, 
+  IoArrowBack, 
   IoHeartOutline, 
   IoHeart, 
   IoChatbubbleOutline,
@@ -49,14 +49,25 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
   const [submittingComment, setSubmittingComment] = useState(false);
 
   useEffect(() => {
-    // Prevent body scroll
+    // Prevent body scroll and hide all navigation
     document.body.style.overflow = 'hidden';
     fetchPost();
     
+    // Push state for Android back button
+    window.history.pushState({ postModal: true }, '');
+    
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault();
+      onClose();
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    
     return () => {
       document.body.style.overflow = 'unset';
+      window.removeEventListener('popstate', handlePopState);
     };
-  }, [postId]);
+  }, [postId, onClose]);
 
   const fetchPost = async () => {
     try {
@@ -81,12 +92,6 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
       setError('Failed to load post');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
     }
   };
 
@@ -199,31 +204,25 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4 overflow-hidden"
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-slate-900 rounded-lg max-[360px]:rounded-none sm:rounded-xl max-w-2xl w-full max-[360px]:h-full max-h-[98vh] sm:max-h-[90vh] overflow-hidden shadow-2xl border border-slate-700 flex flex-col">
-        {/* Compact Header */}
-        <div className="flex items-center justify-between max-[360px]:p-2 p-2.5 sm:p-4 border-b border-slate-700 bg-slate-800/50 flex-shrink-0">
-          <h2 className="max-[360px]:text-sm text-base sm:text-lg font-bold text-white">Post</h2>
-          <button
-            onClick={onClose}
-            className="max-[360px]:w-7 max-[360px]:h-7 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition-colors"
-          >
-            <IoClose className="max-[360px]:w-3.5 max-[360px]:h-3.5 w-4 h-4 sm:w-5 sm:h-5 text-white" />
-          </button>
-        </div>
-
-        {/* Content - Scrollable with smooth scrolling */}
-        <div 
-          className="overflow-y-auto flex-1 overscroll-contain"
-          style={{ 
-            WebkitOverflowScrolling: 'touch',
-            scrollBehavior: 'smooth'
-          }}
-          onTouchMove={(e) => e.stopPropagation()}
+    <div className="fixed inset-0 z-[100] bg-slate-900 flex flex-col overflow-hidden">
+      {/* Header with Back Button */}
+      <div className="flex items-center gap-3 px-3 py-3 border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm flex-shrink-0">
+        <button
+          onClick={onClose}
+          className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
         >
+          <IoArrowBack className="w-5 h-5 text-white" />
+        </button>
+        <h2 className="text-base font-bold text-white">Post</h2>
+      </div>
+
+      {/* Content - Fullscreen Scrollable */}
+      <div 
+        className="flex-1 overflow-y-auto overscroll-contain"
+        style={{ 
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
           {loading ? (
             <div className="p-12 text-center">
               <div className="animate-spin w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -334,40 +333,39 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
           ) : null}
         </div>
 
-        {/* Comment Input - Fixed at bottom */}
-        {post && (
-          <div className="border-t border-slate-700 max-[360px]:p-1.5 p-2 sm:p-3 bg-slate-800/50 flex-shrink-0">
-            <div className="flex max-[360px]:gap-1 gap-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && !submittingComment) {
-                    handleComment();
-                  }
-                }}
-                placeholder="Write a comment..."
-                className="flex-1 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs px-3 py-2 text-sm bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-              />
-              <button
-                onClick={handleComment}
-                disabled={!commentText.trim() || submittingComment}
-                className="max-[360px]:px-2 max-[360px]:py-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2 max-[360px]:text-xs text-sm font-medium"
-              >
-                {submittingComment ? (
-                  <div className="animate-spin max-[360px]:w-3 max-[360px]:h-3 w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                ) : (
-                  <>
-                    <IoSendOutline className="max-[360px]:w-3 max-[360px]:h-3 w-4 h-4" />
-                    <span className="hidden sm:inline">Post</span>
-                  </>
-                )}
-              </button>
-            </div>
+      {/* Comment Input - Fixed at bottom */}
+      {post && (
+        <div className="border-t border-slate-700 max-[360px]:p-1.5 p-2 sm:p-3 bg-slate-800/50 flex-shrink-0">
+          <div className="flex max-[360px]:gap-1 gap-2">
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !submittingComment) {
+                  handleComment();
+                }
+              }}
+              placeholder="Write a comment..."
+              className="flex-1 max-[360px]:px-2 max-[360px]:py-1.5 max-[360px]:text-xs px-3 py-2 text-sm bg-slate-700 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
+            />
+            <button
+              onClick={handleComment}
+              disabled={!commentText.trim() || submittingComment}
+              className="max-[360px]:px-2 max-[360px]:py-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2 max-[360px]:text-xs text-sm font-medium"
+            >
+              {submittingComment ? (
+                <div className="animate-spin max-[360px]:w-3 max-[360px]:h-3 w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+              ) : (
+                <>
+                  <IoSendOutline className="max-[360px]:w-3 max-[360px]:h-3 w-4 h-4" />
+                  <span className="hidden sm:inline">Post</span>
+                </>
+              )}
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
