@@ -27,6 +27,10 @@ interface Post {
     firstName: string;
     lastName: string;
     avatar?: string;
+    verificationBadge?: {
+      status: string;
+      expiresAt?: string;
+    };
   };
   _count: {
     likes: number;
@@ -196,7 +200,7 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4 overflow-hidden"
       onClick={handleBackdropClick}
     >
       <div className="bg-slate-900 rounded-lg max-[360px]:rounded-none sm:rounded-xl max-w-2xl w-full max-[360px]:h-full max-h-[98vh] sm:max-h-[90vh] overflow-hidden shadow-2xl border border-slate-700 flex flex-col">
@@ -211,8 +215,15 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
           </button>
         </div>
 
-        {/* Content - Scrollable */}
-        <div className="overflow-y-auto flex-1">
+        {/* Content - Scrollable with smooth scrolling */}
+        <div 
+          className="overflow-y-auto flex-1 overscroll-contain"
+          style={{ 
+            WebkitOverflowScrolling: 'touch',
+            scrollBehavior: 'smooth'
+          }}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
           {loading ? (
             <div className="p-12 text-center">
               <div className="animate-spin w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -245,18 +256,22 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
                     </span>
                   </div>
                 )}
-                <div>
-                  <p className="text-white max-[360px]:text-xs text-sm sm:text-base font-semibold">
-                    {post.user.firstName} {post.user.lastName}
-                  </p>
-                  <p className="text-gray-400 max-[360px]:text-[10px] text-xs sm:text-sm">@{post.user.username}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1">
+                    <p className="text-white max-[360px]:text-xs text-sm sm:text-base font-semibold truncate">
+                      {post.user.firstName} {post.user.lastName}
+                    </p>
+                    {post.user.verificationBadge?.status === 'active' && (
+                      <svg className="max-[360px]:w-3 max-[360px]:h-3 w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <p className="text-gray-400 max-[360px]:text-[10px] text-xs sm:text-sm truncate">@{post.user.username}</p>
                 </div>
               </div>
 
-              {/* Post Content */}
-              <p className="text-white max-[360px]:text-xs max-[360px]:leading-tight text-sm sm:text-base max-[360px]:mb-2 mb-2.5 sm:mb-4 whitespace-pre-wrap">{post.description}</p>
-
-              {/* Compact Media */}
+              {/* Media First - Before Text */}
               {post.images && post.images.length > 0 && (
                 <div className="max-[360px]:mb-2 mb-2.5 sm:mb-4 max-[360px]:rounded-md rounded-lg sm:rounded-xl overflow-hidden">
                   <img
@@ -276,6 +291,9 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
                   />
                 </div>
               )}
+
+              {/* Post Content - After Media */}
+              <p className="text-white max-[360px]:text-xs max-[360px]:leading-tight text-sm sm:text-base max-[360px]:mb-2 mb-2.5 sm:mb-4 whitespace-pre-wrap">{post.description}</p>
 
               {/* Interactive Stats */}
               <div className="flex items-center max-[360px]:gap-3 gap-4 sm:gap-6 max-[360px]:py-1.5 py-2 sm:py-3 border-t border-slate-700 text-gray-400">
