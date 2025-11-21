@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import prisma from '../config/database';
 import { Currency, UserStatus } from '@prisma/client';
 import { passwordUtils, jwtUtils, tokenBlacklist, sessionUtils, codeUtils, rateLimitUtils } from '../utils/auth';
-import { emailService } from '../services/email.service';
+import { sendEmail } from '../services/email.service';
 import config from '../config/config';
 
 // Helper to pick public user fields
@@ -123,10 +123,17 @@ export async function register(req: Request, res: Response) {
     if (config.SMTP_HOST && config.SMTP_USER) {
       try {
         await Promise.race([
-          emailService.sendVerificationEmail(user.email, {
-            username: user.firstName || user.username,
-            verificationCode: verificationToken,
-            verificationUrl: `${config.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}`
+          sendEmail({
+            to: user.email,
+            subject: 'Verify Your Email',
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2>Welcome ${user.firstName || user.username}!</h2>
+                <p>Please verify your email by clicking the link below:</p>
+                <a href="${config.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
+                <p>Or use this code: <strong>${verificationToken}</strong></p>
+              </div>
+            `
           }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 3000))
         ]);
@@ -385,10 +392,18 @@ export async function forgotPassword(req: Request, res: Response) {
     });
 
     // Send password reset email
-    await emailService.sendPasswordResetEmail(user.email, {
-      username: user.firstName || user.username,
-      resetCode: resetToken,
-      resetUrl: `${config.FRONTEND_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset Request',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Password Reset</h2>
+          <p>Hi ${user.firstName || user.username},</p>
+          <p>Click the link below to reset your password:</p>
+          <a href="${config.FRONTEND_URL}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
+          <p>Or use this code: <strong>${resetToken}</strong></p>
+        </div>
+      `
     });
 
     return res.status(200).json({
@@ -593,10 +608,18 @@ export async function resendVerification(req: Request, res: Response) {
     });
 
     // Send verification email
-    await emailService.sendVerificationEmail(user.email, {
-      username: user.firstName || user.username,
-      verificationCode: verificationToken,
-      verificationUrl: `${config.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}`
+    await sendEmail({
+      to: user.email,
+      subject: 'Verify Your Email',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Verify Your Email</h2>
+          <p>Hi ${user.firstName || user.username},</p>
+          <p>Click the link below to verify your email:</p>
+          <a href="${config.FRONTEND_URL}/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
+          <p>Or use this code: <strong>${verificationToken}</strong></p>
+        </div>
+      `
     });
 
     return res.status(200).json({
