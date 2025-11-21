@@ -112,8 +112,8 @@ router.post('/transfer', authenticate, requireKYC, asyncHandler(async (req: Requ
     res.status(400).json({ success: false, message: 'Invalid amount', code: 'INVALID_AMOUNT' });
     return;
   }
-  if (!currency || !['LMC'].includes(String(currency))) {
-    res.status(400).json({ success: false, message: 'Only LMC transfers are supported', code: 'INVALID_CURRENCY' });
+  if (!currency || !['LMC', 'NGN', 'USD'].includes(String(currency))) {
+    res.status(400).json({ success: false, message: 'Invalid currency. Supported: NGN, USD, LMC', code: 'INVALID_CURRENCY' });
     return;
   }
 
