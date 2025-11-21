@@ -22,6 +22,7 @@ import testRoutes from './test.routes';
 import storyRoutes from './story.routes';
 import followRoutes from './follow.routes';
 import adminKycRoutes from './admin-kyc.routes';
+import passwordResetRoutes from './password-reset.routes';
 
 const router = Router();
 
@@ -49,5 +50,6 @@ router.use('/follow', followRoutes);
 router.use('/admin-temp', adminKycRoutes); // TEMPORARY - DELETE AFTER USE
 router.use('/listings', listingRoutes);
 router.use('/purchases', purchaseRoutes);
+router.use('/password-reset', passwordResetRoutes);
 
 export default router;
