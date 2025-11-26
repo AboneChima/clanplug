@@ -226,19 +226,43 @@ class WalletService {
       throw new Error('INVALID_CURRENCY');
     }
 
+    // Check if recipient is a wallet address (format: prefix-NGN-suffix or prefix-USD-suffix)
+    const isNgnAddress = recipient.includes('-NGN-');
+    const isUsdAddress = recipient.includes('-USD-');
+    
     let toUser;
     
     try {
-      // Find user by email or username only
-      toUser = await prisma.user.findFirst({
-        where: {
-          OR: [
-            { email: recipient.toLowerCase().trim() },
-            { username: recipient.trim() }
-          ],
-        },
-        select: { id: true, username: true, email: true, firstName: true, lastName: true },
-      });
+      if (isNgnAddress || isUsdAddress) {
+        // Extract user ID from wallet address
+        const parts = recipient.split(isNgnAddress ? '-NGN-' : '-USD-');
+        if (parts.length === 2) {
+          const prefix = parts[0];
+          const suffix = parts[1];
+          
+          // Find user whose ID matches this pattern
+          toUser = await prisma.user.findFirst({
+            where: {
+              AND: [
+                { id: { startsWith: prefix } },
+                { id: { endsWith: suffix } }
+              ]
+            },
+            select: { id: true, username: true, email: true, firstName: true, lastName: true },
+          });
+        }
+      } else {
+        // Find user by email or username
+        toUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: recipient.toLowerCase().trim() },
+              { username: recipient.trim() }
+            ],
+          },
+          select: { id: true, username: true, email: true, firstName: true, lastName: true },
+        });
+      }
     } catch (error) {
       console.error('Error finding recipient:', error);
       throw new Error('RECIPIENT_NOT_FOUND');
@@ -266,6 +290,12 @@ class WalletService {
       ? `${sender.firstName} ${sender.lastName}`
       : sender?.username || sender?.email || 'Someone';
 
+    // Calculate 0.5% transfer fee
+    const feePercentage = 0.005; // 0.5%
+    const fee = amount * feePercentage;
+    const recipientAmount = amount - fee; // Recipient gets amount minus fee
+    const totalDeduction = amount; // Sender pays the full amount
+
     const result = await prisma.$transaction(async (tx) => {
       // Ensure sender wallet exists and has sufficient balance
       const fromWallet = await tx.wallet.findUnique({
@@ -276,21 +306,21 @@ class WalletService {
         throw new Error('WALLET_NOT_FOUND');
       }
 
-      if (Number(fromWallet.balance) < amount) {
+      if (Number(fromWallet.balance) < totalDeduction) {
         throw new Error('INSUFFICIENT_FUNDS');
       }
 
-      // Decrement sender balance
+      // Decrement sender balance (full amount including fee)
       const updatedFromWallet = await tx.wallet.update({
         where: { userId_currency: { userId: fromUserId, currency } },
-        data: { balance: { decrement: amount } },
+        data: { balance: { decrement: totalDeduction } },
       });
 
-      // Upsert recipient wallet and increment balance
+      // Upsert recipient wallet and increment balance (amount minus fee)
       const toWallet = await tx.wallet.upsert({
         where: { userId_currency: { userId: toUser.id, currency } },
-        update: { balance: { increment: amount } },
-        create: { userId: toUser.id, currency, balance: amount },
+        update: { balance: { increment: recipientAmount } },
+        create: { userId: toUser.id, currency, balance: recipientAmount },
       });
 
       // Record transactions for both parties
@@ -300,16 +330,17 @@ class WalletService {
           walletId: updatedFromWallet.id,
           type: TransactionType.TRANSFER,
           status: TransactionStatus.COMPLETED,
-          amount,
-          fee: 0,
-          netAmount: amount,
+          amount: totalDeduction,
+          fee: fee,
+          netAmount: recipientAmount,
           currency,
           reference: senderReference,
           description: description || `Transfer sent to ${toUser.username || toUser.email}`,
           metadata: { 
             recipient: toUser,
             direction: 'debit',
-            transferType: 'outgoing'
+            transferType: 'outgoing',
+            feeCharged: fee
           },
         },
       });
@@ -320,16 +351,18 @@ class WalletService {
           walletId: toWallet.id,
           type: TransactionType.TRANSFER,
           status: TransactionStatus.COMPLETED,
-          amount,
+          amount: recipientAmount,
           fee: 0,
-          netAmount: amount,
+          netAmount: recipientAmount,
           currency,
           reference: receiverReference,
           description: description || `Transfer received from ${senderDisplayName}`,
           metadata: { 
             senderId: fromUserId,
             direction: 'credit',
-            transferType: 'incoming'
+            transferType: 'incoming',
+            originalAmount: amount,
+            feeDeducted: fee
           },
         },
       });
@@ -344,32 +377,33 @@ class WalletService {
       // Format amount with proper currency symbol
       const formattedAmount = `${currency} ${amount.toLocaleString()}`;
 
-      // Notification for sender (DEBIT - showing outgoing transfer with minus sign)
+      // Notification for sender (DEBIT - showing outgoing transfer with fee)
       await notificationService.createNotification({
         userId: fromUserId,
         type: 'TRANSACTION',
         title: 'Transfer Sent',
-        message: `- ${formattedAmount} sent to ${recipientDisplayName}`,
+        message: `- ${currency} ${totalDeduction.toLocaleString()} sent to ${recipientDisplayName} (incl. ${currency} ${fee.toFixed(2)} fee)`,
         data: {
           type: 'transfer_sent',
-          amount: -amount, // Negative for debit
+          amount: -totalDeduction,
           currency,
           recipient: recipientDisplayName,
           reference: result.senderTx.reference,
           transactionId: result.senderTx.id,
-          direction: 'debit'
+          direction: 'debit',
+          fee: fee
         }
       });
 
-      // Notification for receiver (CREDIT - showing incoming transfer with plus sign)
+      // Notification for receiver (CREDIT - showing incoming transfer after fee)
       await notificationService.createNotification({
         userId: toUser.id,
         type: 'TRANSACTION',
         title: 'Money Received',
-        message: `+ ${formattedAmount} received from ${senderDisplayName}`,
+        message: `+ ${currency} ${recipientAmount.toLocaleString()} received from ${senderDisplayName}`,
         data: {
           type: 'transfer_received',
-          amount: amount, // Positive for credit
+          amount: recipientAmount,
           currency,
           sender: senderDisplayName,
           reference: result.receiverTx.reference,
