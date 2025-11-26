@@ -221,61 +221,44 @@ class WalletService {
       throw new Error('INVALID_AMOUNT');
     }
 
-    // Check if recipient is a wallet address (USDT, NGN, or LMC format)
-    const isUsdtAddress = recipient.startsWith('0x') || recipient.startsWith('T') || recipient.length === 42;
-    const isNgnAddress = recipient.match(/^[0-9]{10}$/); // Nigerian bank account format
-    const isLmcAddress = recipient.includes('-LMC-'); // LMC address format: {prefix}-LMC-{suffix}
+    // Check if recipient is a wallet address
+    const isUsdtAddress = (recipient.startsWith('0x') || recipient.startsWith('T')) && recipient.length >= 34;
+    const isNgnAddress = /^[0-9]{10}$/.test(recipient); // 10-digit Nigerian account number
     
     let toUser;
     
-    if (isUsdtAddress && currency === 'USD') {
-      // Find user by USDT wallet address
-      toUser = await prisma.user.findFirst({
-        where: { usdtWalletAddress: recipient },
-        select: { id: true, username: true, email: true, usdtWalletAddress: true },
-      });
-    } else if (isNgnAddress && currency === 'NGN') {
-      // Find user by NGN wallet address
-      toUser = await prisma.user.findFirst({
-        where: { ngnWalletAddress: recipient },
-        select: { id: true, username: true, email: true, ngnWalletAddress: true },
-      });
-    } else if (isLmcAddress && currency === 'LMC') {
-      // Find user by LMC wallet address
-      // LMC address format: {first8chars}-LMC-{last8chars}
-      // We need to find the user whose ID matches this pattern
-      const addressParts = recipient.split('-LMC-');
-      if (addressParts.length === 2) {
-        const prefix = addressParts[0];
-        const suffix = addressParts[1];
-        
-        // Find user whose ID starts with prefix and ends with suffix
+    try {
+      if (isUsdtAddress) {
+        // Find user by USDT wallet address
+        toUser = await prisma.user.findFirst({
+          where: { usdtWalletAddress: recipient },
+          select: { id: true, username: true, email: true, firstName: true, lastName: true },
+        });
+      } else if (isNgnAddress) {
+        // Find user by NGN wallet address
+        toUser = await prisma.user.findFirst({
+          where: { ngnWalletAddress: recipient },
+          select: { id: true, username: true, email: true, firstName: true, lastName: true },
+        });
+      } else {
+        // Find user by email or username
         toUser = await prisma.user.findFirst({
           where: {
-            AND: [
-              { id: { startsWith: prefix } },
-              { id: { endsWith: suffix } }
-            ]
+            OR: [
+              { email: recipient.toLowerCase() },
+              { username: recipient }
+            ],
           },
-          select: { id: true, username: true, email: true },
+          select: { id: true, username: true, email: true, firstName: true, lastName: true },
         });
       }
-    } else {
-      // Find user by email or username (existing functionality)
-      toUser = await prisma.user.findFirst({
-        where: {
-          OR: [{ email: recipient }, { username: recipient }],
-        },
-        select: { id: true, username: true, email: true },
-      });
+    } catch (error) {
+      console.error('Error finding recipient:', error);
+      throw new Error('RECIPIENT_NOT_FOUND');
     }
 
     if (!toUser) {
-      if (isUsdtAddress || isNgnAddress || isLmcAddress) {
-        throw new Error('WALLET_ADDRESS_NOT_FOUND');
-      } else {
-        throw new Error('RECIPIENT_NOT_FOUND');
-      }
+      throw new Error('RECIPIENT_NOT_FOUND');
     }
 
     if (toUser.id === fromUserId) {
