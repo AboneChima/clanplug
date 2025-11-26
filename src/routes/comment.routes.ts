@@ -9,7 +9,7 @@ const router = Router();
 
 // Validation middleware
 const createCommentValidation = [
-  param('postId').isUUID().withMessage('Invalid post ID'),
+  param('postId').isString().notEmpty().withMessage('Invalid post ID'),
   body('content')
     .isString()
     .trim()
@@ -17,12 +17,12 @@ const createCommentValidation = [
     .withMessage('Content must be between 1 and 1000 characters'),
   body('parentId')
     .optional()
-    .isUUID()
+    .isString()
     .withMessage('Invalid parent comment ID'),
 ];
 
 const updateCommentValidation = [
-  param('commentId').isUUID().withMessage('Invalid comment ID'),
+  param('commentId').isString().notEmpty().withMessage('Invalid comment ID'),
   body('content')
     .isString()
     .trim()
@@ -54,7 +54,7 @@ router.get(
   '/posts/:postId/comments',
   optionalAuthenticate,
   [
-    param('postId').isUUID().withMessage('Invalid post ID'),
+    param('postId').isString().notEmpty().withMessage('Invalid post ID'),
     ...paginationValidation,
   ],
   validateRequest,
@@ -65,7 +65,7 @@ router.get(
   '/comments/:commentId/replies',
   optionalAuthenticate,
   [
-    param('commentId').isUUID().withMessage('Invalid comment ID'),
+    param('commentId').isString().notEmpty().withMessage('Invalid comment ID'),
     ...paginationValidation,
   ],
   validateRequest,
@@ -75,7 +75,7 @@ router.get(
 router.get(
   '/comments/:commentId',
   optionalAuthenticate,
-  [param('commentId').isUUID().withMessage('Invalid comment ID')],
+  [param('commentId').isString().notEmpty().withMessage('Invalid comment ID')],
   validateRequest,
   commentController.getCommentById
 );
@@ -91,7 +91,7 @@ router.put(
 router.delete(
   '/comments/:commentId',
   authenticate,
-  [param('commentId').isUUID().withMessage('Invalid comment ID')],
+  [param('commentId').isString().notEmpty().withMessage('Invalid comment ID')],
   validateRequest,
   asyncHandler(commentController.deleteComment)
 );
@@ -99,7 +99,7 @@ router.delete(
 router.get(
   '/users/:userId/comments',
   [
-    param('userId').isUUID().withMessage('Invalid user ID'),
+    param('userId').isString().notEmpty().withMessage('Invalid user ID'),
     ...paginationValidation,
   ],
   validateRequest,
