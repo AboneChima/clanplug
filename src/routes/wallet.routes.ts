@@ -100,8 +100,8 @@ router.post('/withdraw', authenticate, requireKYC, asyncHandler(async (req: Requ
   }
 }));
 
-// POST /api/wallets/transfer - Transfer between users
-router.post('/transfer', authenticate, requireKYC, asyncHandler(async (req: Request, res: Response) => {
+// POST /api/wallets/transfer - Transfer between users (KYC not required for internal transfers)
+router.post('/transfer', authenticate, asyncHandler(async (req: Request, res: Response) => {
   const { recipient, amount, currency, description } = req.body || {};
   
   if (!recipient || typeof recipient !== 'string') {
