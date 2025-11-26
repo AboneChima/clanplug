@@ -212,6 +212,26 @@ class WalletService {
       return { wallet, transaction };
     });
 
+    // Send notification to user
+    try {
+      await notificationService.createNotification({
+        userId,
+        type: 'TRANSACTION',
+        title: 'Deposit Successful',
+        message: `+ ${currency} ${netAmount.toLocaleString()} added to your wallet`,
+        data: {
+          type: 'deposit',
+          amount: netAmount,
+          currency,
+          reference: result.transaction.reference,
+          transactionId: result.transaction.id,
+          fee: fee
+        }
+      });
+    } catch (notificationError) {
+      console.error('Failed to send deposit notification:', notificationError);
+    }
+
     return result;
   }
 
