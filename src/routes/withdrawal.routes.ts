@@ -61,8 +61,10 @@ router.post('/verify-account', [
   }
 });
 
+import { withdrawalController } from '../controllers/withdrawal.controller';
+
 /**
- * Process withdrawal request with enhanced validation
+ * Process withdrawal request with enhanced validation (INSTANT for < ₦50k)
  * POST /api/withdrawal/request
  */
 router.post('/request', authenticate, [
@@ -103,32 +105,8 @@ router.post('/request', authenticate, [
       });
     }
 
-    const { amount, bankCode, accountNumber, accountName, narration } = req.body;
-    const userId = (req as any).user.id;
-
-    // Process withdrawal with enhanced response
-    const result = await withdrawalService.processWithdrawal({
-      userId,
-      amount: parseFloat(amount),
-      bankCode,
-      bankName: accountName.split(' - ')[1] || 'Bank', // Extract bank name from account name
-      accountNumber,
-      accountName,
-      narration
-    });
-
-    return res.json({
-      success: true,
-      message: result.message,
-      data: {
-        reference: result.reference,
-        status: result.status,
-        estimatedTime: result.estimatedTime,
-        amount: parseFloat(amount),
-        accountName,
-        submittedAt: new Date().toISOString()
-      }
-    });
+    // Use new instant withdrawal controller
+    return await withdrawalController.requestWithdrawal(req, res);
 
   } catch (error: any) {
     console.error('Withdrawal processing error:', error);
@@ -144,40 +122,8 @@ router.post('/request', authenticate, [
  * GET /api/withdrawal/limits
  */
 router.get('/limits', authenticate, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.id;
-
-    const limits = await withdrawalService.getWithdrawalLimits(userId);
-
-    return res.json({
-      success: true,
-      data: {
-        daily: {
-          limit: limits.dailyLimit,
-          used: limits.dailyLimit - limits.remainingDaily,
-          remaining: limits.remainingDaily
-        },
-        monthly: {
-          limit: limits.monthlyLimit,
-          used: limits.monthlyLimit - limits.remainingMonthly,
-          remaining: limits.remainingMonthly
-        },
-        minimum: limits.minAmount,
-        maximum: limits.maxAmount,
-        fee: {
-          percentage: 1.5,
-          minimum: 50
-        }
-      }
-    });
-
-  } catch (error: any) {
-    console.error('Error fetching withdrawal limits:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch withdrawal limits'
-    });
-  }
+  // Use new instant withdrawal controller
+  return await withdrawalController.getWithdrawalLimits(req, res);
 });
 
 router.get('/history', authenticate, async (req: Request, res: Response) => {
