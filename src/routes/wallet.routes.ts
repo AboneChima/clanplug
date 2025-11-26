@@ -112,8 +112,8 @@ router.post('/transfer', authenticate, asyncHandler(async (req: Request, res: Re
     res.status(400).json({ success: false, message: 'Invalid amount', code: 'INVALID_AMOUNT' });
     return;
   }
-  if (!currency || !['LMC', 'NGN', 'USD'].includes(String(currency))) {
-    res.status(400).json({ success: false, message: 'Invalid currency. Supported: NGN, USD, LMC', code: 'INVALID_CURRENCY' });
+  if (!currency || !['NGN', 'USD'].includes(String(currency))) {
+    res.status(400).json({ success: false, message: 'Invalid currency. Supported: NGN, USD', code: 'INVALID_CURRENCY' });
     return;
   }
 

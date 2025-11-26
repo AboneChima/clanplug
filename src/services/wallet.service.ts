@@ -215,43 +215,30 @@ class WalletService {
     return result;
   }
 
-  // Transfer funds to another user (by email, username, or wallet address)
+  // Transfer funds to another user (by email or username only - NGN/USD)
   async transferToUser(fromUserId: string, recipient: string, amount: number, currency: Currency, description?: string) {
     if (!amount || amount <= 0) {
       throw new Error('INVALID_AMOUNT');
     }
 
-    // Check if recipient is a wallet address
-    const isUsdtAddress = (recipient.startsWith('0x') || recipient.startsWith('T')) && recipient.length >= 34;
-    const isNgnAddress = /^[0-9]{10}$/.test(recipient); // 10-digit Nigerian account number
-    
+    // Only support NGN and USD currencies
+    if (currency !== 'NGN' && currency !== 'USD') {
+      throw new Error('INVALID_CURRENCY');
+    }
+
     let toUser;
     
     try {
-      if (isUsdtAddress) {
-        // Find user by USDT wallet address
-        toUser = await prisma.user.findFirst({
-          where: { usdtWalletAddress: recipient },
-          select: { id: true, username: true, email: true, firstName: true, lastName: true },
-        });
-      } else if (isNgnAddress) {
-        // Find user by NGN wallet address
-        toUser = await prisma.user.findFirst({
-          where: { ngnWalletAddress: recipient },
-          select: { id: true, username: true, email: true, firstName: true, lastName: true },
-        });
-      } else {
-        // Find user by email or username
-        toUser = await prisma.user.findFirst({
-          where: {
-            OR: [
-              { email: recipient.toLowerCase() },
-              { username: recipient }
-            ],
-          },
-          select: { id: true, username: true, email: true, firstName: true, lastName: true },
-        });
-      }
+      // Find user by email or username only
+      toUser = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: recipient.toLowerCase().trim() },
+            { username: recipient.trim() }
+          ],
+        },
+        select: { id: true, username: true, email: true, firstName: true, lastName: true },
+      });
     } catch (error) {
       console.error('Error finding recipient:', error);
       throw new Error('RECIPIENT_NOT_FOUND');
