@@ -38,6 +38,8 @@ import passwordResetRoutes from './routes/password-reset.routes';
 
 const app = express();
 
+// Force redeploy - Nov 26, 2025
+
 // Simple CORS - allow everything (MUST be first)
 app.use((req, res, next) => {
   const origin = req.headers.origin || '*';
