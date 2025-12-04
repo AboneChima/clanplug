@@ -14,7 +14,7 @@ async function checkMarketplacePosts() {
 
     // Check recent listings
     const listings = await client.query(`
-      SELECT id, title, "sellerId", "createdAt" 
+      SELECT id, title, "sellerId", "createdAt"      
       FROM "Listing" 
       ORDER BY "createdAt" DESC 
       LIMIT 10;
