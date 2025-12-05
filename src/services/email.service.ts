@@ -52,17 +52,27 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
   try {
     // Improved email headers to avoid spam
     const mailOptions = {
-      from: `"${config.APP_NAME}" <${config.SMTP_USER}>`, // Use SMTP_USER as sender
+      from: `"${config.APP_NAME} (No Reply)" <${config.SMTP_USER}>`, // Indicate no-reply
       to: options.to,
       subject: options.subject,
-      html: options.html,
+      html: options.html + `
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+          <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+            ⚠️ This is an automated message. Please do not reply to this email.
+          </p>
+          <p style="color: #9ca3af; font-size: 12px; margin: 5px 0 0 0;">
+            For support, contact us through the app or visit our website.
+          </p>
+        </div>
+      `,
       text: options.text || options.html.replace(/<[^>]*>/g, ''), // Plain text fallback
       headers: {
         'X-Priority': '1',
         'X-MSMail-Priority': 'High',
         'Importance': 'high',
         'X-Mailer': config.APP_NAME,
-        'Reply-To': config.SMTP_USER
+        'Reply-To': 'noreply@clanplug.com', // No-reply address
+        'X-Auto-Response-Suppress': 'All' // Suppress auto-replies
       }
     };
 
