@@ -105,7 +105,7 @@ class FlutterwaveBillsService {
 
     return commonBundles.map(bundle => ({
       id: bundle.id as any,
-      biller_code: this.getNetworkBillerCode(network),
+      biller_code: this.getNetworkTypeName(network),
       name: bundle.name,
       amount: bundle.amount,
       validity: bundle.validity,
@@ -119,14 +119,14 @@ class FlutterwaveBillsService {
   async purchaseAirtime(
     phoneNumber: string,
     amount: number,
-    billerCode: string,
+    networkType: string,
     reference: string
   ): Promise<{ success: boolean; message: string; data?: any }> {
     try {
       console.log('[Flutterwave Bills] Purchasing airtime:', {
         phone: phoneNumber,
         amount,
-        biller: billerCode,
+        type: networkType,
         reference
       });
 
@@ -134,7 +134,7 @@ class FlutterwaveBillsService {
         country: 'NG',
         customer: phoneNumber,
         amount,
-        type: billerCode,
+        type: networkType,
         reference
       };
 
@@ -257,18 +257,18 @@ class FlutterwaveBillsService {
   }
 
   /**
-   * Get network biller code from network name
-   * Using the VTU codes for Nigerian networks
+   * Get network type name for Flutterwave Bills API
+   * These are the exact names Flutterwave expects
    */
-  getNetworkBillerCode(network: string): string {
+  getNetworkTypeName(network: string): string {
     const networkMap: { [key: string]: string } = {
-      'MTN': 'BIL099',      // MTN VTU
-      'GLO': 'BIL102',      // GLO VTU  
-      'AIRTEL': 'BIL100',   // AIRTEL VTU
-      '9MOBILE': 'BIL103'   // 9MOBILE VTU
+      'MTN': 'MTN',         // MTN currently not supported by Flutterwave
+      'GLO': 'GLO VTU',     // Works!
+      'AIRTEL': 'AIRTEL VTU', // Works!
+      '9MOBILE': '9MOBILE VTU' // Works!
     };
 
-    return networkMap[network.toUpperCase()] || 'BIL099';
+    return networkMap[network.toUpperCase()] || 'GLO VTU';
   }
 }
 

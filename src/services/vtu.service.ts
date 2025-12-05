@@ -184,11 +184,11 @@ class VTUService {
         console.log('[VTU] Phone:', request.recipient);
         console.log('[VTU] Amount:', request.amount);
 
-        const billerCode = flutterwaveBillsService.getNetworkBillerCode(request.provider);
+        const networkType = flutterwaveBillsService.getNetworkTypeName(request.provider);
         const response = await flutterwaveBillsService.purchaseAirtime(
           request.recipient,
           request.amount,
-          billerCode,
+          networkType,
           reference
         );
 
@@ -323,11 +323,11 @@ class VTUService {
         console.log('[VTU] Phone:', request.recipient);
         console.log('[VTU] Plan:', request.planId);
 
-        const billerCode = flutterwaveBillsService.getNetworkBillerCode(request.provider);
+        const networkType = flutterwaveBillsService.getNetworkTypeName(request.provider);
         const response = await flutterwaveBillsService.purchaseData(
           request.recipient,
           request.amount,
-          billerCode,
+          networkType,
           request.planId,
           reference
         );
