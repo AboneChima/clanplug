@@ -3,6 +3,7 @@ import { TransactionStatus, Currency } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { walletService } from './wallet.service';
 import { flutterwaveBillsService } from './flutterwave-bills.service';
+import { clubKonnectService } from './clubkonnect.service';
 
 export interface VTUProvider {
   id: string;
@@ -179,18 +180,39 @@ class VTUService {
       await this.deductWalletBalance(request.userId, totalAmount, reference);
 
       try {
-        console.log('[VTU] Using Flutterwave Bills for airtime purchase');
+        console.log('[VTU] Purchasing airtime');
         console.log('[VTU] Network:', request.provider);
         console.log('[VTU] Phone:', request.recipient);
         console.log('[VTU] Amount:', request.amount);
 
-        const networkType = flutterwaveBillsService.getNetworkTypeName(request.provider);
-        const response = await flutterwaveBillsService.purchaseAirtime(
-          request.recipient,
-          request.amount,
-          networkType,
-          reference
-        );
+        let response;
+        
+        // Use ClubKonnect for MTN (Flutterwave doesn't support it)
+        if (request.provider.toUpperCase() === 'MTN') {
+          console.log('[VTU] Using ClubKonnect for MTN');
+          const clubResponse = await clubKonnectService.purchaseAirtime(
+            request.provider,
+            request.amount,
+            request.recipient,
+            reference
+          );
+          
+          response = {
+            success: clubResponse.status === 'success',
+            message: clubResponse.message || 'Airtime purchase processed',
+            data: { flw_ref: clubResponse.transactionid }
+          };
+        } else {
+          // Use Flutterwave for other networks
+          console.log('[VTU] Using Flutterwave Bills');
+          const networkType = flutterwaveBillsService.getNetworkTypeName(request.provider);
+          response = await flutterwaveBillsService.purchaseAirtime(
+            request.recipient,
+            request.amount,
+            networkType,
+            reference
+          );
+        }
 
         if (response.success) {
           await prisma.vTUTransaction.update({
