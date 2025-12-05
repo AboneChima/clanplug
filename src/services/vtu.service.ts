@@ -2,7 +2,7 @@ import { prisma } from '../config/database';
 import { TransactionStatus, Currency } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { walletService } from './wallet.service';
-import { clubKonnectService } from './clubkonnect.service';
+import { flutterwaveBillsService } from './flutterwave-bills.service';
 
 export interface VTUProvider {
   id: string;
@@ -39,7 +39,7 @@ export interface VTUTransactionResponse {
 
 class VTUService {
   constructor() {
-    console.log('[VTU] Service initialized with ClubKonnect provider');
+    console.log('[VTU] Service initialized with Flutterwave Bills provider');
   }
 
   // Helper method to check wallet balance
@@ -109,12 +109,14 @@ class VTUService {
   // Get data plans for a specific network
   async getDataPlans(network: string): Promise<DataPlan[]> {
     try {
-      const plans = clubKonnectService.getDataPlans(network);
-      return plans.map(plan => ({
-        id: plan.id,
-        name: plan.name,
-        amount: plan.amount,
-        validity: plan.validity,
+      const billerCode = flutterwaveBillsService.getNetworkBillerCode(network);
+      const bundles = await flutterwaveBillsService.getDataBundles(billerCode);
+      
+      return bundles.map(bundle => ({
+        id: bundle.item_code,
+        name: bundle.name,
+        amount: bundle.amount,
+        validity: '30 days', // Flutterwave doesn't provide validity, default to 30 days
         network: network.toUpperCase(),
       }));
     } catch (error) {
@@ -178,30 +180,32 @@ class VTUService {
       await this.deductWalletBalance(request.userId, totalAmount, reference);
 
       try {
-        console.log('[VTU] Using ClubKonnect for airtime purchase');
+        console.log('[VTU] Using Flutterwave Bills for airtime purchase');
         console.log('[VTU] Network:', request.provider);
         console.log('[VTU] Phone:', request.recipient);
         console.log('[VTU] Amount:', request.amount);
 
-        const response = await clubKonnectService.purchaseAirtime(
-          request.provider,
-          request.amount,
+        const billerCode = flutterwaveBillsService.getNetworkBillerCode(request.provider);
+        const response = await flutterwaveBillsService.purchaseAirtime(
           request.recipient,
+          request.amount,
+          billerCode,
           reference
         );
 
-        if (response.status === 'success') {
+        if (response.success) {
           await prisma.vTUTransaction.update({
             where: { id: transaction.id },
             data: {
               status: TransactionStatus.COMPLETED,
-              providerReference: response.transactionid || reference,
+              providerReference: response.data?.flw_ref || reference,
               processedAt: new Date(),
               metadata: {
                 network: request.provider,
                 phoneNumber: request.recipient,
-                provider: 'ClubKonnect',
-                transactionId: response.transactionid,
+                provider: 'Flutterwave',
+                flwRef: response.data?.flw_ref,
+                txRef: response.data?.tx_ref,
               },
             },
           });
@@ -209,7 +213,7 @@ class VTUService {
           return {
             success: true,
             reference,
-            providerReference: response.transactionid,
+            providerReference: response.data?.flw_ref,
             message: response.message || 'Airtime purchase successful',
           };
         } else {
@@ -236,7 +240,7 @@ class VTUService {
           };
         }
       } catch (apiError: any) {
-        console.error('❌ ClubKonnect API error for airtime purchase');
+        console.error('❌ Flutterwave Bills API error for airtime purchase');
         console.error('Error message:', apiError.message);
         
         await prisma.vTUTransaction.update({
@@ -315,31 +319,34 @@ class VTUService {
       });
 
       try {
-        console.log('[VTU] Using ClubKonnect for data purchase');
+        console.log('[VTU] Using Flutterwave Bills for data purchase');
         console.log('[VTU] Network:', request.provider);
         console.log('[VTU] Phone:', request.recipient);
         console.log('[VTU] Plan:', request.planId);
 
-        const response = await clubKonnectService.purchaseData(
-          request.provider,
-          request.planId,
+        const billerCode = flutterwaveBillsService.getNetworkBillerCode(request.provider);
+        const response = await flutterwaveBillsService.purchaseData(
           request.recipient,
+          request.amount,
+          billerCode,
+          request.planId,
           reference
         );
 
-        if (response.status === 'success') {
+        if (response.success) {
           await prisma.vTUTransaction.update({
             where: { id: transaction.id },
             data: {
               status: TransactionStatus.COMPLETED,
-              providerReference: response.transactionid || reference,
+              providerReference: response.data?.flw_ref || reference,
               processedAt: new Date(),
               metadata: {
                 network: request.provider,
                 phoneNumber: request.recipient,
                 planId: request.planId,
-                provider: 'ClubKonnect',
-                transactionId: response.transactionid,
+                provider: 'Flutterwave',
+                flwRef: response.data?.flw_ref,
+                txRef: response.data?.tx_ref,
               },
             },
           });
@@ -347,7 +354,7 @@ class VTUService {
           return {
             success: true,
             reference,
-            providerReference: response.transactionid,
+            providerReference: response.data?.flw_ref,
             message: response.message || 'Data purchase successful',
           };
         } else {
@@ -367,7 +374,7 @@ class VTUService {
           };
         }
       } catch (apiError: any) {
-        console.error('❌ ClubKonnect API error for data purchase');
+        console.error('❌ Flutterwave Bills API error for data purchase');
         console.error('Error message:', apiError.message);
         
         await walletService.deposit(request.userId, totalAmount, Currency.NGN, `Refund for failed data purchase - ${reference}`);
