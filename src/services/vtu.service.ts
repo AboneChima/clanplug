@@ -210,21 +210,26 @@ class VTUService {
           });
 
           // Create notification for successful purchase
-          await prisma.notification.create({
-            data: {
-              userId: request.userId,
-              type: 'TRANSACTION',
-              title: 'Airtime Purchase Successful',
-              message: `₦${request.amount} ${request.provider} airtime sent to ${request.recipient}`,
+          try {
+            await prisma.notification.create({
               data: {
-                type: 'airtime',
-                amount: request.amount,
-                network: request.provider,
-                phoneNumber: request.recipient,
-                reference,
+                userId: request.userId,
+                type: 'TRANSACTION',
+                title: 'Airtime Purchase Successful',
+                message: `₦${request.amount} ${request.provider} airtime sent to ${request.recipient}`,
+                data: {
+                  type: 'airtime',
+                  amount: request.amount,
+                  network: request.provider,
+                  phoneNumber: request.recipient,
+                  reference,
+                },
               },
-            },
-          });
+            });
+            console.log('[VTU] Notification created for airtime purchase');
+          } catch (notifError) {
+            console.error('[VTU] Failed to create notification:', notifError);
+          }
 
           return {
             success: true,
@@ -368,22 +373,27 @@ class VTUService {
           });
 
           // Create notification for successful purchase
-          await prisma.notification.create({
-            data: {
-              userId: request.userId,
-              type: 'TRANSACTION',
-              title: 'Data Purchase Successful',
-              message: `${request.provider} data bundle sent to ${request.recipient}`,
+          try {
+            await prisma.notification.create({
               data: {
-                type: 'data',
-                amount: request.amount,
-                network: request.provider,
-                phoneNumber: request.recipient,
-                planId: request.planId,
-                reference,
+                userId: request.userId,
+                type: 'TRANSACTION',
+                title: 'Data Purchase Successful',
+                message: `${request.provider} data bundle sent to ${request.recipient}`,
+                data: {
+                  type: 'data',
+                  amount: request.amount,
+                  network: request.provider,
+                  phoneNumber: request.recipient,
+                  planId: request.planId,
+                  reference,
+                },
               },
-            },
-          });
+            });
+            console.log('[VTU] Notification created for data purchase');
+          } catch (notifError) {
+            console.error('[VTU] Failed to create notification:', notifError);
+          }
 
           return {
             success: true,
