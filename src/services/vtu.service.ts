@@ -195,7 +195,7 @@ class VTUService {
           if (ngnWallet) {
             await prisma.wallet.update({
               where: { id: ngnWallet.id },
-              data: { balance: { increment: totalDeduction } },
+              data: { balance: { increment: totalAmount } },
             });
           }
 
