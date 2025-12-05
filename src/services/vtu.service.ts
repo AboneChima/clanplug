@@ -185,34 +185,41 @@ class VTUService {
         console.log('[VTU] Phone:', request.recipient);
         console.log('[VTU] Amount:', request.amount);
 
-        let response;
-        
-        // Use ClubKonnect for MTN (Flutterwave doesn't support it)
+        // MTN not supported yet (ClubKonnect account needs activation)
         if (request.provider.toUpperCase() === 'MTN') {
-          console.log('[VTU] Using ClubKonnect for MTN');
-          const clubResponse = await clubKonnectService.purchaseAirtime(
-            request.provider,
-            request.amount,
-            request.recipient,
-            reference
-          );
+          console.log('[VTU] MTN not supported - ClubKonnect account needs activation');
           
-          response = {
-            success: clubResponse.status === 'success',
-            message: clubResponse.message || 'Airtime purchase processed',
-            data: { flw_ref: clubResponse.transactionid }
+          // Refund the user
+          const wallets = await walletService.getUserWallets(request.userId);
+          const ngnWallet = wallets.find(w => w.currency === Currency.NGN);
+          if (ngnWallet) {
+            await prisma.wallet.update({
+              where: { id: ngnWallet.id },
+              data: { balance: { increment: totalDeduction } },
+            });
+          }
+
+          await prisma.vTUTransaction.update({
+            where: { id: transaction.id },
+            data: { status: TransactionStatus.FAILED },
+          });
+
+          return {
+            success: false,
+            reference,
+            message: 'MTN airtime is temporarily unavailable. Please use GLO, AIRTEL, or 9MOBILE.',
           };
-        } else {
-          // Use Flutterwave for other networks
-          console.log('[VTU] Using Flutterwave Bills');
-          const networkType = flutterwaveBillsService.getNetworkTypeName(request.provider);
-          response = await flutterwaveBillsService.purchaseAirtime(
-            request.recipient,
-            request.amount,
-            networkType,
-            reference
-          );
         }
+
+        // Use Flutterwave for other networks
+        console.log('[VTU] Using Flutterwave Bills');
+        const networkType = flutterwaveBillsService.getNetworkTypeName(request.provider);
+        const response = await flutterwaveBillsService.purchaseAirtime(
+          request.recipient,
+          request.amount,
+          networkType,
+          reference
+        );
 
         if (response.success) {
           await prisma.vTUTransaction.update({
