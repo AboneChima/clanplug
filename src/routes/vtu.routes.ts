@@ -38,10 +38,9 @@ router.get('/data-plans/:network',
   asyncHandler(vtuController.getDataPlans.bind(vtuController))
 );
 
-// POST /api/vtu/airtime - Purchase airtime
+// POST /api/vtu/airtime - Purchase airtime (KYC not required)
 router.post('/airtime', 
-  authenticate, 
-  requireKYC,
+  authenticate,
   [
     body('network').notEmpty().withMessage('Network is required'),
     body('phoneNumber').isMobilePhone('any').withMessage('Valid phone number is required'),
@@ -51,10 +50,9 @@ router.post('/airtime',
   asyncHandler(vtuController.purchaseAirtime.bind(vtuController))
 );
 
-// POST /api/vtu/data - Purchase data
+// POST /api/vtu/data - Purchase data (KYC not required)
 router.post('/data', 
-  authenticate, 
-  requireKYC,
+  authenticate,
   [
     body('network').notEmpty().withMessage('Network is required'),
     body('phoneNumber').isMobilePhone('any').withMessage('Valid phone number is required'),
