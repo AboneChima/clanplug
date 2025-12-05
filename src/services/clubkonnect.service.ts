@@ -104,7 +104,7 @@ class ClubKonnectService {
     requestId: string
   ): Promise<ClubKonnectResponse> {
     try {
-      const payload: ClubKonnectAirtimeRequest = {
+      const params = {
         UserID: this.userId,
         APIKey: this.apiKey,
         MobileNetwork: network.toUpperCase(),
@@ -113,9 +113,10 @@ class ClubKonnectService {
         RequestID: requestId,
       };
 
-      console.log('[ClubKonnect] Purchasing airtime:', payload);
+      console.log('[ClubKonnect] Purchasing airtime:', params);
 
-      const response = await this.api.post('/APIAirtimeV1.asp', payload);
+      // ClubKonnect uses GET with query parameters, not POST with body
+      const response = await this.api.get('/APIAirtimeV1.asp', { params });
 
       return response.data;
     } catch (error: any) {
@@ -134,7 +135,7 @@ class ClubKonnectService {
     requestId: string
   ): Promise<ClubKonnectResponse> {
     try {
-      const payload: ClubKonnectDataRequest = {
+      const params = {
         UserID: this.userId,
         APIKey: this.apiKey,
         MobileNetwork: network.toUpperCase(),
@@ -143,9 +144,10 @@ class ClubKonnectService {
         RequestID: requestId,
       };
 
-      console.log('[ClubKonnect] Purchasing data:', payload);
+      console.log('[ClubKonnect] Purchasing data:', params);
 
-      const response = await this.api.post('/APIDataV1.asp', payload);
+      // ClubKonnect uses GET with query parameters, not POST with body
+      const response = await this.api.get('/APIDataV1.asp', { params });
 
       return response.data;
     } catch (error: any) {
