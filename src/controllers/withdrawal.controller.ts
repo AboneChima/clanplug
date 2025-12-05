@@ -107,13 +107,6 @@ export class WithdrawalController {
           success: false,
           message: `Maximum withdrawal amount is ₦${INSTANT_WITHDRAWAL_LIMIT.toLocaleString()}. Please withdraw a smaller amount.`
         });
-          bankName,
-          accountNumber,
-          accountName,
-          narration,
-          reference,
-          wallet
-        });
       }
     } catch (error: any) {
       console.error('Withdrawal request error:', error);
