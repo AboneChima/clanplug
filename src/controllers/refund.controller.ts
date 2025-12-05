@@ -93,7 +93,7 @@ export class RefundController {
         message: `Processed ${suspectTransactions.length} transactions`,
         data: {
           refunded: refunds.length,
-          errors: errors.length,
+          errorCount: errors.length,
           refunds,
           errors
         }

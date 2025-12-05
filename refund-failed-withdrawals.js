@@ -45,7 +45,7 @@ async function processRefunds() {
 
     console.log('✅ Refunds processed!\n');
     console.log(`Refunded: ${response.data.data.refunded}`);
-    console.log(`Errors: ${response.data.data.errors}\n`);
+    console.log(`Errors: ${response.data.data.errorCount}\n`);
 
     if (response.data.data.refunds.length > 0) {
       console.log('📋 Refunded transactions:\n');
