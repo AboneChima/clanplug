@@ -209,11 +209,28 @@ class VTUService {
             },
           });
 
+          // Create notification for successful purchase
+          await prisma.notification.create({
+            data: {
+              userId: request.userId,
+              type: 'TRANSACTION',
+              title: 'Airtime Purchase Successful',
+              message: `₦${request.amount} ${request.provider} airtime sent to ${request.recipient}`,
+              data: {
+                type: 'airtime',
+                amount: request.amount,
+                network: request.provider,
+                phoneNumber: request.recipient,
+                reference,
+              },
+            },
+          });
+
           return {
             success: true,
             reference,
             providerReference: response.data?.flw_ref,
-            message: response.message || 'Airtime purchase successful',
+            message: `Airtime purchase successful! ₦${request.amount} sent to ${request.recipient}`,
           };
         } else {
           await prisma.vTUTransaction.update({
@@ -350,11 +367,29 @@ class VTUService {
             },
           });
 
+          // Create notification for successful purchase
+          await prisma.notification.create({
+            data: {
+              userId: request.userId,
+              type: 'TRANSACTION',
+              title: 'Data Purchase Successful',
+              message: `${request.provider} data bundle sent to ${request.recipient}`,
+              data: {
+                type: 'data',
+                amount: request.amount,
+                network: request.provider,
+                phoneNumber: request.recipient,
+                planId: request.planId,
+                reference,
+              },
+            },
+          });
+
           return {
             success: true,
             reference,
             providerReference: response.data?.flw_ref,
-            message: response.message || 'Data purchase successful',
+            message: `Data purchase successful! Bundle sent to ${request.recipient}`,
           };
         } else {
           await walletService.deposit(request.userId, totalAmount, Currency.NGN, `Refund for failed data purchase - ${reference}`);
