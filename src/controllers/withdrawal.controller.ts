@@ -62,11 +62,15 @@ export class WithdrawalController {
       if (isInstant) {
         // Try instant withdrawal via Flutterwave
         try {
+          console.log(`[Withdrawal] User ${userId} requesting ₦${amount} withdrawal`);
+          console.log(`[Withdrawal] Net amount to transfer: ₦${netAmount}`);
+          
           // Check if Flutterwave can process
           const canProcess = await flutterwaveService.canProcessInstantTransfer(netAmount);
+          console.log(`[Withdrawal] Can process check:`, canProcess);
           
           if (!canProcess.canProcess) {
-            console.log('Cannot process instant transfer:', canProcess.reason);
+            console.log('[Withdrawal] Cannot process instant transfer:', canProcess.reason);
             // Return error instead of manual processing
             return res.status(400).json({
               success: false,
@@ -74,6 +78,8 @@ export class WithdrawalController {
               error: canProcess.reason
             });
           }
+          
+          console.log('[Withdrawal] Proceeding with instant withdrawal...');
 
           // Process instant transfer
           const result = await this.processInstantWithdrawal({
