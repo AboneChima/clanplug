@@ -213,6 +213,34 @@ export class WithdrawalController {
           beneficiaryName: accountName
         });
 
+        // Check if transfer actually succeeded or failed
+        if (transferResult.status === 'FAILED') {
+          // Refund immediately if Flutterwave rejected the transfer
+          await tx.wallet.update({
+            where: { id: wallet.id },
+            data: {
+              balance: { increment: totalDeduction },
+              totalWithdrawals: { decrement: amount }
+            }
+          });
+
+          await tx.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              status: 'FAILED',
+              metadata: {
+                ...(transaction.metadata as any),
+                flutterwaveTransferId: transferResult.id,
+                flutterwaveStatus: transferResult.status,
+                failureReason: transferResult.complete_message || 'Transfer failed',
+                flutterwaveResponse: transferResult
+              }
+            }
+          });
+
+          throw new Error(transferResult.complete_message || 'Transfer failed. Please try again.');
+        }
+
         // Update transaction with transfer details
         await tx.transaction.update({
           where: { id: transaction.id },

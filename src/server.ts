@@ -37,6 +37,7 @@ import migrationRoutes from './routes/migration.routes';
 import passwordResetRoutes from './routes/password-reset.routes';
 import commentRoutes from './routes/comment.routes';
 import adminRefundRoutes from './routes/admin-refund.routes';
+import refundRoutes from './routes/refund.routes';
 
 const app = express();
 
@@ -159,6 +160,7 @@ app.use('/api/migration', migrationRoutes);
 app.use('/api/password-reset', passwordResetRoutes);
 app.use('/api', commentRoutes);
 app.use('/api/admin-refund', adminRefundRoutes);
+app.use('/api/refund', refundRoutes);
 
 // Proxy middleware for frontend - only in development
 if (config.NODE_ENV === 'development' && config.FRONTEND_URL) {
