@@ -67,20 +67,11 @@ export class WithdrawalController {
           
           if (!canProcess.canProcess) {
             console.log('Cannot process instant transfer:', canProcess.reason);
-            // Fall back to manual processing
-            return await this.processManualWithdrawal(req, res, {
-              userId,
-              amount,
-              fee,
-              netAmount,
-              totalDeduction,
-              bankCode,
-              bankName,
-              accountNumber,
-              accountName,
-              narration,
-              reference,
-              wallet
+            // Return error instead of manual processing
+            return res.status(400).json({
+              success: false,
+              message: 'Withdrawal temporarily unavailable. Please try again later.',
+              error: canProcess.reason
             });
           }
 
@@ -102,32 +93,20 @@ export class WithdrawalController {
 
           return res.json(result);
         } catch (error: any) {
-          console.error('Instant withdrawal failed, falling back to manual:', error.message);
-          // Fall back to manual processing
-          return await this.processManualWithdrawal(req, res, {
-            userId,
-            amount,
-            fee,
-            netAmount,
-            totalDeduction,
-            bankCode,
-            bankName,
-            accountNumber,
-            accountName,
-            narration,
-            reference,
-            wallet
+          console.error('Instant withdrawal failed:', error.message);
+          // Return error instead of manual processing
+          return res.status(400).json({
+            success: false,
+            message: error.message || 'Withdrawal failed. Please try again.',
+            error: error.message
           });
         }
       } else {
-        // Manual processing for large amounts
-        return await this.processManualWithdrawal(req, res, {
-          userId,
-          amount,
-          fee,
-          netAmount,
-          totalDeduction,
-          bankCode,
+        // Large amounts not supported for instant withdrawal
+        return res.status(400).json({
+          success: false,
+          message: `Maximum withdrawal amount is ₦${INSTANT_WITHDRAWAL_LIMIT.toLocaleString()}. Please withdraw a smaller amount.`
+        });
           bankName,
           accountNumber,
           accountName,
