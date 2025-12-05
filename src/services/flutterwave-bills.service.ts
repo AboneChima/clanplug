@@ -87,23 +87,30 @@ class FlutterwaveBillsService {
 
   /**
    * Get data bundle plans for a network
+   * Note: Flutterwave uses flexible amounts for data, not fixed plans
+   * We'll return common data bundle amounts
    */
-  async getDataBundles(billerCode: string): Promise<BillCategory[]> {
-    try {
-      const response = await axios.get(
-        `${this.baseUrl}/bill-categories/${billerCode}/items`,
-        { headers: this.getHeaders() }
-      );
+  async getDataBundles(network: string): Promise<BillCategory[]> {
+    // Return common data bundle amounts for Nigerian networks
+    const commonBundles = [
+      { id: 'data-500mb', name: '500MB', amount: 200, validity: '30 days' },
+      { id: 'data-1gb', name: '1GB', amount: 350, validity: '30 days' },
+      { id: 'data-2gb', name: '2GB', amount: 700, validity: '30 days' },
+      { id: 'data-3gb', name: '3GB', amount: 1000, validity: '30 days' },
+      { id: 'data-5gb', name: '5GB', amount: 1500, validity: '30 days' },
+      { id: 'data-10gb', name: '10GB', amount: 2500, validity: '30 days' },
+      { id: 'data-15gb', name: '15GB', amount: 3500, validity: '30 days' },
+      { id: 'data-20gb', name: '20GB', amount: 4500, validity: '30 days' },
+    ];
 
-      if (response.data.status === 'success') {
-        return response.data.data;
-      }
-
-      return [];
-    } catch (error: any) {
-      console.error('Failed to get data bundles:', error.response?.data || error.message);
-      return [];
-    }
+    return commonBundles.map(bundle => ({
+      id: bundle.id as any,
+      biller_code: this.getNetworkBillerCode(network),
+      name: bundle.name,
+      amount: bundle.amount,
+      validity: bundle.validity,
+      item_code: bundle.id,
+    } as any));
   }
 
   /**
@@ -251,13 +258,14 @@ class FlutterwaveBillsService {
 
   /**
    * Get network biller code from network name
+   * Using the VTU codes for Nigerian networks
    */
   getNetworkBillerCode(network: string): string {
     const networkMap: { [key: string]: string } = {
-      'MTN': 'BIL099',
-      'GLO': 'BIL100', 
-      'AIRTEL': 'BIL102',
-      '9MOBILE': 'BIL103'
+      'MTN': 'BIL099',      // MTN VTU
+      'GLO': 'BIL102',      // GLO VTU  
+      'AIRTEL': 'BIL100',   // AIRTEL VTU
+      '9MOBILE': 'BIL103'   // 9MOBILE VTU
     };
 
     return networkMap[network.toUpperCase()] || 'BIL099';

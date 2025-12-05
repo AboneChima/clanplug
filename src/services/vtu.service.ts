@@ -109,14 +109,13 @@ class VTUService {
   // Get data plans for a specific network
   async getDataPlans(network: string): Promise<DataPlan[]> {
     try {
-      const billerCode = flutterwaveBillsService.getNetworkBillerCode(network);
-      const bundles = await flutterwaveBillsService.getDataBundles(billerCode);
+      const bundles = await flutterwaveBillsService.getDataBundles(network);
       
       return bundles.map(bundle => ({
         id: bundle.item_code,
         name: bundle.name,
         amount: bundle.amount,
-        validity: '30 days', // Flutterwave doesn't provide validity, default to 30 days
+        validity: (bundle as any).validity || '30 days',
         network: network.toUpperCase(),
       }));
     } catch (error) {
