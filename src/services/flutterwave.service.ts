@@ -95,9 +95,22 @@ class FlutterwaveService {
         reference: data.reference
       });
 
+      // Convert camelCase to snake_case for Flutterwave API
+      const requestData = {
+        account_bank: data.accountBank,
+        account_number: data.accountNumber,
+        amount: data.amount,
+        narration: data.narration,
+        currency: data.currency,
+        reference: data.reference,
+        callback_url: data.callbackUrl,
+        debit_currency: data.debitCurrency || data.currency,
+        beneficiary_name: data.beneficiaryName
+      };
+
       const response = await axios.post<TransferResponse>(
         `${this.baseUrl}/transfers`,
-        data,
+        requestData,
         { headers: this.getHeaders() }
       );
 
