@@ -99,40 +99,112 @@ class EscrowService {
       }
 
       const fee = this.calculateFee(request.amount);
+      const totalAmount = request.amount + fee;
       const autoReleaseAt = request.autoReleaseHours 
         ? new Date(Date.now() + request.autoReleaseHours * 60 * 60 * 1000)
         : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // Default 7 days
 
-      const escrow = await prisma.escrow.create({
-        data: {
-          buyerId: request.buyerId,
-          sellerId: request.sellerId,
-          postId: request.postId,
-          amount: request.amount,
-          fee,
-          currency: request.currency,
-          title: request.title,
-          description: request.description,
-          terms: request.terms,
-          autoReleaseAt,
-          status: EscrowStatus.PENDING
-        },
-        include: {
-          buyer: {
-            select: { id: true, username: true, email: true, avatar: true }
-          },
-          seller: {
-            select: { id: true, username: true, email: true, avatar: true }
-          },
-          post: {
-            select: { id: true, title: true, price: true, currency: true }
+      // Check if buyer has sufficient balance
+      const buyerWallet = await prisma.wallet.findUnique({
+        where: {
+          userId_currency: {
+            userId: request.buyerId,
+            currency: request.currency
           }
         }
       });
 
+      if (!buyerWallet || buyerWallet.balance.toNumber() < totalAmount) {
+        return {
+          success: false,
+          message: `Insufficient balance. You need ${totalAmount} ${request.currency} (including ${fee} ${request.currency} escrow fee)`,
+          error: 'INSUFFICIENT_BALANCE'
+        };
+      }
+
+      // Create escrow and deduct money in a transaction
+      const escrow = await prisma.$transaction(async (tx) => {
+        // Deduct money from buyer's wallet
+        await tx.wallet.update({
+          where: {
+            userId_currency: {
+              userId: request.buyerId,
+              currency: request.currency
+            }
+          },
+          data: {
+            balance: {
+              decrement: totalAmount
+            }
+          }
+        });
+
+        // Create transaction record
+        await tx.transaction.create({
+          data: {
+            userId: request.buyerId,
+            walletId: buyerWallet.id,
+            type: 'ESCROW_DEPOSIT',
+            status: 'COMPLETED',
+            amount: totalAmount,
+            fee: fee,
+            netAmount: request.amount,
+            currency: request.currency,
+            reference: `ESC-${uuidv4()}`,
+            description: `Escrow payment for: ${request.title}`
+          }
+        });
+
+        // Create escrow with FUNDED status
+        const newEscrow = await tx.escrow.create({
+          data: {
+            buyerId: request.buyerId,
+            sellerId: request.sellerId,
+            postId: request.postId,
+            amount: request.amount,
+            fee,
+            currency: request.currency,
+            title: request.title,
+            description: request.description,
+            terms: request.terms,
+            autoReleaseAt,
+            status: EscrowStatus.FUNDED, // Automatically funded
+            fundedAt: new Date()
+          },
+          include: {
+            buyer: {
+              select: { id: true, username: true, email: true, avatar: true }
+            },
+            seller: {
+              select: { id: true, username: true, email: true, avatar: true }
+            },
+            post: {
+              select: { id: true, title: true, price: true, currency: true }
+            }
+          }
+        });
+
+        // Notify seller
+        await tx.notification.create({
+          data: {
+            userId: request.sellerId,
+            type: 'ESCROW',
+            title: '💰 New Escrow Payment',
+            message: `${buyer.username} has paid ${request.amount} ${request.currency} for "${request.title}". Please deliver the item.`,
+            data: {
+              escrowId: newEscrow.id,
+              amount: request.amount,
+              currency: request.currency
+            }
+          }
+        });
+
+        return newEscrow;
+      });
+
       return {
         success: true,
-        message: 'Escrow created successfully',
+        message: 'Escrow created and funded successfully',
         escrow
       };
     } catch (error) {
