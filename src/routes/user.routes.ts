@@ -303,6 +303,42 @@ router.get('/search',
   })
 );
 
+// GET /api/users/username/:username - Get user by username
+router.get('/username/:username',
+  authenticate,
+  param('username').notEmpty().withMessage('Username is required'),
+  handleValidationErrors,
+  asyncHandler(async (req: Request, res: Response) => {
+    try {
+      const username = req.params.username;
+      const user = await prisma.user.findUnique({
+        where: { username },
+        select: {
+          id: true,
+          username: true,
+          firstName: true,
+          lastName: true,
+          avatar: true,
+          verificationBadge: {
+            select: {
+              status: true
+            }
+          }
+        }
+      });
+
+      if (!user) {
+        res.status(404).json({ success: false, message: 'User not found' });
+        return;
+      }
+
+      res.json({ success: true, data: user });
+    } catch (error: any) {
+      res.status(404).json({ success: false, message: error.message || 'User not found' });
+    }
+  })
+);
+
 // GET /api/users/:userId - Get user by ID
 router.get('/:userId',
   authenticate,
