@@ -258,6 +258,44 @@ export class AdminService {
       }
     });
 
+    // Send notification to user about status change
+    const statusMessages = {
+      ACTIVE: {
+        title: '✅ Account Activated',
+        message: 'Your account has been activated. You can now access all features.'
+      },
+      SUSPENDED: {
+        title: '⚠️ Account Suspended',
+        message: `Your account has been suspended. ${reason || 'Please contact support for more information.'}`
+      },
+      BANNED: {
+        title: '🚫 Account Banned',
+        message: `Your account has been permanently banned. ${reason || 'Please contact support if you believe this is an error.'}`
+      },
+      PENDING_VERIFICATION: {
+        title: '⏳ Account Pending',
+        message: 'Your account is pending verification.'
+      }
+    };
+
+    const notification = statusMessages[status];
+    if (notification) {
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: 'SYSTEM',
+          title: notification.title,
+          message: notification.message,
+          data: {
+            oldStatus: user.status,
+            newStatus: status,
+            reason: reason || null,
+            changedAt: new Date().toISOString()
+          }
+        }
+      });
+    }
+
     return updatedUser;
   }
 

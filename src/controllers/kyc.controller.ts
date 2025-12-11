@@ -185,15 +185,53 @@ export async function reviewKYC(req: Request, res: Response) {
       where: { id },
       data: {
         status,
-        rejectionReason: status === 'REJECTED' ? rejectionReason : null
+        rejectionReason: status === 'REJECTED' ? rejectionReason : null,
+        verifiedAt: status === 'APPROVED' ? new Date() : null
       }
     });
 
-    // Update user KYC status
+    // Update user KYC status and send notification
     if (status === 'APPROVED') {
       await prisma.user.update({
         where: { id: kyc.userId },
         data: { isKYCVerified: true }
+      });
+
+      // Send approval notification
+      await prisma.notification.create({
+        data: {
+          userId: kyc.userId,
+          type: 'KYC',
+          title: '✅ KYC Approved!',
+          message: 'Congratulations! Your KYC verification has been approved. You can now post on the marketplace and access all verified features.',
+          data: {
+            kycId: kyc.id,
+            status: 'APPROVED',
+            approvedAt: new Date().toISOString()
+          }
+        }
+      });
+    } else if (status === 'REJECTED') {
+      // Set user KYC to false if rejected
+      await prisma.user.update({
+        where: { id: kyc.userId },
+        data: { isKYCVerified: false }
+      });
+
+      // Send rejection notification
+      await prisma.notification.create({
+        data: {
+          userId: kyc.userId,
+          type: 'KYC',
+          title: '❌ KYC Rejected',
+          message: `Your KYC verification was rejected. Reason: ${rejectionReason || 'Please check your documents and resubmit.'}`,
+          data: {
+            kycId: kyc.id,
+            status: 'REJECTED',
+            reason: rejectionReason,
+            rejectedAt: new Date().toISOString()
+          }
+        }
       });
     }
 
