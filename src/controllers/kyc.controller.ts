@@ -192,9 +192,13 @@ export async function reviewKYC(req: Request, res: Response) {
 
     // Update user KYC status and send notification
     if (status === 'APPROVED') {
+      // Update user: set KYC verified and activate account
       await prisma.user.update({
         where: { id: kyc.userId },
-        data: { isKYCVerified: true }
+        data: { 
+          isKYCVerified: true,
+          status: 'ACTIVE' // Activate account when KYC is approved
+        }
       });
 
       // Send approval notification
