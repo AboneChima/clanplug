@@ -40,7 +40,8 @@
 ## 🚀 DEPLOYMENT INSTRUCTIONS
 
 ### Backend Deployment (Render)
-**URL:** https://jobica-backend.onrender.com
+**Production URL:** https://api.clanplug.site
+**Render URL:** https://clanplug-o7rp.onrender.com
 
 **How to Deploy:**
 1. Make changes to backend files (anything in `src/` folder)
@@ -58,7 +59,8 @@
 ---
 
 ### Frontend Deployment (Vercel)
-**URL:** https://web-ib4rnl9hw-oracles-projects-0d30db20.vercel.app
+**Production URL:** https://clanplug.site
+**Vercel URL:** https://clanplug-sable.vercel.app
 
 **How to Deploy:**
 1. Make changes to frontend files (anything in `web/` folder)
@@ -68,7 +70,7 @@
    vercel --prod
    ```
 3. Deployment takes ~3-5 seconds
-4. Returns new production URL
+4. Changes automatically go live on https://clanplug.site
 
 **Note:** Vercel has a limit of 100 deployments per day on free tier.
 

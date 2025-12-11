@@ -65,7 +65,7 @@ class KYCService {
     this.dojahApi = axios.create({
       baseURL: config.DOJAH_BASE_URL,
       headers: {
-        'Authorization': `Bearer ${config.DOJAH_API_KEY}`,
+        'Authorization': config.DOJAH_API_KEY,
         'AppId': config.DOJAH_APP_ID,
         'Content-Type': 'application/json',
       },
