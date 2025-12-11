@@ -303,6 +303,12 @@ export const userService = {
         lastName: true, 
         avatar: true, 
         bio: true,
+        city: true,
+        state: true,
+        country: true,
+        createdAt: true,
+        status: true,
+        isKYCVerified: true,
         verificationBadge: {
           select: {
             status: true,
