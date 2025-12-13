@@ -71,11 +71,11 @@ export const sendPushNotification = async (
   };
 
   try {
-    const response = await admin.messaging().sendMulticast(message);
+    const response = await admin.messaging().sendEachForMulticast(message);
     console.log(`✅ Push notification sent: ${response.successCount}/${fcmTokens.length} successful`);
     
     if (response.failureCount > 0) {
-      response.responses.forEach((resp, idx) => {
+      response.responses.forEach((resp: any, idx: number) => {
         if (!resp.success) {
           console.error(`Failed to send to token ${idx}:`, resp.error);
         }

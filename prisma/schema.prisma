@@ -595,6 +595,7 @@ enum NotificationType {
   SYSTEM
   KYC
   ESCROW
+  PURCHASE_REQUEST
 }
 
 enum GameCategory {

@@ -16,14 +16,15 @@ router.post('/',
     body('amount').isNumeric().withMessage('Amount must be a number'),
     body('currency').isIn(['NGN', 'USD']).withMessage('Invalid currency')
   ],
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Validation error',
         errors: errors.array()
       });
+      return;
     }
 
     const { sellerId, postId, amount, currency } = req.body;
@@ -121,7 +122,7 @@ router.get('/',
 router.get('/:id',
   authenticate,
   param('id').notEmpty(),
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!.id;
     const requestId = req.params.id;
 
@@ -163,18 +164,20 @@ router.get('/:id',
     });
 
     if (!request) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'Request not found'
       });
+      return;
     }
 
     // Check authorization
     if (request.buyerId !== userId && request.sellerId !== userId) {
-      return res.status(403).json({
+      res.status(403).json({
         success: false,
         message: 'Unauthorized'
       });
+      return;
     }
 
     res.json({
