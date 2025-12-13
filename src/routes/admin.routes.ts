@@ -89,7 +89,7 @@ router.delete('/games/:gameId', authenticate, adminOnly, asyncHandler(adminContr
 router.put('/games/:gameId/status', authenticate, adminOnly, asyncHandler(adminController.updateGameStatus.bind(adminController)));
 
 // POST /api/admin/escrow/refund-all - Emergency refund all escrows
-router.post('/escrow/refund-all', authenticate, adminOnly, asyncHandler(async (req, res) => {
+router.post('/escrow/refund-all', authenticate, adminOnly, asyncHandler(async (req: any, res: any) => {
   const { prisma } = await import('../config/database');
   
   try {
