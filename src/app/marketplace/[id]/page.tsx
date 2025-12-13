@@ -69,7 +69,6 @@ export default function MarketplaceDetailPage() {
   const { showToast } = useToast();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showEscrowModal, setShowEscrowModal] = useState(false);
   const [markingSold, setMarkingSold] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -185,40 +184,7 @@ export default function MarketplaceDetailPage() {
     }
   };
 
-  const handleCreatePurchaseRequest = async () => {
-    if (!post || !user) return;
 
-    try {
-      const token = localStorage.getItem('accessToken');
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchase-requests`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sellerId: post.userId,
-          postId: post.id,
-          amount: post.price,
-          currency: post.currency || 'NGN',
-        }),
-      });
-
-      if (response.ok) {
-        showToast('✅ Purchase request sent! Seller has 5 minutes to respond.', 'success');
-        setShowEscrowModal(false);
-        router.push('/orders');
-      } else {
-        const error = await response.json();
-        console.error('Purchase request error:', error);
-        showToast(error.message || 'Failed to send purchase request', 'error');
-      }
-    } catch (error) {
-      console.error('Error creating purchase request:', error);
-      showToast('Error sending purchase request', 'error');
-    }
-  };
 
   const handleMessage = async () => {
     if (!post || !user) return;
@@ -651,101 +617,7 @@ export default function MarketplaceDetailPage() {
           </div>
         </div>
 
-        {/* Escrow Confirmation Modal */}
-        {showEscrowModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h2 className="text-xl font-semibold text-white mb-4">Confirm Purchase</h2>
-              
-              <div className="space-y-4 mb-6">
-                {/* Seller Info */}
-                <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-700">
-                  <p className="text-gray-400 text-sm mb-2">Seller</p>
-                  <div className="flex items-center gap-3">
-                    {post.user.avatar ? (
-                      <img 
-                        src={post.user.avatar} 
-                        alt={post.user.username}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                        <span className="text-white text-sm font-semibold">
-                          {post.user.firstName[0]}
-                        </span>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-white font-medium">{post.user.firstName} {post.user.lastName}</p>
-                      <p className="text-gray-400 text-sm">@{post.user.username}</p>
-                    </div>
-                  </div>
-                </div>
 
-                <div className="p-4 bg-slate-900/50 rounded-lg">
-                  <p className="text-gray-400 text-sm mb-1">Item</p>
-                  <p className="text-white font-medium">{post.title}</p>
-                </div>
-                
-                <div className="p-4 bg-slate-900/50 rounded-lg">
-                  <p className="text-gray-400 text-sm mb-1">Price</p>
-                  <p className="text-white font-medium text-lg">
-                    {formatPrice(post.price, post.currency)}
-                  </p>
-                </div>
-
-                {/* Warning */}
-                <div className="p-4 bg-yellow-600/10 border border-yellow-600/30 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <IoWarningOutline className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-yellow-400 font-medium text-sm mb-1">⚠️ Important</p>
-                      <p className="text-gray-400 text-xs mb-2">
-                        Money will be deducted immediately. We recommend contacting the seller first to confirm they're available.
-                      </p>
-                      <button
-                        onClick={() => {
-                          setShowEscrowModal(false);
-                          handleMessage();
-                        }}
-                        className="text-blue-400 hover:text-blue-300 text-xs font-medium underline"
-                      >
-                        Message seller first →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 bg-blue-600/10 border border-blue-600/30 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <IoShieldCheckmarkOutline className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-blue-400 font-medium text-sm mb-1">Escrow Protection</p>
-                      <p className="text-gray-400 text-xs">
-                        Payment will be held securely until you confirm receipt
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowEscrowModal(false)}
-                  className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateEscrow}
-                  className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all"
-                >
-                  Proceed to Payment
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Image Modal - Adjusted for menus */}
         {selectedImage && (
