@@ -188,14 +188,15 @@ const VTUServices: React.FC = () => {
       const response = await VTUService.purchaseAirtime(request);
       
       if (response.success) {
-        showToast(response.message, 'success');
+        showToast(response.message || 'Airtime purchase successful!', 'success');
         resetForm();
         loadTransactions();
       } else {
-        showToast(response.message, 'error');
+        showToast(response.message || 'Airtime purchase failed', 'error');
       }
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to purchase airtime', 'error');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to purchase airtime. Please try again.';
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -225,14 +226,15 @@ const VTUServices: React.FC = () => {
       const response = await VTUService.purchaseData(request);
       
       if (response.success) {
-        showToast(response.message, 'success');
+        showToast(response.message || 'Data purchase successful!', 'success');
         resetForm();
         loadTransactions();
       } else {
-        showToast(response.message, 'error');
+        showToast(response.message || 'Data purchase failed', 'error');
       }
     } catch (error: any) {
-      showToast(error.response?.data?.message || 'Failed to purchase data', 'error');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to purchase data. Please try again.';
+      showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
     }

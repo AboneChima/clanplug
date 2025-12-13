@@ -8,12 +8,29 @@ import {
   IoChatbubbleOutline,
   IoBookmarkOutline,
   IoBookmark,
-  IoSendOutline
+  IoSendOutline,
+  IoTrashOutline,
+  IoShareSocialOutline
 } from 'react-icons/io5';
+import { useAuth } from '@/contexts/AuthContext';
+import SharePostModal from './SharePostModal';
 
 interface PostModalProps {
   postId: string;
   onClose: () => void;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  user: {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  };
 }
 
 interface Post {
@@ -42,16 +59,24 @@ interface Post {
 }
 
 export default function PostModal({ postId, onClose }: PostModalProps) {
+  const { user } = useAuth();
   const [post, setPost] = useState<Post | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingComments, setLoadingComments] = useState(false);
   const [error, setError] = useState('');
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     // Prevent body scroll and hide all navigation
     document.body.style.overflow = 'hidden';
     fetchPost();
+    fetchComments();
+    
+    // Auto-refresh comments every 5 seconds for real-time updates
+    const interval = setInterval(fetchComments, 5000);
     
     // Push state for Android back button
     window.history.pushState({ postModal: true }, '');
@@ -65,6 +90,7 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
     
     return () => {
       document.body.style.overflow = 'unset';
+      clearInterval(interval);
       window.removeEventListener('popstate', handlePopState);
     };
   }, [postId, onClose]);
@@ -92,6 +118,29 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
       setError('Failed to load post');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      setLoadingComments(true);
+      const token = localStorage.getItem('accessToken');
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://jobica-backend.onrender.com';
+      
+      const response = await fetch(`${API_URL}/api/posts/${postId}/comments`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setComments(data.data || data.comments || []);
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setLoadingComments(false);
     }
   };
 
@@ -195,6 +244,8 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
           }
         });
         setCommentText('');
+        // Refresh comments immediately
+        fetchComments();
       }
     } catch (error) {
       console.error('Error commenting:', error);
@@ -272,11 +323,13 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
 
               {/* Media First - Before Text */}
               {post.images && post.images.length > 0 && (
-                <div className="max-[360px]:mb-2 mb-2.5 sm:mb-4 max-[360px]:rounded-md rounded-lg sm:rounded-xl overflow-hidden">
+                <div className="max-[360px]:mb-2 mb-2.5 sm:mb-4 max-[360px]:rounded-md rounded-lg sm:rounded-xl overflow-hidden bg-black">
                   <img
                     src={post.images[0]}
                     alt="Post"
-                    className="w-full h-auto max-[360px]:max-h-48 max-h-64 sm:max-h-96 object-cover"
+                    className="w-full h-auto object-contain cursor-pointer"
+                    style={{ maxHeight: 'calc(100vh - 300px)' }}
+                    onClick={() => window.open(post.images![0], '_blank')}
                   />
                 </div>
               )}
@@ -312,6 +365,13 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
                   <IoChatbubbleOutline className="max-[360px]:w-4 max-[360px]:h-4 w-5 h-5 sm:w-6 sm:h-6" />
                   <span className="max-[360px]:text-[10px] text-xs sm:text-sm">{post._count.comments}</span>
                 </button>
+
+                <button 
+                  onClick={() => setShowShareModal(true)}
+                  className="flex items-center max-[360px]:gap-1 gap-1.5 sm:gap-2 hover:text-green-500 transition-colors active:scale-95"
+                >
+                  <IoShareSocialOutline className="max-[360px]:w-4 max-[360px]:h-4 w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
                 
                 <button 
                   onClick={handleBookmark}
@@ -326,9 +386,92 @@ export default function PostModal({ postId, onClose }: PostModalProps) {
               </div>
 
               {/* Timestamp */}
-              <p className="text-gray-500 max-[360px]:text-[9px] text-[10px] sm:text-xs max-[360px]:mt-0.5 mt-1 sm:mt-2">
+              <p className="text-gray-500 max-[360px]:text-[9px] text-[10px] sm:text-xs max-[360px]:mt-0.5 mt-1 sm:mt-2 max-[360px]:pb-2 pb-3 border-b border-slate-800">
                 {new Date(post.createdAt).toLocaleString()}
               </p>
+
+              {/* Comments Section */}
+              <div className="max-[360px]:mt-2 mt-3">
+                <h3 className="text-white font-semibold max-[360px]:text-sm text-base max-[360px]:mb-2 mb-3">
+                  Comments ({comments.length})
+                </h3>
+                
+                {loadingComments && comments.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">Loading comments...</p>
+                ) : comments.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">No comments yet. Be the first to comment!</p>
+                ) : (
+                  <div className="space-y-3 max-[360px]:space-y-2">
+                    {comments.map((comment) => (
+                      <div key={comment.id} className="flex gap-2 max-[360px]:gap-1.5">
+                        {comment.user.avatar ? (
+                          <img
+                            src={comment.user.avatar}
+                            alt={comment.user.username}
+                            className="max-[360px]:w-6 max-[360px]:h-6 w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="max-[360px]:w-6 max-[360px]:h-6 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                            <span className="text-white max-[360px]:text-[9px] text-xs font-semibold">
+                              {comment.user.firstName?.[0]}{comment.user.lastName?.[0]}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="bg-slate-800 rounded-lg max-[360px]:p-2 p-3 relative group">
+                            <p className="text-white font-medium max-[360px]:text-xs text-sm flex items-center gap-1">
+                              <span>{comment.user.firstName} {comment.user.lastName}</span>
+                              {(comment.user as any)?.verificationBadge?.status === 'active' && (
+                                <svg className="w-3.5 h-3.5 max-[360px]:w-3 max-[360px]:h-3 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </p>
+                            <p className="text-gray-300 max-[360px]:text-[11px] text-sm max-[360px]:mt-0.5 mt-1 break-words pr-8">
+                              {comment.content}
+                            </p>
+                            {comment.user.id === user?.id && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (!confirm('Delete this comment?')) return;
+                                  
+                                  try {
+                                    const token = localStorage.getItem('accessToken');
+                                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comments/${comment.id}`, {
+                                      method: 'DELETE',
+                                      headers: { 'Authorization': `Bearer ${token}` },
+                                    });
+
+                                    if (response.ok) {
+                                      // Remove comment from state
+                                      setComments(comments.filter(c => c.id !== comment.id));
+                                    } else {
+                                      const errorData = await response.json().catch(() => ({}));
+                                      console.error('Delete comment error:', response.status, errorData);
+                                      alert(errorData.message || 'Failed to delete comment');
+                                    }
+                                  } catch (error: any) {
+                                    console.error('Error deleting comment:', error);
+                                    alert(error.message || 'Error deleting comment');
+                                  }
+                                }}
+                                className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Delete comment"
+                              >
+                                <IoTrashOutline className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-gray-500 max-[360px]:text-[9px] text-[10px] max-[360px]:mt-0.5 mt-1 ml-3">
+                            {new Date(comment.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : null}
         </div>

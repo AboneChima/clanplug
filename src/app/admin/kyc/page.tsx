@@ -33,50 +33,95 @@ export default function AdminKYCPage() {
 
   useEffect(() => {
     fetchSubmissions();
+    // Auto-refresh every 10 seconds for real-time updates
+    const interval = setInterval(fetchSubmissions, 10000);
+    return () => clearInterval(interval);
   }, [filter]);
 
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/kyc?status=${filter}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSubmissions(data.data || []);
+      
+      if (!token) {
+        console.error('No access token found');
+        alert('Please login as admin first');
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching KYC submissions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleApprove = async (kycId: string) => {
-    if (!confirm('Approve this KYC submission?')) return;
-
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/kyc/${kycId}/verify`, {
-        method: 'PUT',
+      console.log('Fetching KYC submissions:', `${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/list?status=${filter}`);
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/list?status=${filter}`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
       });
 
-      if (response.ok) {
-        alert('KYC Approved!');
+      console.log('KYC Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch KYC submissions:', response.status, errorText);
+        alert(`Failed to fetch KYC submissions: ${response.status}`);
+        return;
+      }
+
+      const data = await response.json();
+      console.log('KYC submissions response:', data);
+      
+      if (!data.success) {
+        console.error('API returned error:', data.message);
+        alert(`Error: ${data.message}`);
+        return;
+      }
+
+      const submissionsData = data.data || [];
+      console.log('KYC submissions data:', submissionsData);
+      
+      if (!Array.isArray(submissionsData)) {
+        console.error('Submissions data is not an array:', submissionsData);
+        return;
+      }
+
+      setSubmissions(submissionsData);
+    } catch (error) {
+      console.error('Error fetching KYC submissions:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (kycId: string) => {
+    if (!confirm('✅ Approve this KYC submission?\n\nThis will:\n- Mark the KYC as APPROVED\n- Set user.isKYCVerified = true\n- Allow user to post on marketplace')) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      console.log('Approving KYC:', kycId);
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/review/${kycId}`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'APPROVED' }),
+      });
+
+      const data = await response.json();
+      console.log('Approve response:', data);
+
+      if (response.ok && data.success) {
+        alert('✅ KYC Approved Successfully!\n\nUser can now:\n- Post on marketplace\n- Access all verified features');
         fetchSubmissions();
         setSelectedSubmission(null);
       } else {
-        alert('Failed to approve KYC');
+        alert(`❌ Failed to approve KYC: ${data.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error approving KYC:', error);
-      alert('Error approving KYC');
+      alert(`❌ Error approving KYC: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -88,92 +133,128 @@ export default function AdminKYCPage() {
 
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/kyc/${kycId}/reject`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/review/${kycId}`, {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ reason: rejectionReason }),
+        body: JSON.stringify({ status: 'REJECTED', rejectionReason }),
       });
 
-      if (response.ok) {
-        alert('KYC Rejected');
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert('✅ KYC Rejected');
         fetchSubmissions();
         setSelectedSubmission(null);
         setRejecting(false);
         setRejectionReason('');
       } else {
-        alert('Failed to reject KYC');
+        alert(`❌ Failed: ${data.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error rejecting KYC:', error);
-      alert('Error rejecting KYC');
+      alert(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleRevoke = async (kycId: string) => {
+    const reason = prompt('Enter reason for revoking KYC approval:');
+    
+    if (!reason || !reason.trim()) {
+      alert('Revoke reason is required');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/review/${kycId}`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'REJECTED', rejectionReason: `REVOKED: ${reason}` }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert('✅ KYC Approval Revoked');
+        fetchSubmissions();
+        setSelectedSubmission(null);
+      } else {
+        alert(`❌ Failed: ${data.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error revoking KYC:', error);
+      alert(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white mb-2">KYC Verifications</h1>
-          <p className="text-gray-400">Review and approve user identity documents</p>
-        </div>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold text-white">KYC Verifications</h1>
+        <p className="text-xs sm:text-sm text-gray-400 mt-1">Review and approve user identity documents</p>
+      </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 mb-6">
-          {(['PENDING', 'APPROVED', 'REJECTED'] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filter === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800 text-gray-400 hover:bg-slate-700'
-              }`}
-            >
-              {status}
-            </button>
-          ))}
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2">
+        {(['PENDING', 'APPROVED', 'REJECTED'] as const).map((status) => (
           <button
-            onClick={fetchSubmissions}
-            className="ml-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors flex items-center gap-2"
+            key={status}
+            onClick={() => setFilter(status)}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+              filter === status
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                : 'bg-slate-900/50 text-gray-300 hover:bg-slate-800 border border-slate-800'
+            }`}
           >
-            <IoRefresh className="w-4 h-4" />
-            Refresh
+            {status}
           </button>
-        </div>
+        ))}
+        <button
+          onClick={fetchSubmissions}
+          className="ml-auto px-3 sm:px-4 py-2 bg-slate-900/50 hover:bg-slate-800 text-gray-300 border border-slate-800 rounded-lg transition-colors flex items-center gap-2 text-xs sm:text-sm"
+        >
+          <IoRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline">Refresh</span>
+        </button>
+      </div>
 
-        {/* Submissions List */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading...</p>
-          </div>
-        ) : submissions.length === 0 ? (
-          <div className="bg-slate-800 rounded-lg p-12 text-center">
-            <p className="text-gray-400">No {filter.toLowerCase()} submissions</p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {submissions.map((submission) => (
-              <div key={submission.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-white font-semibold mb-1">
+      {/* Submissions List */}
+      {loading ? (
+        <div className="text-center py-12">
+          <div className="animate-spin w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-400 text-sm">Loading...</p>
+        </div>
+      ) : submissions.length === 0 ? (
+        <div className="bg-slate-900/50 rounded-lg p-8 sm:p-12 text-center border border-slate-800">
+          <IoDocumentText className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-400 text-sm">No {filter.toLowerCase()} submissions</p>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:gap-4">
+          {submissions.map((submission) => (
+            <div key={submission.id} className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-slate-800 hover:border-blue-500/30 transition-all">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-semibold mb-1 text-sm sm:text-base">
                       {submission.user.firstName} {submission.user.lastName}
                     </h3>
-                    <p className="text-gray-400 text-sm mb-2">@{submission.user.username} • {submission.user.email}</p>
-                    <div className="flex gap-4 text-sm text-gray-400">
-                      <span>📄 {submission.documentType}</span>
-                      <span>🔢 {submission.documentNumber}</span>
-                      <span>📅 {new Date(submission.createdAt).toLocaleDateString()}</span>
+                    <p className="text-gray-400 text-xs sm:text-sm mb-2 truncate">@{submission.user.username} • {submission.user.email}</p>
+                    <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400">
+                      <span className="flex items-center gap-1">📄 {submission.documentType}</span>
+                      <span className="flex items-center gap-1">🔢 {submission.documentNumber}</span>
+                      <span className="flex items-center gap-1">📅 {new Date(submission.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedSubmission(submission)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                    className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm rounded-lg transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                   >
                     <IoEye className="w-4 h-4" />
                     Review
@@ -184,58 +265,67 @@ export default function AdminKYCPage() {
           </div>
         )}
 
-        {/* Detail Modal */}
-        {selectedSubmission && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-            <div className="bg-slate-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      {/* Detail Modal */}
+      {selectedSubmission && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-2 sm:p-4 overflow-y-auto">
+            <div className="bg-slate-800 rounded-xl max-w-2xl w-full my-4 sm:my-8">
               {/* Modal Header */}
-              <div className="p-6 border-b border-slate-700">
-                <h2 className="text-xl font-bold text-white">KYC Review</h2>
+              <div className="p-3 sm:p-4 border-b border-slate-700 sticky top-0 bg-slate-800 z-10">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base sm:text-lg font-bold text-white">KYC Review</h2>
+                  <span className={`px-2 py-1 text-[10px] sm:text-xs font-medium rounded-full ${
+                    selectedSubmission.status === 'PENDING' ? 'bg-orange-500/20 text-orange-300' :
+                    selectedSubmission.status === 'APPROVED' ? 'bg-green-500/20 text-green-300' :
+                    'bg-red-500/20 text-red-300'
+                  }`}>
+                    {selectedSubmission.status}
+                  </span>
+                </div>
               </div>
 
               {/* Modal Content */}
-              <div className="p-6 space-y-6">
+              <div className="p-3 sm:p-4 space-y-3 max-h-[70vh] overflow-y-auto">
                 {/* User Info */}
-                <div className="bg-slate-700/50 rounded-lg p-4">
-                  <h3 className="text-white font-semibold mb-3">User Information</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="bg-slate-700/30 rounded-lg p-3">
+                  <h3 className="text-white font-semibold mb-2 text-xs sm:text-sm">User Information</h3>
+                  <div className="grid grid-cols-2 gap-2 text-[10px] sm:text-xs">
                     <div>
-                      <p className="text-gray-400">Full Name</p>
+                      <p className="text-gray-400 mb-0.5">Full Name</p>
                       <p className="text-white font-medium">{selectedSubmission.user.firstName} {selectedSubmission.user.lastName}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Username</p>
+                      <p className="text-gray-400 mb-0.5">Username</p>
                       <p className="text-white font-medium">@{selectedSubmission.user.username}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Email</p>
-                      <p className="text-white font-medium">{selectedSubmission.user.email}</p>
+                      <p className="text-gray-400 mb-0.5">Email</p>
+                      <p className="text-white font-medium break-all">{selectedSubmission.user.email}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Phone</p>
+                      <p className="text-gray-400 mb-0.5">Phone</p>
                       <p className="text-white font-medium">{selectedSubmission.phoneNumber}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Date of Birth</p>
+                      <p className="text-gray-400 mb-0.5">Date of Birth</p>
                       <p className="text-white font-medium">{new Date(selectedSubmission.dateOfBirth).toLocaleDateString()}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Address</p>
-                      <p className="text-white font-medium">{selectedSubmission.address}</p>
+                      <p className="text-gray-400 mb-0.5">Address</p>
+                      <p className="text-white font-medium text-[9px] sm:text-[10px]">{selectedSubmission.address}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Document Info */}
-                <div className="bg-slate-700/50 rounded-lg p-4">
-                  <h3 className="text-white font-semibold mb-3">Document Details</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="bg-slate-700/30 rounded-lg p-3">
+                  <h3 className="text-white font-semibold mb-2 text-xs sm:text-sm">Document Details</h3>
+                  <div className="grid grid-cols-2 gap-2 text-[10px] sm:text-xs">
                     <div>
-                      <p className="text-gray-400">Document Type</p>
+                      <p className="text-gray-400 mb-0.5">Document Type</p>
                       <p className="text-white font-medium">{selectedSubmission.documentType}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Document Number</p>
+                      <p className="text-gray-400 mb-0.5">Document Number</p>
                       <p className="text-white font-medium">{selectedSubmission.documentNumber}</p>
                     </div>
                   </div>
@@ -243,22 +333,23 @@ export default function AdminKYCPage() {
 
                 {/* Uploaded Documents */}
                 {selectedSubmission.documentImages.length > 0 && (
-                  <div className="bg-slate-700/50 rounded-lg p-4">
-                    <h3 className="text-white font-semibold mb-3">Uploaded Documents</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-700/30 rounded-lg p-3">
+                    <h3 className="text-white font-semibold mb-2 text-xs sm:text-sm">Uploaded Documents</h3>
+                    <div className="grid grid-cols-2 gap-2">
                       {selectedSubmission.documentImages.map((url, index) => (
                         <a
                           key={index}
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block"
+                          className="block group"
                         >
                           <img
                             src={url}
                             alt={`Document ${index + 1}`}
-                            className="w-full h-48 object-cover rounded-lg border border-slate-600 hover:border-blue-500 transition-colors"
+                            className="w-full h-32 sm:h-40 object-cover rounded-lg border border-slate-600 group-hover:border-blue-500 transition-colors"
                           />
+                          <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1 text-center">Tap to enlarge</p>
                         </a>
                       ))}
                     </div>
@@ -275,37 +366,37 @@ export default function AdminKYCPage() {
 
                 {/* Actions */}
                 {selectedSubmission.status === 'PENDING' && (
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     {!rejecting ? (
                       <>
                         <button
                           onClick={() => handleApprove(selectedSubmission.id)}
-                          className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
                         >
-                          <IoCheckmarkCircle className="w-5 h-5" />
-                          Approve KYC
+                          <IoCheckmarkCircle className="w-4 h-4" />
+                          Approve
                         </button>
                         <button
                           onClick={() => setRejecting(true)}
-                          className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                          className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
                         >
-                          <IoCloseCircle className="w-5 h-5" />
-                          Reject KYC
+                          <IoCloseCircle className="w-4 h-4" />
+                          Reject
                         </button>
                       </>
                     ) : (
-                      <div className="flex-1 space-y-3">
+                      <div className="flex-1 space-y-2">
                         <textarea
                           value={rejectionReason}
                           onChange={(e) => setRejectionReason(e.target.value)}
                           placeholder="Enter rejection reason..."
-                          className="w-full px-4 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                          rows={3}
+                          className="w-full px-3 py-2 bg-slate-700 text-white text-xs sm:text-sm rounded-lg border border-slate-600 focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-500"
+                          rows={2}
                         />
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleReject(selectedSubmission.id)}
-                            className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+                            className="flex-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg font-semibold transition-colors"
                           >
                             Confirm Reject
                           </button>
@@ -314,7 +405,7 @@ export default function AdminKYCPage() {
                               setRejecting(false);
                               setRejectionReason('');
                             }}
-                            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                            className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition-colors"
                           >
                             Cancel
                           </button>
@@ -323,17 +414,34 @@ export default function AdminKYCPage() {
                     )}
                   </div>
                 )}
+                
+                {/* Revoke Option for Approved KYC */}
+                {selectedSubmission.status === 'APPROVED' && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                    <p className="text-yellow-300 text-xs mb-2">This KYC is approved. You can revoke it if approved by mistake.</p>
+                    <button
+                      onClick={() => {
+                        if (confirm('⚠️ Revoke this KYC approval?\n\nThis will:\n- Set user.isKYCVerified = false\n- User cannot post on marketplace anymore\n- User will receive notification')) {
+                          handleRevoke(selectedSubmission.id);
+                        }
+                      }}
+                      className="w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs sm:text-sm rounded-lg font-semibold transition-colors"
+                    >
+                      Revoke KYC Approval
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Close Button */}
-              <div className="p-6 border-t border-slate-700">
+              <div className="p-3 sm:p-4 border-t border-slate-700 bg-slate-800">
                 <button
                   onClick={() => {
                     setSelectedSubmission(null);
                     setRejecting(false);
                     setRejectionReason('');
                   }}
-                  className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                  className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs sm:text-sm rounded-lg transition-colors"
                 >
                   Close
                 </button>
@@ -341,7 +449,6 @@ export default function AdminKYCPage() {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }

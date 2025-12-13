@@ -20,6 +20,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshAuth: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
+  refetchUser: () => Promise<void>;
 }
 
 // Helper function to set cookie
@@ -161,6 +162,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Add function to refetch user data from API
+  const refetchUser = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setUser(data.data);
+          localStorage.setItem('user', JSON.stringify(data.data));
+        }
+      }
+    } catch (error) {
+      console.error('Refetch user error:', error);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     accessToken,
@@ -170,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout,
     refreshAuth,
     updateUser,
+    refetchUser,
   };
 
   return (

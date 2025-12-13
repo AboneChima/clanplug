@@ -6,7 +6,7 @@ import {
   IoGridOutline, 
   IoWalletOutline, 
   IoChatbubbleEllipsesOutline, 
-  IoDocumentTextOutline, 
+  IoStorefrontOutline, 
   IoSettingsOutline, 
   IoLogOutOutline,
   IoStatsChartOutline,
@@ -56,8 +56,8 @@ const navItems = [
   },
   { 
     href: '/posts', 
-    label: 'Marketplace', 
-    Icon: IoDocumentTextOutline
+    label: 'Shop', 
+    Icon: IoStorefrontOutline
   },
   { 
     href: '/kyc', 

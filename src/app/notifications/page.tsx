@@ -17,6 +17,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import AppShell from '@/components/AppShell';
 import { useToast } from '@/contexts/ToastContext';
 import PostModal from '@/components/PostModal';
+import TransactionDetailsModal from '@/components/TransactionDetailsModal';
+import VTUTransactionModal from '@/components/VTUTransactionModal';
 
 interface Notification {
   id: string;
@@ -29,12 +31,14 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
-  const { user, accessToken } = useAuth();
+  const { user, accessToken, refetchUser } = useAuth();
   const { showToast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Notification | null>(null);
+  const [selectedVTUTransaction, setSelectedVTUTransaction] = useState<Notification | null>(null);
 
   const fetchNotifications = async () => {
     if (!accessToken) {
@@ -173,6 +177,16 @@ export default function NotificationsPage() {
     
     // Route based on notification type
     switch (notification.type) {
+      case 'TRANSACTION':
+        // Check if it's a VTU transaction
+        if (data.type === 'airtime' || data.type === 'data') {
+          setSelectedVTUTransaction(notification);
+        } else {
+          // Regular transaction (withdrawal, deposit, etc.)
+          setSelectedTransaction(notification);
+        }
+        break;
+        
       case 'CHAT':
       case 'MESSAGE':
         // Navigate to specific chat conversation
@@ -203,9 +217,16 @@ export default function NotificationsPage() {
         break;
         
       case 'KYC':
-        // Navigate to KYC page or marketplace if approved
+        // Refetch user data to get updated KYC status
+        await refetchUser();
+        
+        // Navigate to KYC page or profile if approved
         if (notification.title.includes('Approved')) {
-          window.location.href = '/marketplace';
+          showToast('✅ KYC Approved! You can now post on marketplace.', 'success');
+          window.location.href = '/profile';
+        } else if (notification.title.includes('Rejected') || notification.title.includes('Revoked')) {
+          showToast('KYC status updated. Please check your profile.', 'info');
+          window.location.href = '/kyc';
         } else {
           window.location.href = '/kyc';
         }
@@ -253,6 +274,19 @@ export default function NotificationsPage() {
     <>
       {selectedPostId && (
         <PostModal postId={selectedPostId} onClose={() => setSelectedPostId(null)} />
+      )}
+      {selectedTransaction && (
+        <TransactionDetailsModal 
+          isOpen={true}
+          onClose={() => setSelectedTransaction(null)}
+          notification={selectedTransaction}
+        />
+      )}
+      {selectedVTUTransaction && (
+        <VTUTransactionModal 
+          notification={selectedVTUTransaction}
+          onClose={() => setSelectedVTUTransaction(null)}
+        />
       )}
       <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">

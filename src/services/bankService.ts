@@ -23,7 +23,7 @@ const FALLBACK_BANKS: NigerianBank[] = [
   { name: "Stanbic IBTC Bank", code: "221", slug: "stanbic-ibtc-bank" },
   { name: "Wema Bank", code: "035", slug: "wema-bank" },
   { name: "Kuda Bank", code: "50211", slug: "kuda-bank" },
-  { name: "Opay", code: "999992", slug: "opay" },
+  { name: "Opay", code: "100004", slug: "opay" },
   { name: "PalmPay", code: "999991", slug: "palmpay" },
   { name: "Moniepoint", code: "50515", slug: "moniepoint" }
 ];

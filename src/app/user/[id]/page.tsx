@@ -14,6 +14,8 @@ import {
   IoChatbubbleEllipsesOutline,
   IoShieldCheckmarkOutline,
   IoCloseCircleOutline,
+  IoEyeOutline,
+  IoCloseOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,6 +68,7 @@ export default function UserProfilePage() {
   const [showPosts, setShowPosts] = useState(false); // Start with both hidden
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -99,6 +102,13 @@ export default function UserProfilePage() {
         // Handle different response formats
         const userData = data.user || data.data || data;
         console.log('User profile data:', userData);
+        
+        // Check if user is banned or suspended
+        if (userData.status === 'BANNED' || userData.status === 'banned') {
+          showToast('This user account has been suspended', 'error');
+          router.push('/feed');
+          return;
+        }
         
         // Fetch user posts to get count
         let postsCount = 0;
@@ -138,6 +148,14 @@ export default function UserProfilePage() {
           console.error('Error fetching follow stats:', err);
         }
         
+        // Properly extract KYC status
+        const isKYCVerified = userData.isKYCVerified === true || userData.isKYCVerified === 'true';
+        
+        console.log('KYC Status:', {
+          raw: userData.isKYCVerified,
+          processed: isKYCVerified
+        });
+        
         setProfile({
           id: userData.id,
           username: userData.username,
@@ -150,7 +168,7 @@ export default function UserProfilePage() {
           country: userData.country,
           createdAt: userData.createdAt,
           isFollowing: userData.isFollowing || false,
-          isKYCVerified: userData.isKYCVerified || false,
+          isKYCVerified: isKYCVerified,
           verificationBadge: userData.verificationBadge, // Include verification badge
           _count: {
             posts: postsCount,
@@ -440,34 +458,27 @@ export default function UserProfilePage() {
                       <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                   )}
-                  {profile.isKYCVerified && (
-                    <div className="flex items-center gap-0.5 bg-green-500/20 border border-green-500/30 rounded-full px-1.5 py-0.5" title="KYC Verified">
-                      <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-[9px] text-green-400 font-medium">KYC</span>
+                </div>
+                <p className="text-gray-400 text-sm mb-2">@{profile.username}</p>
+                
+                {/* KYC Status Badge - Compact */}
+                <div className="mb-2">
+                  {profile.isKYCVerified ? (
+                    <div className="inline-flex items-center gap-1 bg-green-500/20 border border-green-500/40 rounded-md px-2 py-1">
+                      <IoShieldCheckmarkOutline className="w-3.5 h-3.5 text-green-400" />
+                      <span className="text-[11px] font-medium text-green-400">KYC Verified</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1 bg-gray-500/10 border border-gray-500/30 rounded-md px-2 py-1">
+                      <IoCloseCircleOutline className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-[11px] font-medium text-gray-400">KYC Unverified</span>
                     </div>
                   )}
                 </div>
-                <p className="text-gray-400 text-sm mb-2">@{profile.username}</p>
+                
                 {profile.bio && (
                   <p className="text-gray-300 text-sm mb-2">{profile.bio}</p>
                 )}
-                
-                {/* KYC Status Badge - Prominent Display */}
-                <div className="mb-2">
-                  {profile.isKYCVerified ? (
-                    <div className="inline-flex items-center gap-1.5 bg-green-500/20 border border-green-500/40 rounded-lg px-2.5 py-1.5">
-                      <IoShieldCheckmarkOutline className="w-4 h-4 text-green-400" />
-                      <span className="text-xs font-medium text-green-400">KYC Verified</span>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-1.5 bg-gray-500/20 border border-gray-500/40 rounded-lg px-2.5 py-1.5">
-                      <IoCloseCircleOutline className="w-4 h-4 text-gray-400" />
-                      <span className="text-xs font-medium text-gray-400">KYC Unverified</span>
-                    </div>
-                  )}
-                </div>
 
                 <div className="flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
                   {profile.city && (
@@ -602,7 +613,7 @@ export default function UserProfilePage() {
 
           {/* Marketplace Listings - Toggle visibility */}
           {showMarketplace && (
-            <div id="user-marketplace" className="space-y-3">
+            <div id="user-marketplace" className="space-y-2 sm:space-y-3">
               <h2 className="text-base sm:text-lg font-bold text-white px-1">Marketplace Listings</h2>
             {marketplacePosts.length === 0 ? (
               <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 p-8 text-center">
@@ -612,37 +623,98 @@ export default function UserProfilePage() {
               marketplacePosts.map((post) => (
                 <div 
                   key={post.id} 
-                  onClick={() => router.push(`/marketplace/${post.id}`)}
-                  className="bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden cursor-pointer hover:border-blue-500 transition-all"
+                  className="bg-slate-800/80 backdrop-blur-sm rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500 transition-all"
                 >
-                  <div className="p-3">
-                    <p className="text-gray-300 text-sm whitespace-pre-wrap mb-2 line-clamp-3">{post.description}</p>
-                    {post.images && post.images.length > 0 && (
-                      <div className={`grid gap-1.5 mb-2 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                        {post.images.map((image, index) => (
-                          <div key={index} className="relative rounded-md overflow-hidden bg-slate-700 aspect-square">
-                            <Image src={image} alt="Post image" fill className="object-cover" />
+                  {/* Mobile: Compact horizontal layout */}
+                  <div className="md:hidden">
+                    <div className="flex gap-2 p-2">
+                      {/* Image - Smaller on mobile */}
+                      {post.images && post.images.length > 0 && (
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (post.images && post.images[0]) {
+                              setSelectedImage(post.images[0]);
+                            }
+                          }}
+                          className="relative w-20 h-20 rounded-md overflow-hidden bg-slate-700 flex-shrink-0 cursor-pointer"
+                        >
+                          <Image src={post.images[0]} alt="Listing" fill className="object-cover" />
+                          <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <IoEyeOutline className="w-5 h-5 text-white opacity-0 hover:opacity-100 transition-opacity" />
                           </div>
-                        ))}
+                        </div>
+                      )}
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-300 text-xs line-clamp-2 mb-1">{post.description}</p>
+                        <div className="flex items-center gap-2 text-gray-400 text-[10px]">
+                          <div className="flex items-center gap-1">
+                            <IoHeart className={post.isLiked ? "w-3 h-3 text-red-500" : "w-3 h-3"} />
+                            <span>{post._count.likes}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <IoChatbubbleEllipsesOutline className="w-3 h-3" />
+                            <span>{post._count.comments}</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => router.push(`/marketplace/${post.id}`)}
+                          className="mt-1 text-blue-400 hover:text-blue-300 text-[10px] font-medium"
+                        >
+                          View Details →
+                        </button>
                       </div>
-                    )}
-                    <div className="flex items-center gap-4 text-gray-400 text-xs">
-                      <button
-                        onClick={() => handleLike(post.id)}
-                        className="flex items-center gap-1.5 hover:text-red-500 transition-colors"
-                      >
-                        {post.isLiked ? (
-                          <IoHeart className="w-4 h-4 text-red-500" />
-                        ) : (
-                          <IoHeartOutline className="w-4 h-4" />
-                        )}
-                        <span>{post._count.likes}</span>
-                      </button>
-                      <div className="flex items-center gap-1.5">
-                        <IoChatbubbleEllipsesOutline className="w-4 h-4" />
-                        <span>{post._count.comments}</span>
+                    </div>
+                  </div>
+
+                  {/* Desktop: Full layout */}
+                  <div 
+                    onClick={() => router.push(`/marketplace/${post.id}`)}
+                    className="hidden md:block cursor-pointer"
+                  >
+                    <div className="p-3">
+                      <p className="text-gray-300 text-sm whitespace-pre-wrap mb-2 line-clamp-3">{post.description}</p>
+                      {post.images && post.images.length > 0 && (
+                        <div className={`grid gap-1.5 mb-2 ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                          {post.images.map((image, index) => (
+                            <div 
+                              key={index} 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedImage(image);
+                              }}
+                              className="relative rounded-md overflow-hidden bg-slate-700 aspect-square cursor-pointer group"
+                            >
+                              <Image src={image} alt="Post image" fill className="object-cover" />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                <IoEyeOutline className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-4 text-gray-400 text-xs">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLike(post.id);
+                          }}
+                          className="flex items-center gap-1.5 hover:text-red-500 transition-colors"
+                        >
+                          {post.isLiked ? (
+                            <IoHeart className="w-4 h-4 text-red-500" />
+                          ) : (
+                            <IoHeartOutline className="w-4 h-4" />
+                          )}
+                          <span>{post._count.likes}</span>
+                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <IoChatbubbleEllipsesOutline className="w-4 h-4" />
+                          <span>{post._count.comments}</span>
+                        </div>
+                        <span className="ml-auto">{new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                       </div>
-                      <span className="ml-auto">{new Date(post.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     </div>
                   </div>
                 </div>
@@ -656,6 +728,30 @@ export default function UserProfilePage() {
       {/* Post Modal */}
       {selectedPostId && (
         <PostModal postId={selectedPostId} onClose={() => setSelectedPostId(null)} />
+      )}
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 p-2 bg-slate-800/80 hover:bg-slate-700 rounded-full text-white transition-colors"
+          >
+            <IoCloseOutline className="w-6 h-6" />
+          </button>
+          <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center">
+            <Image
+              src={selectedImage}
+              alt="Full size"
+              fill
+              className="object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
       )}
     </AppShell>
   );

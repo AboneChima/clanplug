@@ -68,7 +68,10 @@ function WalletContent() {
       });
       if (transactionsResponse.ok) {
         const transactionsData = await transactionsResponse.json();
-        setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
+        console.log('Transactions data:', transactionsData); // Debug log
+        // Backend returns { success: true, data: [...] }
+        const txArray = transactionsData.data || transactionsData;
+        setTransactions(Array.isArray(txArray) ? txArray : []);
       }
     } catch (error) {
       console.error('Error loading wallet data:', error);
@@ -88,6 +91,16 @@ function WalletContent() {
     refreshDelay: 1000,
     enabled: !!accessToken
   });
+
+  // Listen for wallet updates from transfer component
+  useEffect(() => {
+    const handleWalletUpdate = () => {
+      load();
+    };
+    
+    window.addEventListener('wallet-updated', handleWalletUpdate);
+    return () => window.removeEventListener('wallet-updated', handleWalletUpdate);
+  }, []);
 
   // Handle case when there's no access token
   useEffect(() => {

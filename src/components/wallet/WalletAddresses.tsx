@@ -6,23 +6,21 @@ import { authApi } from '@/lib/auth-api';
 import { 
   IoWalletOutline,
   IoCopyOutline,
-  IoRefreshOutline,
   IoCheckmarkCircleOutline,
   IoAlertCircleOutline
 } from 'react-icons/io5';
 
 interface WalletAddresses {
-  lmcAddress: string | null;
+  ngnAddress: string | null;
+  usdAddress: string | null;
 }
 
 export default function WalletAddresses() {
   const { user, accessToken } = useAuth();
-  const [addresses, setAddresses] = useState<WalletAddresses>({ lmcAddress: null });
+  const [addresses, setAddresses] = useState<WalletAddresses>({ ngnAddress: null, usdAddress: null });
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
   const [copying, setCopying] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
 
   useEffect(() => {
     if (accessToken && user) {
@@ -34,10 +32,11 @@ export default function WalletAddresses() {
     try {
       setLoading(true);
       setError('');
-      // Generate LMC address using user ID
+      // Generate unique addresses using user ID
       if (user?.id) {
-        const lmcAddress = `${user.id.substring(0, 8)}-LMC-${user.id.substring(user.id.length - 8)}`;
-        setAddresses({ lmcAddress });
+        const ngnAddress = `${user.id.substring(0, 8)}-NGN-${user.id.substring(user.id.length - 8)}`;
+        const usdAddress = `${user.id.substring(0, 8)}-USD-${user.id.substring(user.id.length - 8)}`;
+        setAddresses({ ngnAddress, usdAddress });
       }
     } catch (err: any) {
       console.error('Failed to load wallet addresses:', err);
@@ -47,24 +46,7 @@ export default function WalletAddresses() {
     }
   };
 
-  const generateAddresses = async () => {
-    try {
-      setGenerating(true);
-      setError('');
-      setSuccess('');
-      // Generate new LMC address using user ID
-      if (user?.id) {
-        const lmcAddress = `${user.id.substring(0, 8)}-LMC-${user.id.substring(user.id.length - 8)}`;
-        setAddresses({ lmcAddress });
-        setSuccess('Wallet address generated successfully!');
-      }
-    } catch (err: any) {
-      console.error('Failed to generate wallet addresses:', err);
-      setError('Failed to generate wallet addresses');
-    } finally {
-      setGenerating(false);
-    }
-  };
+
 
   const copyToClipboard = async (text: string, type: string) => {
     try {
@@ -97,25 +79,14 @@ export default function WalletAddresses() {
   return (
     <div>
       {/* Header - Compact on mobile */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-3 sm:mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-            <IoWalletOutline className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">My Wallet Address</h2>
-            <p className="text-gray-600 font-medium text-[10px] xs:text-xs sm:text-sm lg:text-base">Receive transfers</p>
-          </div>
+      <div className="flex items-center gap-4 mb-3 sm:mb-6">
+        <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+          <IoWalletOutline className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
         </div>
-        
-        <button
-          onClick={generateAddresses}
-          disabled={generating}
-          className="btn-secondary flex items-center gap-2 px-4 py-2 text-sm hover-lift"
-        >
-          <IoRefreshOutline className={`w-4 h-4 ${generating ? 'animate-spin' : ''}`} />
-          {generating ? 'Generating...' : 'Regenerate'}
-        </button>
+        <div>
+          <h2 className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">My Wallet Address</h2>
+          <p className="text-gray-600 font-medium text-[10px] xs:text-xs sm:text-sm lg:text-base">Permanent addresses to receive transfers</p>
+        </div>
       </div>
 
       {error && (
@@ -125,43 +96,75 @@ export default function WalletAddresses() {
         </div>
       )}
 
-      {success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center space-x-3">
-          <IoCheckmarkCircleOutline className="w-5 h-5 text-green-600 flex-shrink-0" />
-          <p className="text-green-800 text-sm">{success}</p>
-        </div>
-      )}
+
 
       <div className="grid grid-cols-1 gap-4 lg:gap-6">
-        {/* LMC Address - Compact for mobile */}
+        {/* NGN Address */}
         <div className="bg-gradient-to-br from-white to-gray-50/50 p-2.5 xs:p-3 sm:p-4 md:p-6 border border-gray-200/50 rounded-lg xs:rounded-xl sm:rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center justify-between mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">
             <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3">
-              <div className="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg xs:rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-sm xs:text-base sm:text-lg">L</span>
+              <div className="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg xs:rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-sm xs:text-base sm:text-lg">₦</span>
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-sm xs:text-base sm:text-lg">Wallet Address</h3>
-                <p className="text-[10px] xs:text-xs sm:text-sm text-gray-600 hidden xs:block">For internal transfers</p>
+                <h3 className="font-bold text-gray-900 text-sm xs:text-base sm:text-lg">NGN Wallet Address</h3>
+                <p className="text-[10px] xs:text-xs sm:text-sm text-gray-600 hidden xs:block">Receive Naira transfers</p>
               </div>
             </div>
-            {addresses.lmcAddress && (
+            {addresses.ngnAddress && (
               <button
-                onClick={() => copyToClipboard(addresses.lmcAddress!, 'lmc')}
+                onClick={() => copyToClipboard(addresses.ngnAddress!, 'ngn')}
                 className="btn-secondary flex items-center gap-1 xs:gap-1.5 sm:gap-2 px-2 xs:px-2.5 sm:px-3 py-1 xs:py-1.5 sm:py-2 text-[10px] xs:text-xs sm:text-sm hover-lift"
               >
-                {copying === 'lmc' ? (
+                {copying === 'ngn' ? (
                   <IoCheckmarkCircleOutline className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 text-green-600" />
                 ) : (
                   <IoCopyOutline className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
                 )}
-                <span className="hidden xs:inline">{copying === 'lmc' ? 'Copied!' : 'Copy'}</span>
+                <span className="hidden xs:inline">{copying === 'ngn' ? 'Copied!' : 'Copy'}</span>
               </button>
             )}
           </div>
-          {addresses.lmcAddress ? (
+          {addresses.ngnAddress ? (
             <div className="bg-gray-100/80 p-2 xs:p-2.5 sm:p-3 md:p-4 rounded-lg xs:rounded-xl border border-gray-200/50">
-              <p className="font-mono text-[10px] xs:text-xs sm:text-sm text-gray-800 break-all leading-relaxed">{addresses.lmcAddress}</p>
+              <p className="font-mono text-[10px] xs:text-xs sm:text-sm text-gray-800 break-all leading-relaxed">{addresses.ngnAddress}</p>
+            </div>
+          ) : (
+            <div className="bg-gray-100/80 p-2 xs:p-2.5 sm:p-3 md:p-4 rounded-lg xs:rounded-xl border border-gray-200/50 border-dashed">
+              <p className="text-[10px] xs:text-xs sm:text-sm text-gray-500 italic text-center">No wallet address generated yet</p>
+            </div>
+          )}
+        </div>
+
+        {/* USD Address */}
+        <div className="bg-gradient-to-br from-white to-gray-50/50 p-2.5 xs:p-3 sm:p-4 md:p-6 border border-gray-200/50 rounded-lg xs:rounded-xl sm:rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="flex items-center justify-between mb-2 xs:mb-2.5 sm:mb-3 md:mb-4">
+            <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3">
+              <div className="w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg xs:rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-sm xs:text-base sm:text-lg">$</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm xs:text-base sm:text-lg">USD Wallet Address</h3>
+                <p className="text-[10px] xs:text-xs sm:text-sm text-gray-600 hidden xs:block">Receive Dollar transfers</p>
+              </div>
+            </div>
+            {addresses.usdAddress && (
+              <button
+                onClick={() => copyToClipboard(addresses.usdAddress!, 'usd')}
+                className="btn-secondary flex items-center gap-1 xs:gap-1.5 sm:gap-2 px-2 xs:px-2.5 sm:px-3 py-1 xs:py-1.5 sm:py-2 text-[10px] xs:text-xs sm:text-sm hover-lift"
+              >
+                {copying === 'usd' ? (
+                  <IoCheckmarkCircleOutline className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 text-green-600" />
+                ) : (
+                  <IoCopyOutline className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
+                )}
+                <span className="hidden xs:inline">{copying === 'usd' ? 'Copied!' : 'Copy'}</span>
+              </button>
+            )}
+          </div>
+          {addresses.usdAddress ? (
+            <div className="bg-gray-100/80 p-2 xs:p-2.5 sm:p-3 md:p-4 rounded-lg xs:rounded-xl border border-gray-200/50">
+              <p className="font-mono text-[10px] xs:text-xs sm:text-sm text-gray-800 break-all leading-relaxed">{addresses.usdAddress}</p>
             </div>
           ) : (
             <div className="bg-gray-100/80 p-2 xs:p-2.5 sm:p-3 md:p-4 rounded-lg xs:rounded-xl border border-gray-200/50 border-dashed">

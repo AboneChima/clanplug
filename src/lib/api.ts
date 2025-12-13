@@ -1,5 +1,5 @@
 // API base URL - always use environment variable or fallback
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://clanplug-dji6xa91a-oracles-projects-0d30db20.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.clanplug.site';
 
 // Shared response wrapper matching backend
 export interface ApiResponse<T = any> {

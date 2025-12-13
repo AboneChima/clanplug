@@ -392,9 +392,9 @@ function ChatContent() {
                           <p className={`text-sm truncate flex-1 ${chat.unreadCount && chat.unreadCount > 0 ? 'text-white font-semibold' : 'text-gray-400'}`}>
                             {getLastMessage(chat)?.content || 'Start a conversation'}
                           </p>
-                          {chat.unreadCount && chat.unreadCount > 0 && (
+                          {(chat.unreadCount ?? 0) > 0 && (
                             <span className="bg-emerald-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1.5 flex-shrink-0">
-                              {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+                              {(chat.unreadCount ?? 0) > 99 ? '99+' : chat.unreadCount}
                             </span>
                           )}
                         </div>
@@ -662,17 +662,53 @@ function ChatContent() {
                               {/* Message content with inline timestamp */}
                               {msg.content && msg.content.trim() && (
                                 <div className={`${msg.type === 'IMAGE' && msg.attachments?.length ? 'mt-1 px-1.5' : ''}`}>
-                                  <p className={`${fontSizes[fontSize].text} break-words max-[360px]:leading-tight leading-relaxed whitespace-pre-wrap inline`}>
-                                    {msg.content}
-                                    <span className="inline-flex items-center gap-1 ml-2 align-bottom">
-                                      <span className="text-[10px] opacity-70 whitespace-nowrap">
-                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {/* Check if message contains a post link */}
+                                  {msg.content.includes('📌 Shared a post with you') && msg.content.includes('/post/') ? (
+                                    <button
+                                      onClick={() => {
+                                        // Extract post ID from URL in message
+                                        const urlMatch = msg.content.match(/\/post\/([a-zA-Z0-9]+)/);
+                                        if (urlMatch && urlMatch[1]) {
+                                          window.location.href = `/post/${urlMatch[1]}`;
+                                        }
+                                      }}
+                                      className="block w-full text-left hover:opacity-80 transition-opacity"
+                                    >
+                                      <div className="bg-slate-700/50 rounded-lg p-2 border border-slate-600">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                                            <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+                                          </svg>
+                                          <span className="text-xs font-semibold text-blue-400">Shared Post</span>
+                                        </div>
+                                        <p className={`${fontSizes[fontSize].text} text-gray-300`}>
+                                          📌 Shared a post with you
+                                        </p>
+                                        <p className="text-[10px] text-blue-400 mt-1">Tap to view post →</p>
+                                      </div>
+                                      <span className="inline-flex items-center gap-1 ml-2 mt-1">
+                                        <span className="text-[10px] opacity-70 whitespace-nowrap">
+                                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                        {isOwn && (
+                                          <IoCheckmarkDoneOutline className={`w-3.5 h-3.5 font-bold ${(currentChat?.unreadCount ?? 0) === 0 ? 'text-blue-400' : 'opacity-70'}`} strokeWidth={2} />
+                                        )}
                                       </span>
-                                      {isOwn && (
-                                        <IoCheckmarkDoneOutline className={`w-3.5 h-3.5 font-bold ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'opacity-70'}`} strokeWidth={2} />
-                                      )}
-                                    </span>
-                                  </p>
+                                    </button>
+                                  ) : (
+                                    <p className={`${fontSizes[fontSize].text} break-words max-[360px]:leading-tight leading-relaxed whitespace-pre-wrap inline`}>
+                                      {msg.content}
+                                      <span className="inline-flex items-center gap-1 ml-2 align-bottom">
+                                        <span className="text-[10px] opacity-70 whitespace-nowrap">
+                                          {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                        {isOwn && (
+                                          <IoCheckmarkDoneOutline className={`w-3.5 h-3.5 font-bold ${(currentChat?.unreadCount ?? 0) === 0 ? 'text-blue-400' : 'opacity-70'}`} strokeWidth={2} />
+                                        )}
+                                      </span>
+                                    </p>
+                                  )}
                                 </div>
                               )}
                               

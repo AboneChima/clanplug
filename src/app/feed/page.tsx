@@ -15,6 +15,8 @@ import {
   IoArrowBackOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
+import PostModal from '@/components/PostModal';
+import SharePostModal from '@/components/SharePostModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
@@ -66,7 +68,7 @@ export default function FeedPage() {
   const [followingUsers, setFollowingUsers] = useState<any[]>([]);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
-  const [viewingPost, setViewingPost] = useState<Post | null>(null);
+  const [viewingPostId, setViewingPostId] = useState<string | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -81,6 +83,7 @@ export default function FeedPage() {
   const [viewingCommentsFor, setViewingCommentsFor] = useState<string | null>(null);
   const [comments, setComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState(false);
+  const [sharingPostId, setSharingPostId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab === 'forYou') {
@@ -92,25 +95,7 @@ export default function FeedPage() {
     }
   }, [activeTab]);
 
-  // Handle Android back button for viewing post modal
-  useEffect(() => {
-    if (viewingPost) {
-      document.body.style.overflow = 'hidden';
-      window.history.pushState({ postModal: true }, '');
-      
-      const handlePopState = (e: PopStateEvent) => {
-        e.preventDefault();
-        setViewingPost(null);
-      };
-      
-      window.addEventListener('popstate', handlePopState);
-      
-      return () => {
-        document.body.style.overflow = 'unset';
-        window.removeEventListener('popstate', handlePopState);
-      };
-    }
-  }, [viewingPost]);
+
 
   const fetchFollowing = async () => {
     if (!user?.id) {
@@ -153,6 +138,11 @@ export default function FeedPage() {
         const data = await response.json();
         const postsData = Array.isArray(data.data) ? data.data : Array.isArray(data.posts) ? data.posts : Array.isArray(data) ? data : [];
         
+        // Filter out marketplace listings - only show SOCIAL_POST type
+        const socialPostsOnly = postsData.filter((post: Post) => 
+          post.type === 'SOCIAL_POST' || !post.type
+        );
+        
         // Fetch bookmarked posts from backend
         const bookmarksResponse = await authFetch('/api/posts/bookmarks');
         let bookmarkedIds: string[] = [];
@@ -162,7 +152,7 @@ export default function FeedPage() {
           bookmarkedIds = bookmarkedPosts.map((post: any) => post.id);
         }
         
-        const postsWithBookmarks = postsData.map((post: Post) => ({
+        const postsWithBookmarks = socialPostsOnly.map((post: Post) => ({
           ...post,
           isBookmarked: bookmarkedIds.includes(post.id),
           // Add timestamp to avatar to prevent caching
@@ -196,7 +186,12 @@ export default function FeedPage() {
         const postsData = Array.isArray(data.data) ? data.data : Array.isArray(data.posts) ? data.posts : [];
         console.log('📚 Found', postsData.length, 'bookmarked posts');
         
-        const postsWithBookmarks = postsData.map((post: Post) => ({
+        // Filter out marketplace listings - only show SOCIAL_POST type
+        const socialPostsOnly = postsData.filter((post: Post) => 
+          post.type === 'SOCIAL_POST' || !post.type
+        );
+        
+        const postsWithBookmarks = socialPostsOnly.map((post: Post) => ({
           ...post,
           isBookmarked: true,
           // Add timestamp to avatar to prevent caching
@@ -601,7 +596,7 @@ export default function FeedPage() {
         /* Image Post - Extra Small for 0-360px */
         <div className="px-1.5 xs:px-2.5 sm:px-3 pb-1.5 xs:pb-2 flex gap-1.5 xs:gap-2.5 sm:gap-3">
           <button
-            onClick={() => setViewingPost(post)}
+            onClick={() => setViewingPostId(post.id)}
             className="relative w-16 h-16 xs:w-24 xs:h-24 sm:w-28 sm:h-28 rounded-md xs:rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 hover:opacity-90 transition-opacity"
           >
             <Image src={post.images[0]} alt="Post image" fill className="object-cover" />
@@ -614,7 +609,7 @@ export default function FeedPage() {
           <div className="flex-1 min-w-0 flex flex-col justify-between">
             <p className="text-gray-300 text-[10px] xs:text-xs sm:text-sm line-clamp-4 leading-tight xs:leading-snug">{post.description}</p>
             <button
-              onClick={() => setViewingPost(post)}
+              onClick={() => setViewingPostId(post.id)}
               className="text-blue-400 hover:text-blue-300 text-[9px] xs:text-[11px] font-medium mt-0.5 xs:mt-1 text-left inline-flex items-center gap-0.5"
             >
               <span>View</span>
@@ -630,7 +625,7 @@ export default function FeedPage() {
           <p className="text-gray-300 text-[10px] xs:text-xs sm:text-sm line-clamp-4 leading-tight xs:leading-snug">{post.description}</p>
           {post.description.length > 200 && (
             <button
-              onClick={() => setViewingPost(post)}
+              onClick={() => setViewingPostId(post.id)}
               className="text-blue-400 hover:text-blue-300 text-[9px] xs:text-[11px] font-medium mt-1 inline-flex items-center gap-0.5"
             >
               View More
@@ -666,19 +661,7 @@ export default function FeedPage() {
             <span className="text-xs">{post._count.comments}</span>
           </button>
           <button 
-            onClick={() => {
-              const postUrl = `${window.location.origin}/post/${post.id}`;
-              if (navigator.share) {
-                navigator.share({
-                  title: post.title || 'Check out this post',
-                  text: post.description,
-                  url: postUrl
-                }).catch(() => {});
-              } else {
-                navigator.clipboard.writeText(postUrl);
-                showToast('Link copied to clipboard!', 'success');
-              }
-            }}
+            onClick={() => setSharingPostId(post.id)}
             className="flex items-center gap-1.5 text-gray-400 hover:text-green-500 transition-colors"
           >
             <IoShareSocialOutline className="w-4 h-4" />
@@ -725,16 +708,59 @@ export default function FeedPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1 max-[360px]:gap-0.5">
-                        <span className="text-white max-[360px]:text-[11px] text-sm font-medium truncate">
-                          {comment.user.firstName} {comment.user.lastName}
-                        </span>
-                        <span className="text-gray-400 max-[360px]:text-[9px] text-xs truncate">
-                          @{comment.user.username}
-                        </span>
-                        <span className="text-gray-500 max-[360px]:text-[9px] text-xs flex-shrink-0">
-                          · {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </span>
+                      <div className="flex items-center justify-between gap-1">
+                        <div className="flex items-center gap-1 max-[360px]:gap-0.5 flex-1 min-w-0">
+                          <span className="text-white max-[360px]:text-[11px] text-sm font-medium truncate">
+                            {comment.user.firstName} {comment.user.lastName}
+                          </span>
+                          {(comment.user as any)?.verificationBadge?.status === 'active' && (
+                            <svg className="w-3.5 h-3.5 max-[360px]:w-3 max-[360px]:h-3 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                          <span className="text-gray-400 max-[360px]:text-[9px] text-xs truncate">
+                            @{comment.user.username}
+                          </span>
+                          <span className="text-gray-500 max-[360px]:text-[9px] text-xs flex-shrink-0">
+                            · {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                        {comment.user.id === user?.id && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!confirm('Delete this comment?')) return;
+                              
+                              try {
+                                const token = localStorage.getItem('accessToken');
+                                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comments/${comment.id}`, {
+                                  method: 'DELETE',
+                                  headers: { 'Authorization': `Bearer ${token}` },
+                                });
+
+                                if (response.ok) {
+                                  // Remove comment from state
+                                  setComments(prev => ({
+                                    ...prev,
+                                    [post.id]: prev[post.id].filter((c: any) => c.id !== comment.id)
+                                  }));
+                                  showToast('Comment deleted', 'success');
+                                } else {
+                                  const errorData = await response.json().catch(() => ({}));
+                                  console.error('Delete comment error:', response.status, errorData);
+                                  showToast(errorData.message || 'Failed to delete comment', 'error');
+                                }
+                              } catch (error: any) {
+                                console.error('Error deleting comment:', error);
+                                showToast(error.message || 'Error deleting comment', 'error');
+                              }
+                            }}
+                            className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors flex-shrink-0"
+                            title="Delete comment"
+                          >
+                            <IoTrashOutline className="w-3.5 h-3.5 max-[360px]:w-3 max-[360px]:h-3" />
+                          </button>
+                        )}
                       </div>
                       <p className="text-gray-300 max-[360px]:text-[11px] max-[360px]:mt-0.5 text-sm mt-1">{comment.content}</p>
                     </div>
@@ -1180,133 +1206,8 @@ export default function FeedPage() {
       )}
 
       {/* Post Detail Modal - Fullscreen */}
-      {viewingPost && (
-        <div className="fixed inset-0 z-[100] bg-slate-900 flex flex-col overflow-hidden">
-          {/* Header with Back Button */}
-          <div className="flex items-center gap-3 px-3 py-3 border-b border-slate-700 bg-slate-800/95 backdrop-blur-sm flex-shrink-0">
-            <button
-              onClick={() => setViewingPost(null)}
-              className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
-            >
-              <IoArrowBackOutline className="w-5 h-5 text-white" />
-            </button>
-            <h2 className="text-base font-bold text-white">Post</h2>
-          </div>
-            
-          {/* Content - Fullscreen Scrollable */}
-          <div 
-            className="flex-1 overflow-y-auto overscroll-contain"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-          >
-            <div className="flex flex-col md:flex-row md:h-full">
-              {/* Image Section */}
-              {viewingPost.images && viewingPost.images.length > 0 && (
-                <div className="md:w-2/3 bg-black flex items-center justify-center relative">
-                  <div className="relative w-full h-[40vh] sm:h-[50vh] md:aspect-auto md:h-[90vh]">
-                    <Image
-                      src={viewingPost.images[0]}
-                      alt="Post image"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  {viewingPost.images.length > 1 && (
-                    <div className="absolute bottom-2 sm:bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1 sm:gap-1.5">
-                      {viewingPost.images.map((_, idx) => (
-                        <div key={idx} className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-white/50" />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Content Section */}
-              <div className="md:w-1/3 flex flex-col max-h-[45vh] sm:max-h-[50vh] md:max-h-[90vh]">
-                {/* User Info */}
-                <div className="p-3 sm:p-4 border-b border-gray-700">
-                  <Link href={`/user/${viewingPost.user.id}`} className="flex items-center gap-2 sm:gap-3 hover:opacity-80">
-                    {viewingPost.user.avatar ? (
-                      <Image 
-                        src={viewingPost.user.avatar} 
-                        alt={viewingPost.user.username} 
-                        width={36} 
-                        height={36} 
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                        <span className="text-white text-sm font-semibold">
-                          {viewingPost.user.firstName[0]}{viewingPost.user.lastName[0]}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
-                        <p className="text-white font-medium text-sm sm:text-base truncate">{viewingPost.user.firstName} {viewingPost.user.lastName}</p>
-                        {(viewingPost.user as any)?.verificationBadge?.status === 'active' && (
-                          <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                      <p className="text-gray-400 text-xs sm:text-sm truncate">@{viewingPost.user.username}</p>
-                    </div>
-                  </Link>
-                </div>
-                
-                {/* Description */}
-                <div className="flex-1 overflow-y-auto p-3 sm:p-4">
-                  <p className="text-gray-300 text-xs sm:text-sm whitespace-pre-wrap">{viewingPost.description}</p>
-                  <p className="text-gray-500 text-[10px] sm:text-xs mt-2 sm:mt-3">
-                    {new Date(viewingPost.createdAt).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                </div>
-                
-                {/* Actions */}
-                <div className="p-3 sm:p-4 border-t border-gray-700">
-                  <div className="flex items-center justify-around">
-                    <button
-                      onClick={() => {
-                        handleLike(viewingPost.id);
-                        setViewingPost({...viewingPost, isLiked: !viewingPost.isLiked});
-                      }}
-                      className="flex flex-col items-center gap-0.5 sm:gap-1 text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      {viewingPost.isLiked ? (
-                        <IoHeart className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
-                      ) : (
-                        <IoHeartOutline className="w-5 h-5 sm:w-6 sm:h-6" />
-                      )}
-                      <span className="text-[10px] sm:text-xs">{viewingPost._count.likes}</span>
-                    </button>
-                    <button className="flex flex-col items-center gap-0.5 sm:gap-1 text-gray-400 hover:text-blue-500 transition-colors">
-                      <IoChatbubbleOutline className="w-5 h-5 sm:w-6 sm:h-6" />
-                      <span className="text-[10px] sm:text-xs">{viewingPost._count.comments}</span>
-                    </button>
-                    <button 
-                      onClick={() => {
-                        handleBookmark(viewingPost.id);
-                        setViewingPost({...viewingPost, isBookmarked: !viewingPost.isBookmarked});
-                      }}
-                      className="flex flex-col items-center gap-0.5 sm:gap-1 text-gray-400 hover:text-yellow-500 transition-colors"
-                    >
-                      {viewingPost.isBookmarked ? (
-                        <IoBookmark className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-500" />
-                      ) : (
-                        <IoBookmarkOutline className="w-5 h-5 sm:w-6 sm:h-6" />
-                      )}
-                      <span className="text-[10px] sm:text-xs">Save</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {viewingPostId && (
+        <PostModal postId={viewingPostId} onClose={() => setViewingPostId(null)} />
       )}
 
       {/* Image Overlay Modal (for backward compatibility) */}
@@ -1333,6 +1234,14 @@ export default function FeedPage() {
             />
           </div>
         </div>
+      )}
+
+      {/* Share Post Modal */}
+      {sharingPostId && (
+        <SharePostModal 
+          postId={sharingPostId} 
+          onClose={() => setSharingPostId(null)} 
+        />
       )}
     </AppShell>
   );

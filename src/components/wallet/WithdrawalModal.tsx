@@ -548,35 +548,44 @@ export default function WithdrawalModal({ isOpen, onClose, balance, onSuccess }:
             />
           </div>
 
-          {/* Account Name - Well-spaced */}
+          {/* Account Name - Handles long names */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
               <IoPersonOutline className="inline w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
               Account Name
             </label>
             <div className="relative">
-              <input
-                type="text"
-                value={formData.accountName}
-                readOnly
-                placeholder={resolvingAccount ? "Verifying account..." : "Account name will appear here"}
-                className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base border rounded-lg ${
+              {formData.accountName ? (
+                <div className={`w-full px-3 py-2.5 sm:px-4 sm:py-3 text-xs xs:text-sm sm:text-base border rounded-lg pr-10 ${
                   accountResolved 
                     ? 'border-green-300 bg-green-50 text-green-800' 
                     : 'border-gray-300 bg-gray-50 text-gray-700'
-                } placeholder-gray-500`}
-              />
+                } break-words leading-tight min-h-[42px] sm:min-h-[48px] flex items-center`}>
+                  {formData.accountName}
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value=""
+                  readOnly
+                  placeholder={resolvingAccount ? "Verifying account..." : "Account name will appear here"}
+                  className="w-full px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base border border-gray-300 bg-gray-50 text-gray-700 rounded-lg placeholder-gray-500"
+                />
+              )}
               {resolvingAccount && (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <div className="animate-spin rounded-full w-4 h-4 sm:w-5 sm:h-5 border-b-2 border-blue-500"></div>
                 </div>
               )}
               {accountResolved && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="absolute right-3 top-3 sm:top-1/2 sm:transform sm:-translate-y-1/2">
                   <IoCheckmarkCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
                 </div>
               )}
             </div>
+            {formData.accountName && formData.accountName.length > 25 && (
+              <p className="text-xs text-gray-500 mt-1">Long names are supported</p>
+            )}
           </div>
 
           {/* Error Message */}

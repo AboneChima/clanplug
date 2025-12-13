@@ -25,6 +25,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
 import VerificationModal from '@/components/VerificationModal';
+import PostModal from '@/components/PostModal';
 
 interface UserStats {
   posts: number;
@@ -90,6 +91,7 @@ export default function ProfilePage() {
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'active' | 'expired'>('none');
   const [verificationDays, setVerificationDays] = useState(0);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [viewingPostId, setViewingPostId] = useState<string | null>(null);
 
   // Update avatar preview, bio, and form when user data is available
   useEffect(() => {
@@ -404,9 +406,9 @@ export default function ProfilePage() {
                     });
                     setShowEditModal(true);
                   }}
-                  className="mt-8 xs:mt-9 sm:mt-10 md:mt-12 px-3 xs:px-3.5 sm:px-4 py-1.5 xs:py-1.5 sm:py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs xs:text-sm rounded-md xs:rounded-lg font-medium transition-colors border border-slate-600 flex items-center gap-1.5 xs:gap-2"
+                  className="mt-8 xs:mt-9 sm:mt-10 md:mt-12 max-[360px]:px-2 max-[360px]:py-0.5 px-2.5 xs:px-3 sm:px-4 py-1 xs:py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white max-[360px]:text-[9px] text-[10px] xs:text-xs sm:text-sm font-semibold rounded-md xs:rounded-lg sm:rounded-xl transition-all flex items-center gap-0.5 xs:gap-1 shadow-lg shadow-blue-500/20"
                 >
-                  <IoCreateOutline className="w-3.5 h-3.5 xs:w-4 xs:h-4" />
+                  <IoCreateOutline className="max-[360px]:w-2.5 max-[360px]:h-2.5 w-3 h-3 xs:w-3.5 xs:h-3.5" />
                   <span className="hidden xs:inline">Edit Profile</span>
                   <span className="xs:hidden">Edit</span>
                 </button>
@@ -594,37 +596,51 @@ export default function ProfilePage() {
                               <span className="ml-auto text-[10px]">{new Date(post.createdAt).toLocaleDateString()}</span>
                             </div>
                           </div>
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation(); // Prevent navigation when deleting
-                              if (confirm('Are you sure you want to delete this post?')) {
-                                try {
-                                  const token = localStorage.getItem('accessToken');
-                                  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${post.id}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                      'Authorization': `Bearer ${token}`,
-                                    },
-                                  });
-                                  
-                                  if (response.ok) {
-                                    setRecentPosts(recentPosts.filter(p => p.id !== post.id));
-                                    setStats(prev => ({ ...prev, posts: prev.posts - 1 }));
-                                    showToast('Post deleted successfully', 'success');
-                                  } else {
-                                    showToast('Failed to delete post', 'error');
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {/* View button for social posts */}
+                            {post.type === 'SOCIAL_POST' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setViewingPostId(post.id);
+                                }}
+                                className="max-[360px]:px-1.5 max-[360px]:py-0.5 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white max-[360px]:text-[9px] text-[10px] font-medium rounded transition-colors opacity-0 group-hover:opacity-100"
+                              >
+                                View
+                              </button>
+                            )}
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation(); // Prevent navigation when deleting
+                                if (confirm('Are you sure you want to delete this post?')) {
+                                  try {
+                                    const token = localStorage.getItem('accessToken');
+                                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${post.id}`, {
+                                      method: 'DELETE',
+                                      headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                      },
+                                    });
+                                    
+                                    if (response.ok) {
+                                      setRecentPosts(recentPosts.filter(p => p.id !== post.id));
+                                      setStats(prev => ({ ...prev, posts: prev.posts - 1 }));
+                                      showToast('Post deleted successfully', 'success');
+                                    } else {
+                                      showToast('Failed to delete post', 'error');
+                                    }
+                                  } catch (error: any) {
+                                    showToast(error.message || 'Failed to delete post', 'error');
                                   }
-                                } catch (error: any) {
-                                  showToast(error.message || 'Failed to delete post', 'error');
                                 }
-                              }
-                            }}
-                            className="p-1 hover:bg-red-500/20 rounded transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
-                          >
-                            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                              }}
+                              className="p-1 hover:bg-red-500/20 rounded transition-colors opacity-0 group-hover:opacity-100"
+                            >
+                              <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -979,6 +995,11 @@ export default function ProfilePage() {
         }}
         isRenewal={verificationStatus === 'expired'}
       />
+
+      {/* Post Modal */}
+      {viewingPostId && (
+        <PostModal postId={viewingPostId} onClose={() => setViewingPostId(null)} />
+      )}
 
     </AppShell>
   );

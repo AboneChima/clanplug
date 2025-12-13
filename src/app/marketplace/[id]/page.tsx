@@ -18,6 +18,7 @@ import {
   IoWarningOutline,
   IoCheckmarkCircleOutline,
   IoChatbubbleOutline,
+  IoCloseOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -70,6 +71,7 @@ export default function MarketplaceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showEscrowModal, setShowEscrowModal] = useState(false);
   const [markingSold, setMarkingSold] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (params.id) {
@@ -104,7 +106,7 @@ export default function MarketplaceDetailPage() {
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!user) {
       showToast('Please login to purchase', 'error');
       router.push('/login');
@@ -116,15 +118,47 @@ export default function MarketplaceDetailPage() {
       return;
     }
 
-    setShowEscrowModal(true);
-  };
+    if (!post) return;
 
-  const handleCreateEscrow = async () => {
-    if (!post || !user) return;
-
+    // Check if user already has a pending purchase request for this listing
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/escrow`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchase-requests`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const requests = data.data || [];
+        
+        // Check if there's already a pending request for this post
+        const existingRequest = requests.find((request: any) => 
+          request.postId === post?.id && 
+          request.buyerId === user.id &&
+          request.status === 'PENDING_SELLER_RESPONSE'
+        );
+
+        if (existingRequest) {
+          showToast('You already have a pending request for this listing. Check your orders page.', 'info');
+          router.push('/orders');
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking existing requests:', error);
+    }
+
+    // Confirm with user
+    if (!confirm(`Send purchase request to ${post.user.firstName} ${post.user.lastName} for ${post.price} ${post.currency}?\n\nThe seller will have 5 minutes to respond. No money will be deducted until they accept.`)) {
+      return;
+    }
+
+    // Create purchase request
+    try {
+      const token = localStorage.getItem('accessToken');
+      const requestResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchase-requests`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -135,22 +169,93 @@ export default function MarketplaceDetailPage() {
           postId: post.id,
           amount: post.price,
           currency: post.currency || 'NGN',
-          title: `Purchase: ${post.title}`,
-          description: post.description,
+        }),
+      });
+
+      if (requestResponse.ok) {
+        showToast('✅ Purchase request sent! Seller has 5 minutes to respond.', 'success');
+        router.push('/orders');
+      } else {
+        const error = await requestResponse.json();
+        showToast(error.message || 'Failed to send purchase request', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating purchase request:', error);
+      showToast('Error sending purchase request', 'error');
+    }
+  };
+
+  const handleCreatePurchaseRequest = async () => {
+    if (!post || !user) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchase-requests`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sellerId: post.userId,
+          postId: post.id,
+          amount: post.price,
+          currency: post.currency || 'NGN',
+        }),
+      });
+
+      if (response.ok) {
+        showToast('✅ Purchase request sent! Seller has 5 minutes to respond.', 'success');
+        setShowEscrowModal(false);
+        router.push('/orders');
+      } else {
+        const error = await response.json();
+        console.error('Purchase request error:', error);
+        showToast(error.message || 'Failed to send purchase request', 'error');
+      }
+    } catch (error) {
+      console.error('Error creating purchase request:', error);
+      showToast('Error sending purchase request', 'error');
+    }
+  };
+
+  const handleMessage = async () => {
+    if (!post || !user) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      
+      // Create or get existing chat
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'DIRECT',
+          participants: [post.userId],
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        showToast('Escrow created! Redirecting to payment...', 'success');
-        router.push(`/escrow/${data.data.id}`);
+        const chatData = data.data || data;
+        const chatId = chatData?.id;
+        
+        if (chatId) {
+          router.push(`/chat?id=${chatId}`);
+        } else {
+          showToast('Failed to create chat', 'error');
+        }
       } else {
-        const error = await response.json();
-        showToast(error.message || 'Failed to create escrow', 'error');
+        const errorData = await response.json();
+        showToast(errorData.message || 'Failed to open chat', 'error');
       }
     } catch (error) {
-      console.error('Error creating escrow:', error);
-      showToast('Error creating escrow', 'error');
+      console.error('Error creating chat:', error);
+      showToast('Failed to open chat', 'error');
     }
   };
 
@@ -256,7 +361,12 @@ export default function MarketplaceDetailPage() {
             <div className="lg:col-span-2 space-y-2 sm:space-y-4">
               {/* Video/Image - Compact */}
               <div className="bg-slate-800/50 rounded-md sm:rounded-lg overflow-hidden border border-slate-700 relative">
-                <div className="relative aspect-video bg-black">
+                {/* Check if it's a social media listing for portrait ratio */}
+                <div className={`relative bg-black ${
+                  post.gameTitle?.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i) 
+                    ? 'aspect-[3/4]' 
+                    : 'aspect-video'
+                }`}>
                   {post.videos && post.videos.length > 0 ? (
                     <video
                       src={post.videos[0]}
@@ -266,11 +376,23 @@ export default function MarketplaceDetailPage() {
                       preload="metadata"
                     />
                   ) : post.images && post.images.length > 0 ? (
-                    <img
-                      src={post.images[0]}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                    />
+                    <div 
+                      className="relative w-full h-full cursor-pointer group"
+                      onClick={() => setSelectedImage(post.images![0])}
+                    >
+                      <img
+                        src={post.images[0]}
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center gap-2">
+                          <IoEyeOutline className="w-12 h-12 text-white" />
+                          <span className="text-white text-sm font-medium">Click to view full size</span>
+                        </div>
+                      </div>
+                    </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <IoGameControllerOutline className="w-16 h-16 sm:w-24 sm:h-24 text-gray-600" />
@@ -279,7 +401,7 @@ export default function MarketplaceDetailPage() {
                   
                   {/* Sold Overlay */}
                   {post.status === 'SOLD' && (
-                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center pointer-events-none">
                       <div className="text-center">
                         <div className="text-4xl sm:text-6xl font-bold text-red-500 mb-2 line-through decoration-4">
                           SOLD
@@ -532,10 +654,34 @@ export default function MarketplaceDetailPage() {
         {/* Escrow Confirmation Modal */}
         {showEscrowModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md">
+            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
               <h2 className="text-xl font-semibold text-white mb-4">Confirm Purchase</h2>
               
               <div className="space-y-4 mb-6">
+                {/* Seller Info */}
+                <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+                  <p className="text-gray-400 text-sm mb-2">Seller</p>
+                  <div className="flex items-center gap-3">
+                    {post.user.avatar ? (
+                      <img 
+                        src={post.user.avatar} 
+                        alt={post.user.username}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                        <span className="text-white text-sm font-semibold">
+                          {post.user.firstName[0]}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-white font-medium">{post.user.firstName} {post.user.lastName}</p>
+                      <p className="text-gray-400 text-sm">@{post.user.username}</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="p-4 bg-slate-900/50 rounded-lg">
                   <p className="text-gray-400 text-sm mb-1">Item</p>
                   <p className="text-white font-medium">{post.title}</p>
@@ -546,6 +692,28 @@ export default function MarketplaceDetailPage() {
                   <p className="text-white font-medium text-lg">
                     {formatPrice(post.price, post.currency)}
                   </p>
+                </div>
+
+                {/* Warning */}
+                <div className="p-4 bg-yellow-600/10 border border-yellow-600/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <IoWarningOutline className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-yellow-400 font-medium text-sm mb-1">⚠️ Important</p>
+                      <p className="text-gray-400 text-xs mb-2">
+                        Money will be deducted immediately. We recommend contacting the seller first to confirm they're available.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setShowEscrowModal(false);
+                          handleMessage();
+                        }}
+                        className="text-blue-400 hover:text-blue-300 text-xs font-medium underline"
+                      >
+                        Message seller first →
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="p-4 bg-blue-600/10 border border-blue-600/30 rounded-lg">
@@ -575,6 +743,29 @@ export default function MarketplaceDetailPage() {
                   Proceed to Payment
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Image Modal - Adjusted for menus */}
+        {selectedImage && (
+          <div 
+            className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-[60]"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-20 right-4 p-3 bg-slate-800/90 hover:bg-slate-700 rounded-full text-white transition-colors shadow-lg z-10"
+            >
+              <IoCloseOutline className="w-6 h-6" />
+            </button>
+            <div className="relative w-full h-full flex items-center justify-center px-4 py-24">
+              <img
+                src={selectedImage}
+                alt="Full size"
+                className="max-w-full max-h-full object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
             </div>
           </div>
         )}

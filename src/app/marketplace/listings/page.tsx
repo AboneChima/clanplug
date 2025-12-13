@@ -58,6 +58,7 @@ function ListingsContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'saved'>('all');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const gameName = searchParams.get('game') || '';
 
@@ -311,10 +312,10 @@ function ListingsContent() {
               </button>
             </div>
           ) : (
-            <div className={`grid gap-2 xs:gap-2.5 sm:gap-4 ${
+            <div className={`grid gap-3 ${
               gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i)
-                ? 'grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // Portrait for social media - 2 cols on mobile
-                : 'grid-cols-1 xs:grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' // Landscape for games - 1 col on mobile
+                ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // Portrait for social media - 2 cols on mobile
+                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' // Landscape for games - 1 col on mobile
             }`}>
               {filteredPosts.map((post) => {
                 const isSocialMedia = gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i);
@@ -326,7 +327,15 @@ function ListingsContent() {
                   }`}
                 >
                   {/* Video/Image Preview */}
-                  <div className={`relative bg-slate-900 ${isSocialMedia ? 'aspect-[3/4]' : 'aspect-video'}`}>
+                  <div 
+                    className={`relative bg-slate-900 ${isSocialMedia ? 'aspect-[3/4]' : 'aspect-video'} ${post.images && post.images.length > 0 ? 'cursor-pointer' : ''}`}
+                    onClick={(e) => {
+                      if (post.images && post.images.length > 0) {
+                        e.stopPropagation();
+                        setSelectedImage(post.images[0]);
+                      }
+                    }}
+                  >
                     {post.videos && post.videos.length > 0 ? (
                       <video
                         src={post.videos[0]}
@@ -334,13 +343,20 @@ function ListingsContent() {
                         controls
                         playsInline
                         preload="metadata"
+                        onClick={(e) => e.stopPropagation()}
                       />
                     ) : post.images && post.images.length > 0 ? (
-                      <img
-                        src={post.images[0]}
-                        alt={post.title}
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="relative w-full h-full group">
+                        <img
+                          src={post.images[0]}
+                          alt={post.title}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Hover overlay for image preview */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                          <IoEyeOutline className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
                         <IoGameControllerOutline className="w-16 h-16 text-gray-600" />
@@ -371,10 +387,10 @@ function ListingsContent() {
                       )}
                     </button>
                     
-                    {/* Price Badge - Ultra Compact */}
+                    {/* Price Badge - Top Right Corner */}
                     {post.price && (
-                      <div className="absolute top-1.5 xs:top-2 sm:top-3 right-1.5 xs:right-2 sm:right-3 px-1.5 xs:px-2 sm:px-3 py-0.5 xs:py-1 sm:py-1.5 bg-black/80 backdrop-blur-sm rounded-md xs:rounded-lg border border-green-500/30">
-                        <span className="text-green-400 font-bold text-[10px] xs:text-xs sm:text-sm">
+                      <div className="absolute top-1.5 xs:top-2 sm:top-3 right-1.5 xs:right-2 sm:right-3 px-1.5 xs:px-2 py-0.5 xs:py-1 bg-black/80 backdrop-blur-sm rounded-md xs:rounded-lg border border-green-500/40 z-10">
+                        <span className="text-green-400 font-bold text-[10px] xs:text-xs">
                           {formatPrice(post.price, post.currency)}
                         </span>
                       </div>
@@ -448,13 +464,14 @@ function ListingsContent() {
                       </span>
                     </div>
 
-                    {/* Action Buttons - Compact */}
+                    {/* Action Buttons - Responsive text */}
                     <div className="flex gap-1.5">
                       <button 
                         onClick={() => router.push(`/marketplace/${post.id}`)}
                         className="flex-1 py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1"
                       >
-                        <span>View</span>
+                        <span className="hidden xs:inline">View Details</span>
+                        <span className="xs:hidden">View</span>
                         <IoCreateOutline className="w-3 h-3 sm:w-4 sm:h-4" />
                       </button>
                       
@@ -462,10 +479,10 @@ function ListingsContent() {
                       {post.userId === user?.id && (
                         <button 
                           onClick={() => deletePost(post.id)}
-                          className="px-2 py-1.5 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
+                          className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
                           title="Delete listing"
                         >
-                          <IoTrashOutline className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <IoTrashOutline className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                       )}
                     </div>
@@ -477,6 +494,29 @@ function ListingsContent() {
           )}
         </div>
       </div>
+
+      {/* Image Modal - Adjusted for menus */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-[60]"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-20 right-4 p-3 bg-slate-800/90 hover:bg-slate-700 rounded-full text-white transition-colors shadow-lg z-10"
+          >
+            <IoCloseOutline className="w-6 h-6" />
+          </button>
+          <div className="relative w-full h-full flex items-center justify-center px-4 py-24">
+            <img
+              src={selectedImage}
+              alt="Full size"
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

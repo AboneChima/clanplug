@@ -110,12 +110,22 @@ export default function InternalTransfer() {
         setRecipient('');
         setDescription('');
         setSuccess(`Successfully sent ${formatCurrency(parseFloat(amount), selectedCurrency)} to ${recipient}`);
-        loadTransactions();
-        loadWallets(); // Refresh balances
+        
+        // Refresh both transactions and balances immediately
+        await Promise.all([
+          loadTransactions(),
+          loadWallets()
+        ]);
+        
+        // Also trigger parent wallet page refresh if available
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('wallet-updated'));
+        }
       }
     } catch (error: any) {
       console.error('Failed to send transfer:', error);
-      setError(error.response?.data?.message || 'Failed to send transfer. Please try again.');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to send transfer. Please try again.';
+      setError(errorMessage);
     } finally {
       setSending(false);
     }
