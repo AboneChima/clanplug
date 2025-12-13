@@ -48,10 +48,13 @@ model User {
   messages          ChatMessage[]
   chatParticipants  ChatParticipant[]
   comments          Comment[]
-  escrowMessages    EscrowMessage[]   @relation("EscrowMessages")
-  escrowsAsBuyer    Escrow[]          @relation("EscrowBuyer")
-  escrowsAsSeller   Escrow[]          @relation("EscrowSeller")
-  follows           Follow[]          @relation("UserFollows")
+  escrowMessages       EscrowMessage[]      @relation("EscrowMessages")
+  escrowsAsBuyer       Escrow[]             @relation("EscrowBuyer")
+  escrowsAsSeller      Escrow[]             @relation("EscrowSeller")
+  purchaseRequestsAsBuyer  PurchaseRequest[] @relation("BuyerRequests")
+  purchaseRequestsAsSeller PurchaseRequest[] @relation("SellerRequests")
+  fcmTokens            String[]
+  follows              Follow[]             @relation("UserFollows")
   followers         Follow[]          @relation("UserFollowers")
   kycVerifications  KYCVerification[]
   likes             Like[]
@@ -195,6 +198,31 @@ model EscrowMessage {
   @@map("escrow_messages")
 }
 
+model PurchaseRequest {
+  id          String                @id @default(cuid())
+  buyerId     String
+  sellerId    String
+  postId      String
+  amount      Decimal               @db.Decimal(10, 2)
+  currency    Currency              @default(NGN)
+  status      PurchaseRequestStatus @default(PENDING_SELLER_RESPONSE)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  rejectedAt  DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  buyer       User                  @relation("BuyerRequests", fields: [buyerId], references: [id])
+  seller      User                  @relation("SellerRequests", fields: [sellerId], references: [id])
+  post        Post                  @relation(fields: [postId], references: [id])
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("purchase_requests")
+}
+
 model Post {
   id             String     @id @default(cuid())
   userId         String
@@ -230,13 +258,14 @@ model Post {
   hasRareItems   Boolean    @default(false)
   isVerified     Boolean    @default(false)
   listingId      String?    // Link to marketplace listing
-  comments       Comment[]
-  escrows        Escrow[]
-  likes          Like[]
-  bookmarks      Bookmark[]
-  game           Game?      @relation(fields: [gameId], references: [id])
-  user           User       @relation(fields: [userId], references: [id])
-  reports        Report[]
+  comments          Comment[]
+  escrows           Escrow[]
+  purchaseRequests  PurchaseRequest[]
+  likes             Like[]
+  bookmarks         Bookmark[]
+  game              Game?      @relation(fields: [gameId], references: [id])
+  user              User       @relation(fields: [userId], references: [id])
+  reports           Report[]
 
   @@map("posts")
 }
@@ -516,6 +545,14 @@ enum EscrowStatus {
   RELEASED
   CANCELLED
   REFUNDED
+}
+
+enum PurchaseRequestStatus {
+  PENDING_SELLER_RESPONSE
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
 }
 
 enum Currency {
