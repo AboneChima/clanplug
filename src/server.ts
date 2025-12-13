@@ -10,6 +10,7 @@ import { connectRedis } from './config/redis';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { startTransactionCleanupJob, stopTransactionCleanupJob } from './jobs/transaction-cleanup.job';
+import { startExpirationJob } from './jobs/expireRequests';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import walletRoutes from './routes/wallet.routes';
@@ -165,6 +166,7 @@ app.use('/api/admin-refund', adminRefundRoutes);
 app.use('/api/refund', refundRoutes);
 app.use('/api/debug', debugRoutes);
 app.use('/api/ip', ipRoutes);
+app.use('/api/purchase-requests', require('./routes/purchaseRequest.routes').default);
 
 // Proxy middleware for frontend - only in development
 if (config.NODE_ENV === 'development' && config.FRONTEND_URL) {
@@ -224,6 +226,14 @@ const startServer = async () => {
         console.log('✅ Transaction cleanup job started');
       } catch (error) {
         console.warn('⚠️ Failed to start cleanup job:', error);
+      }
+
+      // Start purchase request expiration job
+      try {
+        startExpirationJob();
+        console.log('✅ Purchase request expiration job started');
+      } catch (error) {
+        console.warn('⚠️ Failed to start expiration job:', error);
       }
     });
 

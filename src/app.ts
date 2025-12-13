@@ -8,6 +8,7 @@ import config from './config/config';
 import prisma from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
+import { initializeFirebase } from './services/firebase.service';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import userDashboardRoutes from './routes/user-dashboard.routes';
@@ -28,6 +29,9 @@ import adminKycRoutes from './routes/admin-kyc.routes';
 import verificationRoutes from './routes/verification.routes';
 
 const app = express();
+
+// Initialize Firebase for push notifications
+initializeFirebase();
 
 // Trust proxy for ngrok and other reverse proxies
 app.set('trust proxy', true);
