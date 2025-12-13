@@ -88,10 +88,7 @@ router.delete('/games/:gameId', authenticate, adminOnly, asyncHandler(adminContr
 // PUT /api/admin/games/:gameId/status - Update game status
 router.put('/games/:gameId/status', authenticate, adminOnly, asyncHandler(adminController.updateGameStatus.bind(adminController)));
 
-export default router;
-
-// 
-POST /api/admin/escrow/refund-all - Emergency refund all escrows
+// POST /api/admin/escrow/refund-all - Emergency refund all escrows
 router.post('/escrow/refund-all', authenticate, adminOnly, asyncHandler(async (req, res) => {
   const { prisma } = await import('../config/database');
   
@@ -212,3 +209,6 @@ router.post('/escrow/refund-all', authenticate, adminOnly, asyncHandler(async (r
     });
   }
 }));
+
+
+export default router;
