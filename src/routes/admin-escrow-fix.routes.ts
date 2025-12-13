@@ -67,7 +67,7 @@ router.post('/refund-all',
               data: {
                 userId: escrow.buyerId,
                 walletId: wallet.id,
-                type: 'ESCROW_REFUND',
+                type: 'REFUND',
                 status: 'COMPLETED',
                 amount: totalAmount,
                 fee: 0,
@@ -82,9 +82,7 @@ router.post('/refund-all',
             await tx.escrow.update({
               where: { id: escrow.id },
               data: {
-                status: 'CANCELLED',
-                cancelledAt: new Date(),
-                cancelReason: 'Admin refund - System fix'
+                status: 'CANCELLED'
               }
             });
 
