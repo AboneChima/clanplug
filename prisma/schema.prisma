@@ -4,8 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
 }
 
 model User {
@@ -137,6 +137,12 @@ model Transaction {
   user            User              @relation(fields: [userId], references: [id])
   wallet          Wallet            @relation(fields: [walletId], references: [id])
 
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([reference])
+  @@index([userId, status])
   @@map("transactions")
 }
 
@@ -179,6 +185,13 @@ model Escrow {
   seller        User            @relation("EscrowSeller", fields: [sellerId], references: [id])
   purchase      Purchase?
 
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([postId])
+  @@index([buyerId, status])
+  @@index([sellerId, status])
   @@map("escrows")
 }
 
@@ -267,6 +280,14 @@ model Post {
   user              User       @relation(fields: [userId], references: [id])
   reports           Report[]
 
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@index([gameId])
+  @@index([category])
+  @@index([userId, status])
+  @@index([status, createdAt])
   @@map("posts")
 }
 
@@ -286,6 +307,10 @@ model Comment {
   user      User      @relation(fields: [userId], references: [id])
 
   @@map("comments")
+  @@index([postId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([createdAt])
 }
 
 model Like {
@@ -297,6 +322,8 @@ model Like {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId])
   @@map("likes")
 }
 
@@ -462,6 +489,10 @@ model Notification {
   createdAt DateTime         @default(now())
   user      User             @relation(fields: [userId], references: [id])
 
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@index([userId, isRead])
   @@map("notifications")
 }
 
