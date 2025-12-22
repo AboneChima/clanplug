@@ -4,29 +4,31 @@ import { prisma } from '../config/database';
 const router = Router();
 
 // Admin key middleware
-const adminAuth = (req: Request, res: Response, next: any) => {
+const adminAuth = (req: Request, res: Response, next: any): void => {
   const adminKey = req.headers['x-admin-key'] || req.query.adminKey;
   
   if (adminKey !== process.env.ADMIN_ACCESS_KEY) {
-    return res.status(403).json({
+    res.status(403).json({
       success: false,
       message: 'Unauthorized'
     });
+    return;
   }
   
   next();
 };
 
 // POST /api/admin-verify-badge - Verify user with badge
-router.post('/', adminAuth, async (req: Request, res: Response) => {
+router.post('/', adminAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, years = 5 } = req.body;
 
     if (!email) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Email is required'
       });
+      return;
     }
 
     // Find user
@@ -35,10 +37,11 @@ router.post('/', adminAuth, async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: 'User not found'
       });
+      return;
     }
 
     // Calculate expiry date
