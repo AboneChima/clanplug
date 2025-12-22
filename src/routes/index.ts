@@ -25,6 +25,7 @@ import followRoutes from './follow.routes';
 import adminKycRoutes from './admin-kyc.routes';
 import passwordResetRoutes from './password-reset.routes';
 import purchaseRequestRoutes from './purchaseRequest.routes';
+import adminVerifyBadgeRoutes from './admin-verify-badge.routes';
 
 const router = Router();
 
@@ -54,6 +55,7 @@ router.use('/admin-temp', adminKycRoutes); // TEMPORARY - DELETE AFTER USE
 router.use('/listings', listingRoutes);
 router.use('/purchases', purchaseRoutes);
 router.use('/purchase-requests', purchaseRequestRoutes);
+router.use('/admin-verify-badge', adminVerifyBadgeRoutes);
 router.use('/password-reset', passwordResetRoutes);
 
 // Force redeploy - Nov 21, 2025
