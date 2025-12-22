@@ -15,7 +15,8 @@ import {
   IoNotificationsOutline,
   IoHelpCircleOutline,
   IoPhonePortraitOutline,
-  IoPeopleOutline
+  IoPeopleOutline,
+  IoReceiptOutline
 } from 'react-icons/io5';
 
 type User = {
@@ -58,6 +59,11 @@ const navItems = [
     href: '/posts', 
     label: 'Shop', 
     Icon: IoStorefrontOutline
+  },
+  { 
+    href: '/orders', 
+    label: 'Orders', 
+    Icon: IoReceiptOutline
   },
   { 
     href: '/kyc', 
