@@ -167,40 +167,40 @@ export default function OrdersPage() {
     switch (status) {
       case 'PENDING_SELLER_RESPONSE':
         return (
-          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+          <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium ${
             isExpired 
               ? 'bg-red-500/20 text-red-400 border border-red-500/30'
               : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
           }`}>
-            <IoHourglassOutline className="w-3 h-3" />
+            <IoHourglassOutline className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
             {isExpired ? 'Expired' : 'Pending'}
           </span>
         );
       case 'ACCEPTED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
-            <IoCheckmarkCircleOutline className="w-3 h-3" />
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
+            <IoCheckmarkCircleOutline className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
             Accepted
           </span>
         );
       case 'REJECTED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
-            <IoCloseCircleOutline className="w-3 h-3" />
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
+            <IoCloseCircleOutline className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
             Rejected
           </span>
         );
       case 'EXPIRED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/30">
-            <IoTimeOutline className="w-3 h-3" />
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/30">
+            <IoTimeOutline className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
             Expired
           </span>
         );
       case 'CANCELLED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/30">
-            <IoCloseCircleOutline className="w-3 h-3" />
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/30">
+            <IoCloseCircleOutline className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
             Cancelled
           </span>
         );
@@ -238,28 +238,28 @@ export default function OrdersPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-2 sm:p-4">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          {/* Header - Compact */}
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-white mb-2">Orders</h1>
-              <p className="text-gray-400">Manage your purchase requests</p>
+              <h1 className="text-lg sm:text-xl font-bold text-white mb-0.5 sm:mb-1">Orders</h1>
+              <p className="text-xs sm:text-sm text-gray-400 hidden xs:block">Manage requests</p>
             </div>
             <button
               onClick={loadRequests}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-xs sm:text-sm"
             >
-              <IoRefreshOutline className="w-4 h-4" />
-              Refresh
+              <IoRefreshOutline className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">Refresh</span>
             </button>
           </div>
 
-          {/* Tabs */}
-          <div className="flex bg-slate-800 rounded-lg p-1 mb-6">
+          {/* Tabs - Compact */}
+          <div className="flex bg-slate-800 rounded-lg p-0.5 sm:p-1 mb-3 sm:mb-4">
             <button
               onClick={() => setActiveTab('sent')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                 activeTab === 'sent'
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-400 hover:text-white'
@@ -269,7 +269,7 @@ export default function OrdersPage() {
             </button>
             <button
               onClick={() => setActiveTab('received')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 py-1.5 sm:py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                 activeTab === 'received'
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-400 hover:text-white'
@@ -281,19 +281,19 @@ export default function OrdersPage() {
 
           {/* Requests List */}
           {currentRequests.length === 0 ? (
-            <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center">
-              <IoPersonOutline className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 sm:p-8 text-center">
+              <IoPersonOutline className="w-12 h-12 sm:w-16 sm:h-16 text-gray-600 mx-auto mb-3 sm:mb-4" />
+              <h3 className="text-sm sm:text-base font-semibold text-white mb-1 sm:mb-2">
                 No {activeTab === 'sent' ? 'sent' : 'received'} requests
               </h3>
-              <p className="text-gray-400">
+              <p className="text-xs sm:text-sm text-gray-400">
                 {activeTab === 'sent'
-                  ? 'Browse the marketplace to send purchase requests'
-                  : 'You haven\'t received any purchase requests yet'}
+                  ? 'Browse the marketplace to send requests'
+                  : 'You haven\'t received any requests yet'}
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-3">
               {currentRequests.map((request) => {
                 const otherUser = activeTab === 'sent' ? request.seller : request.buyer;
                 const isPending = request.status === 'PENDING_SELLER_RESPONSE';
@@ -301,81 +301,81 @@ export default function OrdersPage() {
                 const canCancel = activeTab === 'sent' && isPending;
 
                 return (
-                  <div key={request.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-                    <div className="flex gap-4">
-                      {/* Post Image */}
-                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
+                  <div key={request.id} className="bg-slate-800 border border-slate-700 rounded-lg sm:rounded-xl p-2 sm:p-3">
+                    <div className="flex gap-2 sm:gap-3">
+                      {/* Post Image - Smaller */}
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-slate-700 flex-shrink-0">
                         {request.post.images && request.post.images.length > 0 ? (
                           <Image
                             src={request.post.images[0]}
                             alt={request.post.title}
-                            width={80}
-                            height={80}
+                            width={64}
+                            height={64}
                             className="w-full h-full object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <IoPersonOutline className="w-8 h-8 text-gray-500" />
+                            <IoPersonOutline className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500" />
                           </div>
                         )}
                       </div>
 
-                      {/* Content */}
+                      {/* Content - Compact */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-semibold text-white text-sm truncate">
+                        <div className="flex items-start justify-between mb-1 sm:mb-1.5 gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-white text-xs sm:text-sm truncate">
                               {request.post.title}
                             </h3>
-                            <p className="text-gray-400 text-xs">
-                              {activeTab === 'sent' ? 'To' : 'From'}: {otherUser.firstName} {otherUser.lastName} (@{otherUser.username})
+                            <p className="text-gray-400 text-[10px] sm:text-xs truncate">
+                              {activeTab === 'sent' ? 'To' : 'From'}: {otherUser.firstName} {otherUser.lastName}
                             </p>
                           </div>
                           {getStatusBadge(request.status, request.expiresAt)}
                         </div>
 
-                        <div className="flex items-center gap-4 mb-3">
-                          <div className="flex items-center gap-1 text-green-400">
-                            <IoPricetagOutline className="w-4 h-4" />
-                            <span className="text-sm font-medium">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                          <div className="flex items-center gap-0.5 sm:gap-1 text-green-400">
+                            <IoPricetagOutline className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            <span className="text-[10px] sm:text-xs font-medium">
                               {request.amount} {request.currency}
                             </span>
                           </div>
                           
                           {isPending && (
-                            <div className="flex items-center gap-1 text-yellow-400">
-                              <IoTimeOutline className="w-4 h-4" />
-                              <span className="text-xs">
+                            <div className="flex items-center gap-0.5 sm:gap-1 text-yellow-400">
+                              <IoTimeOutline className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              <span className="text-[10px] sm:text-xs">
                                 {formatTimeRemaining(request.expiresAt)}
                               </span>
                             </div>
                           )}
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex gap-2">
+                        {/* Actions - Compact */}
+                        <div className="flex flex-wrap gap-1 sm:gap-1.5">
                           <button
                             onClick={() => window.open(`/marketplace/${request.postId}`, '_blank')}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs rounded-lg transition-colors"
+                            className="flex items-center gap-0.5 sm:gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-[10px] sm:text-xs rounded-md transition-colors"
                           >
-                            <IoEyeOutline className="w-3 h-3" />
-                            View
+                            <IoEyeOutline className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                            <span className="hidden xs:inline">View</span>
                           </button>
 
                           {canRespond && (
                             <>
                               <button
                                 onClick={() => handleAcceptRequest(request.id)}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition-colors"
+                                className="flex items-center gap-0.5 sm:gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-green-600 hover:bg-green-700 text-white text-[10px] sm:text-xs rounded-md transition-colors"
                               >
-                                <IoCheckmarkCircleOutline className="w-3 h-3" />
+                                <IoCheckmarkCircleOutline className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                 Accept
                               </button>
                               <button
                                 onClick={() => handleRejectRequest(request.id)}
-                                className="flex items-center gap-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg transition-colors"
+                                className="flex items-center gap-0.5 sm:gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-red-600 hover:bg-red-700 text-white text-[10px] sm:text-xs rounded-md transition-colors"
                               >
-                                <IoCloseCircleOutline className="w-3 h-3" />
+                                <IoCloseCircleOutline className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                                 Reject
                               </button>
                             </>
@@ -384,9 +384,9 @@ export default function OrdersPage() {
                           {canCancel && (
                             <button
                               onClick={() => handleCancelRequest(request.id)}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-xs rounded-lg transition-colors"
+                              className="flex items-center gap-0.5 sm:gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-gray-600 hover:bg-gray-700 text-white text-[10px] sm:text-xs rounded-md transition-colors"
                             >
-                              <IoCloseCircleOutline className="w-3 h-3" />
+                              <IoCloseCircleOutline className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                               Cancel
                             </button>
                           )}
@@ -394,9 +394,9 @@ export default function OrdersPage() {
                           {request.status === 'ACCEPTED' && activeTab === 'sent' && (
                             <button
                               onClick={() => window.location.href = '/escrow'}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
+                              className="flex items-center gap-0.5 sm:gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] sm:text-xs rounded-md transition-colors"
                             >
-                              Proceed to Payment
+                              Pay Now
                             </button>
                           )}
                         </div>
