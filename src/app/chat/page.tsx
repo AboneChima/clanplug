@@ -390,7 +390,15 @@ function ChatContent() {
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <p className={`text-sm truncate flex-1 ${chat.unreadCount && chat.unreadCount > 0 ? 'text-white font-semibold' : 'text-gray-400'}`}>
-                            {getLastMessage(chat)?.content || 'Start a conversation'}
+                            {(() => {
+                              const lastMsg = getLastMessage(chat);
+                              if (!lastMsg) return 'Start a conversation';
+                              // Show "📷 Image" if message has image but no text
+                              if (lastMsg.type === 'IMAGE' && lastMsg.attachments?.length && (!lastMsg.content || !lastMsg.content.trim())) {
+                                return '📷 Image';
+                              }
+                              return lastMsg.content || '📷 Image';
+                            })()}
                           </p>
                           {(chat.unreadCount ?? 0) > 0 && (
                             <span className="bg-emerald-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1.5 flex-shrink-0">
@@ -697,9 +705,11 @@ function ChatContent() {
                                       </span>
                                     </button>
                                   ) : (
-                                    <p className={`${fontSizes[fontSize].text} break-words max-[360px]:leading-tight leading-relaxed whitespace-pre-wrap inline`}>
-                                      {msg.content}
-                                      <span className="inline-flex items-center gap-1 ml-2 align-bottom">
+                                    <div className="flex items-end gap-1">
+                                      <p className={`${fontSizes[fontSize].text} break-words max-[360px]:leading-tight leading-relaxed whitespace-pre-wrap flex-1`}>
+                                        {msg.content}
+                                      </p>
+                                      <span className="inline-flex items-center gap-1 flex-shrink-0 self-end pb-0.5">
                                         <span className="text-[10px] opacity-70 whitespace-nowrap">
                                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
@@ -707,7 +717,7 @@ function ChatContent() {
                                           <IoCheckmarkDoneOutline className={`w-3.5 h-3.5 font-bold ${(currentChat?.unreadCount ?? 0) === 0 ? 'text-blue-400' : 'opacity-70'}`} strokeWidth={2} />
                                         )}
                                       </span>
-                                    </p>
+                                    </div>
                                   )}
                                 </div>
                               )}
@@ -831,7 +841,7 @@ function ChatContent() {
                       placeholder={replyingTo ? "Reply..." : "Type a message"}
                       disabled={sending}
                       rows={1}
-                      className="flex-1 min-w-0 px-2 xs:px-4 py-2 xs:py-2.5 border border-slate-600 rounded-2xl bg-slate-700 text-white text-[11px] xs:text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 resize-none overflow-y-auto max-h-[120px]"
+                      className="flex-1 min-w-0 px-2 xs:px-4 py-2 xs:py-2.5 border border-slate-600 rounded-2xl bg-slate-700 text-white text-[11px] xs:text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 resize-none overflow-y-auto max-h-[80px] sm:max-h-[120px]"
                       style={{ minHeight: '36px' }}
                     />
                     <button
