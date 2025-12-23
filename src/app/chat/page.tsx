@@ -814,19 +814,30 @@ function ChatContent() {
                         className="hidden" 
                       />
                     </label>
-                    <input
-                      type="text"
+                    <textarea
                       value={messageText}
-                      onChange={(e) => setMessageText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                      onChange={(e) => {
+                        setMessageText(e.target.value);
+                        // Auto-resize textarea
+                        e.target.style.height = 'auto';
+                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
                       placeholder={replyingTo ? "Reply..." : "Type a message"}
                       disabled={sending}
-                      className="flex-1 min-w-0 px-2 xs:px-4 py-1 xs:py-2.5 border border-slate-600 rounded-full bg-slate-700 text-white text-[11px] xs:text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      rows={1}
+                      className="flex-1 min-w-0 px-2 xs:px-4 py-2 xs:py-2.5 border border-slate-600 rounded-2xl bg-slate-700 text-white text-[11px] xs:text-base placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 resize-none overflow-y-auto max-h-[120px]"
+                      style={{ minHeight: '36px' }}
                     />
                     <button
                       onClick={handleSend}
                       disabled={(!messageText.trim() && !selectedImage) || sending}
-                      className="p-2 xs:p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      className="p-2 xs:p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 self-end mb-0.5"
                     >
                       <IoSendOutline className="w-5 h-5 xs:w-6 xs:h-6" />
                     </button>
