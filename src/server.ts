@@ -167,6 +167,7 @@ app.use('/api/refund', refundRoutes);
 app.use('/api/debug', debugRoutes);
 app.use('/api/ip', ipRoutes);
 app.use('/api/purchase-requests', require('./routes/purchaseRequest.routes').default);
+app.use('/api/admin-verify-badge', require('./routes/admin-verify-badge.routes').default);
 
 // Proxy middleware for frontend - only in development
 if (config.NODE_ENV === 'development' && config.FRONTEND_URL) {
