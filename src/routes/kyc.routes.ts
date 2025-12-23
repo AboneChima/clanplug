@@ -17,7 +17,7 @@ router.get('/status', authenticate, asyncHandler(getKYCStatus));
 // Admin endpoints
 router.get('/admin/list', authenticate, adminOnly, asyncHandler(listKYCSubmissions));
 router.put('/admin/review/:id', authenticate, adminOnly, asyncHandler(reviewKYC));
-router.post('/admin/bulk-approve', authenticate, adminOnly, asyncHandler(async (req: Request, res: Response) => {
+router.post('/admin/bulk-approve', authenticate, adminOnly, asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const { prisma } = await import('../config/database');
   
   try {
@@ -28,19 +28,19 @@ router.post('/admin/bulk-approve', authenticate, adminOnly, asyncHandler(async (
     });
 
     if (pendingKYCs.length === 0) {
-      return res.json({
+      res.json({
         success: true,
         message: 'No pending KYC submissions to approve',
         data: { count: 0 }
       });
+      return;
     }
 
-    // Approve all pending KYCs
+    // Approve all pending KYCs (remove reviewedAt as it doesn't exist in schema)
     await prisma.kYCVerification.updateMany({
       where: { status: 'PENDING' },
       data: {
-        status: 'APPROVED',
-        reviewedAt: new Date()
+        status: 'APPROVED'
       }
     });
 
