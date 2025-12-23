@@ -98,6 +98,32 @@ export default function AdminKYCPage() {
 
     try {
       const token = localStorage.getItem('accessToken');
+
+  const handleBulkApprove = async () => {
+    if (!confirm('⚠️ BULK APPROVE ALL PENDING KYC?\n\nThis will approve ALL pending KYC submissions.\n\nAre you sure?')) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/bulk-approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`✅ Success! Approved ${data.data?.count || 0} KYC submissions`);
+        fetchSubmissions();
+      } else {
+        alert('Failed to bulk approve KYC submissions');
+      }
+    } catch (error) {
+      console.error('Error bulk approving:', error);
+      alert('Error bulk approving KYC submissions');
+    }
+  };
       console.log('Approving KYC:', kycId);
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/review/${kycId}`, {
@@ -207,7 +233,7 @@ export default function AdminKYCPage() {
           <button
             key={status}
             onClick={() => setFilter(status)}
-            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+            className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs md:text-sm font-medium transition-colors ${
               filter === status
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                 : 'bg-slate-900/50 text-gray-300 hover:bg-slate-800 border border-slate-800'
@@ -216,11 +242,21 @@ export default function AdminKYCPage() {
             {status}
           </button>
         ))}
+        {filter === 'PENDING' && submissions.length > 0 && (
+          <button
+            onClick={handleBulkApprove}
+            className="px-2 sm:px-3 py-1.5 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-1 text-[10px] sm:text-xs font-medium"
+          >
+            <IoCheckmarkCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden xs:inline">Approve All</span>
+            <span className="xs:hidden">All</span>
+          </button>
+        )}
         <button
           onClick={fetchSubmissions}
-          className="ml-auto px-3 sm:px-4 py-2 bg-slate-900/50 hover:bg-slate-800 text-gray-300 border border-slate-800 rounded-lg transition-colors flex items-center gap-2 text-xs sm:text-sm"
+          className="ml-auto px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-slate-900/50 hover:bg-slate-800 text-gray-300 border border-slate-800 rounded-lg transition-colors flex items-center gap-1 sm:gap-2 text-[10px] sm:text-xs md:text-sm"
         >
-          <IoRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <IoRefresh className={`w-3 h-3 sm:w-4 sm:h-4 ${loading ? 'animate-spin' : ''}`} />
           <span className="hidden sm:inline">Refresh</span>
         </button>
       </div>
