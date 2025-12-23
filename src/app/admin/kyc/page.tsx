@@ -98,32 +98,6 @@ export default function AdminKYCPage() {
 
     try {
       const token = localStorage.getItem('accessToken');
-
-  const handleBulkApprove = async () => {
-    if (!confirm('⚠️ BULK APPROVE ALL PENDING KYC?\n\nThis will approve ALL pending KYC submissions.\n\nAre you sure?')) return;
-
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/bulk-approve`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        alert(`✅ Success! Approved ${data.data?.count || 0} KYC submissions`);
-        fetchSubmissions();
-      } else {
-        alert('Failed to bulk approve KYC submissions');
-      }
-    } catch (error) {
-      console.error('Error bulk approving:', error);
-      alert('Error bulk approving KYC submissions');
-    }
-  };
       console.log('Approving KYC:', kycId);
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/review/${kycId}`, {
@@ -148,6 +122,32 @@ export default function AdminKYCPage() {
     } catch (error) {
       console.error('Error approving KYC:', error);
       alert(`❌ Error approving KYC: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    if (!confirm('⚠️ BULK APPROVE ALL PENDING KYC?\n\nThis will approve ALL pending KYC submissions.\n\nAre you sure?')) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/bulk-approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(`✅ Success! Approved ${data.data?.count || 0} KYC submissions`);
+        fetchSubmissions();
+      } else {
+        alert('Failed to bulk approve KYC submissions');
+      }
+    } catch (error) {
+      console.error('Error bulk approving:', error);
+      alert('Error bulk approving KYC submissions');
     }
   };
 
