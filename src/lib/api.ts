@@ -76,7 +76,8 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    retry: boolean = true
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
@@ -104,6 +105,38 @@ class ApiClient {
       }
       const reason = err?.message || 'Network error';
       throw new Error(`Failed to reach API at ${url}: ${reason}. Check server is running and NEXT_PUBLIC_API_URL.`);
+    }
+
+    // Handle 401 Unauthorized - try to refresh token
+    if (response.status === 401 && retry && !endpoint.includes('/auth/')) {
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (refreshToken) {
+          // Try to refresh the token
+          const refreshResponse = await this.refresh(refreshToken);
+          if (refreshResponse.success && refreshResponse.data) {
+            // Update tokens
+            localStorage.setItem('accessToken', refreshResponse.data.tokens.accessToken);
+            localStorage.setItem('refreshToken', refreshResponse.data.tokens.refreshToken);
+            
+            // Retry the original request with new token
+            const newHeaders = {
+              ...options.headers,
+              'Authorization': `Bearer ${refreshResponse.data.tokens.accessToken}`
+            };
+            return this.request<T>(endpoint, { ...options, headers: newHeaders }, false);
+          }
+        }
+      } catch (refreshError) {
+        // Refresh failed, clear tokens and redirect to login
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+        throw new Error('Session expired. Please login again.');
+      }
     }
 
     // Try to parse JSON; if not JSON, fall back to text
