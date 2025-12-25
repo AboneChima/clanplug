@@ -71,6 +71,17 @@ router.post('/notifications/broadcast', authenticate, adminOnly, asyncHandler(ad
 // DELETE /api/admin/notifications/:id - Delete notification
 router.delete('/notifications/:id', authenticate, adminOnly, asyncHandler(adminController.deleteNotification.bind(adminController)));
 
+// ===== VERIFICATION BADGE MANAGEMENT =====
+
+// GET /api/admin/verifications - Get all verified users
+router.get('/verifications', authenticate, adminOnly, asyncHandler(adminController.getVerifiedUsers.bind(adminController)));
+
+// POST /api/admin/verifications/verify - Verify a user
+router.post('/verifications/verify', authenticate, adminOnly, asyncHandler(adminController.verifyUser.bind(adminController)));
+
+// DELETE /api/admin/verifications/:userId - Remove verification
+router.delete('/verifications/:userId', authenticate, adminOnly, asyncHandler(adminController.removeVerification.bind(adminController)));
+
 // ===== GAME MANAGEMENT ROUTES =====
 
 // GET /api/admin/games - Get all games

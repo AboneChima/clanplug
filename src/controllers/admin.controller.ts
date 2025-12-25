@@ -691,6 +691,157 @@ export class AdminController {
       });
     }
   }
+
+  // Verification Badge Management
+  async verifyUser(req: Request, res: Response) {
+    try {
+      const { userId, days } = req.body;
+
+      if (!userId || !days) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID and days are required'
+        });
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + parseInt(days));
+
+      const badge = await prisma.verificationBadge.upsert({
+        where: { userId },
+        update: {
+          status: 'verified',
+          purchasedAt: new Date(),
+          expiresAt
+        },
+        create: {
+          userId,
+          status: 'verified',
+          purchasedAt: new Date(),
+          expiresAt
+        }
+      });
+
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: 'SYSTEM',
+          title: '✅ Verification Badge Activated!',
+          message: `Congratulations! Your verification badge is now active for ${days} days.`
+        }
+      });
+
+      return res.json({
+        success: true,
+        message: 'User verified successfully',
+        data: badge
+      });
+    } catch (error) {
+      console.error('Verify user error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to verify user',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  async removeVerification(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
+
+      const badge = await prisma.verificationBadge.update({
+        where: { userId },
+        data: {
+          status: 'none',
+          expiresAt: new Date()
+        }
+      });
+
+      await prisma.notification.create({
+        data: {
+          userId,
+          type: 'SYSTEM',
+          title: '⚠️ Verification Badge Removed',
+          message: 'Your verification badge has been removed by an administrator.'
+        }
+      });
+
+      return res.json({
+        success: true,
+        message: 'Verification removed successfully',
+        data: badge
+      });
+    } catch (error) {
+      console.error('Remove verification error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to remove verification',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  async getVerifiedUsers(req: Request, res: Response) {
+    try {
+      const { page = '1', limit = '20' } = req.query;
+      const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+      const [badges, total] = await Promise.all([
+        prisma.verificationBadge.findMany({
+          where: {
+            status: 'verified'
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+                firstName: true,
+                lastName: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: parseInt(limit as string)
+        }),
+        prisma.verificationBadge.count({
+          where: { status: 'verified' }
+        })
+      ]);
+
+      return res.json({
+        success: true,
+        data: badges,
+        pagination: {
+          page: parseInt(page as string),
+          limit: parseInt(limit as string),
+          total,
+          totalPages: Math.ceil(total / parseInt(limit as string))
+        }
+      });
+    } catch (error) {
+      console.error('Get verified users error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch verified users',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
 }
 
 export const adminController = new AdminController();
