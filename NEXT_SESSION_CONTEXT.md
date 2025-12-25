@@ -1,247 +1,128 @@
-# Project Context & Deployment Guide
+# Next Session Context - Admin Broadcast System
 
-## ✅ LATEST SESSION UPDATES (Nov 18, 2025)
+## What We Completed This Session:
 
-### Completed Optimizations:
-1. ✅ **Settings Page** - Much smaller on mobile (0-360px optimized)
-   - Reduced header padding: `py-2.5` (360px) vs `py-6` (desktop)
-   - Compact inputs: `py-1.5` (360px) vs `py-3` (desktop)
-   - Smaller icons and text throughout
-   - Tighter spacing on all sections
+### 1. ✅ Purchase Request System (COMPLETE)
+- Backend with Firebase push notifications
+- Orders page at `/orders` with sent/received tabs
+- Auto-expiring requests (5 minutes)
+- Token auto-refresh on 401 errors
+- Bulk KYC approval button in admin panel
 
-2. ✅ **User Profile Buttons** - Extra small for 0-360px devices
-   - Social/Marketplace buttons: `text-[9px]` (0-360px) vs `text-xs` (360px+)
-   - Reduced padding: `px-1.5 py-1` (0-360px) vs `px-3 py-2` (desktop)
-   - Shortened text: "Hide Social" / "Market" on smallest screens
+### 2. ✅ User Verifications
+- **abonejoseph@gmail.com** - Verified for 5015 years (expires 7040)
+- **Franklynnnamdi136@gmail.com** - Verified for 5015 years (expires 7040)
+- **Dmaileizzy@gmail.com** - Verified for 60 days (expires Feb 21, 2026)
 
-3. ✅ **Chat User Header** - Now clickable to visit profile
-   - Click on user avatar/name in chat header to visit their profile
-   - Smooth hover effect for better UX
+### 3. ✅ Chat Improvements
+- Changed input to auto-expanding textarea (like WhatsApp)
+- Reduced scroll height on mobile (80px vs 120px)
+- Fixed sender bubble timestamp to stay at right end
+- Show "📷 Image" in chat list for image-only messages
 
-4. ✅ **Notification Persistence** - Fixed mark all as read
-   - Changed endpoint from `/mark-all-read` to `/read-all` (PUT method)
-   - Added server refresh after marking to ensure persistence
-   - Fixed individual notification mark as read (PUT method)
-   - Notifications now stay read after page refresh
+### 4. ✅ Database Optimizations
+- Added performance indexes for Posts, Transactions, Escrows, Notifications
+- Upgraded to Basic-256MB plan on Render
 
-5. ✅ **Favorites Functionality** - Already working correctly
-   - Backend bookmark API properly synced
-   - Favorites tab shows bookmarked posts
-   - Add/remove from favorites works seamlessly
+### 5. ✅ Verification Success Modal
+- Created beautiful modal with confetti animation
+- Glowing badge icon with pulse effect
+- Auto-closes after 5 seconds
+- Mobile-friendly and responsive
+- File: `web/src/components/VerificationSuccessModal.tsx`
 
-### Still Pending:
-- Message read status indicators (red dot removal from chat icon)
-- Profile page duplicate text issue (need to investigate posts rendering)
-- Real-time notification counters on navbar
-- VTU page already optimized in previous session
+## ✅ What We Just Completed:
 
----
+### 🎯 Admin Broadcast Message System (COMPLETE!)
 
-## 🚀 DEPLOYMENT INSTRUCTIONS
+#### ✅ Backend:
+- Already had `/api/admin/notifications/broadcast` endpoint
+- Supports targeted messaging and broadcast to all
+- Creates SYSTEM type notifications
 
-### Backend Deployment (Render)
-**Production URL:** https://api.clanplug.site
-**Render URL:** https://clanplug-o7rp.onrender.com
+#### ✅ Frontend:
+1. **Created Admin Broadcast Page** (`web/src/app/admin/broadcast/page.tsx`):
+   - ✅ Two tabs: "Message User" and "Broadcast All"
+   - ✅ User search/select with multi-select
+   - ✅ Title and message inputs
+   - ✅ Real-time preview section
+   - ✅ Send button with loading state
+   - ✅ Success toast notification
+   - ✅ TikTok-style modern UI with gradients
+   - ✅ Mobile responsive
 
-**How to Deploy:**
-1. Make changes to backend files (anything in `src/` folder)
-2. Commit and push to GitHub:
-   ```bash
-   git add -A
-   git commit -m "Your commit message"
-   git push origin main
-   ```
-3. Render auto-deploys from GitHub (takes ~2-3 minutes)
-4. Check Render dashboard for deployment status
+2. **Updated Admin Sidebar**:
+   - ✅ Added "Broadcast" link with megaphone icon
+   - ✅ Proper navigation and active state
 
-**Important:** Backend uses PostgreSQL database on Render. Never run database scripts locally.
+#### Features Delivered:
+- ✅ Send to specific users (multi-select)
+- ✅ Broadcast to all users at once
+- ✅ Message preview before sending
+- ✅ Success feedback with animation
+- ✅ User count display
+- ✅ Character counter
+- ✅ Appears in user's notification page
 
----
+#### Files Created/Modified:
+- ✅ `web/src/app/admin/broadcast/page.tsx` - NEW broadcast page
+- ✅ `web/src/components/admin/AdminSidebar.tsx` - Added broadcast link
+- ✅ `BROADCAST_SYSTEM_COMPLETE.md` - Full documentation
 
-### Frontend Deployment (Vercel)
-**Production URL:** https://clanplug.site
-**Vercel URL:** https://clanplug-sable.vercel.app
+## What Needs to Be Done Next:
 
-**How to Deploy:**
-1. Make changes to frontend files (anything in `web/` folder)
-2. Run from `web` directory:
-   ```bash
-   cd web
-   vercel --prod
-   ```
-3. Deployment takes ~3-5 seconds
-4. Changes automatically go live on https://clanplug.site
+### 🎯 Potential Future Enhancements (Optional):
 
-**Note:** Vercel has a limit of 100 deployments per day on free tier.
+## Current System Status:
 
----
+### Backend (Render):
+- URL: https://clanplug.onrender.com
+- Database: PostgreSQL Basic-256MB
+- All systems operational
 
-## 📋 VERIFICATION SYSTEMS
+### Frontend (Vercel):
+- URL: https://web-[hash].vercel.app
+- All pages deployed and working
 
-### 1. KYC Verification (`isKYCVerified`)
-- **Purpose:** Identity verification for marketplace access
-- **Database:** `User.isKYCVerified` (boolean field)
-- **Required For:** Posting on marketplace (GAME_ACCOUNT, MARKETPLACE_LISTING)
-- **How to Verify:** Complete KYC form at `/kyc` page
-- **Badge:** Shows as small checkmark badge on avatar
+### Key Features Working:
+✅ Purchase Request System
+✅ Orders Management
+✅ Bulk KYC Approval
+✅ Token Auto-Refresh
+✅ Chat with WhatsApp-like input
+✅ Verification Success Modal
+✅ Database Optimizations
 
-### 2. Verification Badge (`verificationBadge`)
-- **Purpose:** Premium subscription feature (₦2,000/month)
-- **Database:** `VerificationBadge` table (separate)
-- **Benefits:** 
-  - Post images on social feed
-  - Unlimited posts
-  - Username protection
-  - Blue verified checkmark
-- **How to Get:** Purchase from profile page
-- **Badge:** Shows as blue verified checkmark next to name
+### Next Priority:
+✅ Admin Broadcast System - COMPLETE!
 
-**IMPORTANT:** These are TWO DIFFERENT systems. Don't confuse them!
+Consider these next:
+- Marketplace enhancements
+- VTU service improvements
+- Analytics dashboard
+- Or any new feature requests
 
----
+## Quick Start Commands:
 
-## 🎯 POST RESTRICTIONS
-
-### Marketplace (GAME_ACCOUNT, MARKETPLACE_LISTING)
-- ✅ **Requires:** KYC Verification (`isKYCVerified = true`)
-- ✅ **Allows:** Images and videos
-- ✅ **Limit:** Unlimited posts for KYC verified users
-- ❌ **Without KYC:** Cannot post at all
-
-### Social Feed (SOCIAL_POST)
-- ✅ **Text Posts:** Anyone can post (20 post limit for non-verified)
-- ✅ **Image Posts:** Requires Verification Badge
-- ✅ **Verified Users:** Unlimited posts with images
-
----
-
-## 🔧 MANUAL USER VERIFICATION
-
-### Verify User via API:
 ```bash
-POST https://jobica-backend.onrender.com/api/verification/manual-verify
-Content-Type: application/json
+# Backend
+cd /path/to/backend
+npm run dev
 
-{
-  "email": "user@example.com",
-  "secret": "verify-user-2024"
-}
+# Frontend
+cd web
+npm run dev
+
+# Deploy Backend
+git push origin main  # Auto-deploys to Render
+
+# Deploy Frontend
+cd web
+vercel --prod
 ```
 
-**PowerShell Command:**
-```powershell
-$body = @{email="user@example.com";secret="verify-user-2024"} | ConvertTo-Json
-Invoke-RestMethod -Uri "https://jobica-backend.onrender.com/api/verification/manual-verify" -Method POST -ContentType "application/json" -Body $body
-```
-
-**Note:** Email must be lowercase!
-
----
-
-## 📁 PROJECT STRUCTURE
-
-```
-Lordmoon/
-├── src/                    # Backend (Node.js + Express + Prisma)
-│   ├── controllers/        # API controllers
-│   ├── services/          # Business logic
-│   ├── routes/            # API routes
-│   └── config/            # Configuration
-├── web/                   # Frontend (Next.js + React)
-│   ├── src/app/          # Pages
-│   ├── src/components/   # React components
-│   └── src/contexts/     # React contexts
-└── prisma/               # Database schema
-```
-
----
-
-## 🐛 COMMON ISSUES
-
-### "Verification badge not showing"
-- Check if `verificationBadge` data is included in API response
-- Verify user has active badge with `expiresAt` in future
-- Check browser console for API response structure
-
-### "Follow/Unfollow not working"
-- Check if `isFollowing` field is returned from API
-- Verify follow API endpoint returns success
-- Check browser console for errors
-
-### "Marketplace post blocked"
-- User needs KYC verification (`isKYCVerified = true`)
-- Complete KYC form at `/kyc` page
-- Check user record in database
-
-### "Can't post images on social feed"
-- User needs Verification Badge (not KYC)
-- Purchase badge from profile page (₦2,000)
-- Badge lasts 30 days
-
----
-
-## 📊 DATABASE TABLES
-
-### Key Tables:
-- `User` - User accounts (includes `isKYCVerified`)
-- `VerificationBadge` - Premium verification subscriptions
-- `Post` - All posts (social + marketplace)
-- `Follow` - User follow relationships
-- `Chat` - Direct messages
-- `Wallet` - User wallets (NGN, USD, etc.)
-- `Transaction` - Payment history
-
----
-
-## 🎨 UI COMPONENTS
-
-### Verification Badges:
-```tsx
-{/* KYC Badge - Small checkmark on avatar */}
-{user.isKYCVerified && (
-  <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-blue-500 rounded-full">
-    <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
-      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-    </svg>
-  </div>
-)}
-
-{/* Verification Badge - Blue checkmark next to name */}
-{user.verificationBadge?.status === 'active' && (
-  <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-  </svg>
-)}
-```
-
----
-
-## ✅ RECENT CHANGES
-
-### Session Summary:
-1. ✅ Separated KYC verification from Verification Badge
-2. ✅ Marketplace now requires KYC verification
-3. ✅ Social feed images require Verification Badge
-4. ✅ Fixed chat scrolling (only messages scroll)
-5. ✅ Made KYC form compact on mobile
-6. ✅ Added manual verification API endpoint
-7. ✅ Fixed verification badge display on profiles
-
----
-
-## 🔐 ENVIRONMENT VARIABLES
-
-### Backend (.env):
-- `DATABASE_URL` - PostgreSQL connection string
-- `JWT_SECRET` - JWT signing secret
-- `CLOUDINARY_*` - Image upload credentials
-- `PAYSTACK_SECRET_KEY` - Payment gateway
-
-### Frontend (web/.env.local):
-- `NEXT_PUBLIC_API_URL` - Backend API URL
-
----
-
-**Last Updated:** November 17, 2025
-**Current Version:** Production
-**Status:** ✅ All systems operational
+## Important Notes:
+- User wants TikTok-style system notifications
+- Should support both individual and broadcast messages
+- Keep UI modern, clean, and mobile-friendly
+- Add confirmation dialogs before sending

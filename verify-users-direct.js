@@ -12,8 +12,8 @@ async function verifyUsers() {
     await client.connect();
     console.log('✅ Connected to database');
 
-    // Verify Franklynnnamdi136@gmail.com for 15 years
-    console.log('\n📧 Verifying Franklynnnamdi136@gmail.com for 15 years...');
+    // Verify Franklynnnamdi136@gmail.com for 5015 years
+    console.log('\n📧 Verifying Franklynnnamdi136@gmail.com for 5015 years...');
     const result1 = await client.query(`
       INSERT INTO verification_badges (id, "userId", status, "purchasedAt", "expiresAt", "createdAt", "updatedAt")
       SELECT 
@@ -21,7 +21,7 @@ async function verifyUsers() {
         u.id,
         'active',
         NOW(),
-        NOW() + INTERVAL '15 years',
+        NOW() + INTERVAL '5015 years',
         NOW(),
         NOW()
       FROM users u
@@ -30,14 +30,14 @@ async function verifyUsers() {
       DO UPDATE SET
         status = 'active',
         "purchasedAt" = NOW(),
-        "expiresAt" = NOW() + INTERVAL '15 years',
+        "expiresAt" = NOW() + INTERVAL '5015 years',
         "updatedAt" = NOW()
       RETURNING *;
     `);
     console.log('✅ Badge created/updated for Franklynnnamdi136@gmail.com');
 
-    // Verify abonejoseph@gmail.com for 15 years
-    console.log('\n📧 Verifying abonejoseph@gmail.com for 15 years...');
+    // Verify abonejoseph@gmail.com for 5015 years
+    console.log('\n📧 Verifying abonejoseph@gmail.com for 5015 years...');
     const result2 = await client.query(`
       INSERT INTO verification_badges (id, "userId", status, "purchasedAt", "expiresAt", "createdAt", "updatedAt")
       SELECT 
@@ -45,7 +45,7 @@ async function verifyUsers() {
         u.id,
         'active',
         NOW(),
-        NOW() + INTERVAL '15 years',
+        NOW() + INTERVAL '5015 years',
         NOW(),
         NOW()
       FROM users u
@@ -54,7 +54,7 @@ async function verifyUsers() {
       DO UPDATE SET
         status = 'active',
         "purchasedAt" = NOW(),
-        "expiresAt" = NOW() + INTERVAL '15 years',
+        "expiresAt" = NOW() + INTERVAL '5015 years',
         "updatedAt" = NOW()
       RETURNING *;
     `);
