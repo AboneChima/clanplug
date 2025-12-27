@@ -13,6 +13,10 @@ declare global {
         role: UserRole;
         isKYCVerified: boolean;
         status: string;
+        verificationBadge?: {
+          status: string;
+          expiresAt: Date;
+        } | null;
       };
     }
   }
@@ -26,6 +30,10 @@ export type AuthenticatedRequest = Request & {
     role: UserRole;
     isKYCVerified: boolean;
     status: string;
+    verificationBadge?: {
+      status: string;
+      expiresAt: Date;
+    } | null;
   };
 };
 
