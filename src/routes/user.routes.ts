@@ -46,7 +46,7 @@ router.get('/profile', authenticate, asyncHandler(async (req: Request, res: Resp
   if (user.verificationBadge) {
     verificationStatus = user.verificationBadge.status;
     
-    if (verificationStatus === 'active' && user.verificationBadge.expiresAt) {
+    if (verificationStatus === 'verified' && user.verificationBadge.expiresAt) {
       const diff = user.verificationBadge.expiresAt.getTime() - new Date().getTime();
       daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
       

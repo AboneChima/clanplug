@@ -21,7 +21,7 @@ export const verificationService = {
     }
 
     // Check if expired
-    if (badge.status === 'active' && badge.expiresAt && new Date() > badge.expiresAt) {
+    if (badge.status === 'verified' && badge.expiresAt && new Date() > badge.expiresAt) {
       badge = await prisma.verificationBadge.update({
         where: { userId },
         data: { status: 'expired' },
@@ -30,7 +30,7 @@ export const verificationService = {
 
     // Calculate days remaining
     let daysRemaining = 0;
-    if (badge.status === 'active' && badge.expiresAt) {
+    if (badge.status === 'verified' && badge.expiresAt) {
       const diff = badge.expiresAt.getTime() - new Date().getTime();
       daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
     }
@@ -51,7 +51,7 @@ export const verificationService = {
       where: { userId },
     });
 
-    if (existing?.status === 'active' && existing.expiresAt && new Date() < existing.expiresAt) {
+    if (existing?.status === 'verified' && existing.expiresAt && new Date() < existing.expiresAt) {
       throw new Error('Verification badge is already active');
     }
 
@@ -99,12 +99,12 @@ export const verificationService = {
       where: { userId },
       create: {
         userId,
-        status: 'active',
+        status: 'verified',
         purchasedAt: now,
         expiresAt,
       },
       update: {
-        status: 'active',
+        status: 'verified',
         purchasedAt: now,
         expiresAt,
       },
@@ -161,12 +161,12 @@ export const verificationService = {
       where: { userId: user.id },
       create: {
         userId: user.id,
-        status: 'active',
+        status: 'verified',
         purchasedAt: now,
         expiresAt,
       },
       update: {
-        status: 'active',
+        status: 'verified',
         purchasedAt: now,
         expiresAt,
       },

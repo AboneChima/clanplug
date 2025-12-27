@@ -54,7 +54,7 @@ router.post('/make-admin', async (req: Request, res: Response) => {
       data: {
         role: 'ADMIN',
         isEmailVerified: true,
-        status: 'ACTIVE'
+        status: 'verified'
       }
     });
     
@@ -95,12 +95,12 @@ router.post('/verify-abone', async (req: Request, res: Response) => {
       where: { userId: user.id },
       create: {
         userId: user.id,
-        status: 'active',
+        status: 'verified',
         purchasedAt: new Date(),
         expiresAt
       },
       update: {
-        status: 'active',
+        status: 'verified',
         purchasedAt: new Date(),
         expiresAt
       }
@@ -155,12 +155,12 @@ router.post('/badge', async (req: Request, res: Response) => {
       where: { userId: user.id },
       create: {
         userId: user.id,
-        status: 'active',
+        status: 'verified',
         purchasedAt: new Date(),
         expiresAt
       },
       update: {
-        status: 'active',
+        status: 'verified',
         purchasedAt: new Date(),
         expiresAt
       }

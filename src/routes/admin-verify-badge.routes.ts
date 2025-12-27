@@ -58,7 +58,7 @@ router.post('/', adminAuth, async (req: Request, res: Response): Promise<void> =
       badge = await prisma.verificationBadge.update({
         where: { userId: user.id },
         data: {
-          status: 'active',
+          status: 'verified',
           purchasedAt: new Date(),
           expiresAt: expiresAt
         }
@@ -68,7 +68,7 @@ router.post('/', adminAuth, async (req: Request, res: Response): Promise<void> =
       badge = await prisma.verificationBadge.create({
         data: {
           userId: user.id,
-          status: 'active',
+          status: 'verified',
           purchasedAt: new Date(),
           expiresAt: expiresAt
         }

@@ -49,7 +49,7 @@ export async function register(req: Request, res: Response) {
       where: { 
         username: { equals: username, mode: 'insensitive' },
         verificationBadge: {
-          status: 'active',
+          status: 'verified',
           expiresAt: { gt: new Date() }
         }
       },

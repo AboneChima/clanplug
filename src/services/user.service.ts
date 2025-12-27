@@ -345,7 +345,7 @@ export const userService = {
               firstName: data.firstName || currentUser?.firstName,
               lastName: data.lastName || currentUser?.lastName,
               verificationBadge: {
-                status: 'active',
+                status: 'verified',
                 expiresAt: { gt: new Date() },
               },
             },
