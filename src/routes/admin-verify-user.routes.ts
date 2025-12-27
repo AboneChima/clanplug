@@ -54,7 +54,7 @@ router.post('/make-admin', async (req: Request, res: Response) => {
       data: {
         role: 'ADMIN',
         isEmailVerified: true,
-        status: 'verified'
+        status: 'ACTIVE'
       }
     });
     
