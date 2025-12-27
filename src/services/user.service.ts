@@ -331,7 +331,7 @@ export const userService = {
           include: { verificationBadge: true },
         });
 
-        const isCurrentUserVerified = currentUser?.verificationBadge?.status === 'active' && 
+        const isCurrentUserVerified = currentUser?.verificationBadge?.status === 'verified' && 
           currentUser.verificationBadge.expiresAt && 
           new Date() < currentUser.verificationBadge.expiresAt;
 

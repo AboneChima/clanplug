@@ -73,7 +73,7 @@ export const postService = {
         where: { userId: authorId },
       });
 
-      const isVerified = verificationBadge?.status === 'active' && 
+      const isVerified = verificationBadge?.status === 'verified' && 
                         verificationBadge?.expiresAt && 
                         new Date() < verificationBadge.expiresAt;
 
