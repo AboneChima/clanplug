@@ -20,8 +20,8 @@ export const verificationService = {
       });
     }
 
-    // Check if expired
-    if (badge.status === 'verified' && badge.expiresAt && new Date() > badge.expiresAt) {
+    // Check if expired - support both 'verified' and 'active' status
+    if ((badge.status === 'verified' || badge.status === 'active') && badge.expiresAt && new Date() > badge.expiresAt) {
       badge = await prisma.verificationBadge.update({
         where: { userId },
         data: { status: 'expired' },
@@ -30,13 +30,16 @@ export const verificationService = {
 
     // Calculate days remaining
     let daysRemaining = 0;
-    if (badge.status === 'verified' && badge.expiresAt) {
+    if ((badge.status === 'verified' || badge.status === 'active') && badge.expiresAt) {
       const diff = badge.expiresAt.getTime() - new Date().getTime();
       daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
     }
 
+    // Normalize status to 'active' for frontend
+    const normalizedStatus = (badge.status === 'verified' || badge.status === 'active') ? 'active' : badge.status;
+
     return {
-      status: badge.status,
+      status: normalizedStatus,
       purchasedAt: badge.purchasedAt,
       expiresAt: badge.expiresAt,
       daysRemaining,
@@ -91,7 +94,7 @@ export const verificationService = {
       },
     });
 
-    // Activate badge
+    // Activate badge - use 'active' status for consistency
     const now = new Date();
     const expiresAt = new Date(now.getTime() + VERIFICATION_DURATION_DAYS * 24 * 60 * 60 * 1000);
 
@@ -99,12 +102,12 @@ export const verificationService = {
       where: { userId },
       create: {
         userId,
-        status: 'verified',
+        status: 'active',
         purchasedAt: now,
         expiresAt,
       },
       update: {
-        status: 'verified',
+        status: 'active',
         purchasedAt: now,
         expiresAt,
       },
@@ -161,12 +164,12 @@ export const verificationService = {
       where: { userId: user.id },
       create: {
         userId: user.id,
-        status: 'verified',
+        status: 'active',
         purchasedAt: now,
         expiresAt,
       },
       update: {
-        status: 'verified',
+        status: 'active',
         purchasedAt: now,
         expiresAt,
       },

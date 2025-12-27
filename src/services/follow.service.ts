@@ -154,6 +154,14 @@ export class FollowService {
                 firstName: true,
                 lastName: true,
                 avatar: true,
+                bio: true,
+                isKYCVerified: true,
+                verificationBadge: {
+                  select: {
+                    status: true,
+                    expiresAt: true,
+                  },
+                },
                 _count: {
                   select: {
                     followers: true,
@@ -204,6 +212,14 @@ export class FollowService {
                 firstName: true,
                 lastName: true,
                 avatar: true,
+                bio: true,
+                isKYCVerified: true,
+                verificationBadge: {
+                  select: {
+                    status: true,
+                    expiresAt: true,
+                  },
+                },
                 _count: {
                   select: {
                     followers: true,
