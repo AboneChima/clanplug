@@ -15,7 +15,7 @@ declare global {
         status: string;
         verificationBadge?: {
           status: string;
-          expiresAt: Date;
+          expiresAt: Date | null;
         } | null;
       };
     }
@@ -32,7 +32,7 @@ export type AuthenticatedRequest = Request & {
     status: string;
     verificationBadge?: {
       status: string;
-      expiresAt: Date;
+      expiresAt: Date | null;
     } | null;
   };
 };
