@@ -92,7 +92,13 @@ export const authenticate = async (
         status: true,
         isKYCVerified: true,
         isEmailVerified: true,
-        lockedUntil: true
+        lockedUntil: true,
+        verificationBadge: {
+          select: {
+            status: true,
+            expiresAt: true
+          }
+        }
       }
     });
 
@@ -143,7 +149,8 @@ export const authenticate = async (
       email: user.email,
       role: user.role,
       isKYCVerified: user.isKYCVerified,
-      status: user.status
+      status: user.status,
+      verificationBadge: user.verificationBadge
     };
 
     next();
@@ -197,7 +204,13 @@ export const optionalAuthenticate = async (
         status: true,
         isKYCVerified: true,
         isEmailVerified: true,
-        lockedUntil: true
+        lockedUntil: true,
+        verificationBadge: {
+          select: {
+            status: true,
+            expiresAt: true
+          }
+        }
       }
     });
 
@@ -207,7 +220,8 @@ export const optionalAuthenticate = async (
         email: user.email,
         role: user.role,
         isKYCVerified: user.isKYCVerified,
-        status: user.status
+        status: user.status,
+        verificationBadge: user.verificationBadge
       };
     }
 
