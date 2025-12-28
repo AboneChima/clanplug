@@ -906,7 +906,7 @@ export const postService = {
       const [allPosts, total] = await Promise.all([
         prisma.post.findMany({
           where: {
-            status: PostStatus.ACTIVE,
+            status: { in: [PostStatus.ACTIVE, PostStatus.SOLD] }, // Include SOLD posts
             type: { in: ['SOCIAL_POST', 'MARKETPLACE_LISTING'] },
           },
           include: {
@@ -926,6 +926,12 @@ export const postService = {
                 },
               },
             },
+            soldTo: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
             _count: {
               select: {
                 likes: true,
@@ -943,7 +949,7 @@ export const postService = {
         }),
         prisma.post.count({
           where: {
-            status: PostStatus.ACTIVE,
+            status: { in: [PostStatus.ACTIVE, PostStatus.SOLD] }, // Include SOLD posts
             type: { in: ['SOCIAL_POST', 'MARKETPLACE_LISTING'] },
           },
         }),
