@@ -165,13 +165,14 @@ export default function OrdersPage() {
     try {
       const token = localStorage.getItem('accessToken');
       
-      // Calculate fee
-      const fee = request.amount * 0.005;
-      const total = request.amount + fee;
+      // FIXED: Convert amount to number first
+      const amount = Number(request.amount);
+      const fee = amount * 0.005;
+      const total = amount + fee;
 
       console.log('Creating escrow with:', {
         sellerId: request.sellerId,
-        amount: request.amount,
+        amount: amount,
         currency: request.currency,
         title: request.post.title,
       });
@@ -207,7 +208,7 @@ export default function OrdersPage() {
       }
 
       // Confirm payment
-      if (!confirm(`Create escrow and pay for "${request.post.title}"?\n\nAmount: ${request.amount} ${request.currency}\nFee (0.5%): ${fee.toFixed(2)} ${request.currency}\nTotal: ${total.toFixed(2)} ${request.currency}\n\nMoney will be held securely until you confirm delivery.`)) {
+      if (!confirm(`Create escrow and pay for "${request.post.title}"?\n\nAmount: ${amount.toFixed(2)} ${request.currency}\nFee (0.5%): ${fee.toFixed(2)} ${request.currency}\nTotal: ${total.toFixed(2)} ${request.currency}\n\nMoney will be held securely until you confirm delivery.`)) {
         return;
       }
 
@@ -220,7 +221,7 @@ export default function OrdersPage() {
         },
         body: JSON.stringify({
           sellerId: request.sellerId,
-          amount: request.amount,
+          amount: amount,
           currency: request.currency,
           title: request.post.title,
           description: `Purchase of ${request.post.title}`,
