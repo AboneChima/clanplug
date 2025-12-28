@@ -242,7 +242,13 @@ export default function OrdersPage() {
       } else {
         const error = await escrowResponse.json();
         console.error('Escrow creation error:', error);
-        showToast(error.message || error.error || 'Failed to create escrow. Check console for details.', 'error');
+        // Show validation errors if available
+        if (error.errors && Array.isArray(error.errors)) {
+          const errorMessages = error.errors.map((e: any) => e.msg || e.message).join(', ');
+          showToast(`Validation failed: ${errorMessages}`, 'error');
+        } else {
+          showToast(error.message || error.error || 'Failed to create escrow. Check console for details.', 'error');
+        }
       }
     } catch (error: any) {
       console.error('Pay now error:', error);

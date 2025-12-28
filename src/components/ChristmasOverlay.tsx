@@ -7,17 +7,27 @@ interface ChristmasOverlayProps {
 }
 
 export default function ChristmasOverlay({ isVerified }: ChristmasOverlayProps) {
-  const [snowflakes, setSnowflakes] = useState<Array<{ id: number; x: number; delay: number; duration: number; size: number }>>([]);
+  const [snowflakes, setSnowflakes] = useState<Array<{ 
+    id: number; 
+    x: number; 
+    delay: number; 
+    duration: number; 
+    size: number;
+    drift: number;
+    opacity: number;
+  }>>([]);
 
   useEffect(() => {
     if (isVerified) {
-      // Optimized 30 snowflakes for smooth performance
-      const newSnowflakes = Array.from({ length: 30 }, (_, i) => ({
+      // Create realistic snowflakes with varied properties
+      const newSnowflakes = Array.from({ length: 40 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
-        delay: Math.random() * 8,
-        duration: 12 + Math.random() * 10,
-        size: 12 + Math.random() * 12,
+        delay: Math.random() * 10,
+        duration: 15 + Math.random() * 15, // Slower, more realistic
+        size: 8 + Math.random() * 16,
+        drift: -30 + Math.random() * 60, // Horizontal drift
+        opacity: 0.4 + Math.random() * 0.6,
       }));
       setSnowflakes(newSnowflakes);
     }
@@ -36,14 +46,23 @@ export default function ChristmasOverlay({ isVerified }: ChristmasOverlayProps) 
             opacity: 0;
           }
           10% {
-            opacity: 0.8;
+            opacity: var(--snow-opacity);
           }
           90% {
-            opacity: 0.8;
+            opacity: var(--snow-opacity);
           }
           100% {
-            transform: translateY(100vh) translateX(50px) rotate(360deg);
+            transform: translateY(100vh) translateX(var(--snow-drift)) rotate(360deg);
             opacity: 0;
+          }
+        }
+
+        @keyframes sway {
+          0%, 100% {
+            transform: translateX(0);
+          }
+          50% {
+            transform: translateX(20px);
           }
         }
 
@@ -51,13 +70,15 @@ export default function ChristmasOverlay({ isVerified }: ChristmasOverlayProps) 
           position: absolute;
           color: white;
           pointer-events: none;
-          animation: snowfall linear infinite;
-          will-change: transform;
+          animation: snowfall linear infinite, sway 3s ease-in-out infinite;
+          will-change: transform, opacity;
+          text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+          filter: blur(0.5px);
         }
       `}</style>
       
       <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-        {/* Beautiful Smooth Snowflakes Only */}
+        {/* Realistic Snowflakes */}
         {snowflakes.map((flake) => (
           <div
             key={flake.id}
@@ -67,8 +88,10 @@ export default function ChristmasOverlay({ isVerified }: ChristmasOverlayProps) 
               top: '-30px',
               fontSize: `${flake.size}px`,
               animationDelay: `${flake.delay}s`,
-              animationDuration: `${flake.duration}s`,
-              opacity: 0.7,
+              animationDuration: `${flake.duration}s, ${3 + Math.random() * 2}s`,
+              // @ts-ignore
+              '--snow-drift': `${flake.drift}px`,
+              '--snow-opacity': flake.opacity,
             }}
           >
             ❄

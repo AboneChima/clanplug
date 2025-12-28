@@ -55,9 +55,19 @@ export default function VerifiedProfileHeader({ isVerified, children }: Verified
         <div className="absolute top-1/2 left-1/2 w-44 h-44 bg-green-400/10 rounded-full blur-3xl animate-float-slow" />
       </div>
 
-      {/* Premium golden border */}
-      <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 opacity-30 animate-shimmer" style={{ padding: '2px' }}>
-        <div className="w-full h-full bg-slate-900 rounded-3xl" />
+      {/* Modern Premium Border with Glow - More Visible */}
+      <div className="absolute inset-0 rounded-3xl">
+        {/* Outer glow */}
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 opacity-40 blur-xl animate-pulse-glow" />
+        {/* Border */}
+        <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 animate-shimmer" style={{ 
+          padding: '2px',
+          WebkitMaskImage: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          WebkitMaskComposite: 'xor',
+          maskComposite: 'exclude'
+        }}>
+          <div className="w-full h-full bg-transparent rounded-3xl" />
+        </div>
       </div>
 
       {/* Content */}
@@ -120,6 +130,17 @@ export default function VerifiedProfileHeader({ isVerified, children }: Verified
           }
         }
 
+        @keyframes pulse-glow {
+          0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: scale(1.02);
+          }
+        }
+
         .animate-snowfall {
           animation: snowfall linear infinite;
         }
@@ -139,6 +160,10 @@ export default function VerifiedProfileHeader({ isVerified, children }: Verified
         .animate-shimmer {
           background-size: 200% auto;
           animation: shimmer 3s linear infinite;
+        }
+
+        .animate-pulse-glow {
+          animation: pulse-glow 3s ease-in-out infinite;
         }
       `}</style>
     </div>
