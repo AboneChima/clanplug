@@ -39,8 +39,8 @@ export const purchaseRequestService = {
 
     if (!buyer) throw new Error('Buyer not found');
 
-    // Create request (expires in 5 minutes)
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    // Create request (expires in 30 minutes)
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
     
     const request = await prisma.purchaseRequest.create({
       data: {
@@ -104,7 +104,7 @@ export const purchaseRequestService = {
         userId: sellerId,
         type: 'PURCHASE_REQUEST',
         title: '💰 New Purchase Request!',
-        message: `${request.buyer.firstName} ${request.buyer.lastName} wants to buy "${request.post.title}" for ${amount} ${currency}. Respond within 5 minutes!`,
+        message: `${request.buyer.firstName} ${request.buyer.lastName} wants to buy "${request.post.title}" for ${amount} ${currency}. Respond within 30 minutes!`,
         data: {
           requestId: request.id,
           postId: request.postId,
