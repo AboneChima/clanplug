@@ -106,7 +106,9 @@ export default function BroadcastOverlay() {
     if (message?.data?.actionButton?.link) {
       handleClose();
       setTimeout(() => {
-        router.push(message.data.actionButton!.link);
+        if (message.data?.actionButton?.link) {
+          router.push(message.data.actionButton.link);
+        }
       }, 300);
     }
   };
