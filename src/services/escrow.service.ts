@@ -595,10 +595,13 @@ class EscrowService {
       await prisma.notification.create({
         data: {
           userId: escrow.buyerId,
-          type: NotificationType.ESCROW_UPDATE,
+          type: NotificationType.ESCROW,
           title: '🎉 Delivery Details Received!',
           message: `${updatedEscrow.seller.username} has provided delivery details for "${updatedEscrow.title}". Check your escrow page to view credentials.`,
-          link: `/escrow?id=${escrowId}`,
+          data: {
+            escrowId: escrowId,
+            action: 'delivery_received'
+          }
         }
       });
 
