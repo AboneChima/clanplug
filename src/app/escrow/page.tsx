@@ -100,6 +100,17 @@ const EscrowPage: React.FC = () => {
       setLoading(true);
       const data = await EscrowService.getUserEscrows(accessToken);
       setEscrows(data.escrows || []);
+      
+      // Check if buyer has any escrows with delivery details
+      const hasNewDeliveries = data.escrows?.some((e: EscrowResponse) => 
+        e.buyerId === user?.id && 
+        e.status === 'FUNDED' && 
+        e.adminNotes
+      );
+      
+      if (hasNewDeliveries) {
+        console.log('🎉 Buyer has new delivery details available!');
+      }
     } catch (error) {
       console.error('Failed to load escrows:', error);
       showToast('Failed to load escrows', 'error');
@@ -369,6 +380,23 @@ const EscrowPage: React.FC = () => {
             <RefreshCw className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Delivery Alert Banner */}
+        {escrows.some(e => e.buyerId === user?.id && e.status === 'FUNDED' && e.adminNotes) && (
+          <div className="mb-6 bg-gradient-to-r from-green-500/20 to-blue-500/20 border-2 border-green-500/50 rounded-lg p-4 animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <CheckCircle className="w-8 h-8 text-green-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-white mb-1">🎉 Delivery Details Available!</h3>
+                <p className="text-sm text-gray-300">
+                  Your seller has provided login credentials. Scroll down to view and test them.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">

@@ -26,6 +26,7 @@ interface PurchaseRequest {
   status: 'PENDING_SELLER_RESPONSE' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED' | 'CANCELLED';
   expiresAt: string;
   createdAt: string;
+  escrowId?: string; // Added to track associated escrow
   buyer: {
     id: string;
     username: string;
@@ -235,6 +236,21 @@ export default function OrdersPage() {
       if (escrowResponse.ok) {
         const escrowData = await escrowResponse.json();
         console.log('Escrow created successfully:', escrowData);
+        
+        // Update purchase request with escrowId
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchase-requests/${request.id}/link-escrow`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ escrowId: escrowData.data.id }),
+          });
+        } catch (error) {
+          console.error('Failed to link escrow to purchase request:', error);
+        }
+        
         showToast('✅ Payment successful! Escrow created.', 'success');
         
         // Redirect to escrow page with the specific escrow ID
@@ -341,13 +357,21 @@ export default function OrdersPage() {
               <h1 className="text-lg sm:text-xl font-bold text-white mb-0.5 sm:mb-1">Orders</h1>
               <p className="text-xs sm:text-sm text-gray-400 hidden xs:block">Manage requests</p>
             </div>
-            <button
-              onClick={loadRequests}
-              className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-xs sm:text-sm"
-            >
-              <IoRefreshOutline className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">Refresh</span>
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.location.href = '/escrow'}
+                className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-xs sm:text-sm font-medium"
+              >
+                🛡️ <span className="hidden sm:inline">My Escrows</span>
+              </button>
+              <button
+                onClick={loadRequests}
+                className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-xs sm:text-sm"
+              >
+                <IoRefreshOutline className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">Refresh</span>
+              </button>
+            </div>
           </div>
 
           {/* Tabs - Compact */}
@@ -373,6 +397,23 @@ export default function OrdersPage() {
               Received ({receivedRequests.length})
             </button>
           </div>
+
+          {/* Helper Banner for Accepted Requests */}
+          {activeTab === 'sent' && sentRequests.some(r => r.status === 'ACCEPTED') && (
+            <div className="mb-3 sm:mb-4 bg-gradient-to-r from-green-500/20 to-blue-500/20 border-2 border-green-500/50 rounded-lg p-3 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex-shrink-0">
+                  <IoCheckmarkCircleOutline className="w-6 h-6 sm:w-8 sm:h-8 text-green-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm sm:text-base font-bold text-white mb-1">✅ Request Accepted!</h3>
+                  <p className="text-xs sm:text-sm text-gray-300">
+                    After payment, track your order progress in <button onClick={() => window.location.href = '/escrow'} className="text-green-400 underline font-medium">My Escrows</button>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Requests List */}
           {currentRequests.length === 0 ? (
@@ -486,12 +527,22 @@ export default function OrdersPage() {
                             </button>
                           )}
 
-                          {request.status === 'ACCEPTED' && activeTab === 'sent' && (
+                          {request.status === 'ACCEPTED' && activeTab === 'sent' && !request.escrowId && (
                             <button
                               onClick={() => handlePayNow(request)}
                               className="flex items-center gap-0.5 sm:gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] sm:text-xs rounded-md transition-colors"
                             >
                               Pay Now
+                            </button>
+                          )}
+
+                          {/* Show escrow link for accepted requests (buyer can check progress) */}
+                          {request.status === 'ACCEPTED' && activeTab === 'sent' && (
+                            <button
+                              onClick={() => window.location.href = '/escrow'}
+                              className="flex items-center gap-0.5 sm:gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-green-600 hover:bg-green-700 text-white text-[10px] sm:text-xs rounded-md transition-colors"
+                            >
+                              🛡️ My Escrows
                             </button>
                           )}
                         </div>
