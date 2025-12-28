@@ -26,7 +26,7 @@ export default function MorePage() {
         { href: '/wallet', label: 'Wallet', icon: IoWalletOutline, color: 'text-green-500' },
         { href: '/vtu', label: 'Airtime & Data', icon: IoPhonePortraitOutline, color: 'text-purple-500' },
         { href: '/kyc', label: 'KYC Verification', icon: IoShieldCheckmarkOutline, color: 'text-blue-500' },
-        { href: '/analytics', label: 'Analytics', icon: IoStatsChartOutline, color: 'text-orange-500' },
+        { href: '/orders', label: 'My Orders', icon: IoStatsChartOutline, color: 'text-orange-500' },
       ]
     },
     {

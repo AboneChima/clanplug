@@ -16,6 +16,7 @@ import {
   IoCloseCircleOutline,
   IoEyeOutline,
   IoCloseOutline,
+  IoPeopleOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,6 +37,8 @@ interface UserProfile {
   country?: string;
   createdAt: string;
   isFollowing: boolean;
+  isFollowingBack: boolean;
+  isMutual: boolean;
   isKYCVerified?: boolean;
   _count: {
     posts: number;
@@ -69,6 +72,11 @@ export default function UserProfilePage() {
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showFollowingModal, setShowFollowingModal] = useState(false);
+  const [followers, setFollowers] = useState<any[]>([]);
+  const [following, setFollowing] = useState<any[]>([]);
+  const [loadingFollowers, setLoadingFollowers] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -168,6 +176,8 @@ export default function UserProfilePage() {
           country: userData.country,
           createdAt: userData.createdAt,
           isFollowing: userData.isFollowing || false,
+          isFollowingBack: userData.isFollowingBack || false,
+          isMutual: (userData.isFollowing && userData.isFollowingBack) || false,
           isKYCVerified: isKYCVerified,
           verificationBadge: userData.verificationBadge, // Include verification badge
           _count: {
@@ -250,9 +260,13 @@ export default function UserProfilePage() {
       });
 
       if (response.ok) {
+        const newIsFollowing = !profile.isFollowing;
+        const newIsMutual = newIsFollowing && profile.isFollowingBack;
+        
         setProfile({
           ...profile,
-          isFollowing: !profile.isFollowing,
+          isFollowing: newIsFollowing,
+          isMutual: newIsMutual,
           _count: {
             ...profile._count,
             followers: profile.isFollowing ? profile._count.followers - 1 : profile._count.followers + 1,
@@ -426,12 +440,19 @@ export default function UserProfilePage() {
                     <button
                       onClick={handleFollow}
                       className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center gap-1 ${
-                        profile.isFollowing
+                        profile.isMutual
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : profile.isFollowing
                           ? 'bg-slate-700 hover:bg-slate-600 text-white'
                           : 'bg-blue-600 hover:bg-blue-700 text-white'
                       }`}
                     >
-                      {profile.isFollowing ? (
+                      {profile.isMutual ? (
+                        <>
+                          <IoPeopleOutline className="w-4 h-4" />
+                          <span className="hidden xs:inline">Friends</span>
+                        </>
+                      ) : profile.isFollowing ? (
                         <>
                           <IoPersonRemoveOutline className="w-4 h-4" />
                           <span className="hidden xs:inline">Unfollow</span>
@@ -477,7 +498,7 @@ export default function UserProfilePage() {
                 </div>
                 
                 {profile.bio && (
-                  <p className="text-gray-300 text-sm mb-2">{profile.bio}</p>
+                  <p className="text-gray-300 text-sm mb-2 whitespace-pre-wrap">{profile.bio}</p>
                 )}
 
                 <div className="flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm text-gray-400">
@@ -494,20 +515,60 @@ export default function UserProfilePage() {
                 </div>
               </div>
 
-              {/* Stats - Modern Grid Layout */}
+              {/* Stats - Modern Grid Layout - Clickable */}
               <div className="grid grid-cols-3 gap-1 xs:gap-1.5 sm:gap-4 pt-2 xs:pt-3 sm:pt-4 border-t border-slate-700 mb-3">
                 <div className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
                   <p className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">{profile._count.posts}</p>
                   <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5">Posts</p>
                 </div>
-                <div className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                <button 
+                  onClick={async () => {
+                    setShowFollowersModal(true);
+                    setLoadingFollowers(true);
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${profile.id}/followers`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                      });
+                      if (response.ok) {
+                        const data = await response.json();
+                        setFollowers(data.data || []);
+                      }
+                    } catch (error) {
+                      console.error('Error fetching followers:', error);
+                    } finally {
+                      setLoadingFollowers(false);
+                    }
+                  }}
+                  className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors cursor-pointer"
+                >
                   <p className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">{profile._count.followers}</p>
                   <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5">Followers</p>
-                </div>
-                <div className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors">
+                </button>
+                <button 
+                  onClick={async () => {
+                    setShowFollowingModal(true);
+                    setLoadingFollowers(true);
+                    try {
+                      const token = localStorage.getItem('accessToken');
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${profile.id}/following`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                      });
+                      if (response.ok) {
+                        const data = await response.json();
+                        setFollowing(data.data || []);
+                      }
+                    } catch (error) {
+                      console.error('Error fetching following:', error);
+                    } finally {
+                      setLoadingFollowers(false);
+                    }
+                  }}
+                  className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors cursor-pointer"
+                >
                   <p className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">{profile._count.following}</p>
                   <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5">Following</p>
-                </div>
+                </button>
               </div>
 
               {/* View Posts Buttons - Toggle Social and Marketplace */}
@@ -756,3 +817,94 @@ export default function UserProfilePage() {
     </AppShell>
   );
 }
+
+
+      {/* Followers Modal */}
+      {showFollowersModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowFollowersModal(false)}>
+          <div className="bg-slate-800 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">Followers</h3>
+              <button onClick={() => setShowFollowersModal(false)} className="p-2 hover:bg-slate-700 rounded-lg">
+                <IoCloseOutline className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[60vh] p-4">
+              {loadingFollowers ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                </div>
+              ) : followers.length === 0 ? (
+                <p className="text-center text-gray-400 py-8">No followers yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {followers.map((follower: any) => (
+                    <Link
+                      key={follower.id}
+                      href={`/user/${follower.id}`}
+                      className="flex items-center gap-3 p-3 bg-slate-700/30 hover:bg-slate-700/50 rounded-lg transition-colors"
+                    >
+                      {follower.avatar ? (
+                        <img src={follower.avatar} alt={follower.username} className="w-10 h-10 rounded-full" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">{follower.firstName?.[0]}{follower.lastName?.[0]}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-medium text-sm truncate">{follower.firstName} {follower.lastName}</p>
+                        <p className="text-gray-400 text-xs truncate">@{follower.username}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Following Modal */}
+      {showFollowingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowFollowingModal(false)}>
+          <div className="bg-slate-800 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-slate-700 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">Following</h3>
+              <button onClick={() => setShowFollowingModal(false)} className="p-2 hover:bg-slate-700 rounded-lg">
+                <IoCloseOutline className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="overflow-y-auto max-h-[60vh] p-4">
+              {loadingFollowers ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                </div>
+              ) : following.length === 0 ? (
+                <p className="text-center text-gray-400 py-8">Not following anyone yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {following.map((user: any) => (
+                    <Link
+                      key={user.id}
+                      href={`/user/${user.id}`}
+                      className="flex items-center gap-3 p-3 bg-slate-700/30 hover:bg-slate-700/50 rounded-lg transition-colors"
+                    >
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.username} className="w-10 h-10 rounded-full" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">{user.firstName?.[0]}{user.lastName?.[0]}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-medium text-sm truncate">{user.firstName} {user.lastName}</p>
+                        <p className="text-gray-400 text-xs truncate">@{user.username}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}

@@ -42,7 +42,7 @@ const EscrowPage: React.FC = () => {
     title: '',
     description: '',
     terms: '',
-    autoReleaseHours: 168 // 7 days
+    autoReleaseHours: 0.5 // 30 minutes
   });
 
   // Chat state
@@ -187,7 +187,7 @@ const EscrowPage: React.FC = () => {
         title: '',
         description: '',
         terms: '',
-        autoReleaseHours: 168
+        autoReleaseHours: 0.5
       });
       loadEscrows();
     } catch (error: any) {
@@ -547,7 +547,7 @@ const EscrowPage: React.FC = () => {
 
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
                   <p className="text-xs text-blue-300">
-                    💡 Money will be held securely until you confirm delivery. Auto-releases after 7 days.
+                    💡 Money will be held securely until you confirm delivery. Auto-releases after 30 minutes.
                   </p>
                 </div>
               </div>

@@ -322,9 +322,23 @@ export default function FeedPage() {
 
       if (response.ok) {
         // Update the post's user follow status
-        setPosts(posts.map(post =>
-          post.user.id === userId ? { ...post, user: { ...post.user, isFollowing: !isCurrentlyFollowing } as any } : post
-        ));
+        setPosts(posts.map(post => {
+          if (post.user.id === userId) {
+            const newIsFollowing = !isCurrentlyFollowing;
+            const isFollowingBack = (post.user as any).isFollowingBack || false;
+            const newIsMutual = newIsFollowing && isFollowingBack;
+            
+            return { 
+              ...post, 
+              user: { 
+                ...post.user, 
+                isFollowing: newIsFollowing,
+                isMutual: newIsMutual
+              } as any 
+            };
+          }
+          return post;
+        }));
         showToast(isCurrentlyFollowing ? 'Unfollowed successfully' : 'Followed successfully', 'success');
       } else {
         // Show actual error message from backend
@@ -517,10 +531,14 @@ export default function FeedPage() {
             <button
               onClick={() => handleFollow(post.user.id, (post.user as any).isFollowing || false)}
               className={`px-1.5 xs:px-2.5 py-0.5 xs:py-1 text-[8px] xs:text-xs font-medium rounded transition-colors ${
-                (post.user as any).isMutual ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
-              } text-white`}
+                (post.user as any).isMutual 
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : (post.user as any).isFollowing 
+                  ? 'bg-slate-700 hover:bg-slate-600 text-white' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
             >
-              {(post.user as any).isMutual ? 'Friends' : (post.user as any).isFollowing ? 'Following' : 'Follow'}
+              {(post.user as any).isMutual ? 'Friends' : (post.user as any).isFollowing ? 'Unfollow' : 'Follow'}
             </button>
             <button
               onClick={() => handleStartChat(post.user.id, post.user)}
@@ -710,18 +728,18 @@ export default function FeedPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
                         <div className="flex items-center gap-1 max-[360px]:gap-0.5 flex-1 min-w-0">
-                          <span className="text-white max-[360px]:text-[11px] text-sm font-medium truncate">
+                          <span className="text-white max-[360px]:text-[9px] text-[11px] xs:text-xs font-medium truncate">
                             {comment.user.firstName} {comment.user.lastName}
                           </span>
                           {(comment.user as any)?.verificationBadge?.status === 'verified' && (
-                            <svg className="w-3.5 h-3.5 max-[360px]:w-3 max-[360px]:h-3 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-2.5 h-2.5 xs:w-3 xs:h-3 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                             </svg>
                           )}
-                          <span className="text-gray-400 max-[360px]:text-[9px] text-xs truncate">
+                          <span className="text-gray-400 max-[360px]:text-[8px] text-[9px] xs:text-[10px] truncate">
                             @{comment.user.username}
                           </span>
-                          <span className="text-gray-500 max-[360px]:text-[9px] text-xs flex-shrink-0">
+                          <span className="text-gray-500 max-[360px]:text-[8px] text-[9px] xs:text-[10px] flex-shrink-0">
                             · {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                           </span>
                         </div>

@@ -265,13 +265,7 @@ export default function TermsPage() {
               </div>
             </div>
 
-            {/* Footer */}
-            <div className="text-center pt-4 sm:pt-6 mt-4 sm:mt-6 border-t border-slate-700/50">
-              <p className="text-xs sm:text-sm text-gray-500">
-                Developed by <span className="text-blue-400 font-semibold">De Oracle</span>
-              </p>
-              <p className="text-[10px] sm:text-xs text-gray-600 mt-1 sm:mt-2">© 2025 ClanPlug. All rights reserved.</p>
-            </div>
+
           </div>
         </div>
       </div>

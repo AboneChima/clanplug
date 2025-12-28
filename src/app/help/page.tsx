@@ -185,8 +185,12 @@ export default function HelpPage() {
             </p>
             <a 
               href="mailto:admin@clanplug.site"
-              className="text-sm text-white hover:text-blue-400 transition-colors"
-              style={{ textDecoration: 'none' }}
+              className="text-sm font-medium transition-colors"
+              style={{ 
+                textDecoration: 'none',
+                color: '#ffffff !important',
+                WebkitTextFillColor: '#ffffff'
+              }}
             >
               admin@clanplug.site
             </a>
