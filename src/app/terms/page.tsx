@@ -8,26 +8,20 @@ export default function TermsPage() {
   const router = useRouter();
 
   return (
-    <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 py-4 mb-4">
-          <div className="max-w-4xl mx-auto px-4">
+    <AppShell hideNavOnMobile={true} hideBottomNavOnMobile={true}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-8">
+        {/* Simple Header with Back Button */}
+        <div className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700 px-4 py-3">
+          <div className="max-w-4xl mx-auto flex items-center gap-3">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-white/80 hover:text-white mb-3 transition-colors"
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
             >
               <IoArrowBack className="w-5 h-5" />
-              <span className="text-sm">Back</span>
             </button>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <IoDocumentTextOutline className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Terms & Conditions</h1>
-                <p className="text-sm text-white/80">Last updated: December 2024</p>
-              </div>
+            <div className="flex items-center gap-2">
+              <IoDocumentTextOutline className="w-5 h-5 text-blue-400" />
+              <h1 className="text-lg font-bold text-white">Terms & Conditions</h1>
             </div>
           </div>
         </div>
