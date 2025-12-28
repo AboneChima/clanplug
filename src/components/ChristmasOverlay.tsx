@@ -13,23 +13,22 @@ export default function ChristmasOverlay({ isVerified }: ChristmasOverlayProps) 
     delay: number; 
     duration: number; 
     size: number;
-    drift: number;
-    opacity: number;
   }>>([]);
 
   useEffect(() => {
     if (isVerified) {
-      // Create realistic snowflakes with varied properties
-      const newSnowflakes = Array.from({ length: 40 }, (_, i) => ({
+      console.log('🎄 ChristmasOverlay: Creating snowflakes for verified user');
+      // Create snowflakes
+      const newSnowflakes = Array.from({ length: 50 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
-        delay: Math.random() * 10,
-        duration: 15 + Math.random() * 15, // Slower, more realistic
-        size: 8 + Math.random() * 16,
-        drift: -30 + Math.random() * 60, // Horizontal drift
-        opacity: 0.4 + Math.random() * 0.6,
+        delay: Math.random() * 8,
+        duration: 10 + Math.random() * 10,
+        size: 10 + Math.random() * 14,
       }));
       setSnowflakes(newSnowflakes);
+    } else {
+      console.log('🎄 ChristmasOverlay: User not verified, no snowfall');
     }
   }, [isVerified]);
 
@@ -40,58 +39,45 @@ export default function ChristmasOverlay({ isVerified }: ChristmasOverlayProps) 
   return (
     <>
       <style jsx global>{`
-        @keyframes snowfall {
+        @keyframes snowfall-animation {
           0% {
-            transform: translateY(-30px) translateX(0) rotate(0deg);
+            transform: translateY(-20px) translateX(0) rotate(0deg);
             opacity: 0;
           }
           10% {
-            opacity: var(--snow-opacity);
+            opacity: 0.8;
           }
           90% {
-            opacity: var(--snow-opacity);
+            opacity: 0.8;
           }
           100% {
-            transform: translateY(100vh) translateX(var(--snow-drift)) rotate(360deg);
+            transform: translateY(100vh) translateX(50px) rotate(360deg);
             opacity: 0;
           }
         }
 
-        @keyframes sway {
-          0%, 100% {
-            transform: translateX(0);
-          }
-          50% {
-            transform: translateX(20px);
-          }
-        }
-
-        .snowflake {
+        .christmas-snowflake {
           position: absolute;
           color: white;
           pointer-events: none;
-          animation: snowfall linear infinite, sway 3s ease-in-out infinite;
-          will-change: transform, opacity;
-          text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
-          filter: blur(0.5px);
+          animation: snowfall-animation linear infinite;
+          will-change: transform;
+          z-index: 9999;
         }
       `}</style>
       
-      <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-        {/* Realistic Snowflakes */}
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 9999 }}>
+        {/* Snowflakes */}
         {snowflakes.map((flake) => (
           <div
             key={flake.id}
-            className="snowflake"
+            className="christmas-snowflake"
             style={{
               left: `${flake.x}%`,
-              top: '-30px',
+              top: '-20px',
               fontSize: `${flake.size}px`,
               animationDelay: `${flake.delay}s`,
-              animationDuration: `${flake.duration}s, ${3 + Math.random() * 2}s`,
-              // @ts-ignore
-              '--snow-drift': `${flake.drift}px`,
-              '--snow-opacity': flake.opacity,
+              animationDuration: `${flake.duration}s`,
             }}
           >
             ❄

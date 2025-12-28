@@ -226,7 +226,7 @@ export default function OrdersPage() {
           title: request.post.title,
           description: `Purchase of ${request.post.title}`,
           terms: 'Marketplace purchase via accepted request',
-          autoReleaseHours: 0.5 // 30 minutes
+          autoReleaseHours: 1 // FIXED: Must be integer, minimum 1 hour
         }),
       });
 
