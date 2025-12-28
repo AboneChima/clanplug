@@ -55,19 +55,16 @@ export default function VerifiedProfileHeader({ isVerified, children }: Verified
         <div className="absolute top-1/2 left-1/2 w-44 h-44 bg-green-400/10 rounded-full blur-3xl animate-float-slow" />
       </div>
 
-      {/* Modern Premium Border with Glow - More Visible */}
-      <div className="absolute inset-0 rounded-3xl">
-        {/* Outer glow */}
-        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 opacity-40 blur-xl animate-pulse-glow" />
-        {/* Border */}
-        <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 animate-shimmer" style={{ 
-          padding: '2px',
-          WebkitMaskImage: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-          WebkitMaskComposite: 'xor',
-          maskComposite: 'exclude'
-        }}>
-          <div className="w-full h-full bg-transparent rounded-3xl" />
-        </div>
+      {/* Subtle corner glows only */}
+      <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
+        {/* Top left corner glow */}
+        <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-amber-400/20 to-transparent blur-2xl" />
+        {/* Top right corner glow */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-yellow-400/20 to-transparent blur-2xl" />
+        {/* Bottom left corner glow */}
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-amber-400/20 to-transparent blur-2xl" />
+        {/* Bottom right corner glow */}
+        <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-tl from-yellow-400/20 to-transparent blur-2xl" />
       </div>
 
       {/* Content */}

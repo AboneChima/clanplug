@@ -62,7 +62,7 @@ interface FollowUser {
 }
 
 export default function ProfilePage() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, refetchUser } = useAuth();
   const { showToast } = useToast();
   const [stats, setStats] = useState<UserStats>({
     posts: 0,
@@ -95,6 +95,11 @@ export default function ProfilePage() {
   const [verificationDays, setVerificationDays] = useState(0);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [viewingPostId, setViewingPostId] = useState<string | null>(null);
+
+  // Fetch fresh user data on mount to ensure bio is up to date
+  useEffect(() => {
+    refetchUser();
+  }, []);
 
   // Update avatar preview, bio, and form when user data is available
   useEffect(() => {
@@ -956,6 +961,7 @@ export default function ProfilePage() {
 
                       if (response.ok) {
                         const data = await response.json();
+                        // Update local state
                         updateUser({
                           firstName: editForm.firstName,
                           lastName: editForm.lastName,
@@ -964,7 +970,10 @@ export default function ProfilePage() {
                         });
                         showToast('Profile updated successfully!', 'success');
                         setShowEditModal(false);
-                        setTimeout(() => window.location.reload(), 500);
+                        // Refetch user data from server to ensure sync
+                        await refetchUser();
+                        // Small delay then reload to show fresh data
+                        setTimeout(() => window.location.reload(), 300);
                       } else {
                         showToast('Failed to update profile', 'error');
                       }
