@@ -453,7 +453,7 @@ export class AdminController {
   // Broadcast Notifications
   async sendBroadcastNotification(req: Request, res: Response) {
     try {
-      const { title, message, targetUsers } = req.body;
+      const { title, message, targetUsers, actionButton } = req.body;
 
       if (!title || !message) {
         return res.status(400).json({
@@ -462,7 +462,7 @@ export class AdminController {
         });
       }
 
-      const result = await adminService.sendBroadcastNotification(title, message, targetUsers);
+      const result = await adminService.sendBroadcastNotification(title, message, targetUsers, actionButton);
       
       return res.json({
         success: true,

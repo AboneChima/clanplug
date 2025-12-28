@@ -714,7 +714,12 @@ export class AdminService {
   }
 
   // Broadcast Notifications
-  async sendBroadcastNotification(title: string, message: string, targetUsers?: string[]) {
+  async sendBroadcastNotification(
+    title: string, 
+    message: string, 
+    targetUsers?: string[],
+    actionButton?: { text: string; link: string }
+  ) {
     const where = targetUsers ? { id: { in: targetUsers } } : {};
     
     const users = await prisma.user.findMany({
@@ -726,7 +731,8 @@ export class AdminService {
       userId: user.id,
       title,
       message,
-      type: 'SYSTEM' as const
+      type: 'SYSTEM' as const,
+      data: actionButton ? { actionButton } : null
     }));
 
     await prisma.notification.createMany({
