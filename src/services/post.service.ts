@@ -975,6 +975,8 @@ export const postService = {
 
       // Get follow status for all users in the feed
       const userIds = [...new Set(mixedPosts.map(post => post.userId))];
+      
+      // Check who the current user is following
       const followStatuses = await prisma.follow.findMany({
         where: {
           followerId: userId,
@@ -984,16 +986,33 @@ export const postService = {
       });
       const followingIds = new Set(followStatuses.map(f => f.followingId));
 
-      const postsWithLikeStatus = mixedPosts.map(post => ({
-        ...post,
-        isLiked: post.likes.length > 0,
-        isBookmarked: bookmarkedPostIds.includes(post.id),
-        user: {
-          ...post.user,
-          isFollowing: followingIds.has(post.userId),
+      // Check who is following the current user back (for mutual/friends status)
+      const followersStatuses = await prisma.follow.findMany({
+        where: {
+          followerId: { in: userIds },
+          followingId: userId,
         },
-        likes: undefined,
-      }));
+        select: { followerId: true },
+      });
+      const followerIds = new Set(followersStatuses.map(f => f.followerId));
+
+      const postsWithLikeStatus = mixedPosts.map(post => {
+        const isFollowing = followingIds.has(post.userId);
+        const isFollower = followerIds.has(post.userId);
+        const isMutual = isFollowing && isFollower;
+
+        return {
+          ...post,
+          isLiked: post.likes.length > 0,
+          isBookmarked: bookmarkedPostIds.includes(post.id),
+          user: {
+            ...post.user,
+            isFollowing,
+            isMutual,
+          },
+          likes: undefined,
+        };
+      });
 
       return {
         success: true,
