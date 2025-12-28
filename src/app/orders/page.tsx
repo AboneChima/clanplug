@@ -161,6 +161,74 @@ export default function OrdersPage() {
     }
   };
 
+  const handlePayNow = async (request: PurchaseRequest) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      
+      // Calculate fee
+      const fee = request.amount * 0.005;
+      const total = request.amount + fee;
+
+      // Check balance first
+      const walletResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/wallet`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (walletResponse.ok) {
+        const walletData = await walletResponse.json();
+        const wallets = walletData.data || [];
+        const userWallet = wallets.find((w: any) => w.currency === request.currency);
+        
+        if (!userWallet || userWallet.balance < total) {
+          showToast(
+            `Insufficient balance. You need ${total.toFixed(2)} ${request.currency} (including ${fee.toFixed(2)} ${request.currency} fee). Current balance: ${userWallet?.balance || 0} ${request.currency}`,
+            'error'
+          );
+          return;
+        }
+      }
+
+      // Confirm payment
+      if (!confirm(`Create escrow and pay for "${request.post.title}"?\n\nAmount: ${request.amount} ${request.currency}\nFee (0.5%): ${fee.toFixed(2)} ${request.currency}\nTotal: ${total.toFixed(2)} ${request.currency}\n\nMoney will be held securely until you confirm delivery.`)) {
+        return;
+      }
+
+      // Create escrow
+      const escrowResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/escrow`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sellerId: request.sellerId,
+          amount: request.amount,
+          currency: request.currency,
+          title: request.post.title,
+          description: `Purchase of ${request.post.title}`,
+          terms: 'Marketplace purchase via accepted request',
+          autoReleaseHours: 0.5 // 30 minutes
+        }),
+      });
+
+      if (escrowResponse.ok) {
+        const escrowData = await escrowResponse.json();
+        showToast('✅ Payment successful! Escrow created.', 'success');
+        
+        // Redirect to escrow page with the specific escrow ID
+        window.location.href = `/escrow?id=${escrowData.data.id}`;
+      } else {
+        const error = await escrowResponse.json();
+        showToast(error.message || 'Failed to create escrow', 'error');
+      }
+    } catch (error) {
+      console.error('Pay now error:', error);
+      showToast('Failed to process payment', 'error');
+    }
+  };
+
   const getStatusBadge = (status: string, expiresAt?: string) => {
     const isExpired = expiresAt && new Date() > new Date(expiresAt);
     
@@ -393,7 +461,7 @@ export default function OrdersPage() {
 
                           {request.status === 'ACCEPTED' && activeTab === 'sent' && (
                             <button
-                              onClick={() => window.location.href = '/escrow'}
+                              onClick={() => handlePayNow(request)}
                               className="flex items-center gap-0.5 sm:gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] sm:text-xs rounded-md transition-colors"
                             >
                               Pay Now
