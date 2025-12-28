@@ -28,6 +28,7 @@ import VerificationModal from '@/components/VerificationModal';
 import PostModal from '@/components/PostModal';
 import VerifiedProfileHeader from '@/components/VerifiedProfileHeader';
 import VerifiedAvatar from '@/components/VerifiedAvatar';
+import ChristmasOverlay from '@/components/ChristmasOverlay';
 
 interface UserStats {
   posts: number;
@@ -359,6 +360,9 @@ export default function ProfilePage() {
 
   return (
     <AppShell>
+      {/* Christmas Overlay for verified users */}
+      <ChristmasOverlay isVerified={verificationStatus === 'active'} />
+      
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         <div className="max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 pt-2 xs:pt-3">
 
