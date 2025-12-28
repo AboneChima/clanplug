@@ -33,6 +33,7 @@ const EscrowPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   
   // Create escrow form
   const [newEscrow, setNewEscrow] = useState<CreateEscrowRequest>({
@@ -49,6 +50,9 @@ const EscrowPage: React.FC = () => {
   const [chatMessage, setChatMessage] = useState('');
   const [chatMessages, setChatMessages] = useState<any[]>([]);
 
+  // Delivery state
+  const [deliveryNotes, setDeliveryNotes] = useState('');
+
   useEffect(() => {
     if (accessToken) {
       loadEscrows();
@@ -60,6 +64,13 @@ const EscrowPage: React.FC = () => {
         // Load and show this specific escrow
         loadSpecificEscrow(escrowId);
       }
+
+      // Auto-refresh every 30 seconds to check for updates
+      const interval = setInterval(() => {
+        loadEscrows();
+      }, 30000);
+
+      return () => clearInterval(interval);
     }
   }, [accessToken]);
 
@@ -208,10 +219,24 @@ const EscrowPage: React.FC = () => {
   };
 
   const handleMarkDelivered = async (escrowId: string) => {
-    if (!confirm('Mark this order as delivered? Buyer will be notified to confirm.')) return;
+    // Open delivery modal instead of simple confirm
+    setSelectedEscrow(escrows.find(e => e.id === escrowId) || null);
+    setShowDeliveryModal(true);
+  };
+
+  const submitDelivery = async () => {
+    if (!selectedEscrow) return;
+    
+    if (!deliveryNotes.trim()) {
+      showToast('Please provide login credentials or delivery details', 'error');
+      return;
+    }
+
     try {
-      await EscrowService.markAsDelivered(accessToken!, escrowId);
-      showToast('Marked as delivered. Waiting for buyer confirmation.', 'success');
+      await EscrowService.markAsDelivered(accessToken!, selectedEscrow.id, deliveryNotes);
+      showToast('✅ Delivery details sent to buyer!', 'success');
+      setShowDeliveryModal(false);
+      setDeliveryNotes('');
       loadEscrows();
     } catch (error) {
       showToast('Failed to mark as delivered', 'error');
@@ -336,7 +361,13 @@ const EscrowPage: React.FC = () => {
             </h1>
             <p className="text-gray-400 text-sm mt-1">Protected transactions for digital goods</p>
           </div>
-          {/* Removed manual escrow creation - only created from marketplace */}
+          <button
+            onClick={() => loadEscrows()}
+            className="p-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Stats */}
@@ -375,7 +406,14 @@ const EscrowPage: React.FC = () => {
             </div>
           ) : (
             escrows.map((escrow) => (
-              <div key={escrow.id} className="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6">
+              <div key={escrow.id} className="bg-slate-900 border border-slate-800 rounded-lg p-4 sm:p-6 relative">
+                {/* New delivery badge for buyer */}
+                {escrow.status === 'FUNDED' && escrow.buyerId === user?.id && escrow.adminNotes && (
+                  <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                    🎉 Delivered!
+                  </div>
+                )}
+                
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -426,6 +464,15 @@ const EscrowPage: React.FC = () => {
                   {/* Buyer actions */}
                   {escrow.buyerId === user?.id && escrow.status === 'FUNDED' && (
                     <>
+                      {escrow.adminNotes && (
+                        <button
+                          onClick={() => { setSelectedEscrow(escrow); setShowDetailsModal(true); }}
+                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors flex items-center gap-2 animate-pulse"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Credentials
+                        </button>
+                      )}
                       <button
                         onClick={() => handleConfirmDelivery(escrow.id)}
                         className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors"
@@ -675,12 +722,12 @@ const EscrowPage: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-blue-400" />
                       <span className="text-gray-400">Buyer:</span>
-                      <span className="text-blue-400">{selectedEscrow.buyer.username}</span>
+                      <span className="text-blue-400">{selectedEscrow.buyer?.username || 'Unknown'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Package className="w-4 h-4 text-green-400" />
                       <span className="text-gray-400">Seller:</span>
-                      <span className="text-green-400">{selectedEscrow.seller.username}</span>
+                      <span className="text-green-400">{selectedEscrow.seller?.username || 'Unknown'}</span>
                     </div>
                   </div>
                 </div>
@@ -704,8 +751,113 @@ const EscrowPage: React.FC = () => {
                         <span className="text-blue-400">{formatDate(selectedEscrow.releasedAt)}</span>
                       </div>
                     )}
+                    {selectedEscrow.autoReleaseAt && selectedEscrow.status === 'FUNDED' && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Auto-Release:</span>
+                        <span className="text-orange-400">{formatDate(selectedEscrow.autoReleaseAt)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Show delivery notes if available */}
+                {selectedEscrow.status === 'FUNDED' && selectedEscrow.sellerId === user?.id && (
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-blue-300 mb-2">📦 Delivery Instructions</h4>
+                    <p className="text-xs text-gray-400">
+                      Once you've delivered the item/service, click "Mark as Delivered" and provide the login credentials or delivery proof to the buyer.
+                    </p>
+                  </div>
+                )}
+
+                {/* Show delivery credentials to buyer */}
+                {selectedEscrow.status === 'FUNDED' && selectedEscrow.buyerId === user?.id && selectedEscrow.adminNotes && (
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-green-300 mb-2 flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      🎉 Delivery Details Received!
+                    </h4>
+                    <div className="bg-slate-800 rounded p-3 mt-2">
+                      <pre className="text-xs text-white whitespace-pre-wrap font-mono">{selectedEscrow.adminNotes}</pre>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      ⚠️ Test the credentials above. If everything works, click "Confirm & Release Payment" below.
+                    </p>
+                  </div>
+                )}
+
+                {/* Show waiting message for buyer if no delivery yet */}
+                {selectedEscrow.status === 'FUNDED' && selectedEscrow.buyerId === user?.id && !selectedEscrow.adminNotes && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-yellow-300 mb-2">⏳ Waiting for Delivery</h4>
+                    <p className="text-xs text-gray-400">
+                      The seller will provide login credentials or delivery proof. Once received, verify and confirm to release payment.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delivery Modal (Seller provides credentials) */}
+        {showDeliveryModal && selectedEscrow && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+            <div className="bg-slate-900 border border-slate-800 rounded-lg max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-white">📦 Provide Delivery Details</h2>
+                <button
+                  onClick={() => { setShowDeliveryModal(false); setDeliveryNotes(''); }}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                  <p className="text-xs text-blue-300">
+                    💡 Provide login credentials, access details, or proof of delivery. The buyer will verify before releasing payment.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Login Credentials / Delivery Details
+                  </label>
+                  <textarea
+                    value={deliveryNotes}
+                    onChange={(e) => setDeliveryNotes(e.target.value)}
+                    rows={8}
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono"
+                    placeholder="Example:&#10;&#10;Username: user123&#10;Password: pass456&#10;Email: email@example.com&#10;&#10;Or provide tracking number, access link, etc."
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {deliveryNotes.length} characters
+                  </p>
+                </div>
+
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                  <p className="text-xs text-yellow-300">
+                    ⚠️ Make sure all details are correct. The buyer will test the credentials before confirming.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => { setShowDeliveryModal(false); setDeliveryNotes(''); }}
+                  className="flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitDelivery}
+                  disabled={!deliveryNotes.trim()}
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                >
+                  Send to Buyer
+                </button>
               </div>
             </div>
           </div>

@@ -24,7 +24,7 @@ export interface EscrowResponse {
   description: string;
   terms?: string;
   disputeReason?: string;
-  adminNotes?: string;
+  adminNotes?: string; // This contains delivery notes from seller
   fundedAt?: string;
   releasedAt?: string;
   disputedAt?: string;
