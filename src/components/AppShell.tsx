@@ -7,6 +7,7 @@ import Sidebar from '@/components/Sidebar';
 import VTUServices from '@/components/VTUServices';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import BroadcastOverlay from '@/components/BroadcastOverlay';
 import { useToast } from '@/contexts/ToastContext';
 import { 
   IoMenuOutline, 
@@ -257,6 +258,9 @@ export default function AppShell({ children, hideNavOnMobile = false, hideBottom
 
         {/* Mobile Bottom Navigation */}
         {!hideBottomNavOnMobile && <MobileBottomNav />}
+        
+        {/* Broadcast Overlay - TikTok Style */}
+        <BroadcastOverlay />
       </div>
     </VTUContext.Provider>
   );
