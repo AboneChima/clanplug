@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { IoCloseOutline, IoMegaphoneOutline, IoCheckmarkCircle } from 'react-icons/io5';
+import { IoCloseOutline, IoInformationCircleOutline } from 'react-icons/io5';
 
 interface BroadcastMessage {
   id: string;
@@ -90,91 +90,72 @@ export default function BroadcastOverlay() {
       setIsVisible(false);
       setIsClosing(false);
       setMessage(null);
-    }, 300);
+    }, 200);
   };
 
   if (!isVisible || !message) return null;
 
   return (
     <div 
-      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all duration-300 ${
+      className={`fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-200 ${
         isClosing ? 'opacity-0' : 'opacity-100'
       }`}
       onClick={handleClose}
     >
-      {/* TikTok-style Modal */}
+      {/* Apple-style Compact Modal */}
       <div 
-        className={`relative w-full max-w-md transform transition-all duration-300 ${
-          isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+        className={`relative w-full sm:w-auto sm:min-w-[340px] sm:max-w-[380px] mx-3 mb-3 sm:mx-0 sm:mb-0 transform transition-all duration-200 ${
+          isClosing ? 'translate-y-4 sm:translate-y-0 sm:scale-95 opacity-0' : 'translate-y-0 sm:scale-100 opacity-100'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Glow Effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-3xl blur-2xl opacity-30 animate-pulse"></div>
-        
-        {/* Main Card */}
-        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl border border-slate-700/50 shadow-2xl overflow-hidden">
-          {/* Animated Background Pattern */}
-          <div className="absolute inset-0 opacity-5">
-            <div className="absolute inset-0" style={{
-              backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-              backgroundSize: '32px 32px'
-            }}></div>
-          </div>
-
-          {/* Close Button */}
+        {/* Main Card - Apple Style */}
+        <div className="relative bg-slate-800/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-700/50 shadow-2xl overflow-hidden">
+          
+          {/* Close Button - Top Right */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-slate-800/80 backdrop-blur-sm border border-slate-700 flex items-center justify-center text-gray-400 hover:text-white hover:bg-slate-700 transition-all hover:scale-110"
+            className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-700/80 backdrop-blur-sm flex items-center justify-center text-gray-400 hover:text-white hover:bg-slate-600 transition-all active:scale-95"
           >
-            <IoCloseOutline className="w-6 h-6" />
+            <IoCloseOutline className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
 
-          {/* Content */}
-          <div className="relative p-8">
-            {/* Icon with Animation */}
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                {/* Pulsing Rings */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-ping opacity-20"></div>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse opacity-30"></div>
-                
-                {/* Icon Container */}
-                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-blue-500/50">
-                  <IoMegaphoneOutline className="w-10 h-10 text-white animate-bounce" />
-                </div>
+          {/* Content - Compact */}
+          <div className="p-4 sm:p-5">
+            {/* Icon - Smaller */}
+            <div className="flex justify-center mb-3 sm:mb-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center">
+                <IoInformationCircleOutline className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" />
               </div>
             </div>
 
-            {/* Title */}
-            <h2 className="text-2xl font-bold text-center mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            {/* Title - Compact */}
+            <h2 className="text-base sm:text-lg font-semibold text-center text-white mb-2 sm:mb-3 px-6">
               {message.title}
             </h2>
 
-            {/* Message */}
-            <div className="bg-slate-800/50 rounded-2xl p-6 mb-6 border border-slate-700/50">
-              <p className="text-gray-300 text-center leading-relaxed whitespace-pre-wrap">
+            {/* Message - Compact */}
+            <div className="bg-slate-700/30 rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+              <p className="text-xs sm:text-sm text-gray-300 text-center leading-relaxed whitespace-pre-wrap">
                 {message.message}
               </p>
             </div>
 
-            {/* Timestamp */}
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-              <IoCheckmarkCircle className="w-4 h-4" />
-              <span>{new Date(message.createdAt).toLocaleString()}</span>
+            {/* Timestamp - Smaller */}
+            <div className="text-center mb-3 sm:mb-4">
+              <span className="text-[10px] sm:text-xs text-gray-500">
+                {new Date(message.createdAt).toLocaleString()}
+              </span>
             </div>
 
-            {/* Action Button */}
+            {/* Action Button - Apple Style */}
             <button
               onClick={handleClose}
-              className="w-full mt-6 py-4 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white font-semibold transition-all hover:scale-105 shadow-lg shadow-purple-500/30"
+              className="w-full py-2.5 sm:py-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm sm:text-base font-medium transition-all active:scale-98"
             >
-              Got it!
+              OK
             </button>
           </div>
-
-          {/* Bottom Accent */}
-          <div className="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
         </div>
       </div>
     </div>
