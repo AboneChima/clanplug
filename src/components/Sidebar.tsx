@@ -132,7 +132,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
                 </svg>
               ) : null}
             </div>
-            <p className="text-[10px] sm:text-xs text-gray-400 truncate">{user.email}</p>
+            <p className="text-[10px] sm:text-xs text-gray-400 truncate" style={{ textDecoration: 'none' }}>{user.email}</p>
           </div>
         </div>
         
@@ -149,8 +149,8 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
         </div>
       </div>
 
-      {/* Navigation - Compact */}
-      <nav className="flex-1 p-2 overflow-y-auto pb-48 lg:pb-4">
+      {/* Navigation - Compact, iOS Scroll Fix */}
+      <nav className="flex-1 p-2 overflow-y-auto pb-48 lg:pb-4 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
         <div className="space-y-1">
           {navItems.map(({ href, label, Icon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));
@@ -159,11 +159,12 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2 px-2 py-2 rounded-lg transition-all group ${
+                className={`flex items-center gap-2 px-2 py-2 rounded-lg transition-all group no-underline ${
                   active 
                     ? 'bg-blue-600/20 text-blue-400' 
                     : 'text-gray-400 hover:bg-slate-800 hover:text-white'
                 }`}
+                style={{ textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}
               >
                 <div className={`
                   w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all flex-shrink-0
@@ -186,7 +187,11 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
         {/* Quick Actions - Compact */}
         <div className="mt-4 pt-3 border-t border-slate-800">
           <div className="space-y-1">
-            <Link href="/notifications" className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group">
+            <Link 
+              href="/notifications" 
+              className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group no-underline"
+              style={{ textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}
+            >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
                 <IoNotificationsOutline className="w-4 h-4" />
               </div>
@@ -194,12 +199,16 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               <div className="ml-auto w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
             </Link>
             
-            <button className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group w-full">
+            <Link
+              href="/help"
+              className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group no-underline"
+              style={{ textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}
+            >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
                 <IoHelpCircleOutline className="w-4 h-4" />
               </div>
               <span className="text-xs sm:text-sm font-medium truncate">Help</span>
-            </button>
+            </Link>
           </div>
         </div>
       </nav>
