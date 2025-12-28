@@ -1,6 +1,6 @@
 'use client';
 
-import { IoArrowBack, IoDocumentTextOutline } from 'react-icons/io5';
+import { IoArrowBack } from 'react-icons/io5';
 import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 
@@ -9,264 +9,268 @@ export default function TermsPage() {
 
   return (
     <AppShell hideNavOnMobile={true} hideBottomNavOnMobile={true}>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-8">
-        {/* Simple Header with Back Button */}
-        <div className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700 px-4 py-3">
-          <div className="max-w-4xl mx-auto flex items-center gap-3">
+      <div className="min-h-screen bg-slate-900">
+        {/* Header */}
+        <div className="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700">
+          <div className="w-full px-4 py-4 flex items-center gap-3">
             <button
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
             >
-              <IoArrowBack className="w-5 h-5" />
+              <IoArrowBack className="w-5 h-5 text-gray-400" />
             </button>
-            <div className="flex items-center gap-2">
-              <IoDocumentTextOutline className="w-5 h-5 text-blue-400" />
-              <h1 className="text-lg font-bold text-white">Terms & Conditions</h1>
-            </div>
+            <h1 className="text-lg font-bold text-white">Terms & Conditions</h1>
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-700 p-6 space-y-6 text-gray-300">
+        {/* Content - Full Width */}
+        <div className="w-full px-4 py-6 pb-24">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 md:p-8 space-y-6 text-gray-300">
             
-            {/* Introduction */}
-            <div>
-              <h2 className="text-xl font-bold text-white mb-3">Welcome to ClanPlug</h2>
-              <p className="text-sm leading-relaxed">
-                By accessing and using ClanPlug, you accept and agree to be bound by these terms and conditions. 
-                Please read them carefully before using our services. If you do not agree with any part of these terms, 
-                you must not use our platform.
+            <div className="text-center pb-4 border-b border-slate-700">
+              <h2 className="text-2xl font-bold text-white mb-2">ClanPlug Terms & Conditions</h2>
+              <p className="text-xs text-gray-400">Last Updated: December 25th, 2025</p>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">1. Acceptance of Terms</h3>
+                <p className="leading-relaxed">
+                  By accessing or using ClanPlug ("the Platform"), you agree to be bound by these Terms and Conditions. 
+                  If you do not agree to these terms, please do not use our services. We reserve the right to modify 
+                  these terms at any time, and continued use of the Platform constitutes acceptance of any changes.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">2. Account Registration & Security</h3>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Eligibility:</strong> You must be at least 18 years old to create an account and use ClanPlug services.
+                </p>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Account Security:</strong> You are responsible for maintaining the confidentiality of your account 
+                  credentials. Any activity under your account is your responsibility.
+                </p>
+                <p className="leading-relaxed">
+                  <strong className="text-white">One Account Policy:</strong> Each user is permitted only one account. Creating multiple accounts 
+                  may result in suspension of all associated accounts.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">3. KYC Verification</h3>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Requirement:</strong> Know Your Customer (KYC) verification is mandatory for users who wish to 
+                  post items on the marketplace. This helps maintain a safe and trustworthy community.
+                </p>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Documentation:</strong> You must submit valid government-issued identification documents. 
+                  All documents are encrypted and stored securely.
+                </p>
+                <p className="leading-relaxed">
+                  <strong className="text-white">Consequences:</strong> Submitting fake or fraudulent documents will result in immediate and 
+                  permanent account suspension, and may be reported to relevant authorities.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">4. Verification Badge</h3>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Cost:</strong> The verification badge costs ₦2,000 for 30 days of premium access.
+                </p>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Benefits:</strong> Verified users receive a blue checkmark next to their name, can post media 
+                  content, and gain increased visibility on the platform.
+                </p>
+                <p className="leading-relaxed">
+                  <strong className="text-white">Non-Refundable:</strong> All verification badge purchases are final and non-refundable. 
+                  The badge expires after 30 days and must be renewed.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">5. Marketplace Rules & Regulations</h3>
+                <p className="leading-relaxed mb-3">
+                  <strong className="text-white">Prohibited Items:</strong> The following items are strictly prohibited from being listed:
+                </p>
+                <ul className="list-disc list-inside space-y-1 ml-4 mb-3">
+                  <li>Illegal items, drugs, or controlled substances</li>
+                  <li>Weapons, ammunition, or explosives</li>
+                  <li>Counterfeit or pirated goods</li>
+                  <li>Adult content or services</li>
+                  <li>Stolen property or items obtained illegally</li>
+                  <li>Live animals (except through approved channels)</li>
+                </ul>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Seller Obligations:</strong> Sellers must provide accurate descriptions, authentic photos, 
+                  ship items within 48 hours of payment confirmation, and accept escrow payments for all transactions.
+                </p>
+                <p className="leading-relaxed">
+                  <strong className="text-white">Buyer Protection:</strong> Buyers are protected through our escrow system. Always use the 
+                  platform's payment system for your safety.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">6. Escrow System</h3>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Mandatory Use:</strong> All marketplace transactions must use the escrow system. This protects 
+                  both buyers and sellers from fraud.
+                </p>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">How It Works:</strong> Payment is held securely by ClanPlug until the buyer confirms receipt 
+                  and satisfaction with the item. Only then is payment released to the seller.
+                </p>
+                <p className="leading-relaxed">
+                  <strong className="text-white">Bypassing Escrow:</strong> Attempting to bypass the escrow system or conducting transactions 
+                  outside the platform will result in immediate account suspension.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">7. Airtime & Data Services</h3>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Service Delivery:</strong> Airtime and data purchases are processed instantly. Delivery 
+                  typically occurs within seconds to minutes.
+                </p>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Final Sale:</strong> All airtime and data purchases are final. Refunds are only provided 
+                  if delivery fails due to technical issues on our end.
+                </p>
+                <p className="leading-relaxed">
+                  <strong className="text-white">Service Fee:</strong> A 2% service fee applies to all airtime and data transactions.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">8. Wallet & Transaction Fees</h3>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Fee Structure:</strong>
+                </p>
+                <ul className="list-disc list-inside space-y-1 ml-4 mb-2">
+                  <li>Deposits: 3% processing fee</li>
+                  <li>Withdrawals: 3% processing fee</li>
+                  <li>Airtime & Data: 2% service fee</li>
+                  <li>Marketplace Transactions: 5% commission</li>
+                  <li>Verification Badge: ₦2,000 per month</li>
+                </ul>
+                <p className="leading-relaxed">
+                  <strong className="text-white">Payment Methods:</strong> We accept bank transfers, card payments, and cryptocurrency. 
+                  Processing times vary by method.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">9. Prohibited Activities</h3>
+                <p className="leading-relaxed mb-2">
+                  The following activities will result in immediate account suspension or termination:
+                </p>
+                <ul className="list-disc list-inside space-y-1 ml-4">
+                  <li>Fraud, scamming, or deceptive practices</li>
+                  <li>Harassment, bullying, or threatening behavior</li>
+                  <li>Creating multiple accounts to bypass restrictions</li>
+                  <li>Attempting to bypass platform fees</li>
+                  <li>Sharing or selling account access</li>
+                  <li>Using automated bots or scripts without permission</li>
+                  <li>Posting spam or unsolicited advertisements</li>
+                  <li>Impersonating other users or entities</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">10. Refund Policy</h3>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Airtime & Data:</strong> Refunds are only issued if delivery fails due to technical issues. 
+                  Wrong number entries are not eligible for refunds.
+                </p>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Verification Badge:</strong> All badge purchases are non-refundable under any circumstances.
+                </p>
+                <p className="leading-relaxed">
+                  <strong className="text-white">Marketplace:</strong> Refunds are handled through the escrow dispute resolution process. 
+                  Buyers must provide evidence of issues within 7 days of delivery.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">11. Privacy & Data Protection</h3>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Data Security:</strong> We take your privacy seriously. All personal information and KYC 
+                  documents are encrypted and stored securely.
+                </p>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Information Usage:</strong> We use your data to provide services, prevent fraud, and improve 
+                  the platform. We do not sell your personal information to third parties.
+                </p>
+                <p className="leading-relaxed">
+                  <strong className="text-white">Data Retention:</strong> We retain your data as long as your account is active and for a 
+                  reasonable period afterward as required by law.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">12. Dispute Resolution</h3>
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Marketplace Disputes:</strong> All marketplace disputes must be reported within 7 days of 
+                  delivery. Our support team will mediate and make a final decision.
+                </p>
+                <p className="leading-relaxed">
+                  <strong className="text-white">Platform Decisions:</strong> ClanPlug's decisions on disputes are final and binding. We reserve 
+                  the right to suspend accounts involved in repeated disputes.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">13. Limitation of Liability</h3>
+                <p className="leading-relaxed">
+                  ClanPlug is not liable for any indirect, incidental, or consequential damages arising from your use of the platform. 
+                  We provide the platform "as is" without warranties of any kind. Our total liability is limited to the amount of fees 
+                  you paid to us in the past 12 months.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">14. Termination</h3>
+                <p className="leading-relaxed">
+                  We reserve the right to suspend or terminate your account at any time for violation of these terms, suspicious activity, 
+                  or at our discretion. Upon termination, you may withdraw any remaining balance in your wallet, subject to our verification 
+                  process.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">15. Changes to Terms</h3>
+                <p className="leading-relaxed">
+                  We may update these Terms and Conditions at any time. Significant changes will be communicated via email or platform 
+                  notification. Continued use of the platform after changes constitutes acceptance of the new terms.
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-slate-700">
+                <p className="leading-relaxed mb-2">
+                  <strong className="text-white">Contact Us:</strong>
+                </p>
+                <p className="leading-relaxed">
+                  For questions about these terms or any issues with the platform, please contact us at{' '}
+                  <a href="mailto:admin@clanplug.site" className="text-blue-400 hover:underline">
+                    admin@clanplug.site
+                  </a>
+                </p>
+              </div>
+
+              <div className="bg-blue-600/10 border border-blue-600/30 rounded-lg p-4">
+                <p className="text-sm text-blue-400 text-center">
+                  ✓ By using ClanPlug, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="text-center pt-6 mt-6 border-t border-slate-700/50">
+              <p className="text-sm text-gray-500">
+                Developed by <span className="text-blue-400 font-semibold">Oracle Technologies</span>
               </p>
-            </div>
-
-            {/* 1. Account Registration */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">1. Account Registration & Security</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>You must be at least 18 years old to create an account</li>
-                <li>You must provide accurate and complete information during registration</li>
-                <li>You are responsible for maintaining the confidentiality of your account credentials</li>
-                <li>You must notify us immediately of any unauthorized access to your account</li>
-                <li>One person may only have one account. Multiple accounts will be suspended</li>
-                <li>You accept responsibility for all activities that occur under your account</li>
-              </ul>
-            </div>
-
-            {/* 2. KYC Verification */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">2. KYC Verification Requirements</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li><strong>Mandatory for Marketplace:</strong> You must complete KYC verification before posting any items for sale</li>
-                <li>Valid government-issued ID is required (National ID, Driver's License, or International Passport)</li>
-                <li>All submitted documents must be clear, valid, and belong to you</li>
-                <li>Submitting fake or fraudulent documents will result in permanent account suspension</li>
-                <li>KYC verification helps maintain a safe and trusted community</li>
-                <li>We reserve the right to request additional verification at any time</li>
-              </ul>
-            </div>
-
-            {/* 3. Verification Badge */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">3. Verification Badge</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>Verification badges cost ₦2,000 for 30 days</li>
-                <li>Badges are non-refundable once purchased</li>
-                <li>Benefits include: blue checkmark, ability to post media, and premium features</li>
-                <li>Badges expire after 30 days and must be renewed</li>
-                <li>Misuse of verification badge privileges will result in badge removal without refund</li>
-              </ul>
-            </div>
-
-            {/* 4. Marketplace Rules */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">4. Marketplace Rules & Prohibited Items</h3>
-              <p className="text-sm mb-2"><strong>You may NOT sell or post:</strong></p>
-              <ul className="space-y-2 text-sm list-disc list-inside mb-3">
-                <li>Illegal items, drugs, weapons, or stolen goods</li>
-                <li>Counterfeit or fake products</li>
-                <li>Adult content or services</li>
-                <li>Items that violate intellectual property rights</li>
-                <li>Hazardous or dangerous materials</li>
-                <li>Live animals (except through approved channels)</li>
-                <li>Human body parts or fluids</li>
-                <li>Items that promote hate, violence, or discrimination</li>
-              </ul>
-              <p className="text-sm mb-2"><strong>Seller Responsibilities:</strong></p>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>Provide accurate descriptions and real photos of items</li>
-                <li>Honor the price and terms stated in your listing</li>
-                <li>Ship items within the stated timeframe</li>
-                <li>Respond to buyer inquiries promptly</li>
-                <li>Accept escrow payments for buyer protection</li>
-                <li>Pay the 5% marketplace fee on completed sales</li>
-              </ul>
-            </div>
-
-            {/* 5. Escrow System */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">5. Escrow Payment System</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>All marketplace transactions must use our escrow system</li>
-                <li>Buyer's payment is held securely until delivery is confirmed</li>
-                <li>Sellers must ship items within 48 hours of payment</li>
-                <li>Buyers have 7 days to confirm receipt or raise a dispute</li>
-                <li>Attempting to bypass escrow will result in account suspension</li>
-                <li>Disputes are reviewed by our team within 48 hours</li>
-                <li>Our decision on disputes is final</li>
-              </ul>
-            </div>
-
-            {/* 6. VTU Services */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">6. VTU Services (Airtime & Data)</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>VTU purchases are final and cannot be cancelled once processed</li>
-                <li>Ensure phone numbers are correct before purchasing</li>
-                <li>Delivery is usually instant but may take up to 5 minutes</li>
-                <li>A 2% service fee applies to all VTU transactions</li>
-                <li>Refunds are only issued for failed transactions (not delivered)</li>
-                <li>We are not responsible for network provider issues</li>
-              </ul>
-            </div>
-
-            {/* 7. Wallet & Payments */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">7. Wallet & Payment Terms</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li><strong>Deposits:</strong> 3% fee, instant processing</li>
-                <li><strong>Withdrawals:</strong> 3% fee, processed within 24 hours</li>
-                <li>Minimum withdrawal: ₦1,000</li>
-                <li>You must provide accurate bank details for withdrawals</li>
-                <li>We are not responsible for funds sent to wrong bank accounts</li>
-                <li>Suspicious transactions may be frozen for investigation</li>
-                <li>We reserve the right to request source of funds documentation</li>
-              </ul>
-            </div>
-
-            {/* 8. Prohibited Activities */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">8. Prohibited Activities & Consequences</h3>
-              <p className="text-sm mb-2"><strong>The following will result in immediate account suspension:</strong></p>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>Fraud, scamming, or deceptive practices</li>
-                <li>Money laundering or illegal financial activities</li>
-                <li>Harassment, bullying, or threatening other users</li>
-                <li>Posting prohibited items or content</li>
-                <li>Attempting to bypass fees or escrow system</li>
-                <li>Using bots or automated systems</li>
-                <li>Creating multiple accounts</li>
-                <li>Impersonating other users or ClanPlug staff</li>
-                <li>Sharing or selling account access</li>
-                <li>Any activity that violates Nigerian law</li>
-              </ul>
-            </div>
-
-            {/* 9. Content & Intellectual Property */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">9. Content & Intellectual Property</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>You retain ownership of content you post</li>
-                <li>By posting, you grant us a license to display and distribute your content</li>
-                <li>You must have rights to all content you post</li>
-                <li>Do not post copyrighted material without permission</li>
-                <li>We may remove content that violates these terms</li>
-                <li>Repeated violations will result in account suspension</li>
-              </ul>
-            </div>
-
-            {/* 10. Refunds & Cancellations */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">10. Refunds & Cancellations</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>VTU purchases: No refunds unless service fails to deliver</li>
-                <li>Verification badges: Non-refundable</li>
-                <li>Marketplace: Refunds handled through escrow dispute system</li>
-                <li>Wallet deposits: Non-refundable (withdraw instead)</li>
-                <li>Refund requests must be submitted within 7 days</li>
-                <li>All refunds are subject to review and approval</li>
-              </ul>
-            </div>
-
-            {/* 11. Privacy & Data */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">11. Privacy & Data Protection</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>We collect and store your personal information securely</li>
-                <li>Your data is used only for platform operations and improvements</li>
-                <li>We do not sell your personal information to third parties</li>
-                <li>KYC documents are encrypted and stored securely</li>
-                <li>You can request data deletion by contacting support</li>
-                <li>We comply with Nigerian data protection regulations</li>
-              </ul>
-            </div>
-
-            {/* 12. Liability & Disclaimers */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">12. Liability & Disclaimers</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>ClanPlug is a platform connecting buyers and sellers</li>
-                <li>We are not responsible for the quality or legality of items sold</li>
-                <li>Users transact at their own risk</li>
-                <li>We are not liable for losses due to user error or negligence</li>
-                <li>Our maximum liability is limited to the transaction amount</li>
-                <li>We do not guarantee uninterrupted service availability</li>
-              </ul>
-            </div>
-
-            {/* 13. Modifications */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">13. Modifications to Terms</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>We reserve the right to modify these terms at any time</li>
-                <li>Changes will be posted on this page with updated date</li>
-                <li>Continued use after changes constitutes acceptance</li>
-                <li>Major changes will be communicated via email or notification</li>
-              </ul>
-            </div>
-
-            {/* 14. Termination */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">14. Account Termination</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>We may suspend or terminate accounts that violate these terms</li>
-                <li>You may close your account at any time</li>
-                <li>Upon termination, you must withdraw all funds within 30 days</li>
-                <li>Suspended accounts may be reinstated after review</li>
-                <li>Permanently banned users cannot create new accounts</li>
-              </ul>
-            </div>
-
-            {/* 15. Dispute Resolution */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">15. Dispute Resolution</h3>
-              <ul className="space-y-2 text-sm list-disc list-inside">
-                <li>All disputes should first be reported through our platform</li>
-                <li>Our support team will mediate and make a decision</li>
-                <li>Decisions are typically made within 48 hours</li>
-                <li>If unsatisfied, disputes may be escalated to Nigerian courts</li>
-                <li>These terms are governed by Nigerian law</li>
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div className="pt-4 border-t border-slate-700">
-              <h3 className="text-lg font-semibold text-white mb-2">Contact Us</h3>
-              <p className="text-sm">
-                For questions about these terms or to report violations, contact us at:
-              </p>
-              <p className="text-sm mt-2">
-                <strong>Email:</strong> <a href="mailto:support@clanplug.com" className="text-blue-400 hover:underline">support@clanplug.com</a>
-              </p>
-              <p className="text-sm mt-1">
-                <strong>Support:</strong> Available through Help & Support page
-              </p>
-            </div>
-
-            {/* Acceptance */}
-            <div className="pt-4 border-t border-slate-700 bg-blue-600/10 rounded-xl p-4">
-              <p className="text-sm text-blue-400 font-medium">
-                ✓ By using ClanPlug, you acknowledge that you have read, understood, and agree to be bound by these Terms & Conditions.
-              </p>
+              <p className="text-xs text-gray-600 mt-2">© 2025 ClanPlug. All rights reserved.</p>
             </div>
           </div>
         </div>

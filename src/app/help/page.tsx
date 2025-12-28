@@ -86,7 +86,7 @@ export default function HelpPage() {
     }
     
     // Unknown question - suggest contacting support
-    return "I'm not sure about that specific question. 🤔\n\nFor personalized help, please contact our support team:\n\n📧 Email: support@clanplug.com\n⏱️ Response time: Within 24 hours\n\nI can answer questions about:\n• Airtime & Data purchases\n• Verification badges & KYC\n• Wallet & payments\n• Marketplace & escrow\n• Fees & charges";
+    return "I'm not sure about that specific question. 🤔\n\nFor personalized help, please contact our support team:\n\n📧 Email: admin@clanplug.site\n⏱️ Response time: Within 24 hours\n\nI can answer questions about:\n• Airtime & Data purchases\n• Verification badges & KYC\n• Wallet & payments\n• Marketplace & escrow\n• Fees & charges";
   };
 
   const handleSendMessage = () => {
@@ -129,7 +129,7 @@ export default function HelpPage() {
           {/* Quick Actions */}
           <div className="grid grid-cols-2 gap-3">
             <a
-              href="mailto:support@clanplug.com"
+              href="mailto:admin@clanplug.site"
               className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 transition-all group"
             >
               <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -183,11 +183,19 @@ export default function HelpPage() {
               Our support team responds within 24 hours
             </p>
             <a 
-              href="mailto:support@clanplug.com"
+              href="mailto:admin@clanplug.site"
               className="text-sm text-blue-400 hover:underline"
             >
-              support@clanplug.com
+              admin@clanplug.site
             </a>
+          </div>
+
+          {/* Footer */}
+          <div className="text-center py-6 border-t border-slate-700/50">
+            <p className="text-xs text-gray-500">
+              Developed by <span className="text-blue-400 font-semibold">Oracle Technologies</span>
+            </p>
+            <p className="text-xs text-gray-600 mt-1">© 2025 ClanPlug. All rights reserved.</p>
           </div>
         </div>
 

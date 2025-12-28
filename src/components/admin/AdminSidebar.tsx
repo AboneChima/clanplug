@@ -7,6 +7,8 @@ import {
   IoPersonOutline,
   IoShieldCheckmarkOutline,
   IoLogOutOutline,
+  IoMegaphoneOutline,
+  IoCheckmarkDoneOutline,
 } from 'react-icons/io5';
 
 interface AdminSidebarProps {
@@ -18,6 +20,8 @@ const menuItems = [
   { href: '/admin', label: 'Dashboard', icon: IoGridOutline },
   { href: '/admin/users', label: 'Users', icon: IoPersonOutline },
   { href: '/admin/kyc', label: 'KYC Verification', icon: IoShieldCheckmarkOutline },
+  { href: '/admin/verifications', label: 'Verify Users', icon: IoCheckmarkDoneOutline },
+  { href: '/admin/broadcast', label: 'Broadcast', icon: IoMegaphoneOutline },
 ];
 
 export default function AdminSidebar({ collapsed }: AdminSidebarProps) {

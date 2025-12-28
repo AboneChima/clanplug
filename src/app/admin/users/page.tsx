@@ -57,7 +57,8 @@ export default function UsersManagement() {
 
       console.log('Fetching users from:', `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`);
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, {
+      // Fetch ALL users with high limit
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users?limit=10000`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

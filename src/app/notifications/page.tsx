@@ -402,7 +402,16 @@ export default function NotificationsPage() {
                               </span>
                             </div>
                             <p className="text-xs text-gray-300 mb-1 line-clamp-2">{notification.message}</p>
-                            <span className="text-[10px] text-gray-500">{formatTimeAgo(notification.createdAt)}</span>
+                            {notification.data?.actionButton && (
+                              <a
+                                href={notification.data.actionButton.link}
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-block mt-2 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xs font-semibold rounded-lg hover:shadow-lg transition-all"
+                              >
+                                {notification.data.actionButton.text}
+                              </a>
+                            )}
+                            <span className="text-[10px] text-gray-500 block mt-1">{formatTimeAgo(notification.createdAt)}</span>
                           </div>
                           
                           <div className="flex items-center gap-0.5 flex-shrink-0">
