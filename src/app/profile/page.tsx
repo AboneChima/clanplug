@@ -26,6 +26,8 @@ import Link from 'next/link';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
 import VerificationModal from '@/components/VerificationModal';
 import PostModal from '@/components/PostModal';
+import VerifiedProfileHeader from '@/components/VerifiedProfileHeader';
+import VerifiedAvatar from '@/components/VerifiedAvatar';
 
 interface UserStats {
   posts: number;
@@ -360,41 +362,33 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         <div className="max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 pt-2 xs:pt-3">
 
-          {/* Profile Card - Compact Mobile Design */}
-          <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl">
-            {/* Minimal cover - Ultra compact for mobile */}
-            <div className="h-16 xs:h-20 sm:h-24 md:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
+          {/* Profile Card - Compact Mobile Design with Verified Enhancement */}
+          <VerifiedProfileHeader isVerified={verificationStatus === 'active'}>
+            <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl">
+              {/* Minimal cover - Ultra compact for mobile */}
+              <div className="h-16 xs:h-20 sm:h-24 md:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
+                </div>
               </div>
-            </div>
 
-            {/* Profile Content */}
-            <div className="px-3 xs:px-4 sm:px-6 lg:px-8 pb-4 xs:pb-5 sm:pb-6">
-              {/* Avatar and Edit Profile Button - Compact */}
-              <div className="flex items-start justify-between -mt-6 xs:-mt-7 sm:-mt-10 md:-mt-12 mb-3 xs:mb-3.5 sm:mb-4">
-                <div className="relative group">
-                  {avatarPreview ? (
-                    <Image
+              {/* Profile Content */}
+              <div className="px-3 xs:px-4 sm:px-6 lg:px-8 pb-4 xs:pb-5 sm:pb-6">
+                {/* Avatar and Edit Profile Button - Compact */}
+                <div className="flex items-start justify-between -mt-6 xs:-mt-7 sm:-mt-10 md:-mt-12 mb-3 xs:mb-3.5 sm:mb-4">
+                  <div className="relative group">
+                    <VerifiedAvatar
                       src={avatarPreview}
                       alt={user?.username || 'User'}
-                      width={96}
-                      height={96}
-                      className="w-16 h-16 xs:w-18 xs:h-18 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-3 xs:border-4 border-slate-800 object-cover shadow-xl ring-2 ring-slate-700"
+                      isVerified={verificationStatus === 'active'}
+                      size="lg"
                     />
-                  ) : (
-                    <div className="w-16 h-16 xs:w-18 xs:h-18 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-3 xs:border-4 border-slate-800 bg-slate-700 flex items-center justify-center shadow-xl ring-2 ring-slate-700">
-                      <svg className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                  {isUploading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                      <div className="animate-spin rounded-full h-5 w-5 xs:h-6 xs:w-6 border-b-2 border-white"></div>
-                    </div>
-                  )}
-                </div>
+                    {isUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                        <div className="animate-spin rounded-full h-5 w-5 xs:h-6 xs:w-6 border-b-2 border-white"></div>
+                      </div>
+                    )}
+                  </div>
 
                 <button
                   onClick={() => {
@@ -538,6 +532,7 @@ export default function ProfilePage() {
 
             </div>
           </div>
+          </VerifiedProfileHeader>
 
           {/* Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">

@@ -24,6 +24,8 @@ import { useToast } from '@/contexts/ToastContext';
 import PostModal from '@/components/PostModal';
 import Image from 'next/image';
 import Link from 'next/link';
+import VerifiedProfileHeader from '@/components/VerifiedProfileHeader';
+import VerifiedAvatar from '@/components/VerifiedAvatar';
 
 interface UserProfile {
   id: string;
@@ -40,6 +42,7 @@ interface UserProfile {
   isFollowingBack: boolean;
   isMutual: boolean;
   isKYCVerified?: boolean;
+  isVerified?: boolean;
   _count: {
     posts: number;
     followers: number;
@@ -397,36 +400,28 @@ export default function UserProfilePage() {
         </div>
 
         <div className="max-w-4xl mx-auto px-3 sm:px-4">
-          {/* Profile Card - Modern Clean Design */}
-          <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl mb-4">
-            {/* Modern pattern cover */}
-            <div className="h-24 sm:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
-              </div>
-            </div>
-
-            {/* Profile Info */}
-            <div className="px-4 sm:px-6 pb-6">
-              {/* Avatar and Actions */}
-              <div className="flex items-end justify-between -mt-12 sm:-mt-16 mb-4">
-                <div className="relative">
-                  {profile.avatar ? (
-                    <Image
-                      src={profile.avatar}
-                      alt={profile.username}
-                      width={96}
-                      height={96}
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 object-cover shadow-xl ring-2 ring-slate-700"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-slate-800 bg-slate-700 flex items-center justify-center shadow-xl ring-2 ring-slate-700">
-                      <span className="text-2xl sm:text-3xl font-bold text-gray-400">
-                        {profile.firstName[0]}{profile.lastName[0]}
-                      </span>
-                    </div>
-                  )}
+          {/* Profile Card - Modern Clean Design with Verified Enhancement */}
+          <VerifiedProfileHeader isVerified={(profile as any)?.verificationBadge?.status === 'active' || (profile as any)?.isVerified}>
+            <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl mb-4">
+              {/* Modern pattern cover */}
+              <div className="h-24 sm:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
                 </div>
+              </div>
+
+              {/* Profile Info */}
+              <div className="px-4 sm:px-6 pb-6">
+                {/* Avatar and Actions */}
+                <div className="flex items-end justify-between -mt-12 sm:-mt-16 mb-4">
+                  <div className="relative">
+                    <VerifiedAvatar
+                      src={profile.avatar}
+                      alt={`${profile.firstName} ${profile.lastName}`}
+                      isVerified={(profile as any)?.verificationBadge?.status === 'active' || (profile as any)?.isVerified}
+                      size="lg"
+                    />
+                  </div>
 
                 {!isOwnProfile && (
                   <div className="flex gap-1.5 sm:gap-2">
@@ -608,6 +603,7 @@ export default function UserProfilePage() {
               </div>
             </div>
           </div>
+          </VerifiedProfileHeader>
 
           {/* Social Posts - Compact - Toggle visibility */}
           {showPosts && (
