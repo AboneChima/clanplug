@@ -814,10 +814,6 @@ export default function UserProfilePage() {
           </div>
         </div>
       )}
-    </AppShell>
-  );
-}
-
 
       {/* Followers Modal */}
       {showFollowersModal && (
@@ -908,3 +904,6 @@ export default function UserProfilePage() {
           </div>
         </div>
       )}
+    </AppShell>
+  );
+}
