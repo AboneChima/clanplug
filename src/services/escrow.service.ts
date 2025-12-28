@@ -203,7 +203,11 @@ class EscrowService {
         if (request.postId) {
           await tx.post.update({
             where: { id: request.postId },
-            data: { status: 'SOLD' }
+            data: { 
+              status: 'SOLD',
+              soldToId: request.buyerId,
+              soldAt: new Date()
+            }
           });
         }
 

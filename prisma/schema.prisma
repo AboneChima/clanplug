@@ -61,6 +61,7 @@ model User {
   bookmarks         Bookmark[]
   notifications     Notification[]
   posts             Post[]
+  purchasedPosts    Post[]            @relation("PostBuyer")
   reports           Report[]          @relation("ReportedBy")
   reportedContent   Report[]          @relation("ReportedUser")
   stories           Story[]           @relation("UserStories")
@@ -241,43 +242,45 @@ model PurchaseRequest {
 }
 
 model Post {
-  id             String     @id @default(cuid())
-  userId         String
-  type           PostType
-  status         PostStatus @default(ACTIVE)
-  title          String
-  description    String
-  price          Decimal?   @db.Decimal(15, 2)
-  currency       Currency?
-  images         String[]
-  videos         String[]
-  tags           String[]
-  category       String?
-  gameTitle      String?
-  platform       String?
-  accountLevel   String?
-  accountDetails Json?
-  location       String?
-  isNegotiable   Boolean    @default(false)
-  isFeatured     Boolean    @default(false)
-  viewCount      Int        @default(0)
-  likeCount      Int        @default(0)
-  commentCount   Int        @default(0)
-  shareCount     Int        @default(0)
-  soldAt         DateTime?
-  expiresAt      DateTime?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  accountAge     Int?
-  accountRank    String?
-  accountRegion  String?
-  gameId         String?
-  hasRareItems   Boolean    @default(false)
-  isVerified     Boolean    @default(false)
-  listingId      String?    // Link to marketplace listing
+  id                String            @id @default(cuid())
+  userId            String
+  type              PostType
+  status            PostStatus        @default(ACTIVE)
+  title             String
+  description       String
+  price             Decimal?          @db.Decimal(15, 2)
+  currency          Currency?
+  images            String[]
+  videos            String[]
+  tags              String[]
+  category          String?
+  gameTitle         String?
+  platform          String?
+  accountLevel      String?
+  accountDetails    Json?
+  location          String?
+  isNegotiable      Boolean           @default(false)
+  isFeatured        Boolean           @default(false)
+  viewCount         Int               @default(0)
+  likeCount         Int               @default(0)
+  commentCount      Int               @default(0)
+  shareCount        Int               @default(0)
+  soldAt            DateTime?
+  soldToId          String?           // Buyer who purchased
+  expiresAt         DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  accountAge        Int?
+  accountRank       String?
+  accountRegion     String?
+  gameId            String?
+  hasRareItems      Boolean           @default(false)
+  isVerified        Boolean           @default(false)
+  listingId         String?           // Link to marketplace listing
   comments          Comment[]
   escrows           Escrow[]
   purchaseRequests  PurchaseRequest[]
+  soldTo            User?             @relation("PostBuyer", fields: [soldToId], references: [id])
   likes             Like[]
   bookmarks         Bookmark[]
   game              Game?      @relation(fields: [gameId], references: [id])
