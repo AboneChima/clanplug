@@ -382,19 +382,26 @@ export default function UserProfilePage() {
   }
 
   const isOwnProfile = currentUser?.id === profile.id;
-  const isVerified = (profile as any)?.verificationBadge?.status === 'active' || (profile as any)?.isVerified;
+  // Check multiple possible verification statuses
+  const verificationBadge = (profile as any)?.verificationBadge;
+  const isVerified = verificationBadge?.status === 'active' || 
+                     verificationBadge?.status === 'verified' || 
+                     verificationBadge?.status === 'ACTIVE' ||
+                     (profile as any)?.isVerified === true;
 
   // Debug logging
-  console.log('Profile verification check:', {
-    verificationBadge: (profile as any)?.verificationBadge,
-    isVerified: (profile as any)?.isVerified,
-    calculated: isVerified
+  console.log('🎄 Profile verification check:', {
+    userId: profile.id,
+    username: profile.username,
+    verificationBadge: verificationBadge,
+    isVerified: isVerified,
+    rawProfile: profile
   });
 
   return (
     <AppShell>
-      {/* Christmas Overlay for verified users */}
-      <ChristmasOverlay isVerified={isVerified} />
+      {/* Christmas Overlay for verified users - ALWAYS RENDER IF VERIFIED */}
+      {isVerified && <ChristmasOverlay isVerified={true} />}
       
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         {/* Header - Clean Modern Design */}
@@ -413,7 +420,7 @@ export default function UserProfilePage() {
 
         <div className="max-w-4xl mx-auto px-3 sm:px-4">
           {/* Profile Card - Modern Clean Design with Verified Enhancement */}
-          <VerifiedProfileHeader isVerified={(profile as any)?.verificationBadge?.status === 'active' || (profile as any)?.isVerified}>
+          <VerifiedProfileHeader isVerified={isVerified}>
             <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl mb-4">
               {/* Modern pattern cover */}
               <div className="h-24 sm:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
@@ -430,7 +437,7 @@ export default function UserProfilePage() {
                     <VerifiedAvatar
                       src={profile.avatar}
                       alt={`${profile.firstName} ${profile.lastName}`}
-                      isVerified={(profile as any)?.verificationBadge?.status === 'active' || (profile as any)?.isVerified}
+                      isVerified={isVerified}
                       size="lg"
                     />
                   </div>

@@ -176,8 +176,8 @@ export default function OrdersPage() {
         title: request.post.title,
       });
 
-      // Check balance first
-      const walletResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/wallet`, {
+      // Check balance first - FIXED: Use /api/wallets (plural)
+      const walletResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/wallets`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -185,18 +185,25 @@ export default function OrdersPage() {
 
       if (walletResponse.ok) {
         const walletData = await walletResponse.json();
-        const wallets = walletData.data || [];
+        const wallets = walletData.data || walletData.wallets || [];
         const userWallet = wallets.find((w: any) => w.currency === request.currency);
         
-        console.log('Wallet check:', { userWallet, total, currency: request.currency });
+        // FIXED: Convert balance to number
+        const balance = userWallet ? Number(userWallet.balance) : 0;
         
-        if (!userWallet || userWallet.balance < total) {
+        console.log('Wallet check:', { userWallet, balance, total, currency: request.currency });
+        
+        if (!userWallet || balance < total) {
           showToast(
-            `Insufficient balance. You need ${total.toFixed(2)} ${request.currency} (including ${fee.toFixed(2)} ${request.currency} fee). Current balance: ${userWallet?.balance || 0} ${request.currency}`,
+            `Insufficient balance. You need ${total.toFixed(2)} ${request.currency} (including ${fee.toFixed(2)} ${request.currency} fee). Current balance: ${balance.toFixed(2)} ${request.currency}`,
             'error'
           );
           return;
         }
+      } else {
+        console.error('Wallet fetch failed:', walletResponse.status);
+        showToast('Failed to check wallet balance. Please try again.', 'error');
+        return;
       }
 
       // Confirm payment
