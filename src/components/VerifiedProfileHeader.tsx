@@ -8,18 +8,19 @@ interface VerifiedProfileHeaderProps {
 }
 
 export default function VerifiedProfileHeader({ isVerified, children }: VerifiedProfileHeaderProps) {
-  const [sparkles, setSparkles] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([]);
+  const [snowflakes, setSnowflakes] = useState<Array<{ id: number; x: number; delay: number; duration: number; size: number }>>([]);
 
   useEffect(() => {
     if (isVerified) {
-      // Generate random sparkles
-      const newSparkles = Array.from({ length: 20 }, (_, i) => ({
+      // Generate snowflakes
+      const newSnowflakes = Array.from({ length: 30 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
-        y: Math.random() * 100,
-        delay: Math.random() * 3,
+        delay: Math.random() * 5,
+        duration: 10 + Math.random() * 10,
+        size: 4 + Math.random() * 8,
       }));
-      setSparkles(newSparkles);
+      setSnowflakes(newSnowflakes);
     }
   }, [isVerified]);
 
@@ -29,29 +30,33 @@ export default function VerifiedProfileHeader({ isVerified, children }: Verified
 
   return (
     <div className="relative">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-purple-600/10 to-pink-600/10 rounded-3xl animate-gradient-shift overflow-hidden">
-        {/* Sparkle effects */}
-        {sparkles.map((sparkle) => (
+      {/* Christmas gradient background - Red, Gold, Green */}
+      <div className="absolute inset-0 bg-gradient-to-br from-red-900/5 via-amber-900/5 to-green-900/5 rounded-3xl overflow-hidden">
+        {/* Snowflakes */}
+        {snowflakes.map((flake) => (
           <div
-            key={sparkle.id}
-            className="absolute w-1 h-1 bg-white rounded-full animate-sparkle"
+            key={flake.id}
+            className="absolute text-white opacity-80 animate-snowfall pointer-events-none"
             style={{
-              left: `${sparkle.x}%`,
-              top: `${sparkle.y}%`,
-              animationDelay: `${sparkle.delay}s`,
+              left: `${flake.x}%`,
+              top: '-10px',
+              fontSize: `${flake.size}px`,
+              animationDelay: `${flake.delay}s`,
+              animationDuration: `${flake.duration}s`,
             }}
-          />
+          >
+            ❄
+          </div>
         ))}
         
-        {/* Floating orbs */}
-        <div className="absolute top-10 left-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-10 right-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl animate-float-delayed" />
-        <div className="absolute top-1/2 left-1/2 w-36 h-36 bg-pink-500/20 rounded-full blur-3xl animate-float-slow" />
+        {/* Subtle golden glow orbs */}
+        <div className="absolute top-10 left-10 w-40 h-40 bg-amber-400/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-10 right-10 w-48 h-48 bg-red-400/10 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/2 w-44 h-44 bg-green-400/10 rounded-full blur-3xl animate-float-slow" />
       </div>
 
-      {/* Premium border glow */}
-      <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-50 animate-border-glow" style={{ padding: '2px' }}>
+      {/* Premium golden border */}
+      <div className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 opacity-30 animate-shimmer" style={{ padding: '2px' }}>
         <div className="w-full h-full bg-slate-900 rounded-3xl" />
       </div>
 
@@ -60,25 +65,22 @@ export default function VerifiedProfileHeader({ isVerified, children }: Verified
         {children}
       </div>
 
-      {/* Add custom animations */}
+      {/* Animations */}
       <style jsx>{`
-        @keyframes gradient-shift {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-
-        @keyframes sparkle {
-          0%, 100% {
+        @keyframes snowfall {
+          0% {
+            transform: translateY(-10px) translateX(0);
             opacity: 0;
-            transform: scale(0);
           }
-          50% {
+          10% {
             opacity: 1;
-            transform: scale(1);
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) translateX(50px);
+            opacity: 0;
           }
         }
 
@@ -105,26 +107,21 @@ export default function VerifiedProfileHeader({ isVerified, children }: Verified
             transform: translate(0, 0) scale(1);
           }
           50% {
-            transform: translate(10px, -10px) scale(1.1);
+            transform: translate(10px, -10px) scale(1.05);
           }
         }
 
-        @keyframes border-glow {
-          0%, 100% {
-            opacity: 0.3;
+        @keyframes shimmer {
+          0% {
+            background-position: -200% center;
           }
-          50% {
-            opacity: 0.6;
+          100% {
+            background-position: 200% center;
           }
         }
 
-        .animate-gradient-shift {
-          background-size: 200% 200%;
-          animation: gradient-shift 8s ease infinite;
-        }
-
-        .animate-sparkle {
-          animation: sparkle 2s ease-in-out infinite;
+        .animate-snowfall {
+          animation: snowfall linear infinite;
         }
 
         .animate-float {
@@ -139,8 +136,9 @@ export default function VerifiedProfileHeader({ isVerified, children }: Verified
           animation: float-slow 8s ease-in-out infinite;
         }
 
-        .animate-border-glow {
-          animation: border-glow 3s ease-in-out infinite;
+        .animate-shimmer {
+          background-size: 200% auto;
+          animation: shimmer 3s linear infinite;
         }
       `}</style>
     </div>

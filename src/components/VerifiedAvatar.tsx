@@ -22,6 +22,13 @@ export default function VerifiedAvatar({ src, alt, isVerified, size = 'xl' }: Ve
     xl: 'w-7 h-7 xs:w-8 xs:h-8',
   };
 
+  const hatSizes = {
+    sm: 'w-8 h-8 -top-6 -right-2',
+    md: 'w-10 h-10 -top-7 -right-2',
+    lg: 'w-14 h-14 -top-10 -right-3',
+    xl: 'w-16 h-16 xs:w-18 xs:h-18 -top-12 xs:-top-14 -right-3 xs:-right-4',
+  };
+
   if (!isVerified) {
     return (
       <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-4 border-slate-700`}>
@@ -40,22 +47,19 @@ export default function VerifiedAvatar({ src, alt, isVerified, size = 'xl' }: Ve
 
   return (
     <div className="relative">
-      {/* Animated glow rings */}
-      <div className="absolute inset-0 animate-pulse-glow">
-        <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 blur-xl opacity-60`} />
-      </div>
-      <div className="absolute inset-0 animate-pulse-glow-delayed">
-        <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 blur-lg opacity-40`} />
+      {/* Soft golden glow - Apple-like */}
+      <div className="absolute inset-0 animate-pulse-soft">
+        <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 blur-2xl opacity-40`} />
       </div>
 
-      {/* Avatar with premium border */}
+      {/* Avatar with premium golden border */}
       <div className="relative">
-        <div className={`${sizeClasses[size]} rounded-full p-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-spin-slow`}>
-          <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-4 border-slate-900`}>
+        <div className={`${sizeClasses[size]} rounded-full p-1 bg-gradient-to-br from-amber-400 via-yellow-300 to-amber-500 shadow-2xl shadow-amber-500/30`}>
+          <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-4 border-white`}>
             {src ? (
               <img src={src} alt={alt} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
                 <span className="text-white font-bold text-2xl">
                   {alt.charAt(0).toUpperCase()}
                 </span>
@@ -64,77 +68,97 @@ export default function VerifiedAvatar({ src, alt, isVerified, size = 'xl' }: Ve
           </div>
         </div>
 
-        {/* Verified badge with animation */}
-        <div className="absolute -bottom-1 -right-1 animate-bounce-subtle">
+        {/* Christmas Santa Hat */}
+        <div className={`absolute ${hatSizes[size]} z-20 animate-wiggle`}>
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Hat body */}
+            <path d="M10 35 L32 10 L54 35 Z" fill="#DC2626" />
+            {/* Hat trim */}
+            <ellipse cx="32" cy="35" rx="24" ry="4" fill="#FFFFFF" />
+            {/* Pom pom */}
+            <circle cx="32" cy="8" r="6" fill="#FFFFFF" />
+            {/* Shadow on hat */}
+            <path d="M10 35 L32 10 L32 35 Z" fill="#B91C1C" opacity="0.3" />
+          </svg>
+        </div>
+
+        {/* Premium verified badge - Gold theme */}
+        <div className="absolute -bottom-1 -right-1 z-10">
           <div className="relative">
             {/* Badge glow */}
-            <div className={`absolute inset-0 ${badgeSizes[size]} bg-blue-500 rounded-full blur-md animate-pulse`} />
+            <div className={`absolute inset-0 ${badgeSizes[size]} bg-amber-400 rounded-full blur-md animate-pulse-soft`} />
             
-            {/* Badge */}
-            <div className={`relative ${badgeSizes[size]} bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center border-2 border-white shadow-lg`}>
-              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+            {/* Badge with Christmas colors */}
+            <div className={`relative ${badgeSizes[size]} bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center border-3 border-white shadow-xl`}>
+              <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             </div>
           </div>
         </div>
+
+        {/* Sparkle effects around avatar */}
+        <div className="absolute -top-2 -right-2 text-amber-400 text-xl animate-twinkle">✨</div>
+        <div className="absolute -bottom-2 -left-2 text-yellow-400 text-lg animate-twinkle-delayed">⭐</div>
       </div>
 
       <style jsx>{`
-        @keyframes pulse-glow {
+        @keyframes pulse-soft {
           0%, 100% {
-            opacity: 0.4;
+            opacity: 0.3;
             transform: scale(1);
           }
           50% {
-            opacity: 0.8;
-            transform: scale(1.1);
-          }
-        }
-
-        @keyframes pulse-glow-delayed {
-          0%, 100% {
-            opacity: 0.2;
+            opacity: 0.5;
             transform: scale(1.05);
           }
-          50% {
-            opacity: 0.6;
-            transform: scale(1.15);
-          }
         }
 
-        @keyframes spin-slow {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        @keyframes bounce-subtle {
+        @keyframes wiggle {
           0%, 100% {
-            transform: translateY(0);
+            transform: rotate(-5deg);
           }
           50% {
-            transform: translateY(-4px);
+            transform: rotate(5deg);
           }
         }
 
-        .animate-pulse-glow {
-          animation: pulse-glow 3s ease-in-out infinite;
+        @keyframes twinkle {
+          0%, 100% {
+            opacity: 0.3;
+            transform: scale(0.8) rotate(0deg);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.2) rotate(180deg);
+          }
         }
 
-        .animate-pulse-glow-delayed {
-          animation: pulse-glow-delayed 3s ease-in-out infinite 0.5s;
+        @keyframes twinkle-delayed {
+          0%, 100% {
+            opacity: 0.4;
+            transform: scale(0.9) rotate(0deg);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.1) rotate(-180deg);
+          }
         }
 
-        .animate-spin-slow {
-          animation: spin-slow 8s linear infinite;
+        .animate-pulse-soft {
+          animation: pulse-soft 3s ease-in-out infinite;
         }
 
-        .animate-bounce-subtle {
-          animation: bounce-subtle 2s ease-in-out infinite;
+        .animate-wiggle {
+          animation: wiggle 2s ease-in-out infinite;
+        }
+
+        .animate-twinkle {
+          animation: twinkle 2s ease-in-out infinite;
+        }
+
+        .animate-twinkle-delayed {
+          animation: twinkle-delayed 2.5s ease-in-out infinite 0.5s;
         }
       `}</style>
     </div>
