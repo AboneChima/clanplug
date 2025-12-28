@@ -193,7 +193,7 @@ export default function HelpPage() {
           {/* Footer */}
           <div className="text-center py-6 border-t border-slate-700/50">
             <p className="text-xs text-gray-500">
-              Developed by <span className="text-blue-400 font-semibold">Oracle Technologies</span>
+              Developed by <span className="text-blue-400 font-semibold">De Oracle</span>
             </p>
             <p className="text-xs text-gray-600 mt-1">© 2025 ClanPlug. All rights reserved.</p>
           </div>

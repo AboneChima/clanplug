@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { IoCloseOutline, IoSparklesOutline, IoArrowForwardOutline } from 'react-icons/io5';
+import { IoCloseOutline, IoInformationCircleOutline, IoArrowForwardOutline } from 'react-icons/io5';
 import { useRouter } from 'next/navigation';
 
 interface BroadcastMessage {
@@ -56,6 +56,9 @@ export default function BroadcastOverlay() {
           const shownBroadcasts = JSON.parse(localStorage.getItem('shownBroadcasts') || '[]');
           
           if (!shownBroadcasts.includes(latestBroadcast.id)) {
+            console.log('📢 Showing broadcast:', latestBroadcast);
+            console.log('📢 Action button data:', latestBroadcast.data?.actionButton);
+            
             setMessage({
               id: latestBroadcast.id,
               title: latestBroadcast.title,
@@ -99,111 +102,103 @@ export default function BroadcastOverlay() {
       setIsVisible(false);
       setIsClosing(false);
       setMessage(null);
-    }, 300);
+    }, 200);
   };
 
   const handleActionClick = () => {
+    console.log('🔘 Action button clicked!');
+    console.log('🔘 Message data:', message?.data);
+    console.log('🔘 Action button:', message?.data?.actionButton);
+    
     if (message?.data?.actionButton?.link) {
+      const link = message.data.actionButton.link;
+      console.log('🔘 Navigating to:', link);
       handleClose();
       setTimeout(() => {
-        if (message.data?.actionButton?.link) {
-          router.push(message.data.actionButton.link);
-        }
-      }, 300);
+        router.push(link);
+      }, 250);
     }
   };
 
   if (!isVisible || !message) return null;
 
+  const hasActionButton = message.data?.actionButton?.text && message.data?.actionButton?.link;
+  console.log('🔘 Has action button:', hasActionButton, message.data?.actionButton);
+
   return (
     <div 
-      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300 ${
+      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-all duration-200 ${
         isClosing ? 'opacity-0' : 'opacity-100'
       }`}
       onClick={handleClose}
     >
-      {/* TikTok-Style Centered Modal */}
+      {/* Apple-Style Clean Modal */}
       <div 
-        className={`relative w-full max-w-md transform transition-all duration-300 ${
-          isClosing ? 'scale-90 opacity-0' : 'scale-100 opacity-100'
+        className={`relative w-full max-w-sm transform transition-all duration-200 ${
+          isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Animated Gradient Background */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-3xl opacity-75 blur-lg animate-pulse"></div>
-        
-        {/* Main Card */}
-        <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-white/10">
-          {/* Decorative Top Bar */}
-          <div className="h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500"></div>
-          
+        {/* Main Card - Clean Apple Style */}
+        <div className="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden">
           {/* Close Button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-all hover:rotate-90 duration-300"
+            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
           >
-            <IoCloseOutline className="w-6 h-6" />
+            <IoCloseOutline className="w-5 h-5" />
           </button>
 
           {/* Content */}
-          <div className="p-8">
-            {/* Icon with Animated Glow */}
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                {/* Pulsing Glow */}
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 rounded-full blur-2xl opacity-60 animate-pulse"></div>
-                
-                {/* Icon Container */}
-                <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 flex items-center justify-center shadow-2xl">
-                  <IoSparklesOutline className="w-10 h-10 text-white animate-pulse" />
-                </div>
+          <div className="p-6 pt-8">
+            {/* Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <IoInformationCircleOutline className="w-9 h-9 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
 
             {/* Title */}
-            <h2 className="text-2xl font-bold text-center text-white mb-4 leading-tight">
+            <h2 className="text-xl font-bold text-center text-gray-900 dark:text-white mb-3 px-2">
               {message.title}
             </h2>
 
             {/* Message */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-5 mb-6">
-              <p className="text-base text-white/90 text-center leading-relaxed whitespace-pre-wrap">
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 dark:text-gray-300 text-center leading-relaxed whitespace-pre-wrap px-2">
                 {message.message}
               </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* Custom Action Button (if provided) */}
-              {message.data?.actionButton && (
+              {hasActionButton && (
                 <button
                   onClick={handleActionClick}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white text-base font-bold transition-all hover:shadow-2xl hover:shadow-purple-500/50 active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
-                  <span>{message.data.actionButton.text}</span>
-                  <IoArrowForwardOutline className="w-5 h-5" />
+                  <span>{message.data!.actionButton!.text}</span>
+                  <IoArrowForwardOutline className="w-4 h-4" />
                 </button>
               )}
               
               {/* Dismiss Button */}
               <button
                 onClick={handleClose}
-                className="w-full py-4 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 text-white text-base font-semibold transition-all active:scale-95"
+                className="w-full py-3.5 rounded-xl bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-900 dark:text-white text-sm font-semibold transition-colors"
               >
-                {message.data?.actionButton ? 'Maybe Later' : 'Got it!'}
+                {hasActionButton ? 'Maybe Later' : 'Got it'}
               </button>
             </div>
 
             {/* Timestamp */}
             <div className="text-center mt-4">
-              <span className="text-xs text-white/40">
+              <span className="text-xs text-gray-400 dark:text-gray-500">
                 {new Date(message.createdAt).toLocaleString()}
               </span>
             </div>
           </div>
-
-          {/* Decorative Bottom Shimmer */}
-          <div className="h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
         </div>
       </div>
     </div>
