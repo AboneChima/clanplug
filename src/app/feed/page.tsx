@@ -27,6 +27,11 @@ interface Post {
   title?: string;
   description: string;
   images?: string[];
+  status?: string;
+  soldTo?: {
+    id: string;
+    username: string;
+  };
   user: {
     id: string;
     username: string;
@@ -589,15 +594,30 @@ export default function FeedPage() {
                   <IoImageOutline className="w-6 h-6 text-gray-500" />
                 </div>
               )}
-              <div className="absolute top-0.5 left-0.5 bg-green-600 text-white text-[9px] px-1 py-0.5 rounded font-medium">
-                LISTING
-              </div>
+              {post.status === 'SOLD' ? (
+                <div className="absolute top-0.5 left-0.5 bg-red-600 text-white text-[9px] px-1 py-0.5 rounded font-medium">
+                  SOLD
+                </div>
+              ) : (
+                <div className="absolute top-0.5 left-0.5 bg-green-600 text-white text-[9px] px-1 py-0.5 rounded font-medium">
+                  LISTING
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
               <div>
-                <p className="text-white font-medium text-xs sm:text-sm line-clamp-1">{post.title || 'Game Listing'}</p>
-                <p className="text-gray-400 text-[11px] sm:text-xs line-clamp-2 mt-0.5">{post.description}</p>
-                {post.price && (
+                <p className={`text-white font-medium text-xs sm:text-sm line-clamp-1 ${post.status === 'SOLD' ? 'line-through opacity-60' : ''}`}>
+                  {post.title || 'Game Listing'}
+                </p>
+                <p className={`text-gray-400 text-[11px] sm:text-xs line-clamp-2 mt-0.5 ${post.status === 'SOLD' ? 'opacity-60' : ''}`}>
+                  {post.description}
+                </p>
+                {post.status === 'SOLD' && post.soldTo && (
+                  <p className="text-red-400 text-[10px] mt-1 font-semibold">
+                    ✓ Sold to @{post.soldTo.username}
+                  </p>
+                )}
+                {post.price && post.status !== 'SOLD' && (
                   <p className="text-green-400 font-bold text-xs sm:text-sm mt-0.5">₦{post.price.toLocaleString()}</p>
                 )}
               </div>
