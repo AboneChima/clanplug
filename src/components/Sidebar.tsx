@@ -105,7 +105,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
   };
 
   return (
-    <aside className="h-screen bg-slate-900 border-r border-slate-800 flex flex-col animate-fade-in">
+    <aside className="h-full bg-slate-900 border-r border-slate-800 flex flex-col animate-fade-in overflow-hidden">
       {/* User Profile Header - Compact */}
       <div className="p-2 sm:p-3 border-b border-slate-800 flex-shrink-0 bg-slate-900">
         <div className="flex items-center gap-2">
@@ -150,7 +150,14 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
       </div>
 
       {/* Navigation - Compact, iOS Scroll Fix */}
-      <nav className="flex-1 p-2 overflow-y-auto pb-48 lg:pb-4 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <nav 
+        className="flex-1 p-2 overflow-y-auto pb-48 lg:pb-4 overscroll-contain min-h-0" 
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          touchAction: 'pan-y'
+        }}
+      >
         <div className="space-y-1">
           {navItems.map(({ href, label, Icon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));

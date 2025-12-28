@@ -133,6 +133,14 @@ export default function MorePage() {
             <IoLogOutOutline className="w-4 h-4 xs:w-4.5 xs:h-4.5 sm:w-5 sm:h-5 text-red-400" />
             <span className="text-red-400 font-semibold text-[11px] xs:text-xs sm:text-sm md:text-base">Sign Out</span>
           </button>
+
+          {/* Footer */}
+          <div className="text-center py-4 sm:py-6">
+            <p className="text-xs sm:text-sm text-gray-500">
+              Developed by <span className="text-blue-400 font-semibold">De Oracle</span>
+            </p>
+            <p className="text-[10px] sm:text-xs text-gray-600 mt-1">© 2025 ClanPlug. All rights reserved.</p>
+          </div>
         </div>
       </div>
     </AppShell>

@@ -10,18 +10,39 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* iOS Safari: Remove underlines from all links and text */
-a, p, span, div, h1, h2, h3, h4, h5, h6 {
+/* iOS Safari: Remove underlines from all links and text - AGGRESSIVE */
+* {
   text-decoration: none !important;
   -webkit-text-decoration: none !important;
+  -webkit-text-decoration-line: none !important;
+  -webkit-text-decoration-style: none !important;
+  -webkit-text-decoration-color: transparent !important;
+}
+
+a, p, span, div, h1, h2, h3, h4, h5, h6, li, td, th {
+  text-decoration: none !important;
+  -webkit-text-decoration: none !important;
+  -webkit-text-decoration-line: none !important;
 }
 
 /* iOS Safari: Prevent automatic link detection underlines */
 a[href^="tel:"],
-a[href^="mailto:"] {
+a[href^="mailto:"],
+a[href*="@"] {
   text-decoration: none !important;
   -webkit-text-decoration: none !important;
-  color: inherit;
+  -webkit-text-decoration-line: none !important;
+  color: inherit !important;
+  border-bottom: none !important;
+}
+
+/* Force remove underlines on specific elements */
+.text-gray-400,
+.text-blue-400,
+.text-white,
+[class*="text-"] {
+  text-decoration: none !important;
+  -webkit-text-decoration: none !important;
 }
 
 html {
@@ -57,13 +78,26 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* iOS Safari: Fix sidebar scrolling */
+/* iOS Safari: Fix sidebar scrolling - AGGRESSIVE */
+aside,
+aside > *,
 .sidebar-scroll,
-aside nav {
+aside nav,
+nav[class*="overflow"],
+[class*="overflow-y-auto"] {
   -webkit-overflow-scrolling: touch !important;
-  overscroll-behavior: contain;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overscroll-behavior: contain !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: relative !important;
+}
+
+/* Ensure sidebar nav can scroll independently */
+aside nav {
+  height: 100% !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 /* Fix for iOS Safari bottom white space */

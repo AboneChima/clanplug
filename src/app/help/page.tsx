@@ -131,6 +131,7 @@ export default function HelpPage() {
             <a
               href="mailto:admin@clanplug.site"
               className="bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 transition-all group"
+              style={{ textDecoration: 'none' }}
             >
               <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <IoMailOutline className="w-5 h-5 text-blue-400" />
@@ -184,7 +185,8 @@ export default function HelpPage() {
             </p>
             <a 
               href="mailto:admin@clanplug.site"
-              className="text-sm text-blue-400 hover:underline"
+              className="text-sm text-white hover:text-blue-400 transition-colors"
+              style={{ textDecoration: 'none' }}
             >
               admin@clanplug.site
             </a>
