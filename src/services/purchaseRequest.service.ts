@@ -156,6 +156,20 @@ export const purchaseRequestService = {
     if (request.status !== 'PENDING_SELLER_RESPONSE') throw new Error('Request already processed');
     if (new Date() > request.expiresAt) throw new Error('Request expired');
 
+    // Cancel all other pending requests for this post from the same buyer
+    await prisma.purchaseRequest.updateMany({
+      where: {
+        postId: request.postId,
+        buyerId: request.buyerId,
+        id: { not: requestId },
+        status: 'PENDING_SELLER_RESPONSE'
+      },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date()
+      }
+    });
+
     // Update request
     await prisma.purchaseRequest.update({
       where: { id: requestId },
