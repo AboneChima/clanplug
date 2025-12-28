@@ -169,6 +169,13 @@ export default function OrdersPage() {
       const fee = request.amount * 0.005;
       const total = request.amount + fee;
 
+      console.log('Creating escrow with:', {
+        sellerId: request.sellerId,
+        amount: request.amount,
+        currency: request.currency,
+        title: request.post.title,
+      });
+
       // Check balance first
       const walletResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/wallet`, {
         headers: {
@@ -180,6 +187,8 @@ export default function OrdersPage() {
         const walletData = await walletResponse.json();
         const wallets = walletData.data || [];
         const userWallet = wallets.find((w: any) => w.currency === request.currency);
+        
+        console.log('Wallet check:', { userWallet, total, currency: request.currency });
         
         if (!userWallet || userWallet.balance < total) {
           showToast(
@@ -213,19 +222,23 @@ export default function OrdersPage() {
         }),
       });
 
+      console.log('Escrow response status:', escrowResponse.status);
+
       if (escrowResponse.ok) {
         const escrowData = await escrowResponse.json();
+        console.log('Escrow created successfully:', escrowData);
         showToast('✅ Payment successful! Escrow created.', 'success');
         
         // Redirect to escrow page with the specific escrow ID
         window.location.href = `/escrow?id=${escrowData.data.id}`;
       } else {
         const error = await escrowResponse.json();
-        showToast(error.message || 'Failed to create escrow', 'error');
+        console.error('Escrow creation error:', error);
+        showToast(error.message || error.error || 'Failed to create escrow. Check console for details.', 'error');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Pay now error:', error);
-      showToast('Failed to process payment', 'error');
+      showToast(error.message || 'Failed to process payment. Check console for details.', 'error');
     }
   };
 

@@ -384,6 +384,13 @@ export default function UserProfilePage() {
   const isOwnProfile = currentUser?.id === profile.id;
   const isVerified = (profile as any)?.verificationBadge?.status === 'active' || (profile as any)?.isVerified;
 
+  // Debug logging
+  console.log('Profile verification check:', {
+    verificationBadge: (profile as any)?.verificationBadge,
+    isVerified: (profile as any)?.isVerified,
+    calculated: isVerified
+  });
+
   return (
     <AppShell>
       {/* Christmas Overlay for verified users */}
