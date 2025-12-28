@@ -187,15 +187,45 @@ const VTUServices: React.FC = () => {
 
       const response = await VTUService.purchaseAirtime(request);
       
-      if (response.success) {
-        showToast(response.message || 'Airtime purchase successful!', 'success');
+      // Check if response indicates success
+      if (response.success || response.data?.reference) {
+        showToast(response.message || 'Airtime purchase successful! ✅', 'success');
         resetForm();
         loadTransactions();
       } else {
-        showToast(response.message || 'Airtime purchase failed', 'error');
+        // Even if success is false, check if there's a reference (means it went through)
+        if (response.data?.providerReference) {
+          showToast('Airtime sent successfully! ✅', 'success');
+          resetForm();
+          loadTransactions();
+        } else {
+          showToast(response.message || 'Airtime purchase failed', 'error');
+        }
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to purchase airtime. Please try again.';
+      console.error('Airtime purchase error:', error);
+      
+      // Better error handling
+      let errorMessage = 'Failed to purchase airtime';
+      
+      if (error.response) {
+        // Server responded with error
+        const serverMessage = error.response.data?.message || error.response.data?.error;
+        if (serverMessage) {
+          errorMessage = serverMessage;
+        } else if (error.response.status === 400) {
+          errorMessage = 'Invalid request. Please check your details.';
+        } else if (error.response.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage = 'Network error. Please check your connection.';
+      } else {
+        // Something else happened
+        errorMessage = error.message || errorMessage;
+      }
+      
       showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
@@ -225,15 +255,45 @@ const VTUServices: React.FC = () => {
 
       const response = await VTUService.purchaseData(request);
       
-      if (response.success) {
-        showToast(response.message || 'Data purchase successful!', 'success');
+      // Check if response indicates success
+      if (response.success || response.data?.reference) {
+        showToast(response.message || 'Data purchase successful! ✅', 'success');
         resetForm();
         loadTransactions();
       } else {
-        showToast(response.message || 'Data purchase failed', 'error');
+        // Even if success is false, check if there's a reference (means it went through)
+        if (response.data?.providerReference) {
+          showToast('Data sent successfully! ✅', 'success');
+          resetForm();
+          loadTransactions();
+        } else {
+          showToast(response.message || 'Data purchase failed', 'error');
+        }
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to purchase data. Please try again.';
+      console.error('Data purchase error:', error);
+      
+      // Better error handling
+      let errorMessage = 'Failed to purchase data';
+      
+      if (error.response) {
+        // Server responded with error
+        const serverMessage = error.response.data?.message || error.response.data?.error;
+        if (serverMessage) {
+          errorMessage = serverMessage;
+        } else if (error.response.status === 400) {
+          errorMessage = 'Invalid request. Please check your details.';
+        } else if (error.response.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+      } else if (error.request) {
+        // Request made but no response
+        errorMessage = 'Network error. Please check your connection.';
+      } else {
+        // Something else happened
+        errorMessage = error.message || errorMessage;
+      }
+      
       showToast(errorMessage, 'error');
     } finally {
       setLoading(false);
