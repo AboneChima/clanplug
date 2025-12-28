@@ -28,26 +28,8 @@ export default function ChristmasOverlay({ isVerified }: ChristmasOverlayProps) 
   }
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {/* Beautiful Snowflakes */}
-      {snowflakes.map((flake) => (
-        <div
-          key={flake.id}
-          className="absolute text-white animate-snowfall"
-          style={{
-            left: `${flake.x}%`,
-            top: '-30px',
-            fontSize: `${flake.size}px`,
-            animationDelay: `${flake.delay}s`,
-            animationDuration: `${flake.duration}s`,
-            opacity: 0.7 + Math.random() * 0.3,
-          }}
-        >
-          ❄
-        </div>
-      ))}
-
-      <style jsx>{`
+    <>
+      <style jsx global>{`
         @keyframes snowfall {
           0% {
             transform: translateY(-30px) translateX(0) rotate(0deg);
@@ -65,10 +47,33 @@ export default function ChristmasOverlay({ isVerified }: ChristmasOverlayProps) 
           }
         }
 
-        .animate-snowfall {
+        .snowflake {
+          position: absolute;
+          color: white;
+          pointer-events: none;
           animation: snowfall linear infinite;
         }
       `}</style>
-    </div>
+      
+      <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+        {/* Beautiful Snowflakes */}
+        {snowflakes.map((flake) => (
+          <div
+            key={flake.id}
+            className="snowflake"
+            style={{
+              left: `${flake.x}%`,
+              top: '-30px',
+              fontSize: `${flake.size}px`,
+              animationDelay: `${flake.delay}s`,
+              animationDuration: `${flake.duration}s`,
+              opacity: 0.7 + Math.random() * 0.3,
+            }}
+          >
+            ❄
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

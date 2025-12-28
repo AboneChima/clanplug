@@ -46,64 +46,9 @@ export default function VerifiedAvatar({ src, alt, isVerified, size = 'xl' }: Ve
   }
 
   return (
-    <div className="relative">
-      {/* Soft golden glow - Apple-like */}
-      <div className="absolute inset-0 animate-pulse-soft">
-        <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 blur-2xl opacity-40`} />
-      </div>
-
-      {/* Avatar with premium golden border */}
-      <div className="relative">
-        <div className={`${sizeClasses[size]} rounded-full p-1 bg-gradient-to-br from-amber-400 via-yellow-300 to-amber-500 shadow-2xl shadow-amber-500/30`}>
-          <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-4 border-white`}>
-            {src ? (
-              <img src={src} alt={alt} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
-                <span className="text-white font-bold text-2xl">
-                  {alt.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Christmas Santa Hat */}
-        <div className={`absolute ${hatSizes[size]} z-20 animate-wiggle`}>
-          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Hat body */}
-            <path d="M10 35 L32 10 L54 35 Z" fill="#DC2626" />
-            {/* Hat trim */}
-            <ellipse cx="32" cy="35" rx="24" ry="4" fill="#FFFFFF" />
-            {/* Pom pom */}
-            <circle cx="32" cy="8" r="6" fill="#FFFFFF" />
-            {/* Shadow on hat */}
-            <path d="M10 35 L32 10 L32 35 Z" fill="#B91C1C" opacity="0.3" />
-          </svg>
-        </div>
-
-        {/* Premium verified badge - Gold theme */}
-        <div className="absolute -bottom-1 -right-1 z-10">
-          <div className="relative">
-            {/* Badge glow */}
-            <div className={`absolute inset-0 ${badgeSizes[size]} bg-amber-400 rounded-full blur-md animate-pulse-soft`} />
-            
-            {/* Badge with Christmas colors */}
-            <div className={`relative ${badgeSizes[size]} bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center border-3 border-white shadow-xl`}>
-              <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        {/* Sparkle effects around avatar */}
-        <div className="absolute -top-2 -right-2 text-amber-400 text-xl animate-twinkle">✨</div>
-        <div className="absolute -bottom-2 -left-2 text-yellow-400 text-lg animate-twinkle-delayed">⭐</div>
-      </div>
-
-      <style jsx>{`
-        @keyframes pulse-soft {
+    <>
+      <style jsx global>{`
+        @keyframes pulse-glow {
           0%, 100% {
             opacity: 0.3;
             transform: scale(1);
@@ -114,12 +59,12 @@ export default function VerifiedAvatar({ src, alt, isVerified, size = 'xl' }: Ve
           }
         }
 
-        @keyframes wiggle {
+        @keyframes wiggle-hat {
           0%, 100% {
-            transform: rotate(-5deg);
+            transform: rotate(-8deg);
           }
           50% {
-            transform: rotate(5deg);
+            transform: rotate(8deg);
           }
         }
 
@@ -134,33 +79,80 @@ export default function VerifiedAvatar({ src, alt, isVerified, size = 'xl' }: Ve
           }
         }
 
-        @keyframes twinkle-delayed {
-          0%, 100% {
-            opacity: 0.4;
-            transform: scale(0.9) rotate(0deg);
-          }
-          50% {
-            opacity: 1;
-            transform: scale(1.1) rotate(-180deg);
-          }
+        .glow-ring {
+          animation: pulse-glow 3s ease-in-out infinite;
         }
 
-        .animate-pulse-soft {
-          animation: pulse-soft 3s ease-in-out infinite;
+        .santa-hat {
+          animation: wiggle-hat 2s ease-in-out infinite;
+          transform-origin: bottom center;
         }
 
-        .animate-wiggle {
-          animation: wiggle 2s ease-in-out infinite;
-        }
-
-        .animate-twinkle {
+        .sparkle {
           animation: twinkle 2s ease-in-out infinite;
         }
 
-        .animate-twinkle-delayed {
-          animation: twinkle-delayed 2.5s ease-in-out infinite 0.5s;
+        .sparkle-delayed {
+          animation: twinkle 2.5s ease-in-out infinite 0.5s;
         }
       `}</style>
-    </div>
+
+      <div className="relative">
+        {/* Soft golden glow - Apple-like */}
+        <div className="absolute inset-0 glow-ring">
+          <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 blur-2xl opacity-40`} />
+        </div>
+
+        {/* Avatar with premium golden border */}
+        <div className="relative">
+          <div className={`${sizeClasses[size]} rounded-full p-1 bg-gradient-to-br from-amber-400 via-yellow-300 to-amber-500 shadow-2xl shadow-amber-500/30`}>
+            <div className={`${sizeClasses[size]} rounded-full overflow-hidden border-4 border-white`}>
+              {src ? (
+                <img src={src} alt={alt} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-2xl">
+                    {alt.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Christmas Santa Hat - Animated */}
+          <div className={`absolute ${hatSizes[size]} z-20 santa-hat`}>
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Hat body */}
+              <path d="M10 35 L32 10 L54 35 Z" fill="#DC2626" />
+              {/* Hat trim */}
+              <ellipse cx="32" cy="35" rx="24" ry="4" fill="#FFFFFF" />
+              {/* Pom pom */}
+              <circle cx="32" cy="8" r="6" fill="#FFFFFF" />
+              {/* Shadow on hat */}
+              <path d="M10 35 L32 10 L32 35 Z" fill="#B91C1C" opacity="0.3" />
+            </svg>
+          </div>
+
+          {/* Premium verified badge - Gold theme */}
+          <div className="absolute -bottom-1 -right-1 z-10">
+            <div className="relative">
+              {/* Badge glow */}
+              <div className={`absolute inset-0 ${badgeSizes[size]} bg-amber-400 rounded-full blur-md glow-ring`} />
+              
+              {/* Badge with Christmas colors */}
+              <div className={`relative ${badgeSizes[size]} bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center border-3 border-white shadow-xl`}>
+                <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Sparkle effects around avatar */}
+          <div className="absolute -top-2 -right-2 text-amber-400 text-xl sparkle">✨</div>
+          <div className="absolute -bottom-2 -left-2 text-yellow-400 text-lg sparkle-delayed">⭐</div>
+        </div>
+      </div>
+    </>
   );
 }
