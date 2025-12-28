@@ -19,6 +19,7 @@ import { useToast } from '@/contexts/ToastContext';
 import PostModal from '@/components/PostModal';
 import TransactionDetailsModal from '@/components/TransactionDetailsModal';
 import VTUTransactionModal from '@/components/VTUTransactionModal';
+import BroadcastModal from '@/components/BroadcastModal';
 
 interface Notification {
   id: string;
@@ -39,6 +40,7 @@ export default function NotificationsPage() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Notification | null>(null);
   const [selectedVTUTransaction, setSelectedVTUTransaction] = useState<Notification | null>(null);
+  const [selectedBroadcast, setSelectedBroadcast] = useState<Notification | null>(null);
 
   const fetchNotifications = async () => {
     if (!accessToken) {
@@ -238,6 +240,11 @@ export default function NotificationsPage() {
           window.location.href = `/escrow?id=${data.escrowId}`;
         }
         break;
+      
+      case 'SYSTEM':
+        // Show broadcast modal
+        setSelectedBroadcast(notification);
+        break;
         
       default:
         // For other types, just mark as read
@@ -286,6 +293,12 @@ export default function NotificationsPage() {
         <VTUTransactionModal 
           notification={selectedVTUTransaction}
           onClose={() => setSelectedVTUTransaction(null)}
+        />
+      )}
+      {selectedBroadcast && (
+        <BroadcastModal 
+          notification={selectedBroadcast}
+          onClose={() => setSelectedBroadcast(null)}
         />
       )}
       <AppShell>

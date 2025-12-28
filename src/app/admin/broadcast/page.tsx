@@ -94,12 +94,20 @@ export default function AdminBroadcastPage() {
   const sendBroadcast = async () => {
     if (!broadcastForm.title || !broadcastForm.message) return;
     
+    // Confirmation dialog
+    const targetUsers = activeTab === 'single' && selectedUsers.length > 0 
+      ? selectedUsers 
+      : undefined;
+    
+    const confirmMessage = targetUsers 
+      ? `Send to ${selectedUsers.length} selected user${selectedUsers.length !== 1 ? 's' : ''}?`
+      : `Send to ALL ${users.length} users?`;
+    
+    if (!confirm(confirmMessage)) return;
+    
     try {
       setSending(true);
       const token = localStorage.getItem('accessToken');
-      const targetUsers = activeTab === 'single' && selectedUsers.length > 0 
-        ? selectedUsers 
-        : undefined;
       
       const payload: any = {
         title: broadcastForm.title,
@@ -111,6 +119,8 @@ export default function AdminBroadcastPage() {
       if (broadcastForm.actionButton?.text && broadcastForm.actionButton?.link) {
         payload.actionButton = broadcastForm.actionButton;
       }
+      
+      console.log('📤 Sending broadcast:', payload);
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/notifications/broadcast`, {
         method: 'POST',
