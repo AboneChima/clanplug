@@ -221,4 +221,43 @@ router.post('/fcm/unregister',
   })
 );
 
+// POST /api/purchase-requests/:id/link-escrow - Link escrow to purchase request
+router.post('/:id/link-escrow',
+  authenticate,
+  [
+    param('id').notEmpty().withMessage('Request ID is required'),
+    body('escrowId').notEmpty().withMessage('Escrow ID is required')
+  ],
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: errors.array()
+      });
+      return;
+    }
+
+    const { id } = req.params;
+    const { escrowId } = req.body;
+    const userId = req.user!.id;
+
+    const result = await purchaseRequestService.linkEscrow(id, escrowId, userId);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Escrow linked successfully',
+        data: result.request
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message
+      });
+    }
+  })
+);
+
 export default router;

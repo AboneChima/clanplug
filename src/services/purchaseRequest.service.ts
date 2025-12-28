@@ -417,5 +417,43 @@ export const purchaseRequestService = {
     }
 
     return expired.length;
+  },
+
+  // Link escrow to purchase request
+  async linkEscrow(requestId: string, escrowId: string, userId: string) {
+    const request = await prisma.purchaseRequest.findUnique({
+      where: { id: requestId }
+    });
+
+    if (!request) {
+      return {
+        success: false,
+        message: 'Purchase request not found'
+      };
+    }
+
+    // Only buyer can link escrow
+    if (request.buyerId !== userId) {
+      return {
+        success: false,
+        message: 'Unauthorized'
+      };
+    }
+
+    const updatedRequest = await prisma.purchaseRequest.update({
+      where: { id: requestId },
+      data: { escrowId },
+      include: {
+        buyer: true,
+        seller: true,
+        post: true
+      }
+    });
+
+    return {
+      success: true,
+      request: updatedRequest
+    };
   }
 };
+

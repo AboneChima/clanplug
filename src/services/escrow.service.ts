@@ -1,4 +1,4 @@
-import { PrismaClient, EscrowStatus, Currency } from '@prisma/client';
+import { PrismaClient, EscrowStatus, Currency, NotificationType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 const prisma = new PrismaClient();
@@ -198,6 +198,14 @@ class EscrowService {
             }
           }
         });
+
+        // Mark post as SOLD if postId is provided
+        if (request.postId) {
+          await tx.post.update({
+            where: { id: request.postId },
+            data: { status: 'SOLD' }
+          });
+        }
 
         return newEscrow;
       });
@@ -576,6 +584,17 @@ class EscrowService {
           seller: {
             select: { id: true, username: true, email: true }
           }
+        }
+      });
+
+      // Send notification to buyer
+      await prisma.notification.create({
+        data: {
+          userId: escrow.buyerId,
+          type: NotificationType.ESCROW_UPDATE,
+          title: '🎉 Delivery Details Received!',
+          message: `${updatedEscrow.seller.username} has provided delivery details for "${updatedEscrow.title}". Check your escrow page to view credentials.`,
+          link: `/escrow?id=${escrowId}`,
         }
       });
 

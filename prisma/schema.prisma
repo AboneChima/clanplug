@@ -160,30 +160,31 @@ model VerificationBadge {
 }
 
 model Escrow {
-  id            String          @id @default(cuid())
-  buyerId       String
-  sellerId      String
-  postId        String?
-  amount        Decimal         @db.Decimal(15, 2)
-  fee           Decimal         @db.Decimal(15, 2)
-  currency      Currency
-  status        EscrowStatus    @default(PENDING)
-  title         String
-  description   String
-  terms         String?
-  disputeReason String?
-  adminNotes    String?
-  fundedAt      DateTime?
-  releasedAt    DateTime?
-  disputedAt    DateTime?
-  autoReleaseAt DateTime?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  messages      EscrowMessage[]
-  buyer         User            @relation("EscrowBuyer", fields: [buyerId], references: [id])
-  post          Post?           @relation(fields: [postId], references: [id])
-  seller        User            @relation("EscrowSeller", fields: [sellerId], references: [id])
-  purchase      Purchase?
+  id               String             @id @default(cuid())
+  buyerId          String
+  sellerId         String
+  postId           String?
+  amount           Decimal            @db.Decimal(15, 2)
+  fee              Decimal            @db.Decimal(15, 2)
+  currency         Currency
+  status           EscrowStatus       @default(PENDING)
+  title            String
+  description      String
+  terms            String?
+  disputeReason    String?
+  adminNotes       String?
+  fundedAt         DateTime?
+  releasedAt       DateTime?
+  disputedAt       DateTime?
+  autoReleaseAt    DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  messages         EscrowMessage[]
+  buyer            User               @relation("EscrowBuyer", fields: [buyerId], references: [id])
+  post             Post?              @relation(fields: [postId], references: [id])
+  seller           User               @relation("EscrowSeller", fields: [sellerId], references: [id])
+  purchase         Purchase?
+  purchaseRequests PurchaseRequest[]  // Link back to purchase requests
 
   @@index([buyerId])
   @@index([sellerId])
@@ -216,6 +217,7 @@ model PurchaseRequest {
   buyerId     String
   sellerId    String
   postId      String
+  escrowId    String?               // Link to created escrow
   amount      Decimal               @db.Decimal(10, 2)
   currency    Currency              @default(NGN)
   status      PurchaseRequestStatus @default(PENDING_SELLER_RESPONSE)
@@ -228,11 +230,13 @@ model PurchaseRequest {
   buyer       User                  @relation("BuyerRequests", fields: [buyerId], references: [id])
   seller      User                  @relation("SellerRequests", fields: [sellerId], references: [id])
   post        Post                  @relation(fields: [postId], references: [id])
+  escrow      Escrow?               @relation(fields: [escrowId], references: [id])
 
   @@index([buyerId])
   @@index([sellerId])
   @@index([status])
   @@index([expiresAt])
+  @@index([escrowId])
   @@map("purchase_requests")
 }
 
