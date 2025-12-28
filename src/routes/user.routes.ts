@@ -346,7 +346,8 @@ router.get('/:userId',
   handleValidationErrors,
   asyncHandler(async (req: Request, res: Response) => {
     try {
-      const user = await userService.getUserPublicById(req.params.userId);
+      const currentUserId = (req as any).user?.id;
+      const user = await userService.getUserPublicById(req.params.userId, currentUserId);
       res.json({ success: true, data: user });
     } catch (error: any) {
       res.status(404).json({ success: false, message: error.message || 'User not found' });

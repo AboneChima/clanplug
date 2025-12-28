@@ -292,7 +292,7 @@ export const userService = {
     return { users, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   },
 
-  async getUserPublicById(userId: string): Promise<Pick<User, 'id' | 'email' | 'username' | 'firstName' | 'lastName' | 'avatar' | 'bio'>> {
+  async getUserPublicById(userId: string, currentUserId?: string): Promise<any> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { 
@@ -318,7 +318,40 @@ export const userService = {
       },
     });
     if (!user) throw new Error('User not found');
-    return user as any;
+    
+    // Check follow status if currentUserId is provided
+    let isFollowing = false;
+    let isFollowingBack = false;
+    
+    if (currentUserId && currentUserId !== userId) {
+      // Check if current user is following this user
+      const followingCheck = await prisma.follow.findUnique({
+        where: {
+          followerId_followingId: {
+            followerId: currentUserId,
+            followingId: userId,
+          },
+        },
+      });
+      isFollowing = !!followingCheck;
+      
+      // Check if this user is following current user back
+      const followerCheck = await prisma.follow.findUnique({
+        where: {
+          followerId_followingId: {
+            followerId: userId,
+            followingId: currentUserId,
+          },
+        },
+      });
+      isFollowingBack = !!followerCheck;
+    }
+    
+    return {
+      ...user,
+      isFollowing,
+      isFollowingBack,
+    };
   },
 
   async updateUserProfile(userId: string, data: Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'city' | 'state' | 'country' | 'avatar'>>): Promise<{ success: boolean; message?: string; user?: any; error?: string }> {
