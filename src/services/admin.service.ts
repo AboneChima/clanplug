@@ -727,17 +727,27 @@ export class AdminService {
       select: { id: true }
     });
 
-    const notifications = users.map(user => ({
-      userId: user.id,
+    // Use individual creates to ensure JSON data is properly saved
+    const notificationData = {
       title,
       message,
       type: 'SYSTEM' as const,
-      data: actionButton ? { actionButton } : null
-    }));
+      data: actionButton ? { actionButton } : undefined
+    };
 
-    await prisma.notification.createMany({
-      data: notifications
-    });
+    console.log('📢 Creating notifications with data:', notificationData);
+
+    // Create notifications individually to ensure data field is saved
+    await Promise.all(
+      users.map(user =>
+        prisma.notification.create({
+          data: {
+            userId: user.id,
+            ...notificationData
+          }
+        })
+      )
+    );
 
     return {
       success: true,
