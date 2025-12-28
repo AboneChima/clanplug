@@ -150,7 +150,7 @@ export default function MarketplaceDetailPage() {
     }
 
     // Confirm with user
-    if (!confirm(`Send purchase request to ${post.user.firstName} ${post.user.lastName} for ${post.price} ${post.currency}?\n\nThe seller will have 5 minutes to respond. No money will be deducted until they accept.`)) {
+    if (!confirm(`Send purchase request to ${post.user.firstName} ${post.user.lastName} for ${post.price} ${post.currency}?\n\nThe seller will have 30 minutes to respond. No money will be deducted until they accept.`)) {
       return;
     }
 
@@ -172,7 +172,7 @@ export default function MarketplaceDetailPage() {
       });
 
       if (requestResponse.ok) {
-        showToast('✅ Purchase request sent! Seller has 5 minutes to respond.', 'success');
+        showToast('✅ Purchase request sent! Seller has 30 minutes to respond.', 'success');
         router.push('/orders');
       } else {
         const error = await requestResponse.json();

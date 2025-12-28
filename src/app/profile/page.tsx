@@ -484,7 +484,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 
-                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                <p className="text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
                   {user?.bio || 'No bio yet'}
                 </p>
               </div>
@@ -911,14 +911,14 @@ export default function ProfilePage() {
                 />
               </div>
 
-              {/* Bio - Smaller */}
+              {/* Bio - Bigger textarea */}
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1.5">Bio</label>
                 <textarea
                   value={editForm.bio}
                   onChange={(e) => setEditForm({...editForm, bio: e.target.value})}
                   maxLength={160}
-                  rows={2}
+                  rows={4}
                   placeholder="Write something about yourself..."
                   className="w-full px-3 py-2 text-sm bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
