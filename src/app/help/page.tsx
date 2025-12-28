@@ -15,31 +15,37 @@ import { useRouter } from 'next/navigation';
 import AppShell from '@/components/AppShell';
 import { useToast } from '@/contexts/ToastContext';
 
-// FAQ Database
+// FAQ Database with better keyword matching
 const FAQS = [
   {
     q: "How do I buy airtime or data?",
-    a: "Go to VTU page, enter phone number, select amount/plan, and click Buy. Delivery is instant."
+    a: "Go to the Airtime & Data page from the bottom menu, enter phone number, select amount/plan, and click Buy. Delivery is instant.",
+    keywords: ["airtime", "data", "buy", "purchase", "recharge", "topup", "vtu", "mobile"]
   },
   {
     q: "Why do I need KYC verification?",
-    a: "KYC is required to post items on marketplace. It helps maintain a safe community."
+    a: "KYC is required to post items on marketplace. It helps maintain a safe community and prevents fraud.",
+    keywords: ["kyc", "kyc verification", "identity", "marketplace", "post", "sell", "document"]
   },
   {
-    q: "How do I get a verification badge?",
-    a: "Purchase from your profile page for ₦2,000/month. Get blue checkmark and premium features."
+    q: "How do I get verified?",
+    a: "There are 2 types:\n\n1. Verification Badge (Blue Check): Go to your Profile page and click 'Get Badge'. Costs ₦2,000 for 30 days. You'll get a blue checkmark and can post media.\n\n2. KYC Verification: Required for marketplace. Submit your ID documents in the Profile section.",
+    keywords: ["verified", "get verified", "verification", "verify", "badge", "blue check", "checkmark", "premium"]
   },
   {
     q: "How do I deposit money?",
-    a: "Go to Wallet > Deposit. Use bank transfer, card, or crypto. Usually instant."
+    a: "Go to Wallet > Deposit. Use bank transfer, card, or crypto. Usually instant.",
+    keywords: ["deposit", "fund", "wallet", "money", "payment", "add money", "top up wallet"]
   },
   {
     q: "How does escrow work?",
-    a: "Payment is held safely until buyer confirms receipt. Protects both parties from fraud."
+    a: "Payment is held safely until buyer confirms receipt. Protects both parties from fraud.",
+    keywords: ["escrow", "safe", "secure", "payment", "marketplace", "protection", "buyer protection"]
   },
   {
     q: "What are the fees?",
-    a: "Deposit: 3%, Withdrawal: 3%, VTU: 2%, Marketplace: 5%. Verification: ₦2,000/month."
+    a: "Deposit: 3%, Withdrawal: 3%, Airtime/Data: 2%, Marketplace: 5%. Verification badge: ₦2,000/month.",
+    keywords: ["fees", "charges", "cost", "price", "commission", "how much"]
   }
 ];
 
@@ -54,24 +60,33 @@ export default function HelpPage() {
   const [loading, setLoading] = useState(false);
 
   const generateAIResponse = (userMessage: string): string => {
-    const lower = userMessage.toLowerCase();
+    const lower = userMessage.toLowerCase().trim();
     
-    // Search FAQs
+    // Priority matching for verification questions (most specific first)
+    if (lower.match(/how (do|can) i get verified|how to get verified|get verified|become verified/)) {
+      return "There are 2 types of verification:\n\n✅ Verification Badge (Blue Check):\n• Go to your Profile page\n• Click 'Get Badge'\n• Costs ₦2,000 for 30 days\n• Get blue checkmark + post media\n\n✅ KYC Verification:\n• Required for marketplace\n• Submit ID documents in Profile\n• Helps keep community safe\n\nWhich one do you need?";
+    }
+    
+    // Search FAQs with keyword matching
     for (const faq of FAQS) {
-      if (lower.includes(faq.q.toLowerCase().split(' ').slice(0, 3).join(' '))) {
+      const hasMatch = faq.keywords.some(keyword => lower.includes(keyword));
+      if (hasMatch) {
         return faq.a;
       }
     }
     
-    if (lower.match(/^(hi|hello|hey)/)) {
-      return "Hello! 👋 How can I help you today?";
+    // Greetings
+    if (lower.match(/^(hi|hello|hey|good morning|good afternoon|good evening|sup|yo)/)) {
+      return "Hello! 👋 I can help you with:\n\n• Buying airtime & data\n• Getting verified (badge or KYC)\n• Wallet deposits & withdrawals\n• Marketplace & escrow\n• Fees & payments\n\nWhat would you like to know?";
     }
     
-    if (lower.match(/(thank|thanks)/)) {
+    // Thank you
+    if (lower.match(/(thank|thanks|appreciate|thx)/)) {
       return "You're welcome! 😊 Anything else I can help with?";
     }
     
-    return "I can help with airtime/data, KYC, wallet, marketplace, badges, and more. Try asking about any of these!";
+    // Unknown question - suggest contacting support
+    return "I'm not sure about that specific question. 🤔\n\nFor personalized help, please contact our support team:\n\n📧 Email: support@clanplug.com\n⏱️ Response time: Within 24 hours\n\nI can answer questions about:\n• Airtime & Data purchases\n• Verification badges & KYC\n• Wallet & payments\n• Marketplace & escrow\n• Fees & charges";
   };
 
   const handleSendMessage = () => {
