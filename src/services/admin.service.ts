@@ -425,6 +425,27 @@ export class AdminService {
     return updatedKyc;
   }
 
+  async deleteKYC(kycId: string) {
+    const kyc = await prisma.kYCVerification.findUnique({
+      where: { id: kycId }
+    });
+
+    if (!kyc) {
+      throw new Error('KYC verification not found');
+    }
+
+    if (kyc.status !== KYCStatus.REJECTED) {
+      throw new Error('Can only delete rejected KYC submissions');
+    }
+
+    // Delete the KYC record
+    await prisma.kYCVerification.delete({
+      where: { id: kycId }
+    });
+
+    return { success: true, message: 'KYC submission deleted successfully' };
+  }
+
   // Transaction Management
   async getTransactions(filters: TransactionFilters = {}) {
     const {

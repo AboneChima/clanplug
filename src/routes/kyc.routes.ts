@@ -5,7 +5,8 @@ import {
   submitKYC, 
   getKYCStatus, 
   listKYCSubmissions, 
-  reviewKYC 
+  reviewKYC,
+  deleteKYC
 } from '../controllers/kyc.controller';
 
 const router = Router();
@@ -17,6 +18,7 @@ router.get('/status', authenticate, asyncHandler(getKYCStatus));
 // Admin endpoints
 router.get('/admin/list', authenticate, adminOnly, asyncHandler(listKYCSubmissions));
 router.put('/admin/review/:id', authenticate, adminOnly, asyncHandler(reviewKYC));
+router.delete('/admin/delete/:id', authenticate, adminOnly, asyncHandler(deleteKYC));
 router.post('/admin/bulk-approve', authenticate, adminOnly, asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const { prisma } = await import('../config/database');
   

@@ -288,3 +288,42 @@ export async function reviewKYC(req: Request, res: Response) {
     });
   }
 }
+
+export async function deleteKYC(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const kyc = await prisma.kYCVerification.findUnique({
+      where: { id }
+    });
+
+    if (!kyc) {
+      return res.status(404).json({
+        success: false,
+        message: 'KYC submission not found'
+      });
+    }
+
+    if (kyc.status !== 'REJECTED') {
+      return res.status(400).json({
+        success: false,
+        message: 'Can only delete rejected KYC submissions'
+      });
+    }
+
+    await prisma.kYCVerification.delete({
+      where: { id }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'KYC submission deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete KYC error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete KYC submission'
+    });
+  }
+}
