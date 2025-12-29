@@ -20,6 +20,7 @@ import SharePostModal from '@/components/SharePostModal';
 import WhatsNewBanner from '@/components/WhatsNewBanner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { formatCount } from '@/lib/formatNumber';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -685,7 +686,7 @@ export default function FeedPage() {
             ) : (
               <IoHeartOutline className="w-4 h-4" />
             )}
-            <span className="text-xs">{post._count.likes}</span>
+            <span className="text-xs">{formatCount(post._count.likes)}</span>
           </button>
           <button 
             onClick={() => {
@@ -697,7 +698,7 @@ export default function FeedPage() {
             className="flex items-center gap-1.5 text-gray-400 hover:text-blue-500 transition-colors"
           >
             <IoChatbubbleOutline className="w-4 h-4" />
-            <span className="text-xs">{post._count.comments}</span>
+            <span className="text-xs">{formatCount(post._count.comments)}</span>
           </button>
           <button 
             onClick={() => setSharingPostId(post.id)}
