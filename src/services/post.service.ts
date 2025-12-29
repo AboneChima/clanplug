@@ -944,7 +944,6 @@ export const postService = {
             },
           },
           orderBy: { createdAt: 'desc' },
-          skip,
           take: fetchLimit,
         }),
         prisma.post.count({
@@ -955,9 +954,21 @@ export const postService = {
         }),
       ]);
 
+      // TikTok-style FYP algorithm: Randomize posts with user-specific seed
+      // This ensures each user gets a different order but it's consistent per session
+      const userSeed = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const sessionSeed = Date.now() % 1000; // Changes every second for variety
+      
+      // Shuffle posts using seeded random
+      const shuffledPosts = [...allPosts].sort((a, b) => {
+        const aHash = (a.id.charCodeAt(0) + userSeed + sessionSeed) % 100;
+        const bHash = (b.id.charCodeAt(0) + userSeed + sessionSeed) % 100;
+        return aHash - bHash;
+      });
+
       // TikTok-style algorithm: Mix posts so no consecutive posts from same user
       const mixedPosts: any[] = [];
-      const remainingPosts = [...allPosts];
+      const remainingPosts = [...shuffledPosts];
       let lastUserId: string | null = null;
 
       while (mixedPosts.length < limit && remainingPosts.length > 0) {

@@ -470,7 +470,7 @@ export const postController = {
     try {
       const userId = (req as any).user?.id;
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = parseInt(req.query.limit as string) || 1000; // Show all posts
 
       const result = await postService.getSocialFeed(userId, page, limit);
 
@@ -546,7 +546,7 @@ export const postController = {
     try {
       const userId = (req as any).user?.id;
       const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = parseInt(req.query.limit as string) || 1000; // Show all bookmarks
 
       const result = await postService.getBookmarkedPosts(userId, page, limit);
 
