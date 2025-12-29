@@ -627,7 +627,6 @@ export default function UserProfilePage() {
                 </button>
               </div>
             </div>
-          </div>
           </VerifiedProfileHeader>
 
           {/* Social Posts - Compact - Toggle visibility */}
