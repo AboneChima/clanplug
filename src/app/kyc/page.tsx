@@ -640,12 +640,71 @@ export default function KYCPage() {
             setLivenessPhotos(photos);
             setShowLiveness(false);
             
-            // TODO: Upload photos and submit KYC
-            // For now, just show success message
-            alert('Face verification complete! Submitting for review...');
-            
-            // You can implement the upload logic here
-            console.log('Liveness photos captured:', photos);
+            try {
+              const token = localStorage.getItem('accessToken');
+              
+              // Convert base64 to blob and upload each photo
+              const uploadPhoto = async (base64Data: string, filename: string) => {
+                const blob = await fetch(base64Data).then(r => r.blob());
+                const file = new File([blob], filename, { type: 'image/jpeg' });
+                
+                const formData = new FormData();
+                formData.append('media', file);
+                
+                const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${token}` },
+                  body: formData,
+                });
+                
+                if (uploadRes.ok) {
+                  const data = await uploadRes.json();
+                  return data.data.urls[0];
+                }
+                throw new Error('Upload failed');
+              };
+
+              // Upload all 4 photos
+              alert('Uploading photos... Please wait.');
+              const [frontUrl, smileUrl, leftUrl, rightUrl] = await Promise.all([
+                uploadPhoto(photos.front, 'liveness-front.jpg'),
+                uploadPhoto(photos.smile, 'liveness-smile.jpg'),
+                uploadPhoto(photos.left, 'liveness-left.jpg'),
+                uploadPhoto(photos.right, 'liveness-right.jpg'),
+              ]);
+
+              // Submit KYC with liveness photos
+              const kycData = {
+                firstName: user?.firstName || '',
+                lastName: user?.lastName || '',
+                verificationType: 'liveness',
+                livenessFrontUrl: frontUrl,
+                livenessSmileUrl: smileUrl,
+                livenessLeftUrl: leftUrl,
+                livenessRightUrl: rightUrl,
+              };
+
+              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/submit`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(kycData),
+              });
+
+              const result = await response.json();
+
+              if (response.ok) {
+                alert('✅ Face verification submitted successfully! We will review it within 24 hours.');
+                window.location.reload();
+              } else {
+                alert(result.message || 'Failed to submit verification');
+              }
+            } catch (error) {
+              console.error('Upload error:', error);
+              alert('Failed to upload photos. Please try again.');
+            }
           }}
           onCancel={() => {
             setShowLiveness(false);
