@@ -21,16 +21,13 @@ export async function submitKYC(req: Request, res: Response) {
       bvn,
       idFrontUrl,
       idBackUrl,
-      selfieUrl
+      selfieUrl,
+      verificationType,
+      livenessFrontUrl,
+      livenessSmileUrl,
+      livenessLeftUrl,
+      livenessRightUrl,
     } = req.body;
-
-    // Validate required fields
-    if (!firstName || !lastName || !dateOfBirth || !address || !idType || !idNumber) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields' 
-      });
-    }
 
     // Check if user already has pending or approved KYC
     const existingKYC = await prisma.kYCVerification.findFirst({
@@ -44,6 +41,45 @@ export async function submitKYC(req: Request, res: Response) {
       return res.status(400).json({
         success: false,
         message: 'You already have a pending or approved KYC submission'
+      });
+    }
+
+    // Handle liveness verification
+    if (verificationType === 'liveness') {
+      if (!livenessFrontUrl || !livenessSmileUrl || !livenessLeftUrl || !livenessRightUrl) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'All liveness photos are required' 
+        });
+      }
+
+      const kyc = await prisma.kYCVerification.create({
+        data: {
+          userId,
+          documentType: 'LIVENESS',
+          documentNumber: `LIVENESS-${userId}-${Date.now()}`,
+          documentImages: [livenessFrontUrl, livenessSmileUrl, livenessLeftUrl, livenessRightUrl],
+          firstName: firstName || '',
+          lastName: lastName || '',
+          dateOfBirth: new Date(),
+          address: 'Liveness Verification',
+          phoneNumber: '',
+          status: 'PENDING'
+        }
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Face verification submitted successfully! We will review it within 24 hours.',
+        data: kyc
+      });
+    }
+
+    // Handle document verification (existing logic)
+    if (!firstName || !lastName || !dateOfBirth || !address || !idType || !idNumber) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing required fields' 
       });
     }
 
