@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import {
   IoCamera,
@@ -151,10 +151,6 @@ export default function LivenessDetection({ onComplete, onCancel }: LivenessDete
         setCurrentStep(nextStep);
         setAutoCapturing(false);
         setFaceDetected(false);
-        
-        // Speak next instruction
-        const stepInfo = STEP_INSTRUCTIONS[nextStep];
-        setTimeout(() => speak(stepInfo.voice), 500);
       }
     }
   }, [currentStep, photos, stopCamera, onComplete, speak]);
@@ -184,11 +180,20 @@ export default function LivenessDetection({ onComplete, onCancel }: LivenessDete
     startCamera();
   };
 
-  // Start camera on mount
-  useState(() => {
-    startCamera();
+  // Start camera when step changes
+  useEffect(() => {
+    if (currentStep !== 'complete') {
+      startCamera();
+    }
+    return () => {
+      // Don't stop camera on cleanup, only when component unmounts
+    };
+  }, [currentStep]);
+
+  // Cleanup on unmount
+  useEffect(() => {
     return () => stopCamera();
-  });
+  }, [stopCamera]);
 
   const stepInfo = STEP_INSTRUCTIONS[currentStep];
 
