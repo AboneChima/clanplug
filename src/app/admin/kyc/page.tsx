@@ -303,10 +303,10 @@ export default function AdminKYCPage() {
 
       {/* Detail Modal */}
       {selectedSubmission && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-2 sm:p-4 overflow-y-auto">
-            <div className="bg-slate-800 rounded-xl max-w-2xl w-full my-4 sm:my-8">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-2 sm:p-4">
+            <div className="bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
               {/* Modal Header */}
-              <div className="p-3 sm:p-4 border-b border-slate-700 sticky top-0 bg-slate-800 z-10">
+              <div className="p-3 sm:p-4 border-b border-slate-700 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <h2 className="text-base sm:text-lg font-bold text-white">KYC Review</h2>
                   <span className={`px-2 py-1 text-[10px] sm:text-xs font-medium rounded-full ${
@@ -320,7 +320,7 @@ export default function AdminKYCPage() {
               </div>
 
               {/* Modal Content */}
-              <div className="p-3 sm:p-4 space-y-3 max-h-[70vh] overflow-y-auto">
+              <div className="p-3 sm:p-4 space-y-3 overflow-y-auto flex-1">
                 {/* User Info */}
                 <div className="bg-slate-700/30 rounded-lg p-3">
                   <h3 className="text-white font-semibold mb-2 text-xs sm:text-sm">User Information</h3>

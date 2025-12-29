@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
+import LivenessDetection from '@/components/LivenessDetection';
 import { 
   IoShieldCheckmarkOutline, 
   IoDocumentTextOutline,
@@ -10,11 +11,16 @@ import {
   IoCardOutline,
   IoCheckmarkCircleOutline,
   IoCloudUploadOutline,
-  IoAlertCircleOutline
+  IoAlertCircleOutline,
+  IoCameraOutline,
+  IoFlashOutline,
 } from 'react-icons/io5';
 
 export default function KYCPage() {
   const { user } = useAuth();
+  const [verificationType, setVerificationType] = useState<'liveness' | 'nin' | null>(null);
+  const [showLiveness, setShowLiveness] = useState(false);
+  const [livenessPhotos, setLivenessPhotos] = useState<any>(null);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -176,6 +182,99 @@ export default function KYCPage() {
               <IoCheckmarkCircleOutline className="w-16 h-16 sm:w-20 sm:h-20 text-green-400 mx-auto mb-3 sm:mb-4" />
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">Verification Complete!</h2>
               <p className="text-sm sm:text-base text-gray-300">Your account is fully verified</p>
+            </div>
+          ) : !verificationType ? (
+            /* Verification Type Selection */
+            <div className="space-y-4">
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-white mb-2">Choose Verification Method</h2>
+                <p className="text-gray-400">Select how you'd like to verify your account</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Liveness Detection Option */}
+                <button
+                  onClick={() => {
+                    setVerificationType('liveness');
+                    setShowLiveness(true);
+                  }}
+                  className="group relative bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-2xl p-6 text-left transition-all transform hover:scale-105 shadow-xl"
+                >
+                  <div className="absolute top-4 right-4">
+                    <IoCameraOutline className="w-8 h-8 text-white/80" />
+                  </div>
+                  <div className="mb-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-xs font-semibold text-white mb-3">
+                      <IoFlashOutline className="w-4 h-4" />
+                      RECOMMENDED
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Face Verification</h3>
+                    <p className="text-blue-100 text-sm mb-4">Quick & Easy - No documents needed</p>
+                  </div>
+                  <div className="space-y-2 text-sm text-blue-50">
+                    <div className="flex items-center gap-2">
+                      <IoCheckmarkCircleOutline className="w-5 h-5 flex-shrink-0" />
+                      <span>Takes only 2 minutes</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IoCheckmarkCircleOutline className="w-5 h-5 flex-shrink-0" />
+                      <span>No NIN or BVN required</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IoCheckmarkCircleOutline className="w-5 h-5 flex-shrink-0" />
+                      <span>Transaction limit: ₦500,000/day</span>
+                    </div>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-white/20">
+                    <span className="text-white font-semibold">Start Face Verification →</span>
+                  </div>
+                </button>
+
+                {/* Full KYC Option */}
+                <button
+                  onClick={() => setVerificationType('nin')}
+                  className="group relative bg-gradient-to-br from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 rounded-2xl p-6 text-left transition-all transform hover:scale-105 shadow-xl"
+                >
+                  <div className="absolute top-4 right-4">
+                    <IoDocumentTextOutline className="w-8 h-8 text-white/80" />
+                  </div>
+                  <div className="mb-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-xs font-semibold text-white mb-3">
+                      <IoShieldCheckmarkOutline className="w-4 h-4" />
+                      FULL KYC
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Document Verification</h3>
+                    <p className="text-green-100 text-sm mb-4">Complete KYC with NIN or BVN</p>
+                  </div>
+                  <div className="space-y-2 text-sm text-green-50">
+                    <div className="flex items-center gap-2">
+                      <IoCheckmarkCircleOutline className="w-5 h-5 flex-shrink-0" />
+                      <span>Unlimited transactions</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IoCheckmarkCircleOutline className="w-5 h-5 flex-shrink-0" />
+                      <span>Higher trust level</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <IoCheckmarkCircleOutline className="w-5 h-5 flex-shrink-0" />
+                      <span>Requires NIN or BVN</span>
+                    </div>
+                  </div>
+                  <div className="mt-6 pt-4 border-t border-white/20">
+                    <span className="text-white font-semibold">Start Full KYC →</span>
+                  </div>
+                </button>
+              </div>
+
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mt-6">
+                <div className="flex gap-3">
+                  <IoAlertCircleOutline className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-300">
+                    <p className="font-semibold mb-1">Why verify?</p>
+                    <p>Verification helps protect your account and enables higher transaction limits. Choose the method that works best for you!</p>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
             /* KYC Form */
@@ -533,6 +632,27 @@ export default function KYCPage() {
           )}
         </div>
       </div>
+
+      {/* Liveness Detection Modal */}
+      {showLiveness && (
+        <LivenessDetection
+          onComplete={async (photos) => {
+            setLivenessPhotos(photos);
+            setShowLiveness(false);
+            
+            // TODO: Upload photos and submit KYC
+            // For now, just show success message
+            alert('Face verification complete! Submitting for review...');
+            
+            // You can implement the upload logic here
+            console.log('Liveness photos captured:', photos);
+          }}
+          onCancel={() => {
+            setShowLiveness(false);
+            setVerificationType(null);
+          }}
+        />
+      )}
     </AppShell>
   );
 }
