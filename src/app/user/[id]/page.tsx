@@ -568,7 +568,7 @@ export default function UserProfilePage() {
                   onClick={async () => {
                     setShowFollowingModal(true);
                     setLoadingFollowers(true);
-                    try:
+                    try {
                       const token = localStorage.getItem('accessToken');
                       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${profile.id}/following`, {
                         headers: { 'Authorization': `Bearer ${token}` }
