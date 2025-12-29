@@ -943,7 +943,7 @@ export const postService = {
               select: { id: true },
             },
           },
-          // NO orderBy - get posts in random database order
+          orderBy: { createdAt: 'desc' },
           take: fetchLimit,
         }),
         prisma.post.count({
