@@ -17,6 +17,7 @@ import {
 import AppShell from '@/components/AppShell';
 import PostModal from '@/components/PostModal';
 import SharePostModal from '@/components/SharePostModal';
+import WhatsNewBanner from '@/components/WhatsNewBanner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
@@ -1098,6 +1099,9 @@ export default function FeedPage() {
             </div>
           ) : (
             <div className="w-full space-y-2 xs:space-y-2.5 sm:space-y-3 px-0">
+              {/* What's New Banner */}
+              {activeTab === 'forYou' && !loading && <WhatsNewBanner />}
+              
               {/* Posts - Full Width */}
               {loading ? (
                 <div className="text-center py-12">
