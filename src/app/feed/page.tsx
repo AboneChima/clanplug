@@ -537,14 +537,17 @@ export default function FeedPage() {
             </Link>
           </div>
           
-          {/* Full-width Image - Twitter Style */}
-          <div className="relative w-full">
-            <Image src={post.images[0]} alt="Featured post" width={800} height={600} className="w-full object-contain bg-black" style={{maxHeight: '500px'}} />
-          </div>
-          
-          {/* Caption */}
-          <div className="p-4 bg-gray-900/50">
-            <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{post.description}</p>
+          {/* Content with Image and Caption side by side */}
+          <div className="flex gap-3 p-3 bg-gray-900/50">
+            {/* Image - Half width */}
+            <div className="relative w-1/2 flex-shrink-0">
+              <Image src={post.images[0]} alt="Featured post" width={400} height={400} className="w-full h-auto rounded-lg object-cover" />
+            </div>
+            
+            {/* Caption - Half width */}
+            <div className="flex-1 flex flex-col justify-center">
+              <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{post.description}</p>
+            </div>
           </div>
           
           {/* Post Actions */}
