@@ -20,28 +20,33 @@ type Step = 'front' | 'smile' | 'left' | 'right' | 'complete';
 const STEP_INSTRUCTIONS = {
   front: {
     title: 'Look at the Camera',
-    instruction: 'Position your face in the center and look straight ahead',
+    instruction: 'Position your face in the center',
     icon: '👤',
+    voice: 'Please look at the camera',
   },
   smile: {
     title: 'Smile!',
-    instruction: 'Give us a big smile 😊',
+    instruction: 'Give us a big smile',
     icon: '😊',
+    voice: 'Please smile',
   },
   left: {
     title: 'Turn Left',
     instruction: 'Slowly turn your head to the left',
     icon: '👈',
+    voice: 'Please turn your head to the left',
   },
   right: {
     title: 'Turn Right',
     instruction: 'Slowly turn your head to the right',
     icon: '👉',
+    voice: 'Please turn your head to the right',
   },
   complete: {
     title: 'All Done!',
     instruction: 'Processing your verification...',
     icon: '✅',
+    voice: 'Verification complete',
   },
 };
 
@@ -51,8 +56,60 @@ export default function LivenessDetection({ onComplete, onCancel }: LivenessDete
   const [photos, setPhotos] = useState<Record<string, string>>({});
   const [countdown, setCountdown] = useState<number | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [autoCapturing, setAutoCapturing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Voice command function
+  const speak = useCallback((text: string) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+  }, []);
+
+  // Simple face detection using video dimensions
+  const detectFace = useCallback(() => {
+    if (!videoRef.current || !cameraReady) return false;
+
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return false;
+
+    ctx.drawImage(video, 0, 0);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Simple brightness check in center area (where face should be)
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const checkRadius = Math.min(canvas.width, canvas.height) / 4;
+
+    let brightPixels = 0;
+    let totalPixels = 0;
+
+    for (let y = centerY - checkRadius; y < centerY + checkRadius; y += 5) {
+      for (let x = centerX - checkRadius; x < centerX + checkRadius; x += 5) {
+        const i = (Math.floor(y) * canvas.width + Math.floor(x)) * 4;
+        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        if (brightness > 50) brightPixels++;
+        totalPixels++;
+      }
+    }
+
+    // If center area has enough bright pixels, assume face is present
+    const facePresent = (brightPixels / totalPixels) > 0.3;
+    return facePresent;
+  }, [cameraReady]);
 
   const startCamera = useCallback(async () => {
     try {
@@ -65,17 +122,37 @@ export default function LivenessDetection({ onComplete, onCancel }: LivenessDete
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         setCameraReady(true);
+        
+        // Speak instruction for current step
+        const stepInfo = STEP_INSTRUCTIONS[currentStep];
+        setTimeout(() => speak(stepInfo.voice), 500);
+        
+        // Start face detection
+        detectionIntervalRef.current = setInterval(() => {
+          const detected = detectFace();
+          setFaceDetected(detected);
+          
+          // Auto-capture when face is detected and not already capturing
+          if (detected && !autoCapturing && countdown === null) {
+            setAutoCapturing(true);
+            startCountdown();
+          }
+        }, 500);
       }
     } catch (error) {
       console.error('Camera error:', error);
       showToast('Failed to access camera. Please allow camera permissions.', 'error');
     }
-  }, [showToast]);
+  }, [showToast, currentStep, speak, detectFace, autoCapturing, countdown]);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
+    }
+    if (detectionIntervalRef.current) {
+      clearInterval(detectionIntervalRef.current);
+      detectionIntervalRef.current = null;
     }
     setCameraReady(false);
   }, []);
@@ -102,6 +179,7 @@ export default function LivenessDetection({ onComplete, onCancel }: LivenessDete
       if (nextStep === 'complete') {
         stopCamera();
         setCurrentStep('complete');
+        speak('Verification complete');
         
         // Call onComplete with all photos
         setTimeout(() => {
@@ -114,9 +192,15 @@ export default function LivenessDetection({ onComplete, onCancel }: LivenessDete
         }, 1000);
       } else {
         setCurrentStep(nextStep);
+        setAutoCapturing(false);
+        setFaceDetected(false);
+        
+        // Speak next instruction
+        const stepInfo = STEP_INSTRUCTIONS[nextStep];
+        setTimeout(() => speak(stepInfo.voice), 500);
       }
     }
-  }, [currentStep, photos, stopCamera, onComplete]);
+  }, [currentStep, photos, stopCamera, onComplete, speak]);
 
   const startCountdown = useCallback(() => {
     setCountdown(3);
@@ -201,8 +285,23 @@ export default function LivenessDetection({ onComplete, onCancel }: LivenessDete
               
               {/* Face Oval Overlay */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-64 h-80 border-4 border-blue-500 rounded-full opacity-50"></div>
+                <div className={`w-64 h-80 border-4 rounded-full transition-colors ${
+                  faceDetected ? 'border-green-500' : 'border-blue-500'
+                } opacity-50`}></div>
               </div>
+
+              {/* Face Detection Status */}
+              {cameraReady && (
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2">
+                  <div className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                    faceDetected 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-yellow-500 text-black'
+                  }`}>
+                    {faceDetected ? '✓ Face Detected' : 'Position Your Face'}
+                  </div>
+                </div>
+              )}
 
               {/* Countdown Overlay */}
               {countdown !== null && (
@@ -243,16 +342,12 @@ export default function LivenessDetection({ onComplete, onCancel }: LivenessDete
                 className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2"
               >
                 <IoRefreshOutline className="w-5 h-5" />
-                Retake
+                Restart
               </button>
-              <button
-                onClick={startCountdown}
-                disabled={!cameraReady || countdown !== null}
-                className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-all flex items-center justify-center gap-2 font-semibold"
-              >
+              <div className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg flex items-center justify-center gap-2 font-semibold">
                 <IoCamera className="w-5 h-5" />
-                {countdown !== null ? 'Capturing...' : 'Capture Photo'}
-              </button>
+                {faceDetected ? 'Capturing...' : 'Waiting for face...'}
+              </div>
             </div>
           )}
 
