@@ -13,6 +13,7 @@ import {
   IoMailOutline,
   IoTrashOutline,
   IoArrowBackOutline,
+  IoSparklesOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import PostModal from '@/components/PostModal';
@@ -497,7 +498,80 @@ export default function FeedPage() {
     }
   };
 
-  const renderPost = (post: Post) => (
+  const renderPost = (post: Post) => {
+    // Special rendering for featured/promo posts
+    const isFeatured = (post as any).isFeatured;
+    
+    if (isFeatured && post.images && post.images.length > 0) {
+      return (
+        <div key={post.id} className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-xl border-2 border-blue-500/50 overflow-hidden w-full shadow-xl">
+          {/* Featured Badge */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-3 py-1 flex items-center gap-2">
+            <IoSparklesOutline className="w-4 h-4 text-yellow-300" />
+            <span className="text-white text-xs font-bold">FEATURED</span>
+          </div>
+          
+          {/* Post Header */}
+          <div className="p-3 flex items-center justify-between bg-gray-900/50">
+            <Link href={`/user/${post.user.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <div className="relative">
+                {post.user.avatar ? (
+                  <Image src={post.user.avatar} alt={post.user.username} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold">{post.user.firstName[0]}{post.user.lastName[0]}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  <p className="text-white text-sm font-bold">{post.user.firstName} {post.user.lastName}</p>
+                  {((post.user as any)?.verificationBadge?.status === 'verified' || (post.user as any)?.verificationBadge?.status === 'active') && (
+                    <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+                <p className="text-gray-400 text-xs">@{post.user.username}</p>
+              </div>
+            </Link>
+          </div>
+          
+          {/* Full-width Image - Twitter Style */}
+          <div className="relative w-full">
+            <Image src={post.images[0]} alt="Featured post" width={800} height={600} className="w-full object-contain bg-black" style={{maxHeight: '500px'}} />
+          </div>
+          
+          {/* Caption */}
+          <div className="p-4 bg-gray-900/50">
+            <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{post.description}</p>
+          </div>
+          
+          {/* Post Actions */}
+          <div className="px-4 py-3 border-t border-gray-700 flex items-center justify-between bg-gray-900/50">
+            <div className="flex items-center gap-4">
+              <button onClick={() => handleLike(post.id)} className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-colors">
+                {post.isLiked ? <IoHeart className="w-5 h-5 text-red-500" /> : <IoHeartOutline className="w-5 h-5" />}
+                <span className="text-sm font-medium">{formatCount(post._count.likes)}</span>
+              </button>
+              <button onClick={() => { if (post._count.comments > 0) loadComments(post.id); setCommentingOnPost(commentingOnPost === post.id ? null : post.id); }} className="flex items-center gap-2 text-gray-400 hover:text-blue-500 transition-colors">
+                <IoChatbubbleOutline className="w-5 h-5" />
+                <span className="text-sm font-medium">{formatCount(post._count.comments)}</span>
+              </button>
+              <button onClick={() => setSharingPostId(post.id)} className="flex items-center gap-2 text-gray-400 hover:text-green-500 transition-colors">
+                <IoShareSocialOutline className="w-5 h-5" />
+              </button>
+            </div>
+            <button onClick={() => handleBookmark(post.id)} className="text-gray-400 hover:text-yellow-500 transition-colors">
+              {post.isBookmarked ? <IoBookmark className="w-5 h-5 text-yellow-500" /> : <IoBookmarkOutline className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    // Regular post rendering
+    return (
     <div key={post.id} className="bg-gray-800/50 rounded-md xs:rounded-lg border border-gray-700 overflow-hidden w-full">
       {/* Post Header - Extra Small for 0-360px */}
       <div className="p-1.5 xs:p-2.5 sm:p-3 flex items-center justify-between">
@@ -522,7 +596,7 @@ export default function FeedPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-0.5 xs:gap-1">
               <p className="text-white text-[10px] xs:text-xs sm:text-sm font-medium truncate">{post.user.firstName} {post.user.lastName}</p>
-              {(post.user as any)?.verificationBadge?.status === 'verified' && (
+              {((post.user as any)?.verificationBadge?.status === 'verified' || (post.user as any)?.verificationBadge?.status === 'active') && (
                 <svg className="w-2.5 h-2.5 xs:w-3.5 xs:h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
@@ -843,7 +917,8 @@ export default function FeedPage() {
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   return (
     <AppShell>
