@@ -219,6 +219,36 @@ export default function AdminKYCPage() {
     }
   };
 
+  const handleDelete = async (kycId: string) => {
+    if (!confirm('🗑️ Delete this rejected KYC submission?\n\nThis will permanently remove the submission and allow the user to resubmit.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/admin/delete/${kycId}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert('✅ KYC submission deleted successfully');
+        fetchSubmissions();
+        setSelectedSubmission(null);
+      } else {
+        alert(`❌ Failed: ${data.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting KYC:', error);
+      alert(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
@@ -464,6 +494,20 @@ export default function AdminKYCPage() {
                       className="w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs sm:text-sm rounded-lg font-semibold transition-colors"
                     >
                       Revoke KYC Approval
+                    </button>
+                  </div>
+                )}
+
+                {/* Delete Option for Rejected KYC */}
+                {selectedSubmission.status === 'REJECTED' && (
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                    <p className="text-red-300 text-xs mb-2">Delete this rejected submission to allow the user to resubmit.</p>
+                    <button
+                      onClick={() => handleDelete(selectedSubmission.id)}
+                      className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                      <IoCloseCircle className="w-4 h-4" />
+                      Delete KYC Submission
                     </button>
                   </div>
                 )}

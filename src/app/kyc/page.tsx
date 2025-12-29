@@ -19,7 +19,7 @@ import {
 } from 'react-icons/io5';
 
 export default function KYCPage() {
-  const { user } = useAuth();
+  const { user, refetchUser } = useAuth();
   const [kycStatus, setKycStatus] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | null>(null);
   const [loading, setLoading] = useState(true);
   const [verificationType, setVerificationType] = useState<'liveness' | 'nin' | null>(null);
@@ -27,11 +27,19 @@ export default function KYCPage() {
   const [livenessPhotos, setLivenessPhotos] = useState<any>(null);
   const [step, setStep] = useState(1);
 
-  // Check KYC status on mount
+  // Check KYC status on mount and when user changes
   useEffect(() => {
     const checkKycStatus = async () => {
       try {
         const token = localStorage.getItem('accessToken');
+        
+        // First check if user.isKYCVerified is true
+        if (user?.isKYCVerified) {
+          setKycStatus('APPROVED');
+          setLoading(false);
+          return;
+        }
+
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/status`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
@@ -50,7 +58,7 @@ export default function KYCPage() {
     };
 
     checkKycStatus();
-  }, []);
+  }, [user?.isKYCVerified]);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -186,7 +194,7 @@ export default function KYCPage() {
     setShowCamera(null);
   };
 
-  const isVerified = user?.isKYCVerified;
+  const isVerified = user?.isKYCVerified || kycStatus === 'APPROVED';
 
   if (loading) {
     return (
