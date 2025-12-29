@@ -77,8 +77,9 @@ async function refund() {
 
     // Create notification
     await client.query(`
-      INSERT INTO notifications ("userId", type, title, message, "createdAt")
+      INSERT INTO notifications (id, "userId", type, title, message, "createdAt")
       SELECT 
+        gen_random_uuid(),
         u.id,
         'SYSTEM',
         '💰 Test Purchases Refunded',
