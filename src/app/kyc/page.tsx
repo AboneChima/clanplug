@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import LivenessDetection from '@/components/LivenessDetection';
@@ -14,14 +14,43 @@ import {
   IoAlertCircleOutline,
   IoCameraOutline,
   IoFlashOutline,
+  IoTimeOutline,
+  IoCloseCircleOutline,
 } from 'react-icons/io5';
 
 export default function KYCPage() {
   const { user } = useAuth();
+  const [kycStatus, setKycStatus] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | null>(null);
+  const [loading, setLoading] = useState(true);
   const [verificationType, setVerificationType] = useState<'liveness' | 'nin' | null>(null);
   const [showLiveness, setShowLiveness] = useState(false);
   const [livenessPhotos, setLivenessPhotos] = useState<any>(null);
   const [step, setStep] = useState(1);
+
+  // Check KYC status on mount
+  useEffect(() => {
+    const checkKycStatus = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/status`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data && data.data.status) {
+            setKycStatus(data.data.status);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking KYC status:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkKycStatus();
+  }, []);
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
@@ -106,8 +135,8 @@ export default function KYCPage() {
       const result = await response.json();
 
       if (response.ok) {
+        setKycStatus('PENDING');
         alert('KYC submitted successfully! We will review it within 24-48 hours.');
-        window.location.reload();
       } else {
         alert(result.message || 'Failed to submit KYC');
       }
@@ -159,6 +188,19 @@ export default function KYCPage() {
 
   const isVerified = user?.isKYCVerified;
 
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-3 sm:py-6 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading KYC status...</p>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-3 sm:py-6">
@@ -182,6 +224,52 @@ export default function KYCPage() {
               <IoCheckmarkCircleOutline className="w-16 h-16 sm:w-20 sm:h-20 text-green-400 mx-auto mb-3 sm:mb-4" />
               <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">Verification Complete!</h2>
               <p className="text-sm sm:text-base text-gray-300">Your account is fully verified</p>
+            </div>
+          ) : kycStatus === 'PENDING' ? (
+            /* Pending State */
+            <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center">
+              <IoTimeOutline className="w-16 h-16 sm:w-20 sm:h-20 text-yellow-400 mx-auto mb-3 sm:mb-4" />
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">KYC Submitted Successfully!</h2>
+              <p className="text-sm sm:text-base text-gray-300 mb-4">Your verification is pending admin approval</p>
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-left">
+                <div className="flex gap-3">
+                  <IoAlertCircleOutline className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-gray-300">
+                    <p className="font-semibold text-yellow-400 mb-1">What's next?</p>
+                    <p>Our team will review your submission within 24-48 hours. You'll receive a notification once your verification is complete.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : kycStatus === 'REJECTED' ? (
+            /* Rejected State */
+            <div className="bg-gradient-to-br from-red-500/10 to-pink-500/10 border border-red-500/30 rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center">
+              <IoCloseCircleOutline className="w-16 h-16 sm:w-20 sm:h-20 text-red-400 mx-auto mb-3 sm:mb-4" />
+              <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">Verification Rejected</h2>
+              <p className="text-sm sm:text-base text-gray-300 mb-4">Your KYC submission was not approved</p>
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-left mb-4">
+                <div className="flex gap-3">
+                  <IoAlertCircleOutline className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-gray-300">
+                    <p className="font-semibold text-red-400 mb-1">Common reasons for rejection:</p>
+                    <ul className="list-disc list-inside space-y-1 text-gray-400">
+                      <li>Blurry or unclear photos</li>
+                      <li>Documents not fully visible</li>
+                      <li>Information mismatch</li>
+                      <li>Expired documents</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setKycStatus(null);
+                  setVerificationType(null);
+                }}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold hover:shadow-lg hover:scale-105 transition-all"
+              >
+                Submit Again
+              </button>
             </div>
           ) : !verificationType ? (
             /* Verification Type Selection */
@@ -696,8 +784,8 @@ export default function KYCPage() {
               const result = await response.json();
 
               if (response.ok) {
+                setKycStatus('PENDING');
                 alert('✅ Face verification submitted successfully! We will review it within 24 hours.');
-                window.location.reload();
               } else {
                 alert(result.message || 'Failed to submit verification');
               }
