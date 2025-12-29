@@ -588,16 +588,7 @@ export default function UserProfilePage() {
                   <p className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">{formatCount(profile._count.following)}</p>
                   <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5">Following</p>
                 </button>
-                      console.error('Error fetching following:', error);
-                    } finally {
-                      setLoadingFollowers(false);
-                    }
-                  }}
-                  className="text-center p-1.5 xs:p-2 sm:p-3 rounded-md xs:rounded-lg bg-slate-700/30 hover:bg-slate-700/50 transition-colors cursor-pointer"
-                >
-                  <p className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">{profile._count.following}</p>
-                  <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 mt-0.5">Following</p>
-                </button>
+              </div>
               </div>
 
               {/* View Posts Buttons - Toggle Social and Marketplace */}
