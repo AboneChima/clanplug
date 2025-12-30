@@ -52,6 +52,12 @@ router.get(
   asyncHandler(listingController.getListings.bind(listingController))
 );
 
+// GET /api/listings/counts - Get listing counts per category
+router.get(
+  '/counts',
+  asyncHandler(listingController.getListingCounts.bind(listingController))
+);
+
 // GET /api/listings/me - Seller listings
 router.get(
   '/me',

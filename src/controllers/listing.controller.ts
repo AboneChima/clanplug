@@ -213,3 +213,17 @@ export class ListingController {
 }
 
 export const listingController = new ListingController();
+
+  // Get listing counts per category
+  async getListingCounts(req: Request, res: Response) {
+    try {
+      const counts = await listingService.getListingCounts();
+      return res.status(200).json({ success: true, counts });
+    } catch (error: any) {
+      console.error('Get listing counts error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to get listing counts',
+      });
+    }
+  }

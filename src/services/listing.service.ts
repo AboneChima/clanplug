@@ -332,3 +332,29 @@ class ListingService {
 }
 
 export const listingService = new ListingService();
+
+  // Get listing counts per category
+  async getListingCounts() {
+    try {
+      const listings = await prisma.listing.findMany({
+        where: {
+          status: { notIn: [ListingStatus.DELETED] }
+        },
+        select: {
+          category: true
+        }
+      });
+
+      // Count listings per category
+      const counts: { [key: string]: number } = {};
+      listings.forEach(listing => {
+        const category = listing.category.toLowerCase().replace(/_/g, '-');
+        counts[category] = (counts[category] || 0) + 1;
+      });
+
+      return counts;
+    } catch (error) {
+      console.error('Error getting listing counts:', error);
+      throw new Error('Failed to get listing counts');
+    }
+  }
