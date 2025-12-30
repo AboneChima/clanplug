@@ -516,7 +516,7 @@ export default function FeedPage() {
             <Link href={`/user/${post.user.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="relative">
                 {post.user.avatar ? (
-                  <Image src={post.user.avatar} alt={post.user.username} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
+                  <img src={post.user.avatar} alt={post.user.username} className="w-10 h-10 rounded-full object-cover" />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                     <span className="text-white text-sm font-semibold">{post.user.firstName[0]}{post.user.lastName[0]}</span>
@@ -581,11 +581,9 @@ export default function FeedPage() {
         <Link href={`/user/${post.user.id}`} className="flex items-center gap-1 xs:gap-2 hover:opacity-80 transition-opacity flex-1 min-w-0">
           <div className="relative flex-shrink-0">
             {post.user.avatar ? (
-              <Image 
+              <img 
                 src={post.user.avatar} 
                 alt={post.user.username} 
-                width={32} 
-                height={32} 
                 className="w-6 h-6 xs:w-8 xs:h-8 rounded-full object-cover"
               />
             ) : (
@@ -1104,11 +1102,9 @@ export default function FeedPage() {
                       <div className="flex items-center gap-3">
                         <Link href={`/user/${followedUser.id}`} className="flex-shrink-0">
                           {followedUser.avatar ? (
-                            <Image 
+                            <img 
                               src={followedUser.avatar} 
                               alt={followedUser.username} 
-                              width={48} 
-                              height={48} 
                               className="w-12 h-12 rounded-full object-cover"
                             />
                           ) : (
@@ -1226,11 +1222,9 @@ export default function FeedPage() {
 
             <div className="flex gap-2 mb-3">
               {user?.avatar ? (
-                <Image 
+                <img 
                   src={user.avatar} 
                   alt={user.username || 'User'} 
-                  width={40} 
-                  height={40} 
                   className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                 />
               ) : (

@@ -22,6 +22,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
 
+interface CategoryCount {
+  [key: string]: number;
+}
+
 // Game cards data
 const allGameCards = [
   {
@@ -251,6 +255,23 @@ function MarketplaceContent() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAllGames, setShowAllGames] = useState(false);
   const [showAllSocials, setShowAllSocials] = useState(false);
+  const [listingCounts, setListingCounts] = useState<CategoryCount>({});
+
+  // Fetch listing counts for each category
+  useEffect(() => {
+    const fetchListingCounts = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/listings/counts`);
+        if (response.ok) {
+          const data = await response.json();
+          setListingCounts(data.counts || {});
+        }
+      } catch (error) {
+        console.error('Failed to fetch listing counts:', error);
+      }
+    };
+    fetchListingCounts();
+  }, []);
 
   useEffect(() => {
     const game = searchParams.get('game');
@@ -283,8 +304,18 @@ function MarketplaceContent() {
                 <button
                   key={game.id}
                   onClick={() => handleGameClick(game.id)}
-                  className="group hover:scale-105 transition-transform duration-300"
+                  className="group hover:scale-105 transition-transform duration-300 relative"
                 >
+                  {listingCounts[game.id] > 0 && (
+                    <div className="absolute -top-1 -right-1 z-10 flex items-center justify-center">
+                      <span className="relative flex h-5 w-5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-5 w-5 bg-gradient-to-r from-green-500 to-emerald-600 items-center justify-center text-white text-[9px] font-bold shadow-lg">
+                          {listingCounts[game.id] > 9 ? '9+' : listingCounts[game.id]}
+                        </span>
+                      </span>
+                    </div>
+                  )}
                   <div className="aspect-[3/4] rounded-lg xs:rounded-xl sm:rounded-2xl overflow-hidden shadow-lg mb-2">
                     <img
                       src={game.image}

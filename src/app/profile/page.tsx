@@ -872,7 +872,7 @@ export default function ProfilePage() {
                   {editForm.avatar ? (
                     <img src={URL.createObjectURL(editForm.avatar)} alt="Preview" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" />
                   ) : avatarPreview ? (
-                    <Image src={avatarPreview} alt="Avatar" width={64} height={64} className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" />
+                    <img src={avatarPreview} alt="Avatar" className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover" />
                   ) : (
                     <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-700 flex items-center justify-center">
                       <IoPersonOutline className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />

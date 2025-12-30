@@ -142,11 +142,9 @@ export default function ChatPage() {
           {otherParticipant && (
             <>
               {otherParticipant.avatar ? (
-                <Image
+                <img
                   src={otherParticipant.avatar}
                   alt={otherParticipant.username}
-                  width={40}
-                  height={40}
                   className="w-10 h-10 rounded-full object-cover"
                 />
               ) : (
@@ -193,11 +191,9 @@ export default function ChatPage() {
                 >
                   {!isOwn && (
                     message.user.avatar ? (
-                      <Image
+                      <img
                         src={message.user.avatar}
                         alt={message.user.username}
-                        width={32}
-                        height={32}
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
