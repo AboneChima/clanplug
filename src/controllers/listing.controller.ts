@@ -210,9 +210,6 @@ export class ListingController {
       });
     }
   }
-}
-
-export const listingController = new ListingController();
 
   // Get listing counts per category
   async getListingCounts(req: Request, res: Response) {
@@ -227,3 +224,6 @@ export const listingController = new ListingController();
       });
     }
   }
+}
+
+export const listingController = new ListingController();

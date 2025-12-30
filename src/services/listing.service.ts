@@ -329,9 +329,6 @@ class ListingService {
   async getSellerListings(sellerId: string, page: number = 1, limit: number = 20) {
     return this.getListings({ sellerId }, page, limit);
   }
-}
-
-export const listingService = new ListingService();
 
   // Get listing counts per category
   async getListingCounts() {
@@ -358,3 +355,6 @@ export const listingService = new ListingService();
       throw new Error('Failed to get listing counts');
     }
   }
+}
+
+export const listingService = new ListingService();
