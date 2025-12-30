@@ -133,6 +133,7 @@ export const postService = {
               username: true,
               firstName: true,
               lastName: true,
+              avatar: true,
               isKYCVerified: true,
             },
           },
@@ -229,6 +230,7 @@ export const postService = {
               username: true,
               firstName: true,
               lastName: true,
+              avatar: true,
               isKYCVerified: true,
               verificationBadge: {
                 select: {
@@ -373,6 +375,7 @@ export const postService = {
               username: true,
               firstName: true,
               lastName: true,
+              avatar: true,
               isKYCVerified: true,
             },
           },

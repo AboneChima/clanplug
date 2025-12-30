@@ -120,9 +120,14 @@ class ListingService {
     try {
       const skip = (page - 1) * limit;
 
-      const where: any = {
-        status: filters.status || ListingStatus.ACTIVE,
-      };
+      const where: any = {};
+
+      // Only exclude DELETED listings, show ACTIVE and SOLD
+      if (filters.status) {
+        where.status = filters.status;
+      } else {
+        where.status = { notIn: [ListingStatus.DELETED] };
+      }
 
       if (filters.category) {
         where.category = filters.category;
