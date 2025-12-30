@@ -110,7 +110,7 @@ function ListingsContent() {
     try {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts?limit=1000`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
