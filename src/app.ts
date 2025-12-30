@@ -28,6 +28,7 @@ import escrowRoutes from './routes/escrow.routes';
 import adminKycRoutes from './routes/admin-kyc.routes';
 import verificationRoutes from './routes/verification.routes';
 import refundRoutes from './routes/refund.routes';
+import listingRoutes from './routes/listing.routes';
 
 const app = express();
 
@@ -148,6 +149,7 @@ app.use('/api/crypto', cryptoRoutes);
 app.use('/api/test', testRoutes);
 app.use('/api/escrow', escrowRoutes);
 app.use('/api/refund', refundRoutes);
+app.use('/api/listings', listingRoutes);
 app.use('/api/admin-temp', adminKycRoutes); // TEMPORARY - DELETE AFTER USE
 console.log('🔵 Registering verification routes at /api/verification');
 app.use('/api/verification', verificationRoutes);
