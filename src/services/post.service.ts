@@ -68,12 +68,12 @@ export const postService = {
         include: { verificationBadge: true },
       });
 
-      // Check if user is verified
+      // Check if user has active verification badge
       const verificationBadge = await prisma.verificationBadge.findUnique({
         where: { userId: authorId },
       });
 
-      const isVerified = verificationBadge?.status === 'verified' && 
+      const isVerified = (verificationBadge?.status === 'verified' || verificationBadge?.status === 'active') && 
                         verificationBadge?.expiresAt && 
                         new Date() < verificationBadge.expiresAt;
 
@@ -100,7 +100,7 @@ export const postService = {
         if (payload.images && payload.images.length > 0) {
           return {
             success: false,
-            message: 'Image posting on social feed requires verification. Text posts are allowed.',
+            message: 'Get verified to post images! Purchase verification badge (₦2,000) to unlock media posting.',
             error: 'VERIFICATION_REQUIRED'
           };
         }
