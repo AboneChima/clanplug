@@ -235,6 +235,8 @@ export default function FeedPage() {
 
       // Upload image if selected
       if (newPostImage) {
+        console.log('📤 Uploading image:', newPostImage.name, 'Size:', (newPostImage.size / 1024 / 1024).toFixed(2) + 'MB');
+        
         const formData = new FormData();
         formData.append('media', newPostImage);
 
@@ -248,14 +250,19 @@ export default function FeedPage() {
 
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
-          console.log('Upload response:', uploadData);
+          console.log('✅ Upload response:', uploadData);
           // Backend returns { success: true, data: { urls: [...] } }
           if (uploadData.success && uploadData.data?.urls?.length > 0) {
             imageUrls.push(...uploadData.data.urls);
+            console.log('✅ Image URLs:', imageUrls);
+          } else {
+            console.error('❌ No URLs in response:', uploadData);
+            showToast('Upload succeeded but no image URL returned', 'error');
+            return;
           }
         } else {
           const errorData = await uploadResponse.json();
-          console.error('Upload error:', errorData);
+          console.error('❌ Upload error:', errorData);
           showToast(errorData.message || 'Failed to upload image', 'error');
           return;
         }
@@ -270,6 +277,8 @@ export default function FeedPage() {
         videos: []
       };
 
+      console.log('📝 Creating post with data:', postData);
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts`, {
         method: 'POST',
         headers: {
@@ -280,12 +289,15 @@ export default function FeedPage() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Post created:', result);
         showToast('Post created successfully!', 'success');
         setNewPostContent('');
         setNewPostImage(null);
         fetchPosts();
       } else {
         const error = await response.json();
+        console.error('❌ Post creation error:', error);
         showToast(error.message || 'Failed to create post', 'error');
       }
     } catch (error) {
@@ -1237,7 +1249,7 @@ export default function FeedPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-1">
                   <p className="text-white text-sm font-medium">{user?.firstName} {user?.lastName}</p>
-                  {(user as any)?.verificationBadge?.status === 'verified' && (
+                  {((user as any)?.verificationBadge?.status === 'verified' || (user as any)?.verificationBadge?.status === 'active') && (
                     <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
@@ -1281,6 +1293,15 @@ export default function FeedPage() {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     
+                    // Check file size (10MB limit)
+                    const maxSize = 10 * 1024 * 1024; // 10MB
+                    if (file.size > maxSize) {
+                      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                      showToast(`Image size (${sizeMB}MB) exceeds 10MB limit. Please compress or resize your image.`, 'error');
+                      e.target.value = '';
+                      return;
+                    }
+                    
                     // Check verification status
                     try {
                       const token = localStorage.getItem('accessToken');
@@ -1290,8 +1311,8 @@ export default function FeedPage() {
                       
                       if (response.ok) {
                         const data = await response.json();
-                        if (data.data?.status !== 'active') {
-                          showToast('Image posting is only available for verified accounts. Purchase verification badge to unlock.', 'error');
+                        if (data.data?.status !== 'active' && data.data?.status !== 'verified') {
+                          showToast('Get verified to post images! Purchase verification badge (₦2,000) in your profile.', 'error');
                           e.target.value = '';
                           return;
                         }
