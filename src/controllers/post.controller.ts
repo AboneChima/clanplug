@@ -347,6 +347,7 @@ export const postController = {
   // POST /api/posts/upload-media - Upload media files
   async uploadMedia(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as any).user?.id;
       const files = req.files as Express.Multer.File[];
       const { postType } = req.body; // Get post type to enforce rules
       
@@ -354,6 +355,19 @@ export const postController = {
         res.status(400).json({
           success: false,
           message: 'No files uploaded',
+        });
+        return;
+      }
+
+      // Check if user has verification badge for media uploads
+      const { verificationService } = await import('../services/verification.service');
+      const canPost = await verificationService.canPostMedia(userId);
+      
+      if (!canPost) {
+        res.status(403).json({
+          success: false,
+          message: 'Complete KYC verification to post images and videos. Visit your profile to get verified!',
+          error: 'VERIFICATION_REQUIRED',
         });
         return;
       }

@@ -131,7 +131,8 @@ export const verificationService = {
       where: { userId },
     });
 
-    if (!badge || badge.status !== 'active') {
+    // Support both 'active' and 'verified' status
+    if (!badge || (badge.status !== 'active' && badge.status !== 'verified')) {
       return false;
     }
 
