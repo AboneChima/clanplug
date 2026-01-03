@@ -9,14 +9,14 @@ export default function WhatsNewBanner() {
 
   useEffect(() => {
     // Check if user has dismissed this version
-    const dismissed = localStorage.getItem('whatsNew_kyc_v3');
+    const dismissed = localStorage.getItem('whatsNew_kyc_v4');
     if (!dismissed) {
       setIsVisible(true);
     }
   }, []);
 
   const handleDismiss = () => {
-    localStorage.setItem('whatsNew_kyc_v3', 'true');
+    localStorage.setItem('whatsNew_kyc_v4', 'true');
     setIsVisible(false);
   };
 
@@ -34,18 +34,18 @@ export default function WhatsNewBanner() {
       
       <div className="pr-8">
         <h3 className="text-white font-bold text-base mb-2">
-          ✨ Verification Required
+          ✨ Complete KYC to Sell on Marketplace
         </h3>
         
         <p className="text-white/95 text-sm mb-3">
-          Complete KYC to post images and create marketplace listings. Quick face verification - no documents needed!
+          KYC verification is required to create shop listings. Quick face verification available - no documents needed!
         </p>
 
         <Link
           href="/kyc"
           className="inline-block px-4 py-2 bg-white text-purple-600 rounded-lg font-semibold text-sm hover:bg-gray-100 transition-colors"
         >
-          Get Verified (₦2,000)
+          Get KYC Verified (Free)
         </Link>
       </div>
     </div>
