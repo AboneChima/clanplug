@@ -349,7 +349,7 @@ export const postController = {
     try {
       const userId = (req as any).user?.id;
       const files = req.files as Express.Multer.File[];
-      const { postType } = req.body; // Get post type to enforce rules
+      const { postType, isKYCUpload } = req.body; // Get post type and KYC flag
       
       if (!files || files.length === 0) {
         res.status(400).json({
@@ -359,22 +359,26 @@ export const postController = {
         return;
       }
 
-      // Check if user has verification badge for media uploads
-      const { verificationService } = await import('../services/verification.service');
-      const canPost = await verificationService.canPostMedia(userId);
-      
-      if (!canPost) {
-        res.status(403).json({
-          success: false,
-          message: 'Complete KYC verification to post images and videos. Visit your profile to get verified!',
-          error: 'VERIFICATION_REQUIRED',
-        });
-        return;
+      // Skip verification check for KYC document uploads
+      if (!isKYCUpload) {
+        // Check if user has verification badge for media uploads (social feed posts)
+        const { verificationService } = await import('../services/verification.service');
+        const canPost = await verificationService.canPostMedia(userId);
+        
+        if (!canPost) {
+          res.status(403).json({
+            success: false,
+            message: 'Purchase verification badge (₦2,000) to post images on social feed. Visit your profile!',
+            error: 'VERIFICATION_REQUIRED',
+          });
+          return;
+        }
       }
 
       const uploadPromises = files.map(async (file) => {
         const filename = `${Date.now()}-${file.originalname}`;
-        return postService.uploadMedia(file.buffer, filename, 'lordmoon/posts', postType);
+        const folder = isKYCUpload ? 'lordmoon/kyc' : 'lordmoon/posts';
+        return postService.uploadMedia(file.buffer, filename, folder, postType);
       });
 
       const results = await Promise.all(uploadPromises);
