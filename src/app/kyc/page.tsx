@@ -109,6 +109,7 @@ export default function KYCPage() {
         if (file) {
           const formData = new FormData();
           formData.append('media', file);
+          formData.append('isKYCUpload', 'true'); // Flag for KYC uploads
           
           const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
             method: 'POST',
@@ -119,6 +120,9 @@ export default function KYCPage() {
           if (uploadRes.ok) {
             const data = await uploadRes.json();
             uploadedUrls[key as keyof typeof uploadedUrls] = data.data.urls[0];
+          } else {
+            const errorData = await uploadRes.json();
+            throw new Error(errorData.message || 'Failed to upload document');
           }
         }
       }
@@ -746,6 +750,7 @@ export default function KYCPage() {
                 
                 const formData = new FormData();
                 formData.append('media', file);
+                formData.append('isKYCUpload', 'true'); // Flag for KYC uploads
                 
                 const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
                   method: 'POST',
@@ -757,7 +762,8 @@ export default function KYCPage() {
                   const data = await uploadRes.json();
                   return data.data.urls[0];
                 }
-                throw new Error('Upload failed');
+                const errorData = await uploadRes.json();
+                throw new Error(errorData.message || 'Upload failed');
               };
 
               // Upload all 4 photos
