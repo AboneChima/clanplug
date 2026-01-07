@@ -569,15 +569,13 @@ function ChatContent() {
                             </div>
                           )}
                           
-                          <div 
-                            className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group px-1`}
-                          >
-                          <div 
-                            className={`relative max-w-[70%] sm:max-w-[65%] touch-pan-y`}
-                            onTouchStart={(e) => {
-                              const touch = e.touches[0];
-                              const startX = touch.clientX;
-                              const startY = touch.clientY;
+                          <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group px-1`}>
+                            <div 
+                              className={`relative max-w-[70%] sm:max-w-[65%] touch-pan-y`}
+                              onTouchStart={(e) => {
+                                const touch = e.touches[0];
+                                const startX = touch.clientX;
+                                const startY = touch.clientY;
                               const element = e.currentTarget as HTMLElement;
                               const messageElement = element.querySelector('.message-bubble') as HTMLElement;
                               const replyIcon = element.querySelector('.reply-icon') as HTMLElement;
