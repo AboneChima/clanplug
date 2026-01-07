@@ -630,7 +630,7 @@ function ChatContent() {
                             <div className={`message-bubble inline-block rounded-2xl shadow-md ${
                               msg.type === 'IMAGE' && msg.attachments?.length 
                                 ? (msg.content && msg.content.trim() ? 'p-0.5 xs:p-1' : 'p-0 overflow-hidden') 
-                                : 'px-1.5 py-1 xs:px-3 xs:py-2 sm:px-4 sm:py-2.5'
+                                : 'px-2 py-1.5 max-[360px]:px-1.5 max-[360px]:py-1 xs:px-3 xs:py-2 sm:px-4 sm:py-2.5 max-w-[75%] max-[360px]:max-w-[80%]'
                             } ${
                               isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-slate-800 text-white rounded-bl-md border border-slate-700'
                             }`}>
@@ -650,17 +650,17 @@ function ChatContent() {
                                   <img 
                                     src={msg.attachments[0]} 
                                     alt="Shared image" 
-                                    className="max-w-[120px] xs:max-w-[200px] sm:max-w-[280px] md:max-w-[320px] max-h-[120px] xs:max-h-[200px] sm:max-h-[280px] md:max-h-[320px] rounded-lg object-cover cursor-pointer block"
+                                    className="max-w-[140px] max-[360px]:max-w-[120px] xs:max-w-[200px] sm:max-w-[280px] md:max-w-[320px] max-h-[140px] max-[360px]:max-h-[120px] xs:max-h-[200px] sm:max-h-[280px] md:max-h-[320px] rounded-xl max-[360px]:rounded-lg object-cover cursor-pointer block"
                                     onClick={() => window.open(msg.attachments[0], '_blank')}
                                   />
                                   {/* Timestamp overlay on image - only if no text content */}
                                   {(!msg.content || !msg.content.trim()) && (
-                                    <div className="absolute bottom-1 right-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
-                                      <span className="text-[10px] text-white">
+                                    <div className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm rounded-full px-1.5 py-0.5 max-[360px]:px-1 max-[360px]:py-0.5 flex items-center gap-0.5 max-[360px]:gap-0.5">
+                                      <span className="text-[9px] max-[360px]:text-[8px] text-white font-medium">
                                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                       </span>
                                       {isOwn && (
-                                        <IoCheckmarkDoneOutline className={`w-3 h-3 ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'text-white/70'}`} />
+                                        <IoCheckmarkDoneOutline className={`w-2.5 h-2.5 max-[360px]:w-2 max-[360px]:h-2 ${currentChat?.unreadCount === 0 ? 'text-blue-400' : 'text-white/70'}`} />
                                       )}
                                     </div>
                                   )}
@@ -705,16 +705,16 @@ function ChatContent() {
                                       </span>
                                     </button>
                                   ) : (
-                                    <div className="flex items-end gap-1">
-                                      <p className={`${fontSizes[fontSize].text} break-words max-[360px]:leading-tight leading-relaxed whitespace-pre-wrap flex-1`}>
+                                    <div className="flex items-end gap-1 max-[360px]:gap-0.5">
+                                      <p className={`${fontSizes[fontSize].text} break-words max-[360px]:text-[13px] max-[360px]:leading-snug leading-relaxed whitespace-pre-wrap flex-1`}>
                                         {msg.content}
                                       </p>
-                                      <span className="inline-flex items-center gap-1 flex-shrink-0 self-end pb-0.5">
-                                        <span className="text-[10px] opacity-70 whitespace-nowrap">
+                                      <span className="inline-flex items-center gap-0.5 flex-shrink-0 self-end pb-0.5 max-[360px]:pb-0">
+                                        <span className="text-[9px] max-[360px]:text-[8px] opacity-70 whitespace-nowrap">
                                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                         {isOwn && (
-                                          <IoCheckmarkDoneOutline className={`w-3.5 h-3.5 font-bold ${(currentChat?.unreadCount ?? 0) === 0 ? 'text-blue-400' : 'opacity-70'}`} strokeWidth={2} />
+                                          <IoCheckmarkDoneOutline className={`w-3 h-3 max-[360px]:w-2.5 max-[360px]:h-2.5 font-bold ${(currentChat?.unreadCount ?? 0) === 0 ? 'text-blue-400' : 'opacity-70'}`} strokeWidth={2} />
                                         )}
                                       </span>
                                     </div>
