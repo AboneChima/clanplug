@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { 
@@ -143,7 +143,13 @@ function ChatContent() {
       const data = await chatService.getChats(accessToken);
       console.log('✅ Loaded chats:', data.length, 'chats');
       console.log('📋 Chats data:', data);
-      setChats(data);
+      // Sort chats by most recent message (WhatsApp style)
+      const sortedChats = data.sort((a: Chat, b: Chat) => {
+        const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+        const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+        return dateB - dateA; // Most recent first
+      });
+      setChats(sortedChats);
     } catch (error) {
       console.error('❌ Load chats error:', error);
     }
@@ -266,6 +272,14 @@ function ChatContent() {
       const newMsg = await chatService.sendMessage(currentChat.id, messageData, accessToken);
       setMessages(prev => [...prev, newMsg]);
       setReplyingTo(null);
+      
+      // Move this chat to the top of the list (WhatsApp style)
+      setChats(prevChats => {
+        const updatedChat = { ...currentChat, lastMessageAt: newMsg.createdAt };
+        const otherChats = prevChats.filter(c => c.id !== currentChat.id);
+        return [updatedChat, ...otherChats];
+      });
+      
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     } catch (error: any) {
       showToast(error.message || 'Failed to send', 'error');
@@ -516,11 +530,46 @@ function ChatContent() {
                       <p className="text-gray-400">No messages yet. Say hi! 👋</p>
                     </div>
                   ) : (
-                    messages.map((msg) => {
+                    messages.map((msg, index) => {
                       const isOwn = msg.userId === user?.id;
+                      
+                      // Check if we need to show a date separator
+                      const currentDate = new Date(msg.createdAt);
+                      const previousDate = index > 0 ? new Date(messages[index - 1].createdAt) : null;
+                      const showDateSeparator = !previousDate || 
+                        currentDate.toDateString() !== previousDate.toDateString();
+                      
+                      // Format date label
+                      const getDateLabel = (date: Date) => {
+                        const today = new Date();
+                        const yesterday = new Date(today);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        
+                        if (date.toDateString() === today.toDateString()) {
+                          return 'Today';
+                        } else if (date.toDateString() === yesterday.toDateString()) {
+                          return 'Yesterday';
+                        } else if (today.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
+                          return date.toLocaleDateString('en-US', { weekday: 'long' });
+                        } else {
+                          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined });
+                        }
+                      };
+                      
                       return (
+                        <React.Fragment key={msg.id}>
+                          {/* Date Separator */}
+                          {showDateSeparator && (
+                            <div className="flex justify-center my-3">
+                              <div className="bg-slate-700/80 backdrop-blur-sm px-3 py-1 rounded-lg shadow-sm">
+                                <span className="text-xs text-gray-300 font-medium">
+                                  {getDateLabel(currentDate)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          
                         <div 
-                          key={msg.id} 
                           className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group px-1`}
                         >
                           <div 
@@ -736,6 +785,7 @@ function ChatContent() {
                             </div>
                           </div>
                         </div>
+                        </React.Fragment>
                       );
                     })
                   )}
