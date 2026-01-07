@@ -569,9 +569,9 @@ function ChatContent() {
                             </div>
                           )}
                           
-                        <div 
-                          className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group px-1`}
-                        >
+                          <div 
+                            className={`flex ${isOwn ? 'justify-end' : 'justify-start'} group px-1`}
+                          >
                           <div 
                             className={`relative max-w-[70%] sm:max-w-[65%] touch-pan-y`}
                             onTouchStart={(e) => {
