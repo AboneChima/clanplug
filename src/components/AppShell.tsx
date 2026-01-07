@@ -186,25 +186,7 @@ export default function AppShell({ children, hideNavOnMobile = false, hideBottom
               </div>
             </div>
 
-            <div className="hidden md:flex flex-1 max-w-lg mx-8">
-              <div className={`relative w-full transition-all duration-200 ${searchFocused ? 'scale-105' : ''}`}>
-                <IoSearchOutline className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 transition-colors" />
-                <input
-                  type="text"
-                  placeholder="Search anything..."
-                  className={`w-full pl-12 pr-4 py-3 bg-slate-800 border rounded-2xl text-sm text-white placeholder-gray-400 transition-all duration-200 ${
-                    searchFocused 
-                      ? 'border-blue-500 shadow-lg shadow-blue-500/20 ring-4 ring-blue-500/10' 
-                      : 'border-slate-700 hover:border-slate-600 focus:border-blue-500'
-                  } focus:outline-none focus:shadow-lg focus:shadow-blue-500/20 focus:ring-4 focus:ring-blue-500/10`}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setSearchFocused(false)}
-                />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <kbd className="px-2 py-1 text-xs bg-slate-700 border border-slate-600 rounded text-gray-400">⌘K</kbd>
-                </div>
-              </div>
-            </div>
+            <div className="flex-1"></div>
 
             <div className="flex items-center gap-2">
               <button 

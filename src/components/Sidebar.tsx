@@ -154,9 +154,9 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
         </div>
       </div>
 
-      {/* Navigation - Compact, iOS Scroll Fix */}
+      {/* Navigation - Fixed height on desktop, scrollable on mobile */}
       <nav 
-        className="flex-1 p-2 overflow-y-auto pb-48 lg:pb-4 overscroll-contain min-h-0" 
+        className="flex-1 p-2 overflow-y-auto lg:overflow-y-visible pb-48 lg:pb-4 overscroll-contain min-h-0" 
         style={{ 
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain',
