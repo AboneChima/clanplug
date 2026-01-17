@@ -553,7 +553,16 @@ export default function FeedPage() {
           <div className="flex gap-3 p-3 bg-gray-900/50">
             {/* Image - Half width */}
             <div className="relative w-1/2 flex-shrink-0">
-              <img src={post.images[0]} alt="Featured post" className="w-full h-auto rounded-lg object-cover" />
+              <img 
+                src={post.images?.[0] || ''} 
+                alt="Featured post" 
+                className="w-full h-auto rounded-lg object-cover" 
+                loading="lazy"
+                onError={(e) => {
+                  console.error('Failed to load image:', post.images?.[0]);
+                  e.currentTarget.src = '/placeholder-image.png';
+                }}
+              />
             </div>
             
             {/* Caption - Half width */}
@@ -677,7 +686,16 @@ export default function FeedPage() {
           <div className="flex gap-2 sm:gap-3 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-lg p-2 border border-green-700/30">
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
               {post.images && post.images[0] ? (
-                <img src={post.images[0]} alt="Listing image" className="w-full h-full object-cover" />
+                <img 
+                  src={post.images[0]} 
+                  alt="Listing image" 
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    console.error('Failed to load listing image:', post.images?.[0]);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gray-700">
                   <IoImageOutline className="w-6 h-6 text-gray-500" />
@@ -726,8 +744,17 @@ export default function FeedPage() {
             onClick={() => setViewingPostId(post.id)}
             className="relative w-16 h-16 xs:w-24 xs:h-24 sm:w-28 sm:h-28 rounded-md xs:rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 hover:opacity-90 transition-opacity"
           >
-            <img src={post.images[0]} alt="Post image" className="w-full h-full object-cover" />
-            {post.images.length > 1 && (
+            <img 
+              src={post.images?.[0] || ''} 
+              alt="Post image" 
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                console.error('Failed to load post image:', post.images?.[0]);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+            {post.images && post.images.length > 1 && (
               <div className="absolute top-0.5 right-0.5 xs:top-1 xs:right-1 bg-black/80 text-white text-[8px] xs:text-[10px] px-1 xs:px-1.5 py-0.5 rounded font-medium">
                 +{post.images.length - 1}
               </div>
