@@ -511,13 +511,13 @@ export const postService = {
         return { success: false, message: 'Cloud storage is not configured', error: 'CLOUDINARY_NOT_CONFIGURED' };
       }
 
-      // Check file size (10MB limit for free Cloudinary)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      // Check file size (50MB limit)
+      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
       if (buffer.length > maxSize) {
         const sizeMB = (buffer.length / (1024 * 1024)).toFixed(2);
         return { 
           success: false, 
-          message: `File size (${sizeMB}MB) exceeds 10MB limit. Please compress or resize your image.`, 
+          message: `File size (${sizeMB}MB) exceeds 50MB limit. Please compress or resize your file.`, 
           error: 'FILE_TOO_LARGE' 
         };
       }
@@ -584,17 +584,17 @@ export const postService = {
           const sizeMB = (parseInt(match[1]) / (1024 * 1024)).toFixed(2);
           return { 
             success: false, 
-            message: `File size (${sizeMB}MB) exceeds 10MB limit. Please compress or resize your image.`, 
+            message: `File size (${sizeMB}MB) exceeds 50MB limit. Please compress or resize your file.`, 
             error: 'FILE_TOO_LARGE' 
           };
         }
         return { 
           success: false, 
-          message: 'File size exceeds 10MB limit. Please compress or resize your image.', 
+          message: 'File size exceeds 50MB limit. Please compress or resize your file.', 
           error: 'FILE_TOO_LARGE' 
         };
       }
-      return { success: false, message: 'Failed to upload media', error: error.message || 'UPLOAD_ERROR' };
+      return { success: false, message: `Failed to upload media: ${error.message || 'Unknown error'}`, error: error.message || 'UPLOAD_ERROR' };
     }
   },
 
