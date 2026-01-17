@@ -2,8 +2,9 @@ import { prisma } from '../config/database';
 import { Post, PostStatus, User, Currency, PostType } from '@prisma/client';
 import { v2 as cloudinary } from 'cloudinary';
 import config from '../config/config';
+import { supabaseStorage } from './supabase.service';
 
-// Configure Cloudinary if credentials are provided
+// Configure Cloudinary if credentials are provided (kept as fallback)
 if (config.CLOUDINARY_CLOUD_NAME && config.CLOUDINARY_API_KEY && config.CLOUDINARY_API_SECRET) {
   cloudinary.config({
     cloud_name: config.CLOUDINARY_CLOUD_NAME,
@@ -503,14 +504,10 @@ export const postService = {
   async uploadMedia(
     buffer: Buffer, 
     filename: string, 
-    folder: string = 'lordmoon/posts',
+    folder: string = 'posts',
     postType?: string
   ): Promise<{ success: boolean; url?: string; message: string; error?: string; duration?: number }> {
     try {
-      if (!config.CLOUDINARY_CLOUD_NAME || !config.CLOUDINARY_API_KEY || !config.CLOUDINARY_API_SECRET) {
-        return { success: false, message: 'Cloud storage is not configured', error: 'CLOUDINARY_NOT_CONFIGURED' };
-      }
-
       // Check file size (50MB limit)
       const maxSize = 50 * 1024 * 1024; // 50MB in bytes
       if (buffer.length > maxSize) {
@@ -533,68 +530,28 @@ export const postService = {
         };
       }
 
-      const uploadResult: any = await new Promise((resolve, reject) => {
-        const uploadOptions: any = {
-          folder,
-          public_id: filename.replace(/\.[^/.]+$/, ''),
-          resource_type: 'auto',
-          overwrite: true,
-          type: 'upload', // Ensure public access
+      // Use Supabase Storage as primary storage
+      const uploadResult = await supabaseStorage.uploadFile(buffer, filename, folder);
+      
+      if (!uploadResult.success) {
+        return {
+          success: false,
+          message: uploadResult.message,
+          error: uploadResult.error
         };
-
-        // For game marketplace videos, add duration limit (120 seconds = 2 minutes)
-        if (isVideo && postType === 'GAME_ACCOUNT') {
-          uploadOptions.eager = [
-            { duration: '0-120' } // Limit to first 2 minutes
-          ];
-        }
-
-        const stream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        });
-        stream.end(buffer);
-      });
-
-      // Check video duration for game marketplace
-      if (isVideo && postType === 'GAME_ACCOUNT' && uploadResult.duration) {
-        if (uploadResult.duration > 120) {
-          // Delete the uploaded video since it exceeds limit
-          await cloudinary.uploader.destroy(uploadResult.public_id, { resource_type: 'video' });
-          return { 
-            success: false, 
-            message: 'Video duration exceeds 2 minutes limit for game marketplace', 
-            error: 'VIDEO_TOO_LONG',
-            duration: uploadResult.duration
-          };
-        }
       }
 
       return { 
         success: true, 
-        url: uploadResult.secure_url, 
-        message: 'Media uploaded successfully',
-        duration: uploadResult.duration 
+        url: uploadResult.url, 
+        message: 'Media uploaded successfully'
       };
     } catch (error: any) {
-      // Handle Cloudinary file size error
-      if (error.message && error.message.includes('File size too large')) {
-        const match = error.message.match(/Got (\d+)/);
-        if (match) {
-          const sizeMB = (parseInt(match[1]) / (1024 * 1024)).toFixed(2);
-          return { 
-            success: false, 
-            message: `File size (${sizeMB}MB) exceeds 50MB limit. Please compress or resize your file.`, 
-            error: 'FILE_TOO_LARGE' 
-          };
-        }
-        return { 
-          success: false, 
-          message: 'File size exceeds 50MB limit. Please compress or resize your file.', 
-          error: 'FILE_TOO_LARGE' 
-        };
-      }
-      return { success: false, message: `Failed to upload media: ${error.message || 'Unknown error'}`, error: error.message || 'UPLOAD_ERROR' };
+      return { 
+        success: false, 
+        message: `Failed to upload media: ${error.message || 'Unknown error'}`, 
+        error: error.message || 'UPLOAD_ERROR' 
+      };
     }
   },
 

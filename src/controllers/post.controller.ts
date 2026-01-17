@@ -377,7 +377,7 @@ export const postController = {
 
       const uploadPromises = files.map(async (file) => {
         const filename = `${Date.now()}-${file.originalname}`;
-        const folder = isKYCUpload ? 'lordmoon/kyc' : 'lordmoon/posts';
+        const folder = isKYCUpload ? 'kyc' : 'posts';
         return postService.uploadMedia(file.buffer, filename, folder, postType);
       });
 

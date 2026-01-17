@@ -61,6 +61,11 @@ export const config = {
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || '',
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || '',
   
+  // Supabase Storage Configuration
+  SUPABASE_URL: process.env.SUPABASE_URL || '',
+  SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY || '',
+  SUPABASE_BUCKET: process.env.SUPABASE_BUCKET || 'uploads',
+  
   // Firebase Configuration
   FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || '',
   FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY || '',
