@@ -163,10 +163,9 @@ export default function FeedPage() {
         const postsWithBookmarks = socialPostsOnly.map((post: Post) => ({
           ...post,
           isBookmarked: bookmarkedIds.includes(post.id),
-          // Add timestamp to avatar to prevent caching
+          // Keep avatar as is
           user: {
-            ...post.user,
-            avatar: post.user.avatar ? `${post.user.avatar}?t=${Date.now()}` : undefined
+            ...post.user
           }
         }));
         
@@ -204,8 +203,7 @@ export default function FeedPage() {
           isBookmarked: true,
           // Add timestamp to avatar to prevent caching
           user: {
-            ...post.user,
-            avatar: post.user.avatar ? `${post.user.avatar}?t=${Date.now()}` : undefined
+            ...post.user
           }
         }));
         
