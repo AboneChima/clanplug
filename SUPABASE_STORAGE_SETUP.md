@@ -11,114 +11,163 @@
 4. **Post service updated** to use Supabase instead of Cloudinary
 5. **@supabase/supabase-js package installed**
 
-## 🚀 Next Steps - Create Storage Bucket
+## 🚀 IMPORTANT: Create Storage Bucket Now!
 
 ### Step 1: Go to Supabase Dashboard
-1. Visit: https://supabase.com/dashboard/project/htfnwvaqrhzcoybphiqk
-2. Login to your account
+Visit: **https://supabase.com/dashboard/project/htfnwvaqrhzcoybphiqk/storage/buckets**
 
-### Step 2: Create Storage Bucket
-1. Click on **Storage** in the left sidebar
-2. Click **New bucket** button
-3. Configure the bucket:
-   - **Name**: `uploads`
-   - **Public bucket**: ✅ **Enable** (so files are publicly accessible)
-   - **File size limit**: 50 MB
-   - **Allowed MIME types**: Leave empty (allow all) or specify:
-     - `image/jpeg`
-     - `image/png`
-     - `image/gif`
-     - `image/webp`
-     - `video/mp4`
-     - `video/quicktime`
-     - `video/webm`
-4. Click **Create bucket**
+### Step 2: Create the "uploads" Bucket
+1. Click **"New bucket"** button (green button on the right)
+2. Fill in the form:
+   - **Name**: `uploads` (must be exactly this)
+   - **Public bucket**: ✅ **ENABLE THIS** (toggle it on)
+   - **File size limit**: `52428800` (50 MB in bytes)
+   - **Allowed MIME types**: Leave empty or add:
+     ```
+     image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm
+     ```
+3. Click **"Create bucket"**
 
-### Step 3: Set Bucket Policies (Important!)
-After creating the bucket, you need to set policies for public access:
+### Step 3: Configure Bucket Policies (CRITICAL!)
 
-1. Click on the **uploads** bucket
-2. Go to **Policies** tab
-3. Click **New Policy**
-4. Select **For full customization** → **Get started**
+After creating the bucket:
 
-**Policy 1: Public Read Access**
+1. Click on the **"uploads"** bucket in the list
+2. Click the **"Policies"** tab at the top
+3. You'll see "No policies created yet"
+4. Click **"New Policy"** button
+
+#### Option A: Use Quick Templates (Easiest)
+1. Click **"Get started quickly"**
+2. Enable these templates:
+   - ✅ **"Allow public read access"** - Click "Use this template"
+   - ✅ **"Allow authenticated uploads"** - Click "Use this template"
+
+#### Option B: Create Custom Policies (Advanced)
+If templates don't work, create these policies manually:
+
+**Policy 1: Public Read**
+- Name: `Public Access`
+- Policy command: `SELECT`
+- Target roles: `public`
+- SQL:
 ```sql
 CREATE POLICY "Public Access"
 ON storage.objects FOR SELECT
 USING ( bucket_id = 'uploads' );
 ```
 
-**Policy 2: Authenticated Upload**
+**Policy 2: Service Role Full Access**
+- Name: `Service role full access`
+- Policy command: `ALL`
+- Target roles: `service_role`
+- SQL:
 ```sql
-CREATE POLICY "Authenticated users can upload"
-ON storage.objects FOR INSERT
-WITH CHECK ( bucket_id = 'uploads' AND auth.role() = 'authenticated' );
-```
-
-**Policy 3: Service Role Full Access** (for backend uploads)
-```sql
-CREATE POLICY "Service role can do everything"
+CREATE POLICY "Service role full access"
 ON storage.objects FOR ALL
+TO service_role
 USING ( bucket_id = 'uploads' );
 ```
 
-Or use the **Quick Policy Templates**:
-- Enable **"Allow public read access"**
-- Enable **"Allow authenticated uploads"**
+### Step 4: Verify Setup
+After creating the bucket and policies, you should see:
+- ✅ Bucket named "uploads" with public access enabled
+- ✅ At least 2 policies active
 
-### Step 4: Test the Setup
-Once the bucket is created, test by uploading a post with an image from your app.
+### Step 5: Test Upload
+Try uploading a post with an image from your app. Check the backend logs for any errors.
+
+## 🔍 Quick Verification Checklist
+
+Before testing uploads, verify:
+- [ ] Bucket "uploads" exists in Supabase dashboard
+- [ ] Bucket is marked as "Public"
+- [ ] At least 2 policies are active (public read + service role)
+- [ ] Environment variables are set in `.env`
+- [ ] Backend server is restarted after changes
 
 ## 📊 Storage Pricing
 
 **Free Tier:**
 - 1 GB storage
 - 2 GB bandwidth/month
+- Perfect for starting out!
 
-**Paid Tier (if needed):**
-- $0.021/GB storage per month
-- $0.09/GB bandwidth
+**Paid Tier (when you grow):**
+- $0.021/GB storage per month (~₦35/GB)
+- $0.09/GB bandwidth (~₦150/GB)
 
 **Comparison with Cloudinary:**
-- Cloudinary Free: 25 GB storage, 25 GB bandwidth
-- Cloudinary Paid: Starts at $89/month
-- **Supabase is much more cost-effective for growing apps!**
+- Cloudinary Free: 25 GB storage, 25 GB bandwidth (but account suspended!)
+- Cloudinary Paid: Starts at $89/month (~₦150,000/month)
+- **Supabase is 90% cheaper for most use cases!**
 
 ## 🔧 Folder Structure
 
-Files will be organized as:
-- `posts/` - Social feed and marketplace posts
-- `kyc/` - KYC verification documents
+Files are organized as:
+- `posts/[timestamp]-[filename]` - Social feed and marketplace posts
+- `kyc/[timestamp]-[filename]` - KYC verification documents
+
+Example URL:
+```
+https://htfnwvaqrhzcoybphiqk.supabase.co/storage/v1/object/public/uploads/posts/1737123456789-image.jpg
+```
 
 ## ✅ Benefits of Supabase Storage
 
-1. **Cost-effective**: Much cheaper than Cloudinary
-2. **Simple pricing**: Pay only for what you use
-3. **Fast CDN**: Global edge network
-4. **Integrated**: Works seamlessly with Supabase Auth
-5. **No account suspension**: No surprise limits
+1. **Cost-effective**: Pay only $0.021/GB vs Cloudinary's $89/month
+2. **No surprise limits**: Clear pricing, no account suspensions
+3. **Fast CDN**: Global edge network for quick delivery
+4. **Integrated**: Works with Supabase Auth and Database
+5. **Simple**: Easy to set up and manage
 
 ## 🐛 Troubleshooting
 
-**If uploads fail:**
-1. Check bucket exists and is named `uploads`
-2. Verify bucket is set to **public**
-3. Check policies are correctly set
-4. Verify environment variables in `.env`
-5. Check backend logs for detailed error messages
+### "Supabase is not configured" error
+- Check `.env` file has `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`
+- Restart your backend server
 
-**Test connection:**
+### "Failed to upload to Supabase" error
+- Verify bucket "uploads" exists
+- Check bucket is set to **public**
+- Verify policies are correctly set
+- Check service role key is correct
+
+### "Bucket not found" error
+- Bucket name must be exactly `uploads` (lowercase)
+- Create the bucket in Supabase dashboard
+
+### Files upload but can't be accessed
+- Bucket must be marked as **public**
+- Add "Public Access" policy for SELECT operations
+
+### Test the connection
+Run this command to test:
 ```bash
-# In your backend, you can test by making a simple upload
-curl -X POST http://localhost:4000/api/posts/upload-media \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -F "media=@test-image.jpg"
+node test-supabase-connection.js
 ```
 
 ## 📝 Migration Notes
 
-- Old Cloudinary URLs will still work for existing posts
-- New uploads will use Supabase
-- You can migrate old files later if needed
-- Cloudinary code kept as fallback (commented out)
+- ✅ Old Cloudinary URLs will continue working for existing posts
+- ✅ All new uploads will use Supabase
+- ✅ You can migrate old files later if needed
+- ✅ Cloudinary code kept as fallback (commented out)
+
+## 🎯 Next Steps After Setup
+
+1. Create the "uploads" bucket in Supabase dashboard
+2. Enable public access on the bucket
+3. Add the required policies
+4. Restart your backend server
+5. Test by uploading a post with an image
+6. Monitor the free tier usage in Supabase dashboard
+
+## 💡 Pro Tips
+
+- Monitor your storage usage in Supabase dashboard
+- Set up alerts when approaching 1GB limit
+- Compress images before upload to save space
+- Consider upgrading to paid tier when you hit 1GB
+- Keep Cloudinary as backup for critical files
+
