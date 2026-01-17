@@ -958,12 +958,6 @@ export const postService = {
                 },
               },
             },
-            soldTo: {
-              select: {
-                id: true,
-                username: true,
-              },
-            },
             _count: {
               select: {
                 likes: true,
