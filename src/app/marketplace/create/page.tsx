@@ -162,7 +162,13 @@ function CreateListingForm() {
       console.log('Upload response:', uploadResponse.status, uploadData);
 
       if (!uploadResponse.ok) {
-        showToast(uploadData.message || 'Failed to upload media', 'error');
+        // Show detailed error message
+        let errorMsg = uploadData.message || 'Failed to upload media';
+        if (uploadData.errors && uploadData.errors.length > 0) {
+          const errorDetails = uploadData.errors.map((e: any) => e.message || e.error).join(', ');
+          errorMsg = `${errorMsg}: ${errorDetails}`;
+        }
+        showToast(errorMsg, 'error');
         console.error('Upload failed:', uploadData);
         return;
       }
