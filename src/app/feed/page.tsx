@@ -528,7 +528,20 @@ export default function FeedPage() {
             <Link href={`/user/${post.user.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="relative">
                 {post.user.avatar ? (
-                  <img src={post.user.avatar} alt={post.user.username} className="w-10 h-10 rounded-full object-cover" />
+                  <img 
+                    src={post.user.avatar} 
+                    alt={post.user.username} 
+                    className="w-10 h-10 rounded-full object-cover" 
+                    loading="lazy"
+                    onError={(e) => {
+                      console.error('Failed to load avatar:', post.user.avatar);
+                      e.currentTarget.style.display = 'none';
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        parent.innerHTML = `<div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"><span class="text-white text-sm font-semibold">${post.user.firstName[0]}${post.user.lastName[0]}</span></div>`;
+                      }
+                    }}
+                  />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                     <span className="text-white text-sm font-semibold">{post.user.firstName[0]}{post.user.lastName[0]}</span>
@@ -606,6 +619,15 @@ export default function FeedPage() {
                 src={post.user.avatar} 
                 alt={post.user.username} 
                 className="w-6 h-6 xs:w-8 xs:h-8 rounded-full object-cover"
+                loading="lazy"
+                onError={(e) => {
+                  console.error('Failed to load small avatar:', post.user.avatar);
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `<div class="w-6 h-6 xs:w-8 xs:h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"><span class="text-white text-[9px] xs:text-xs font-semibold">${post.user.firstName[0]}${post.user.lastName[0]}</span></div>`;
+                  }
+                }}
               />
             ) : (
               <div className="w-6 h-6 xs:w-8 xs:h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
