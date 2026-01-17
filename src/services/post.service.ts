@@ -539,6 +539,7 @@ export const postService = {
           public_id: filename.replace(/\.[^/.]+$/, ''),
           resource_type: 'auto',
           overwrite: true,
+          type: 'upload', // Ensure public access
         };
 
         // For game marketplace videos, add duration limit (120 seconds = 2 minutes)
