@@ -144,6 +144,7 @@ export default function SettingsPage() {
                       value={profile.username}
                       onChange={(e) => setProfile({ ...profile, username: e.target.value })} 
                     />
+                    <p className="text-[9px] xs:text-[10px] text-gray-400 mt-1">Can be changed once every 30 days</p>
                   </div>
                   
                   <div>
@@ -155,6 +156,7 @@ export default function SettingsPage() {
                       value={profile.email}
                       onChange={(e) => setProfile({ ...profile, email: e.target.value })} 
                     />
+                    <p className="text-[9px] xs:text-[10px] text-gray-400 mt-1">Can be changed once every 30 days</p>
                   </div>
                 </div>
               </div>

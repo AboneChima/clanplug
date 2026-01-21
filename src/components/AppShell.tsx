@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, createContext, useContext } from 'react';
@@ -18,7 +19,8 @@ import {
   IoPersonOutline,
   IoHomeOutline,
   IoLogOutOutline,
-  IoGameControllerOutline
+  IoGameControllerOutline,
+  IoWalletOutline
 } from 'react-icons/io5';
 
 // Notification Badge Component with real-time updates
@@ -186,7 +188,24 @@ export default function AppShell({ children, hideNavOnMobile = false, hideBottom
               </div>
             </div>
 
-            <div className="flex-1"></div>
+            {/* Wallet Balance - Desktop Only */}
+            <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-xl">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                  <IoWalletOutline className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400">Wallet Balance</p>
+                  <p className="text-sm font-bold text-white">₦0.00</p>
+                </div>
+              </div>
+              <Link 
+                href="/wallet"
+                className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors"
+              >
+                Fund
+              </Link>
+            </div>
 
             <div className="flex items-center gap-2">
               <button 

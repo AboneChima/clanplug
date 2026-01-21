@@ -187,20 +187,13 @@ const VTUServices: React.FC = () => {
 
       const response = await VTUService.purchaseAirtime(request);
       
-      // Check if response indicates success
-      if (response.success || response.data?.reference) {
+      // Backend returns { success, message, reference, providerReference }
+      if (response.success) {
         showToast(response.message || 'Airtime purchase successful! ✅', 'success');
         resetForm();
         loadTransactions();
       } else {
-        // Even if success is false, check if there's a reference (means it went through)
-        if (response.data?.providerReference) {
-          showToast('Airtime sent successfully! ✅', 'success');
-          resetForm();
-          loadTransactions();
-        } else {
-          showToast(response.message || 'Airtime purchase failed', 'error');
-        }
+        showToast(response.message || 'Airtime purchase failed', 'error');
       }
     } catch (error: any) {
       console.error('Airtime purchase error:', error);
@@ -208,16 +201,9 @@ const VTUServices: React.FC = () => {
       // Better error handling
       let errorMessage = 'Failed to purchase airtime';
       
-      if (error.response) {
-        // Server responded with error
-        const serverMessage = error.response.data?.message || error.response.data?.error;
-        if (serverMessage) {
-          errorMessage = serverMessage;
-        } else if (error.response.status === 400) {
-          errorMessage = 'Invalid request. Please check your details.';
-        } else if (error.response.status === 500) {
-          errorMessage = 'Server error. Please try again later.';
-        }
+      if (error.response?.data) {
+        // Server responded with error - use the message from backend
+        errorMessage = error.response.data.message || error.response.data.error || errorMessage;
       } else if (error.request) {
         // Request made but no response
         errorMessage = 'Network error. Please check your connection.';
@@ -255,20 +241,13 @@ const VTUServices: React.FC = () => {
 
       const response = await VTUService.purchaseData(request);
       
-      // Check if response indicates success
-      if (response.success || response.data?.reference) {
+      // Backend returns { success, message, reference, providerReference }
+      if (response.success) {
         showToast(response.message || 'Data purchase successful! ✅', 'success');
         resetForm();
         loadTransactions();
       } else {
-        // Even if success is false, check if there's a reference (means it went through)
-        if (response.data?.providerReference) {
-          showToast('Data sent successfully! ✅', 'success');
-          resetForm();
-          loadTransactions();
-        } else {
-          showToast(response.message || 'Data purchase failed', 'error');
-        }
+        showToast(response.message || 'Data purchase failed', 'error');
       }
     } catch (error: any) {
       console.error('Data purchase error:', error);
@@ -276,16 +255,9 @@ const VTUServices: React.FC = () => {
       // Better error handling
       let errorMessage = 'Failed to purchase data';
       
-      if (error.response) {
-        // Server responded with error
-        const serverMessage = error.response.data?.message || error.response.data?.error;
-        if (serverMessage) {
-          errorMessage = serverMessage;
-        } else if (error.response.status === 400) {
-          errorMessage = 'Invalid request. Please check your details.';
-        } else if (error.response.status === 500) {
-          errorMessage = 'Server error. Please try again later.';
-        }
+      if (error.response?.data) {
+        // Server responded with error - use the message from backend
+        errorMessage = error.response.data.message || error.response.data.error || errorMessage;
       } else if (error.request) {
         // Request made but no response
         errorMessage = 'Network error. Please check your connection.';

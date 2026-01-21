@@ -154,16 +154,9 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
         </div>
       </div>
 
-      {/* Navigation - Fixed height on desktop, scrollable on mobile */}
-      <nav 
-        className="flex-1 p-2 overflow-y-auto lg:overflow-y-visible pb-48 lg:pb-4 overscroll-contain min-h-0" 
-        style={{ 
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
-          touchAction: 'pan-y'
-        }}
-      >
-        <div className="space-y-1">
+      {/* Navigation - Compact grid layout for desktop */}
+      <nav className="flex-1 p-2 overflow-y-auto lg:overflow-y-visible pb-48 lg:pb-2 overscroll-contain min-h-0">
+        <div className="space-y-0.5 lg:space-y-1">
           {navItems.map(({ href, label, Icon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));
 
@@ -171,7 +164,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2 px-2 py-2 rounded-lg transition-all group no-underline ${
+                className={`flex items-center gap-2 px-2 py-1.5 lg:py-2 rounded-lg transition-all group no-underline ${
                   active 
                     ? 'bg-blue-600/20 text-blue-400' 
                     : 'text-gray-400 hover:bg-slate-800 hover:text-white'
@@ -179,15 +172,15 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
                 style={{ textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}
               >
                 <div className={`
-                  w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all flex-shrink-0
+                  w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0
                   ${active 
                     ? 'bg-blue-600/30 text-blue-400' 
                     : 'bg-slate-800 text-gray-400 group-hover:bg-slate-700 group-hover:text-white'
                   }
                 `}>
-                  <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                  <Icon className="w-4 h-4" />
                 </div>
-                <span className="text-xs sm:text-sm font-medium truncate">{label}</span>
+                <span className="text-xs font-medium truncate">{label}</span>
                 {active && (
                   <div className="ml-auto w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
                 )}
@@ -197,39 +190,39 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
         </div>
 
         {/* Quick Actions - Compact */}
-        <div className="mt-4 pt-3 border-t border-slate-800">
-          <div className="space-y-1">
+        <div className="mt-2 lg:mt-3 pt-2 lg:pt-3 border-t border-slate-800">
+          <div className="space-y-0.5 lg:space-y-1">
             <Link 
               href="/notifications" 
-              className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group no-underline"
+              className="flex items-center gap-2 px-2 py-1.5 lg:py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group no-underline"
               style={{ textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
                 <IoNotificationsOutline className="w-4 h-4" />
               </div>
-              <span className="text-xs sm:text-sm font-medium truncate">Notifications</span>
+              <span className="text-xs font-medium truncate">Notifications</span>
               <div className="ml-auto w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
             </Link>
             
             <Link
               href="/help"
-              className="flex items-center gap-2 px-2 py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group no-underline"
+              className="flex items-center gap-2 px-2 py-1.5 lg:py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group no-underline"
               style={{ textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
                 <IoHelpCircleOutline className="w-4 h-4" />
               </div>
-              <span className="text-xs sm:text-sm font-medium truncate">Help</span>
+              <span className="text-xs font-medium truncate">Help</span>
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Logout Section - Hidden on mobile, Compact */}
-      <div className="hidden lg:block p-2 border-t border-slate-800">
+      {/* Logout Section - Always visible */}
+      <div className="p-2 border-t border-slate-800 flex-shrink-0">
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 group"
+          className="w-full flex items-center gap-2 px-2 py-1.5 lg:py-2 rounded-lg text-xs font-semibold transition-all bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 group"
         >
           <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 group-hover:bg-red-500/20 transition-all flex-shrink-0">
             <IoLogOutOutline className="w-4 h-4" />

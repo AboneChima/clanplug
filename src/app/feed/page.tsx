@@ -615,14 +615,14 @@ export default function FeedPage() {
             {post.user.avatar ? (
               <img 
                 src={post.user.avatar} 
-                alt={post.user.username} 
+                alt={post.user.username || 'User'} 
                 className="w-6 h-6 xs:w-8 xs:h-8 rounded-full object-cover"
                 loading="lazy"
                 onError={(e) => {
                   console.error('Failed to load small avatar:', post.user.avatar);
                   e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
-                  if (parent) {
+                  if (parent && post.user.firstName && post.user.lastName) {
                     parent.innerHTML = `<div class="w-6 h-6 xs:w-8 xs:h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"><span class="text-white text-[9px] xs:text-xs font-semibold">${post.user.firstName[0]}${post.user.lastName[0]}</span></div>`;
                   }
                 }}
@@ -630,21 +630,23 @@ export default function FeedPage() {
             ) : (
               <div className="w-6 h-6 xs:w-8 xs:h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                 <span className="text-white text-[9px] xs:text-xs font-semibold">
-                  {post.user.firstName[0]}{post.user.lastName[0]}
+                  {post.user.firstName?.[0] || 'U'}{post.user.lastName?.[0] || ''}
                 </span>
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-0.5 xs:gap-1">
-              <p className="text-white text-[10px] xs:text-xs sm:text-sm font-medium truncate">{post.user.firstName} {post.user.lastName}</p>
+              <p className="text-white text-[10px] xs:text-xs sm:text-sm font-medium truncate">
+                {post.user.firstName || 'Unknown'} {post.user.lastName || 'User'}
+              </p>
               {((post.user as any)?.verificationBadge?.status === 'verified' || (post.user as any)?.verificationBadge?.status === 'active') && (
                 <svg className="w-2.5 h-2.5 xs:w-3.5 xs:h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               )}
             </div>
-            <p className="text-gray-400 text-[9px] xs:text-[11px] truncate">@{post.user.username}</p>
+            <p className="text-gray-400 text-[9px] xs:text-[11px] truncate">@{post.user.username || 'unknown'}</p>
           </div>
         </Link>
         
@@ -885,7 +887,7 @@ export default function FeedPage() {
                       <div className="flex items-center justify-between gap-1">
                         <div className="flex items-center gap-1 max-[360px]:gap-0.5 flex-1 min-w-0">
                           <span className="text-white max-[360px]:text-[9px] text-[11px] xs:text-xs font-medium truncate">
-                            {comment.user.firstName} {comment.user.lastName}
+                            {comment.user.firstName || 'Unknown'} {comment.user.lastName || 'User'}
                           </span>
                           {((comment.user as any)?.verificationBadge?.status === 'verified' || (comment.user as any)?.verificationBadge?.status === 'active') && (
                             <svg className="w-2.5 h-2.5 xs:w-3 xs:h-3 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -893,7 +895,7 @@ export default function FeedPage() {
                             </svg>
                           )}
                           <span className="text-gray-400 max-[360px]:text-[8px] text-[9px] xs:text-[10px] truncate">
-                            @{comment.user.username}
+                            @{comment.user.username || 'unknown'}
                           </span>
                           <span className="text-gray-500 max-[360px]:text-[8px] text-[9px] xs:text-[10px] flex-shrink-0">
                             · {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

@@ -939,11 +939,9 @@ export default function UserProfilePage() {
           </button>
           
           <div className="relative max-w-2xl w-full">
-            <Image
+            <img
               src={profile.avatar}
               alt={`${profile.firstName} ${profile.lastName}`}
-              width={800}
-              height={800}
               className="w-full h-auto rounded-lg"
               onClick={(e) => e.stopPropagation()}
             />
