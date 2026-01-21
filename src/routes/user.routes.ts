@@ -97,7 +97,7 @@ router.put('/profile', authenticate, upload.single('avatar'), asyncHandler(async
   }
   
   // Handle other profile updates
-  const { firstName, lastName, bio, city, state, country, website } = req.body;
+  const { firstName, lastName, bio, city, state, country, website, username, email } = req.body;
   const updateData: any = {};
   if (firstName !== undefined) updateData.firstName = firstName;
   if (lastName !== undefined) updateData.lastName = lastName;
@@ -105,10 +105,12 @@ router.put('/profile', authenticate, upload.single('avatar'), asyncHandler(async
   if (city !== undefined) updateData.city = city;
   if (state !== undefined) updateData.state = state;
   if (country !== undefined) updateData.country = country;
+  if (username !== undefined) updateData.username = username;
+  if (email !== undefined) updateData.email = email;
   
   const result = await userService.updateUserProfile(userId, updateData);
   if (result.success) {
-    res.json({ success: true, message: 'Profile updated successfully', user: result.user });
+    res.json({ success: true, message: result.message || 'Profile updated successfully', user: result.user });
   } else {
     res.status(400).json({ success: false, message: result.message || 'Failed to update profile' });
   }

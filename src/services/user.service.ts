@@ -354,16 +354,89 @@ export const userService = {
     };
   },
 
-  async updateUserProfile(userId: string, data: Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'city' | 'state' | 'country' | 'avatar'>>): Promise<{ success: boolean; message?: string; user?: any; error?: string }> {
+  async updateUserProfile(userId: string, data: Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'city' | 'state' | 'country' | 'avatar' | 'username' | 'email'>>): Promise<{ success: boolean; message?: string; user?: any; error?: string }> {
     try {
-      // Check if user is trying to update name
-      if (data.firstName || data.lastName) {
-        // Get current user's verification status
-        const currentUser = await prisma.user.findUnique({
-          where: { id: userId },
-          include: { verificationBadge: true },
+      // Get current user data
+      const currentUser = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { verificationBadge: true },
+      });
+
+      if (!currentUser) {
+        return { success: false, message: 'User not found', error: 'USER_NOT_FOUND' };
+      }
+
+      // Check username change restriction (30 days)
+      if (data.username && data.username !== currentUser.username) {
+        if (currentUser.usernameChangedAt) {
+          const daysSinceLastChange = Math.floor(
+            (Date.now() - currentUser.usernameChangedAt.getTime()) / (1000 * 60 * 60 * 24)
+          );
+          
+          if (daysSinceLastChange < 30) {
+            const daysRemaining = 30 - daysSinceLastChange;
+            return {
+              success: false,
+              message: `You can change your username again in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`,
+              error: 'USERNAME_CHANGE_COOLDOWN'
+            };
+          }
+        }
+
+        // Check if username is already taken
+        const existingUser = await prisma.user.findUnique({
+          where: { username: data.username }
         });
 
+        if (existingUser) {
+          return {
+            success: false,
+            message: 'Username is already taken',
+            error: 'USERNAME_TAKEN'
+          };
+        }
+
+        // Update usernameChangedAt timestamp
+        (data as any).usernameChangedAt = new Date();
+      }
+
+      // Check email change restriction (30 days)
+      if (data.email && data.email !== currentUser.email) {
+        if (currentUser.emailChangedAt) {
+          const daysSinceLastChange = Math.floor(
+            (Date.now() - currentUser.emailChangedAt.getTime()) / (1000 * 60 * 60 * 24)
+          );
+          
+          if (daysSinceLastChange < 30) {
+            const daysRemaining = 30 - daysSinceLastChange;
+            return {
+              success: false,
+              message: `You can change your email again in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`,
+              error: 'EMAIL_CHANGE_COOLDOWN'
+            };
+          }
+        }
+
+        // Check if email is already taken
+        const existingUser = await prisma.user.findUnique({
+          where: { email: data.email }
+        });
+
+        if (existingUser) {
+          return {
+            success: false,
+            message: 'Email is already taken',
+            error: 'EMAIL_TAKEN'
+          };
+        }
+
+        // Update emailChangedAt timestamp and reset email verification
+        (data as any).emailChangedAt = new Date();
+        (data as any).isEmailVerified = false;
+      }
+
+      // Check if user is trying to update name
+      if (data.firstName || data.lastName) {
         const isCurrentUserVerified = currentUser?.verificationBadge?.status === 'verified' && 
           currentUser.verificationBadge.expiresAt && 
           new Date() < currentUser.verificationBadge.expiresAt;
@@ -432,6 +505,8 @@ export const userService = {
           country: true,
           isKYCVerified: true,
           isEmailVerified: true,
+          usernameChangedAt: true,
+          emailChangedAt: true,
         },
       });
       return { success: true, message: 'Profile updated successfully', user };

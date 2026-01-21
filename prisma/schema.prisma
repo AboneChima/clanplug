@@ -45,6 +45,8 @@ model User {
   verificationToken String?
   ngnWalletAddress  String?
   usdtWalletAddress String?
+  usernameChangedAt DateTime?
+  emailChangedAt    DateTime?
   messages          ChatMessage[]
   chatParticipants  ChatParticipant[]
   comments          Comment[]
