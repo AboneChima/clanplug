@@ -155,7 +155,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
       </div>
 
       {/* Navigation - Compact grid layout for desktop */}
-      <nav className="flex-1 p-2 overflow-y-auto lg:overflow-y-visible pb-48 lg:pb-2 overscroll-contain min-h-0">
+      <nav className="flex-1 p-2 overflow-y-auto pb-2 overscroll-contain min-h-0">
         <div className="space-y-0.5 lg:space-y-1">
           {navItems.map(({ href, label, Icon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));

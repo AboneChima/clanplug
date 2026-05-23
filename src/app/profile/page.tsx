@@ -28,7 +28,6 @@ import VerificationModal from '@/components/VerificationModal';
 import PostModal from '@/components/PostModal';
 import VerifiedProfileHeader from '@/components/VerifiedProfileHeader';
 import VerifiedAvatar from '@/components/VerifiedAvatar';
-import ChristmasOverlay from '@/components/ChristmasOverlay';
 
 interface UserStats {
   posts: number;
@@ -365,15 +364,11 @@ export default function ProfilePage() {
 
   return (
     <AppShell>
-      {/* Christmas Overlay for verified users */}
-      <ChristmasOverlay isVerified={verificationStatus === 'active'} />
-      
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         <div className="max-w-4xl mx-auto px-2 xs:px-3 sm:px-4 pt-2 xs:pt-3">
 
-          {/* Profile Card - Compact Mobile Design with Verified Enhancement */}
-          <VerifiedProfileHeader isVerified={verificationStatus === 'active'}>
-            <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl">
+          {/* Profile Card - Compact Mobile Design */}
+          <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg sm:rounded-xl border border-slate-700 overflow-hidden shadow-xl">
               {/* Minimal cover - Ultra compact for mobile */}
               <div className="h-16 xs:h-20 sm:h-24 md:h-32 bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10">
@@ -386,11 +381,33 @@ export default function ProfilePage() {
                 {/* Avatar and Edit Profile Button - Compact */}
                 <div className="flex items-start justify-between -mt-6 xs:-mt-7 sm:-mt-10 md:-mt-12 mb-3 xs:mb-3.5 sm:mb-4">
                   <div className="relative group">
-                    <VerifiedAvatar
-                      src={avatarPreview}
-                      alt={user?.username || 'User'}
-                      isVerified={verificationStatus === 'active'}
-                      size="lg"
+                    <div className="w-16 h-16 xs:w-20 xs:h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full border-4 border-slate-800 bg-gradient-to-br from-blue-500 to-purple-600 overflow-hidden shadow-xl">
+                      {avatarPreview ? (
+                        <Image
+                          src={avatarPreview}
+                          alt={user?.username || 'User'}
+                          width={112}
+                          height={112}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white text-2xl font-bold">
+                          {user?.firstName?.[0]}{user?.lastName?.[0]}
+                        </div>
+                      )}
+                    </div>
+                    <label
+                      htmlFor="avatar-upload"
+                      className="absolute bottom-0 right-0 w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-all hover:scale-110"
+                    >
+                      <IoCreateOutline className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 text-white" />
+                    </label>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
                     />
                     {isUploading && (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
@@ -541,7 +558,6 @@ export default function ProfilePage() {
 
             </div>
           </div>
-          </VerifiedProfileHeader>
 
           {/* Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mt-4 sm:mt-6">

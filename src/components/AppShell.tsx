@@ -234,7 +234,7 @@ export default function AppShell({ children, hideNavOnMobile = false, hideBottom
 
         <div className="flex relative">
           <div className={`
-            fixed top-16 bottom-0 left-0 z-[65] w-80 transform transition-all duration-300 ease-out lg:translate-x-0 lg:static lg:top-0 lg:z-auto
+            fixed top-16 bottom-0 left-0 z-[100] w-80 transform transition-all duration-300 ease-out lg:translate-x-0 lg:static lg:top-0 lg:z-auto
             ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
             ${hideNavOnMobile ? 'hidden lg:block' : ''}
           `}>
@@ -243,7 +243,7 @@ export default function AppShell({ children, hideNavOnMobile = false, hideBottom
 
           {sidebarOpen && (
             <div 
-              className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md lg:hidden transition-opacity duration-300"
+              className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-md lg:hidden transition-opacity duration-300"
               onClick={() => setSidebarOpen(false)}
             />
           )}
