@@ -28,31 +28,30 @@ export type KYCSubmissionPayload = {
 export const userService = {
   async uploadAvatar(userId: string, buffer: Buffer, filename?: string): Promise<{ success: boolean; url?: string; message?: string; error?: string }> {
     try {
-      if (!config.CLOUDINARY_CLOUD_NAME || !config.CLOUDINARY_API_KEY || !config.CLOUDINARY_API_SECRET) {
-        return { success: false, message: 'Cloud storage is not configured', error: 'CLOUDINARY_NOT_CONFIGURED' };
+      // Use Supabase storage instead of Cloudinary
+      const { supabaseStorage } = require('./supabase.service');
+      
+      const uploadResult = await supabaseStorage.uploadFile(
+        buffer,
+        filename || `avatar-${userId}-${Date.now()}.jpg`,
+        'avatars'
+      );
+
+      if (!uploadResult.success) {
+        return { 
+          success: false, 
+          message: uploadResult.message || 'Failed to upload avatar', 
+          error: uploadResult.error 
+        };
       }
 
-      const uploadResult: any = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream({
-          folder: 'lordmoon/avatars',
-          public_id: filename ? filename.replace(/\.[^/.]+$/, '') : undefined,
-          resource_type: 'image',
-          overwrite: true,
-        }, (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        });
-        stream.end(buffer);
-      });
-
-      const url = uploadResult.secure_url as string;
-
+      // Update user avatar in database
       await prisma.user.update({
         where: { id: userId },
-        data: { avatar: url },
+        data: { avatar: uploadResult.url },
       });
 
-      return { success: true, url, message: 'Avatar uploaded successfully' };
+      return { success: true, url: uploadResult.url, message: 'Avatar uploaded successfully' };
     } catch (error: any) {
       return { success: false, message: 'Failed to upload avatar', error: error.message || 'UPLOAD_ERROR' };
     }
