@@ -26,7 +26,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import VerifiedProfileHeader from '@/components/VerifiedProfileHeader';
 import VerifiedAvatar from '@/components/VerifiedAvatar';
-import ChristmasOverlay from '@/components/ChristmasOverlay';
 import { formatCount } from '@/lib/formatNumber';
 
 interface UserProfile {
@@ -402,9 +401,6 @@ export default function UserProfilePage() {
 
   return (
     <AppShell>
-      {/* Christmas Overlay for verified users - ALWAYS RENDER IF VERIFIED */}
-      {isVerified && <ChristmasOverlay isVerified={true} />}
-      
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
         {/* Header - Clean Modern Design */}
         <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm py-4 sm:py-5 mb-4">
