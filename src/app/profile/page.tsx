@@ -1,5 +1,6 @@
 'use client';
 
+// Clean minimal profile - v2.0
 import { useState, useEffect } from 'react';
 import { IoSettingsOutline, IoImageOutline, IoCreateOutline } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';

@@ -46,16 +46,6 @@ const navItems = [
     Icon: IoGridOutline
   },
   { 
-    href: '/wallet', 
-    label: 'Wallet', 
-    Icon: IoWalletOutline
-  },
-  { 
-    href: '/vtu', 
-    label: 'Airtime & Data', 
-    Icon: IoPhonePortraitOutline
-  },
-  { 
     href: '/posts', 
     label: 'Shop', 
     Icon: IoStorefrontOutline
