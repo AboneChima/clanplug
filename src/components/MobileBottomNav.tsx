@@ -104,7 +104,7 @@ export default function MobileBottomNav() {
   }, [pathname]); // Re-run when pathname changes
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] max-[360px]:px-2 px-4 pb-safe">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[50] max-[360px]:px-2 px-4 pb-safe">
       <div className="mx-auto max-w-md max-[360px]:mb-2 mb-4">
         <div className="bg-slate-900/80 backdrop-blur-2xl border border-slate-700/50 max-[360px]:rounded-[20px] rounded-[28px] shadow-2xl shadow-black/40">
           <div className="flex items-center justify-around max-[360px]:px-1 max-[360px]:py-1.5 px-2 py-3">
