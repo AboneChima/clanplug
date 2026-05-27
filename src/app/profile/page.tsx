@@ -16,7 +16,7 @@ interface UserStats {
 }
 
 export default function ProfilePage() {
-  const { user, updateUser, refetchUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const { showToast } = useToast();
   const [stats, setStats] = useState<UserStats>({
     posts: 0,
@@ -26,10 +26,6 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
-
-  useEffect(() => {
-    refetchUser();
-  }, []);
 
   useEffect(() => {
     if (user?.avatar) {
