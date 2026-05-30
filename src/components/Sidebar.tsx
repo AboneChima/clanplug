@@ -9,13 +9,10 @@ import {
   IoStorefrontOutline, 
   IoSettingsOutline, 
   IoLogOutOutline,
-  IoStatsChartOutline,
   IoPersonOutline,
   IoShieldCheckmarkOutline,
   IoNotificationsOutline,
   IoHelpCircleOutline,
-  IoPhonePortraitOutline,
-  IoPeopleOutline,
   IoReceiptOutline
 } from 'react-icons/io5';
 
@@ -100,53 +97,44 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
   };
 
   return (
-    <aside className="h-full bg-slate-900 border-r border-slate-800 flex flex-col animate-fade-in overflow-hidden">
-      {/* User Profile Header - Compact */}
-      <div className="p-2 sm:p-3 border-b border-slate-800 flex-shrink-0 bg-slate-900">
-        <div className="flex items-center gap-2">
+    <aside className="h-full bg-black border-r border-[#2f3336] flex flex-col overflow-hidden">
+      {/* User Profile Header */}
+      <div className="p-4 border-b border-[#2f3336] flex-shrink-0">
+        <div className="flex items-center gap-3">
           <div className="relative">
-            {user.avatar ? (
-              <img 
-                src={user.avatar} 
-                alt={user.username || 'User'} 
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover"
-              />
-            ) : (
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                <span className="text-xs sm:text-sm font-bold text-white">{getUserInitials()}</span>
+            <div className="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-blue-600 via-blue-500 to-slate-700">
+              <div className="w-full h-full rounded-full overflow-hidden bg-[#1a1a1a] p-0.5">
+                {user.avatar ? (
+                  <img 
+                    src={user.avatar} 
+                    alt={user.username || 'User'} 
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-[#2a2a2a] flex items-center justify-center">
+                    <span className="text-sm font-bold text-white">{getUserInitials()}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            {(user.verificationBadge?.status === 'verified' || user.verificationBadge?.status === 'active') && (
+              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-black">
+                <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
               </div>
             )}
-            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-slate-900"></div>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
-              <h2 className="text-xs sm:text-sm font-bold text-white truncate">{getUserDisplayName()}</h2>
-              {user.verificationBadge?.status === 'verified' || user.verificationBadge?.status === 'active' ? (
-                <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              ) : null}
-            </div>
-            <p className="text-[10px] sm:text-xs text-gray-400 truncate" style={{ textDecoration: 'none' }}>{user.email}</p>
-          </div>
-        </div>
-        
-        {/* User Status - Compact */}
-        <div className="flex items-center gap-1.5 mt-2">
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20">
-            <IoShieldCheckmarkOutline className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-400" />
-            <span className="text-[9px] sm:text-[10px] font-medium text-blue-300 capitalize">{user.role}</span>
-          </div>
-          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-green-500/10 border border-green-500/20">
-            <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-[9px] sm:text-[10px] font-medium text-green-300">Online</span>
+            <h2 className="text-sm font-bold text-white truncate">{getUserDisplayName()}</h2>
+            <p className="text-xs text-gray-500 truncate">@{user.username}</p>
           </div>
         </div>
       </div>
 
-      {/* Navigation - Compact grid layout for desktop */}
-      <nav className="flex-1 p-2 overflow-y-auto pb-2 overscroll-contain min-h-0">
-        <div className="space-y-0.5 lg:space-y-1">
+      {/* Navigation */}
+      <nav className="flex-1 p-3 overflow-y-auto overscroll-contain min-h-0">
+        <div className="space-y-1">
           {navItems.map(({ href, label, Icon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));
 
@@ -154,69 +142,49 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-2 px-2 py-1.5 lg:py-2 rounded-lg transition-all group no-underline ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all group ${
                   active 
-                    ? 'bg-blue-600/20 text-blue-400' 
-                    : 'text-gray-400 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-blue-600 text-white' 
+                    : 'text-gray-400 hover:bg-[#1a1a1a] hover:text-white'
                 }`}
-                style={{ textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}
               >
-                <div className={`
-                  w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0
-                  ${active 
-                    ? 'bg-blue-600/30 text-blue-400' 
-                    : 'bg-slate-800 text-gray-400 group-hover:bg-slate-700 group-hover:text-white'
-                  }
-                `}>
-                  <Icon className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-medium truncate">{label}</span>
-                {active && (
-                  <div className="ml-auto w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
-                )}
+                <Icon className="w-5 h-5" />
+                <span className="text-sm font-medium">{label}</span>
               </Link>
             );
           })}
         </div>
 
-        {/* Quick Actions - Compact */}
-        <div className="mt-2 lg:mt-3 pt-2 lg:pt-3 border-t border-slate-800">
-          <div className="space-y-0.5 lg:space-y-1">
+        {/* Quick Actions */}
+        <div className="mt-4 pt-4 border-t border-[#2f3336]">
+          <div className="space-y-1">
             <Link 
               href="/notifications" 
-              className="flex items-center gap-2 px-2 py-1.5 lg:py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group no-underline"
-              style={{ textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-[#1a1a1a] hover:text-white transition-all group"
             >
-              <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
-                <IoNotificationsOutline className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-medium truncate">Notifications</span>
-              <div className="ml-auto w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+              <IoNotificationsOutline className="w-5 h-5" />
+              <span className="text-sm font-medium">Notifications</span>
+              <div className="ml-auto w-2 h-2 bg-red-500 rounded-full"></div>
             </Link>
             
             <Link
               href="/help"
-              className="flex items-center gap-2 px-2 py-1.5 lg:py-2 rounded-lg text-gray-400 hover:bg-slate-800 hover:text-white transition-all group no-underline"
-              style={{ textDecoration: 'none', WebkitTapHighlightColor: 'transparent' }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-[#1a1a1a] hover:text-white transition-all group"
             >
-              <div className="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-gray-400 group-hover:bg-slate-700 group-hover:text-white transition-all flex-shrink-0">
-                <IoHelpCircleOutline className="w-4 h-4" />
-              </div>
-              <span className="text-xs font-medium truncate">Help</span>
+              <IoHelpCircleOutline className="w-5 h-5" />
+              <span className="text-sm font-medium">Help</span>
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Logout Section - Always visible */}
-      <div className="p-2 border-t border-slate-800 flex-shrink-0">
+      {/* Logout Section */}
+      <div className="p-3 border-t border-[#2f3336] flex-shrink-0">
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-2 px-2 py-1.5 lg:py-2 rounded-lg text-xs font-semibold transition-all bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30 group"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:border-red-500/30"
         >
-          <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 group-hover:bg-red-500/20 transition-all flex-shrink-0">
-            <IoLogOutOutline className="w-4 h-4" />
-          </div>
+          <IoLogOutOutline className="w-5 h-5" />
           <span>Sign Out</span>
         </button>
       </div>

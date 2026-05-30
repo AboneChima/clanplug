@@ -32,7 +32,7 @@ export default function MorePage() {
     {
       title: 'Settings',
       items: [
-        { href: '/settings', label: 'Settings', icon: IoSettingsOutline, color: 'text-gray-500' },
+        { href: '/settings', label: 'Settings', icon: IoSettingsOutline, color: 'text-gray-400' },
         { href: '/notifications', label: 'Notifications', icon: IoNotificationsOutline, color: 'text-red-500' },
       ]
     },
@@ -40,106 +40,108 @@ export default function MorePage() {
       title: 'Support',
       items: [
         { href: '/help', label: 'Help & Support', icon: IoHelpCircleOutline, color: 'text-indigo-500' },
-        { href: '/terms', label: 'Terms & Conditions', icon: IoDocumentTextOutline, color: 'text-gray-500' },
+        { href: '/terms', label: 'Terms & Conditions', icon: IoDocumentTextOutline, color: 'text-gray-400' },
       ]
     }
   ];
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Hero Header - Compact for Extra Small */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 mb-2 xs:mb-3 sm:mb-4 md:mb-6">
-          <div className="max-w-2xl mx-auto px-2 xs:px-3 sm:px-4 md:px-6 py-2.5 xs:py-3 sm:py-4 md:py-6 lg:py-8">
-            <h1 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white mb-0.5 xs:mb-1 sm:mb-2">More</h1>
-            <p className="text-[10px] xs:text-xs sm:text-sm md:text-base text-white/90">Settings & options</p>
-          </div>
+      <div className="min-h-screen bg-black pb-20 lg:pb-8">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-xl border-b border-[#2f3336] px-4 py-3">
+          <h1 className="text-xl font-bold text-white">More</h1>
         </div>
 
-        <div className="max-w-2xl mx-auto px-2 xs:px-3 sm:px-4 md:px-6 space-y-2 xs:space-y-2.5 sm:space-y-3 md:space-y-4 lg:space-y-6">
-          {/* User Info Card - Compact for Extra Small */}
-          <div className="bg-slate-800/80 backdrop-blur-sm rounded-lg xs:rounded-xl p-2 xs:p-2.5 sm:p-3 md:p-4 border border-slate-700 shadow-xl">
-            <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-2.5 md:gap-3">
-              {user?.avatar ? (
-                <img 
-                  src={user.avatar} 
-                  alt={user.username} 
-                  className="w-10 h-10 xs:w-11 xs:h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-10 h-10 xs:w-11 xs:h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <span className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white">
-                    {user?.firstName?.[0] || user?.username?.[0] || 'U'}
-                  </span>
+        <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
+          {/* User Info Card */}
+          <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#2f3336]">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-black p-0.5">
+                    {user?.avatar ? (
+                      <img 
+                        src={user.avatar} 
+                        alt={user.username} 
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                        <span className="text-lg font-bold text-white">
+                          {user?.firstName?.[0] || user?.username?.[0] || 'U'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1">
-                  <h2 className="text-xs xs:text-sm sm:text-base md:text-lg font-semibold text-white truncate">
-                    {user?.firstName} {user?.lastName}
-                  </h2>
-                  {((user as any)?.verificationBadge?.status === 'verified' || (user as any)?.verificationBadge?.status === 'active') && (
-                    <svg className="w-3.5 h-3.5 xs:w-4 xs:h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                {((user as any)?.verificationBadge?.status === 'verified' || (user as any)?.verificationBadge?.status === 'active') && (
+                  <div className="absolute bottom-0 right-0 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center border-2 border-[#1a1a1a]">
+                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                  )}
-                </div>
-                <p className="text-[10px] xs:text-xs sm:text-sm text-gray-400 truncate">@{user?.username}</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-semibold text-white truncate">
+                  {user?.firstName} {user?.lastName}
+                </h2>
+                <p className="text-sm text-gray-500 truncate">@{user?.username}</p>
               </div>
               {user?.isKYCVerified && (
                 <div className="flex-shrink-0">
-                  <div className="px-1.5 xs:px-2 py-0.5 xs:py-1 bg-green-500/20 border border-green-500/30 rounded-full">
-                    <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-green-400">Verified</span>
+                  <div className="px-2 py-1 bg-green-500/10 border border-green-500/30 rounded-full">
+                    <span className="text-xs font-medium text-green-400">Verified</span>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Menu Sections - Compact for Extra Small */}
+          {/* Menu Sections */}
           {menuItems.map((section, idx) => (
-            <div key={idx} className="bg-slate-800/80 backdrop-blur-sm rounded-lg xs:rounded-xl border border-slate-700 shadow-xl overflow-hidden">
-              <div className="px-2 xs:px-2.5 sm:px-3 md:px-4 py-1.5 xs:py-2 sm:py-2.5 md:py-3 border-b border-slate-700">
-                <h3 className="text-[10px] xs:text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">
+            <div key={idx}>
+              <div className="px-2 mb-2">
+                <h3 className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   {section.title}
                 </h3>
               </div>
-              <div className="divide-y divide-slate-700">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex items-center gap-1.5 xs:gap-2 sm:gap-2.5 md:gap-3 px-2 xs:px-2.5 sm:px-3 md:px-4 py-2 xs:py-2.5 sm:py-3 hover:bg-slate-700/50 transition-colors"
-                    >
-                      <div className={`${item.color}`}>
-                        <Icon className="w-4 h-4 xs:w-4.5 xs:h-4.5 sm:w-5 sm:h-5" />
-                      </div>
-                      <span className="flex-1 text-white font-medium text-[11px] xs:text-xs sm:text-sm md:text-base">{item.label}</span>
-                      <IoChevronForwardOutline className="w-4 h-4 xs:w-4.5 xs:h-4.5 sm:w-5 sm:h-5 text-gray-400" />
-                    </Link>
-                  );
-                })}
+              <div className="bg-[#1a1a1a] rounded-2xl border border-[#2f3336] overflow-hidden">
+                <div className="divide-y divide-[#2f3336]">
+                  {section.items.map((item, itemIdx) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="flex items-center gap-3 px-4 py-3.5 hover:bg-[#222] transition-colors"
+                      >
+                        <div className={`w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center ${item.color}`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <span className="flex-1 text-white font-medium text-sm">{item.label}</span>
+                        <IoChevronForwardOutline className="w-5 h-5 text-gray-600" />
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           ))}
 
-          {/* Logout Button - Compact for Extra Small */}
+          {/* Logout Button */}
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-1.5 xs:gap-2 sm:gap-2.5 md:gap-3 px-2 xs:px-3 sm:px-4 py-2 xs:py-2.5 sm:py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg xs:rounded-xl transition-colors"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-2xl transition-colors"
           >
-            <IoLogOutOutline className="w-4 h-4 xs:w-4.5 xs:h-4.5 sm:w-5 sm:h-5 text-red-400" />
-            <span className="text-red-400 font-semibold text-[11px] xs:text-xs sm:text-sm md:text-base">Sign Out</span>
+            <IoLogOutOutline className="w-5 h-5 text-red-400" />
+            <span className="text-red-400 font-semibold text-sm">Sign Out</span>
           </button>
 
           {/* Footer */}
-          <div className="text-center py-4 sm:py-6">
-            <p className="text-xs sm:text-sm text-gray-500">
-              Developed by <span className="text-blue-400 font-semibold">De Oracle</span>
-            </p>
-            <p className="text-[10px] sm:text-xs text-gray-600 mt-1">© 2025 ClanPlug. All rights reserved.</p>
+          <div className="text-center py-6">
+            <p className="text-xs text-gray-600">© 2025 ClanPlug. All rights reserved.</p>
           </div>
         </div>
       </div>
