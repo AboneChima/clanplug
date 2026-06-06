@@ -55,16 +55,6 @@ const navItems = [
     comingSoon: true
   },
   { 
-    href: '/orders', 
-    label: 'Orders', 
-    Icon: IoReceiptOutline
-  },
-  { 
-    href: '/escrow', 
-    label: 'My Escrows', 
-    Icon: IoShieldCheckmarkOutline
-  },
-  { 
     href: '/kyc', 
     label: 'KYC Verification', 
     Icon: IoShieldCheckmarkOutline

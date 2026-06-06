@@ -19,6 +19,7 @@ import {
   IoCheckmarkCircleOutline,
   IoChatbubbleOutline,
   IoCloseOutline,
+  IoCallOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,6 +42,7 @@ type Post = {
     firstName: string;
     lastName: string;
     avatar?: string;
+    phone?: string;
     verificationBadge?: {
       status: string;
       expiresAt: string;
@@ -105,89 +107,14 @@ export default function MarketplaceDetailPage() {
     }
   };
 
-  const handleBuyNow = async () => {
+  const handleMessageSeller = async () => {
     if (!user) {
-      showToast('Please login to purchase', 'error');
+      showToast('Please login to message seller', 'error');
       router.push('/login');
       return;
     }
-
-    if (post?.userId === user.id) {
-      showToast('You cannot buy your own listing', 'error');
-      return;
-    }
-
+    
     if (!post) return;
-
-    // Check if user already has a pending purchase request for this listing
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchase-requests`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const requests = data.data || [];
-        
-        // Check if there's already a pending request for this post
-        const existingRequest = requests.find((request: any) => 
-          request.postId === post?.id && 
-          request.buyerId === user.id &&
-          request.status === 'PENDING_SELLER_RESPONSE'
-        );
-
-        if (existingRequest) {
-          showToast('You already have a pending request for this listing. Check your orders page.', 'info');
-          router.push('/orders');
-          return;
-        }
-      }
-    } catch (error) {
-      console.error('Error checking existing requests:', error);
-    }
-
-    // Confirm with user
-    if (!confirm(`Send purchase request to ${post.user.firstName} ${post.user.lastName} for ${post.price} ${post.currency}?\n\nThe seller will have 30 minutes to respond. No money will be deducted until they accept.`)) {
-      return;
-    }
-
-    // Create purchase request
-    try {
-      const token = localStorage.getItem('accessToken');
-      const requestResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/purchase-requests`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sellerId: post.userId,
-          postId: post.id,
-          amount: post.price,
-          currency: post.currency || 'NGN',
-        }),
-      });
-
-      if (requestResponse.ok) {
-        showToast('✅ Purchase request sent! Seller has 30 minutes to respond.', 'success');
-        router.push('/orders');
-      } else {
-        const error = await requestResponse.json();
-        showToast(error.message || 'Failed to send purchase request', 'error');
-      }
-    } catch (error) {
-      console.error('Error creating purchase request:', error);
-      showToast('Error sending purchase request', 'error');
-    }
-  };
-
-
-
-  const handleMessage = async () => {
-    if (!post || !user) return;
 
     try {
       const token = localStorage.getItem('accessToken');
@@ -211,6 +138,29 @@ export default function MarketplaceDetailPage() {
         const chatId = chatData?.id;
         
         if (chatId) {
+          // Send the listing as context message
+          const listingMessage = {
+            type: 'LISTING_SHARE',
+            listingId: post.id,
+            listingTitle: post.title,
+            listingPrice: post.price,
+            listingCurrency: post.currency,
+            listingImage: post.images?.[0] || post.videos?.[0],
+          };
+          
+          // Send the listing context
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats/${chatId}/messages`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content: `I'm interested in: ${post.title}`,
+              metadata: listingMessage,
+            }),
+          });
+          
           router.push(`/chat?id=${chatId}`);
         } else {
           showToast('Failed to create chat', 'error');
@@ -484,63 +434,41 @@ export default function MarketplaceDetailPage() {
                     {markingSold ? 'Marking...' : 'Mark as Sold'}
                   </button>
                 ) : (
-                  <>
+                  <div className="space-y-2">
+                    {/* Call Button */}
+                    {post.user.phone ? (
+                      <a
+                        href={`tel:${post.user.phone}`}
+                        className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+                      >
+                        <IoCallOutline className="w-4 h-4" />
+                        <span>Call Seller</span>
+                      </a>
+                    ) : (
+                      <div className="w-full py-2 bg-gray-700 text-gray-400 text-xs sm:text-sm font-medium rounded-md text-center">
+                        No phone number provided
+                      </div>
+                    )}
+                    
+                    {/* Message Seller Button */}
                     <button
-                      onClick={handleBuyNow}
-                      className="w-full py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-xs sm:text-sm font-semibold rounded-md transition-all mb-1.5"
-                    >
-                      Buy with Escrow
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (!user) {
-                          showToast('Please login to message seller', 'error');
-                          router.push('/login');
-                          return;
-                        }
-                        
-                        try {
-                          const token = localStorage.getItem('accessToken');
-                          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats`, {
-                            method: 'POST',
-                            headers: {
-                              'Authorization': `Bearer ${token}`,
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                              type: 'DIRECT',
-                              participants: [post.userId],
-                            }),
-                          });
-
-                          if (response.ok) {
-                            const data = await response.json();
-                            router.push(`/chat?id=${data.data.id}`);
-                          } else {
-                            const error = await response.json();
-                            showToast(error.message || 'Failed to start chat', 'error');
-                          }
-                        } catch (error) {
-                          console.error('Error creating chat:', error);
-                          showToast('Failed to start chat', 'error');
-                        }
-                      }}
-                      className="w-full py-2 bg-slate-700 hover:bg-slate-600 text-white text-xs sm:text-sm font-medium rounded-md transition-all flex items-center justify-center gap-1.5 mb-2"
+                      onClick={handleMessageSeller}
+                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2"
                     >
                       <IoChatbubbleOutline className="w-4 h-4" />
                       <span>Message Seller</span>
                     </button>
-                  </>
+                  </div>
                 )}
 
-                {/* Escrow Info - Compact */}
+                {/* Safety Tips */}
                 <div className="p-2 bg-blue-600/10 border border-blue-600/30 rounded-md">
                   <div className="flex items-start gap-1.5">
                     <IoShieldCheckmarkOutline className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-blue-400 font-medium text-[10px] sm:text-xs mb-0.5">Secure Escrow</p>
+                      <p className="text-blue-400 font-medium text-[10px] sm:text-xs mb-0.5">Safety Tips</p>
                       <p className="text-gray-400 text-[10px] sm:text-xs leading-tight">
-                        Payment held until confirmed
+                        Always verify before transfer
                       </p>
                     </div>
                   </div>
@@ -597,15 +525,15 @@ export default function MarketplaceDetailPage() {
                 <ul className="space-y-1.5 text-gray-400 text-xs">
                   <li className="flex items-start gap-2">
                     <span className="text-blue-400 mt-1">•</span>
-                    <span>Always use escrow for secure transactions</span>
+                    <span>Meet in a safe public location if possible</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-400 mt-1">•</span>
-                    <span>Verify account details before confirming</span>
+                    <span>Verify account details before payment</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-400 mt-1">•</span>
-                    <span>Change password immediately after purchase</span>
+                    <span>Change credentials after purchase</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-blue-400 mt-1">•</span>

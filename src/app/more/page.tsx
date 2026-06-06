@@ -29,7 +29,6 @@ export default function MorePage() {
       items: [
         { href: '/profile', label: 'Profile', icon: IoPersonOutline, color: 'text-blue-500' },
         { href: '/kyc', label: 'KYC Verification', icon: IoShieldCheckmarkOutline, color: 'text-blue-500' },
-        { href: '/orders', label: 'My Orders', icon: IoReceiptOutline, color: 'text-orange-500' },
       ]
     },
     {
