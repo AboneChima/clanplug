@@ -25,11 +25,13 @@ interface KYCSubmission {
 
 export default function AdminKYCPage() {
   const [submissions, setSubmissions] = useState<KYCSubmission[]>([]);
+  const [filteredSubmissions, setFilteredSubmissions] = useState<KYCSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
   const [selectedSubmission, setSelectedSubmission] = useState<KYCSubmission | null>(null);
   const [rejecting, setRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchSubmissions();
@@ -37,6 +39,24 @@ export default function AdminKYCPage() {
     const interval = setInterval(fetchSubmissions, 10000);
     return () => clearInterval(interval);
   }, [filter]);
+
+  // Filter submissions based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredSubmissions(submissions);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = submissions.filter(submission => 
+      submission.user.username.toLowerCase().includes(query) ||
+      submission.user.email.toLowerCase().includes(query) ||
+      submission.user.firstName.toLowerCase().includes(query) ||
+      submission.user.lastName.toLowerCase().includes(query) ||
+      submission.documentNumber.toLowerCase().includes(query)
+    );
+    setFilteredSubmissions(filtered);
+  }, [searchQuery, submissions]);
 
   const fetchSubmissions = async () => {
     try {
@@ -85,6 +105,7 @@ export default function AdminKYCPage() {
       }
 
       setSubmissions(submissionsData);
+      setFilteredSubmissions(submissionsData);
     } catch (error) {
       console.error('Error fetching KYC submissions:', error);
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -291,20 +312,44 @@ export default function AdminKYCPage() {
         </button>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by name, username, email, or document number..."
+          className="w-full px-4 py-3 pl-10 bg-slate-900/50 border border-slate-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+        />
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+          >
+            <IoCloseCircle className="w-5 h-5" />
+          </button>
+        )}
+      </div>
+
       {/* Submissions List */}
       {loading ? (
         <div className="text-center py-12">
           <div className="animate-spin w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-gray-400 text-sm">Loading...</p>
         </div>
-      ) : submissions.length === 0 ? (
+      ) : filteredSubmissions.length === 0 ? (
         <div className="bg-slate-900/50 rounded-lg p-8 sm:p-12 text-center border border-slate-800">
           <IoDocumentText className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">No {filter.toLowerCase()} submissions</p>
+          <p className="text-gray-400 text-sm">
+            {searchQuery ? `No results found for "${searchQuery}"` : `No ${filter.toLowerCase()} submissions`}
+          </p>
         </div>
       ) : (
         <div className="grid gap-3 sm:gap-4">
-          {submissions.map((submission) => (
+          {filteredSubmissions.map((submission) => (
             <div key={submission.id} className="bg-slate-900/50 rounded-lg p-3 sm:p-4 border border-slate-800 hover:border-blue-500/30 transition-all">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">

@@ -284,22 +284,80 @@ function MarketplaceContent() {
     router.push(`/marketplace/listings?game=${gameId}`);
   };
 
+  const handleHotDealClick = (dealId: string) => {
+    router.push(`/marketplace/listings?hotdeal=${dealId}`);
+  };
+
   const handleCreateListing = (gameId: string) => {
     router.push(`/marketplace/create?game=${gameId}`);
   };
 
-  const gameCards = showAllGames ? allGameCards : allGameCards.slice(0, 6);
-  const socialCards = showAllSocials ? allSocialCards : allSocialCards.slice(0, 6);
+  const gameCards = showAllGames ? allGameCards : allGameCards.slice(0, 12);
+  const socialCards = showAllSocials ? allSocialCards : allSocialCards.slice(0, 12);
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8 pt-4">
+      <div className="min-h-screen bg-black pb-20 lg:pb-8 pt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
+
+          {/* Hot Deals Section */}
+          <div className="mb-12">
+            <div className="flex items-center gap-2 mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white">Hot Deals</h2>
+              <div className="relative">
+                <span className="px-2.5 py-1 bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold rounded uppercase tracking-wider animate-pulse">
+                  Hot
+                </span>
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { name: 'CODM', image: '/codm.jpeg', id: 'cod-mobile' },
+                { name: 'TIKTOK', image: '/tiktok.jpeg', id: 'tiktok' },
+                { name: 'IPAD/TABLETS', image: '/Ipad and tablet.jpg', id: 'ipad-tablets' },
+                { name: 'EFOOTBALL', image: '/e football.jpeg', id: 'efootball' },
+                { name: 'INSTAGRAM', image: '/instagram.jpeg', id: 'instagram' },
+                { name: 'PS/XBOX', image: '/xbox vs ps.jpg', id: 'ps-xbox' },
+                { name: 'FREE FIRE', image: '/free fire.jpeg', id: 'free-fire' },
+                { name: 'FACEBOOK', image: '/facebook.jpeg', id: 'facebook' },
+                { name: 'PC/LAPTOPS', image: '/Laptop pc.jpg', id: 'pc-laptops' },
+                { name: 'BLOODSTRIKE', image: '/blood strike.jpeg', id: 'blood-strike' },
+                { name: 'YOUTUBE', image: '/youtube.jpeg', id: 'youtube' },
+                { name: 'GAMING PHONES', image: '/Gaming phones.jpg', id: 'gaming-phones' },
+              ].map((deal, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleHotDealClick(deal.id)}
+                  className="group hover:scale-105 transition-all duration-300 relative"
+                >
+                  <div className="aspect-[3/4] rounded-xl overflow-hidden shadow-lg border border-[#2f3336] bg-[#1a1a1a] relative">
+                    <img
+                      src={deal.image}
+                      alt={deal.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <span className="px-2 py-0.5 bg-red-500 text-white text-[8px] font-bold rounded uppercase">
+                        Hot
+                      </span>
+                    </div>
+                  </div>
+                  <h3 className="text-white font-semibold text-[10px] xs:text-xs text-center px-1 line-clamp-2 mt-2">
+                    {deal.name}
+                  </h3>
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* In-Game Accounts Section */}
           <div className="mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">In-Game Accounts</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4">
+            <div className="grid grid-cols-4 gap-2">
               {gameCards.map((game) => (
                 <button
                   key={game.id}
@@ -309,34 +367,34 @@ function MarketplaceContent() {
                   {listingCounts[game.id] > 0 && (
                     <div className="absolute -top-1 -right-1 z-10 flex items-center justify-center">
                       <span className="relative flex h-5 w-5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-5 w-5 bg-gradient-to-r from-green-500 to-emerald-600 items-center justify-center text-white text-[9px] font-bold shadow-lg">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-5 w-5 bg-blue-600 items-center justify-center text-white text-[9px] font-bold shadow-lg">
                           {listingCounts[game.id] > 9 ? '9+' : listingCounts[game.id]}
                         </span>
                       </span>
                     </div>
                   )}
-                  <div className="aspect-[3/4] rounded-lg xs:rounded-xl sm:rounded-2xl overflow-hidden shadow-lg mb-2">
+                  <div className="aspect-[3/4] rounded-xl overflow-hidden shadow-lg mb-2 border border-[#2f3336]">
                     <img
                       src={game.image}
                       alt={game.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <h3 className="text-white font-semibold text-[10px] xs:text-xs sm:text-sm text-center px-1">
+                  <h3 className="text-white font-semibold text-[10px] xs:text-xs text-center px-1 line-clamp-2">
                     {game.name}
                   </h3>
                 </button>
               ))}
             </div>
-            <div className="text-center mt-6">
-              {!showAllGames && allGameCards.length > 6 && (
+            <div className="text-center mt-4">
+              {!showAllGames && allGameCards.length > 8 && (
                 <button
                   onClick={() => setShowAllGames(true)}
-                  className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-600/30 hover:to-purple-600/30 text-white text-sm rounded-full font-medium transition-all border border-blue-500/30 hover:border-blue-500/50 backdrop-blur-sm"
+                  className="inline-flex items-center gap-1 px-4 py-1.5 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white text-xs rounded-full font-medium transition-all border border-[#2f3336]"
                 >
                   <span>View More</span>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -344,10 +402,10 @@ function MarketplaceContent() {
               {showAllGames && (
                 <button
                   onClick={() => setShowAllGames(false)}
-                  className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-slate-600/20 to-slate-700/20 hover:from-slate-600/30 hover:to-slate-700/30 text-white text-sm rounded-full font-medium transition-all border border-slate-500/30 hover:border-slate-500/50 backdrop-blur-sm"
+                  className="inline-flex items-center gap-1 px-4 py-1.5 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white text-xs rounded-full font-medium transition-all border border-[#2f3336]"
                 >
                   <span>Show Less</span>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                   </svg>
                 </button>
@@ -358,7 +416,7 @@ function MarketplaceContent() {
           {/* Social Accounts Section */}
           <div className="mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Social Accounts</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 xs:gap-3 sm:gap-4">
+            <div className="grid grid-cols-4 gap-2">
               {socialCards.map((social) => (
                 <button
                   key={social.id}
@@ -368,34 +426,34 @@ function MarketplaceContent() {
                   {listingCounts[social.id] > 0 && (
                     <div className="absolute -top-1 -right-1 z-10 flex items-center justify-center">
                       <span className="relative flex h-5 w-5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-5 w-5 bg-gradient-to-r from-green-500 to-emerald-600 items-center justify-center text-white text-[9px] font-bold shadow-lg">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-5 w-5 bg-blue-600 items-center justify-center text-white text-[9px] font-bold shadow-lg">
                           {listingCounts[social.id] > 9 ? '9+' : listingCounts[social.id]}
                         </span>
                       </span>
                     </div>
                   )}
-                  <div className="aspect-square rounded-lg xs:rounded-xl sm:rounded-2xl overflow-hidden shadow-lg mb-2">
+                  <div className="aspect-square rounded-xl overflow-hidden shadow-lg mb-2 border border-[#2f3336]">
                     <img
                       src={social.image}
                       alt={social.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <h3 className="text-white font-semibold text-[10px] xs:text-xs sm:text-sm text-center px-1">
+                  <h3 className="text-white font-semibold text-[10px] xs:text-xs text-center px-1 line-clamp-2">
                     {social.name}
                   </h3>
                 </button>
               ))}
             </div>
-            <div className="text-center mt-6">
-              {!showAllSocials && allSocialCards.length > 6 && (
+            <div className="text-center mt-4">
+              {!showAllSocials && allSocialCards.length > 8 && (
                 <button
                   onClick={() => setShowAllSocials(true)}
-                  className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-600/30 hover:to-purple-600/30 text-white text-sm rounded-full font-medium transition-all border border-blue-500/30 hover:border-blue-500/50 backdrop-blur-sm"
+                  className="inline-flex items-center gap-1 px-4 py-1.5 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white text-xs rounded-full font-medium transition-all border border-[#2f3336]"
                 >
                   <span>View More</span>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -403,14 +461,36 @@ function MarketplaceContent() {
               {showAllSocials && (
                 <button
                   onClick={() => setShowAllSocials(false)}
-                  className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-slate-600/20 to-slate-700/20 hover:from-slate-600/30 hover:to-slate-700/30 text-white text-sm rounded-full font-medium transition-all border border-slate-500/30 hover:border-slate-500/50 backdrop-blur-sm"
+                  className="inline-flex items-center gap-1 px-4 py-1.5 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white text-xs rounded-full font-medium transition-all border border-[#2f3336]"
                 >
                   <span>Show Less</span>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                   </svg>
                 </button>
               )}
+            </div>
+          </div>
+
+          {/* Games & Gadgets Section */}
+          <div className="mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Games & Gadgets</h2>
+            <div className="grid grid-cols-4 gap-2">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
+                <div
+                  key={i}
+                  className="group hover:scale-105 transition-transform duration-300 relative"
+                >
+                  <div className="aspect-[3/4] rounded-xl overflow-hidden shadow-lg mb-2 border border-[#2f3336] bg-[#1a1a1a] flex items-center justify-center">
+                    <div className="text-center p-4">
+                      <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center mx-auto mb-2">
+                        <IoGameControllerOutline className="w-6 h-6 text-gray-600" />
+                      </div>
+                      <p className="text-gray-600 text-[10px]">Coming Soon</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -423,7 +503,7 @@ export default function MarketplacePage() {
   return (
     <Suspense fallback={
       <AppShell>
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
       </AppShell>

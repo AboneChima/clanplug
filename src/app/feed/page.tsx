@@ -1,40 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  IoHeartOutline,
-  IoHeart,
-  IoChatbubbleOutline,
-  IoShareSocialOutline,
-  IoBookmarkOutline,
-  IoBookmark,
-  IoImageOutline,
-  IoPeopleOutline,
-  IoMailOutline,
-  IoTrashOutline,
-  IoArrowBackOutline,
-  IoSparklesOutline,
-} from 'react-icons/io5';
+import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoCloseOutline, IoTrashOutline, IoEllipsisVerticalOutline } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
-import PostModal from '@/components/PostModal';
-import SharePostModal from '@/components/SharePostModal';
-import WhatsNewBanner from '@/components/WhatsNewBanner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { formatCount } from '@/lib/formatNumber';
 import Image from 'next/image';
 import Link from 'next/link';
 
 interface Post {
   id: string;
-  title?: string;
   description: string;
   images?: string[];
-  status?: string;
-  soldTo?: {
-    id: string;
-    username: string;
-  };
+  type?: string;
   user: {
     id: string;
     username: string;
@@ -42,1392 +20,254 @@ interface Post {
     lastName: string;
     avatar?: string;
   };
-  _count: {
-    likes: number;
-    comments: number;
-  };
+  _count: { likes: number; comments: number };
   isLiked: boolean;
   isBookmarked?: boolean;
   createdAt: string;
-  type?: 'SOCIAL_POST' | 'MARKETPLACE_LISTING';
-  listingId?: string;
-  price?: number;
-  category?: string;
-}
-
-// Helper function for authenticated API calls
-async function authFetch(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('accessToken');
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      ...options.headers,
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
-  return response;
 }
 
 export default function FeedPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'forYou' | 'favorites' | 'following'>('forYou');
-  const [followingUsers, setFollowingUsers] = useState<any[]>([]);
-  const [loadingFollowing, setLoadingFollowing] = useState(false);
-  const [viewingImage, setViewingImage] = useState<string | null>(null);
-  const [viewingPostId, setViewingPostId] = useState<string | null>(null);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [favoritePosts, setFavoritePosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newPostContent, setNewPostContent] = useState('');
-  const [newPostImage, setNewPostImage] = useState<File | null>(null);
-  const [commentingOnPost, setCommentingOnPost] = useState<string | null>(null);
-  const [commentText, setCommentText] = useState('');
-  const [viewingCommentsFor, setViewingCommentsFor] = useState<string | null>(null);
-  const [comments, setComments] = useState<Record<string, any[]>>({});
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [sharingPostId, setSharingPostId] = useState<string | null>(null);
+  const [showKYCBanner, setShowKYCBanner] = useState(true);
+  const [activeTab, setActiveTab] = useState<'forYou' | 'bookmarks'>('forYou');
 
   useEffect(() => {
-    if (activeTab === 'forYou') {
-      fetchPosts();
-    } else if (activeTab === 'favorites') {
-      fetchFavoritePosts();
-    } else if (activeTab === 'following') {
-      fetchFollowing();
-    }
-  }, [activeTab]);
-
-
-
-  const fetchFollowing = async () => {
-    if (!user?.id) {
-      console.log('⚠️ No user ID, cannot fetch following');
-      return;
-    }
-    try {
-      setLoadingFollowing(true);
-      console.log('🔍 Fetching following for user:', user.id);
-      const response = await authFetch(`/api/follow/${user.id}/following`);
-      console.log('📥 Following response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📥 Following response data:', data);
-        // The response structure is { success: true, data: [...users] }
-        const followingList = data.data || [];
-        console.log('✅ Following users:', followingList.length);
-        setFollowingUsers(followingList);
-      } else {
-        const errorData = await response.json();
-        console.error('❌ Following fetch error:', errorData);
-        setFollowingUsers([]);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching following:', error);
-      setFollowingUsers([]);
-    } finally {
-      setLoadingFollowing(false);
-    }
-  };
+    fetchPosts();
+  }, []);
 
   const fetchPosts = async () => {
     try {
-      setLoading(true);
-      // Fetch social feed with TikTok-style algorithm
-      const endpoint = '/api/posts/feed';
-      const response = await authFetch(endpoint);
-      if (response.ok) {
-        const data = await response.json();
-        const postsData = Array.isArray(data.data) ? data.data : Array.isArray(data.posts) ? data.posts : Array.isArray(data) ? data : [];
-        
-        // Filter out marketplace listings - only show SOCIAL_POST type
-        const socialPostsOnly = postsData.filter((post: Post) => 
-          post.type === 'SOCIAL_POST' || !post.type
-        );
-        
-        // Fetch bookmarked posts from backend
-        const bookmarksResponse = await authFetch('/api/posts/bookmarks');
-        let bookmarkedIds: string[] = [];
-        if (bookmarksResponse.ok) {
-          const bookmarksData = await bookmarksResponse.json();
-          const bookmarkedPosts = Array.isArray(bookmarksData.posts) ? bookmarksData.posts : Array.isArray(bookmarksData.data) ? bookmarksData.data : [];
-          bookmarkedIds = bookmarkedPosts.map((post: any) => post.id);
-        }
-        
-        const postsWithBookmarks = socialPostsOnly.map((post: Post) => ({
-          ...post,
-          isBookmarked: bookmarkedIds.includes(post.id),
-          // Keep avatar as is
-          user: {
-            ...post.user
-          }
-        }));
-        
-        setPosts(postsWithBookmarks);
-      }
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      setPosts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchFavoritePosts = async () => {
-    try {
-      setLoading(true);
-      console.log('📚 Fetching bookmarked posts...');
-      // Fetch bookmarked posts directly from backend
-      const response = await authFetch('/api/posts/bookmarks');
-      console.log('📚 Bookmarks response status:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📚 Bookmarks data:', data);
-        const postsData = Array.isArray(data.data) ? data.data : Array.isArray(data.posts) ? data.posts : [];
-        console.log('📚 Found', postsData.length, 'bookmarked posts');
-        
-        // Filter out marketplace listings - only show SOCIAL_POST type
-        const socialPostsOnly = postsData.filter((post: Post) => 
-          post.type === 'SOCIAL_POST' || !post.type
-        );
-        
-        const postsWithBookmarks = socialPostsOnly.map((post: Post) => ({
-          ...post,
-          isBookmarked: true,
-          // Add timestamp to avatar to prevent caching
-          user: {
-            ...post.user
-          }
-        }));
-        
-        setFavoritePosts(postsWithBookmarks);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ Failed to fetch bookmarks:', response.status, errorData);
-        setFavoritePosts([]);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching favorites:', error);
-      setFavoritePosts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreatePost = async () => {
-    if (!newPostContent.trim()) {
-      showToast('Please enter some content', 'error');
-      return;
-    }
-
-    try {
       const token = localStorage.getItem('accessToken');
-      let imageUrls: string[] = [];
-
-      // Upload image if selected
-      if (newPostImage) {
-        console.log('📤 Uploading image:', newPostImage.name, 'Size:', (newPostImage.size / 1024 / 1024).toFixed(2) + 'MB');
-        
-        const formData = new FormData();
-        formData.append('media', newPostImage);
-
-        const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          console.log('✅ Upload response:', uploadData);
-          // Backend returns { success: true, data: { urls: [...] } }
-          if (uploadData.success && uploadData.data?.urls?.length > 0) {
-            imageUrls.push(...uploadData.data.urls);
-            console.log('✅ Image URLs:', imageUrls);
-          } else {
-            console.error('❌ No URLs in response:', uploadData);
-            showToast('Upload succeeded but no image URL returned', 'error');
-            return;
-          }
-        } else {
-          const errorData = await uploadResponse.json();
-          console.error('❌ Upload error:', errorData);
-          showToast(errorData.message || 'Failed to upload image', 'error');
-          return;
-        }
-      }
-      
-      // Create post data
-      const postData = {
-        title: newPostContent.substring(0, 100), // Use first 100 chars as title
-        description: newPostContent,
-        type: 'SOCIAL_POST',
-        images: imageUrls,
-        videos: []
-      };
-
-      console.log('📝 Creating post with data:', postData);
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(postData),
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/feed`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
+      
       if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Post created:', result);
-        showToast('Post created successfully!', 'success');
-        setNewPostContent('');
-        setNewPostImage(null);
-        fetchPosts();
-      } else {
-        const error = await response.json();
-        console.error('❌ Post creation error:', error);
-        showToast(error.message || 'Failed to create post', 'error');
+        const data = await response.json();
+        const postsData = Array.isArray(data.data) ? data.data : [];
+        const socialPosts = postsData.filter((p: Post) => !p.type || p.type === 'SOCIAL_POST');
+        setPosts(socialPosts);
       }
     } catch (error) {
-      console.error('Error creating post:', error);
-      showToast('Error creating post', 'error');
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleLike = async (postId: string) => {
     try {
-      const response = await authFetch(`/api/posts/${postId}/like`, {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/like`, {
         method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-
-      if (response.ok) {
-        setPosts(posts.map(post => 
-          post.id === postId 
-            ? { 
-                ...post, 
-                isLiked: !post.isLiked,
-                _count: { 
-                  ...post._count, 
-                  likes: post.isLiked ? post._count.likes - 1 : post._count.likes + 1 
-                }
-              }
-            : post
-        ));
-      }
-    } catch (error) {
-      console.error('Error liking post:', error);
-    }
-  };
-
-  const handleFollow = async (userId: string, isCurrentlyFollowing: boolean) => {
-    try {
-      const method = isCurrentlyFollowing ? 'DELETE' : 'POST';
-      const endpoint = `/api/follow/${userId}`;
       
-      const response = await authFetch(endpoint, {
-        method,
-      });
-
-      if (response.ok) {
-        // Update the post's user follow status
-        setPosts(posts.map(post => {
-          if (post.user.id === userId) {
-            const newIsFollowing = !isCurrentlyFollowing;
-            const isFollowingBack = (post.user as any).isFollowingBack || false;
-            const newIsMutual = newIsFollowing && isFollowingBack;
-            
-            return { 
-              ...post, 
-              user: { 
-                ...post.user, 
-                isFollowing: newIsFollowing,
-                isMutual: newIsMutual
-              } as any 
-            };
-          }
-          return post;
-        }));
-        showToast(isCurrentlyFollowing ? 'Unfollowed successfully' : 'Followed successfully', 'success');
-      } else {
-        // Show actual error message from backend
-        const errorData = await response.json();
-        showToast(errorData.message || 'Failed to update follow status', 'error');
-      }
+      setPosts(posts.map(post => 
+        post.id === postId 
+          ? { ...post, isLiked: !post.isLiked, _count: { ...post._count, likes: post.isLiked ? post._count.likes - 1 : post._count.likes + 1 }}
+          : post
+      ));
     } catch (error) {
-      console.error('Error following user:', error);
-      showToast('Failed to update follow status', 'error');
+      console.error('Error:', error);
     }
   };
 
   const handleBookmark = async (postId: string) => {
     try {
-      // Get current state from both lists
-      const postInFeed = posts.find(p => p.id === postId);
-      const postInFavorites = favoritePosts.find(p => p.id === postId);
-      const currentPost = postInFeed || postInFavorites;
-      const newBookmarkState = !currentPost?.isBookmarked;
-      
-      console.log('🔖 Toggling bookmark for post:', postId, 'New state:', newBookmarkState);
-      
-      // Sync with backend first
-      const response = await authFetch(`/api/posts/${postId}/bookmark`, {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/bookmark`, {
         method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      console.log('🔖 Bookmark API response:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Bookmark saved:', data);
-        
-        // Update posts list
-        setPosts(posts.map(p => 
-          p.id === postId 
-            ? { ...p, isBookmarked: newBookmarkState }
-            : p
-        ));
-        
-        // Update favorites list
-        if (!newBookmarkState) {
-          // Remove from favorites
-          console.log('🗑️ Removing from favorites list');
-          setFavoritePosts(favoritePosts.filter(p => p.id !== postId));
-        } else {
-          // Add to favorites if not already there
-          if (currentPost && !postInFavorites) {
-            console.log('➕ Adding to favorites list');
-            setFavoritePosts([{ ...currentPost, isBookmarked: true }, ...favoritePosts]);
-          }
-        }
-        
-        showToast(newBookmarkState ? 'Added to favorites' : 'Removed from favorites', 'success');
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ Bookmark failed:', response.status, errorData);
-        showToast('Failed to update bookmark', 'error');
-      }
+      setPosts(posts.map(post => 
+        post.id === postId ? { ...post, isBookmarked: !post.isBookmarked } : post
+      ));
+      showToast(posts.find(p => p.id === postId)?.isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks', 'success');
     } catch (error) {
-      console.error('❌ Error bookmarking post:', error);
-      showToast('Failed to update bookmark', 'error');
+      console.error('Error:', error);
     }
   };
 
-  const handleComment = async (postId: string) => {
-    if (!commentText.trim()) {
-      showToast('Please enter a comment', 'error');
-      return;
-    }
-
+  const handleDelete = async (postId: string) => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+    
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/comments`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content: commentText }),
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.ok) {
-        const data = await response.json();
-        showToast('Comment posted!', 'success');
-        setCommentText('');
-        
-        // Update comment count
-        setPosts(posts.map(post => 
-          post.id === postId 
-            ? { ...post, _count: { ...post._count, comments: post._count.comments + 1 } }
-            : post
-        ));
-
-        // Add new comment to the list if viewing comments
-        if (viewingCommentsFor === postId) {
-          setComments(prev => ({
-            ...prev,
-            [postId]: [data.data, ...(prev[postId] || [])]
-          }));
-        }
+        setPosts(posts.filter(p => p.id !== postId));
+        showToast('Post deleted successfully', 'success');
       } else {
-        const errorData = await response.json();
-        showToast(errorData.message || 'Failed to post comment', 'error');
+        showToast('Failed to delete post', 'error');
       }
     } catch (error) {
-      console.error('Error posting comment:', error);
-      showToast('Error posting comment', 'error');
+      console.error('Error:', error);
+      showToast('Failed to delete post', 'error');
     }
-  };
-
-  const loadComments = async (postId: string) => {
-    if (comments[postId]) {
-      // Already loaded, just toggle view
-      setViewingCommentsFor(viewingCommentsFor === postId ? null : postId);
-      return;
-    }
-
-    try {
-      setLoadingComments(true);
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/comments`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setComments(prev => ({
-          ...prev,
-          [postId]: data.data || []
-        }));
-        setViewingCommentsFor(postId);
-      }
-    } catch (error) {
-      console.error('Error loading comments:', error);
-    } finally {
-      setLoadingComments(false);
-    }
-  };
-
-  const handleStartChat = async (userId: string, userInfo?: any) => {
-    const { openChat } = await import('@/lib/chat-helper');
-    const result = await openChat(userId, userInfo);
-    
-    if (!result.success) {
-      showToast(result.error || 'Failed to open chat', 'error');
-    }
-  };
-
-  const renderPost = (post: Post) => {
-    // Special rendering for featured/promo posts
-    const isFeatured = (post as any).isFeatured;
-    
-    if (isFeatured && post.images && post.images.length > 0) {
-      return (
-        <div key={post.id} className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-xl border-2 border-blue-500/50 overflow-hidden w-full shadow-xl">
-          {/* Featured Badge */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-3 py-1 flex items-center gap-2">
-            <IoSparklesOutline className="w-4 h-4 text-yellow-300" />
-            <span className="text-white text-xs font-bold">FEATURED</span>
-          </div>
-          
-          {/* Post Header */}
-          <div className="p-3 flex items-center justify-between bg-gray-900/50">
-            <Link href={`/user/${post.user.id}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="relative">
-                {post.user.avatar ? (
-                  <img 
-                    src={post.user.avatar} 
-                    alt={post.user.username} 
-                    className="w-10 h-10 rounded-full object-cover" 
-                    loading="lazy"
-                    onError={(e) => {
-                      console.error('Failed to load avatar:', post.user.avatar);
-                      e.currentTarget.style.display = 'none';
-                      const parent = e.currentTarget.parentElement;
-                      if (parent) {
-                        parent.innerHTML = `<div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"><span class="text-white text-sm font-semibold">${post.user.firstName[0]}${post.user.lastName[0]}</span></div>`;
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-white text-sm font-semibold">{post.user.firstName[0]}{post.user.lastName[0]}</span>
-                  </div>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center gap-1">
-                  <p className="text-white text-sm font-bold">{post.user.firstName} {post.user.lastName}</p>
-                  {((post.user as any)?.verificationBadge?.status === 'verified' || (post.user as any)?.verificationBadge?.status === 'active') && (
-                    <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </div>
-                <p className="text-gray-400 text-xs">@{post.user.username}</p>
-              </div>
-            </Link>
-          </div>
-          
-          {/* Content with Image and Caption side by side */}
-          <div className="flex gap-3 p-3 bg-gray-900/50">
-            {/* Image - Half width */}
-            <div className="relative w-1/2 flex-shrink-0">
-              <img 
-                src={post.images?.[0] || ''} 
-                alt="Featured post" 
-                className="w-full h-auto rounded-lg object-cover" 
-                loading="lazy"
-                onError={(e) => {
-                  console.error('Failed to load image:', post.images?.[0]);
-                  e.currentTarget.src = '/placeholder-image.png';
-                }}
-              />
-            </div>
-            
-            {/* Caption - Half width */}
-            <div className="flex-1 flex flex-col justify-center">
-              <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">{post.description}</p>
-            </div>
-          </div>
-          
-          {/* Post Actions */}
-          <div className="px-4 py-3 border-t border-gray-700 flex items-center justify-between bg-gray-900/50">
-            <div className="flex items-center gap-4">
-              <button onClick={() => handleLike(post.id)} className="flex items-center gap-2 text-gray-400 hover:text-red-500 transition-colors">
-                {post.isLiked ? <IoHeart className="w-5 h-5 text-red-500" /> : <IoHeartOutline className="w-5 h-5" />}
-                <span className="text-sm font-medium">{formatCount(post._count.likes)}</span>
-              </button>
-              <button onClick={() => { if (post._count.comments > 0) loadComments(post.id); setCommentingOnPost(commentingOnPost === post.id ? null : post.id); }} className="flex items-center gap-2 text-gray-400 hover:text-blue-500 transition-colors">
-                <IoChatbubbleOutline className="w-5 h-5" />
-                <span className="text-sm font-medium">{formatCount(post._count.comments)}</span>
-              </button>
-              <button onClick={() => setSharingPostId(post.id)} className="flex items-center gap-2 text-gray-400 hover:text-green-500 transition-colors">
-                <IoShareSocialOutline className="w-5 h-5" />
-              </button>
-            </div>
-            <button onClick={() => handleBookmark(post.id)} className="text-gray-400 hover:text-yellow-500 transition-colors">
-              {post.isBookmarked ? <IoBookmark className="w-5 h-5 text-yellow-500" /> : <IoBookmarkOutline className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
-      );
-    }
-    
-    // Regular post rendering
-    return (
-    <div key={post.id} className="bg-gray-800/50 rounded-md xs:rounded-lg border border-gray-700 overflow-hidden w-full">
-      {/* Post Header - Extra Small for 0-360px */}
-      <div className="p-1.5 xs:p-2.5 sm:p-3 flex items-center justify-between">
-        <Link href={`/user/${post.user.id}`} className="flex items-center gap-1 xs:gap-2 hover:opacity-80 transition-opacity flex-1 min-w-0">
-          <div className="relative flex-shrink-0">
-            {post.user.avatar ? (
-              <img 
-                src={post.user.avatar} 
-                alt={post.user.username || 'User'} 
-                className="w-6 h-6 xs:w-8 xs:h-8 rounded-full object-cover"
-                loading="lazy"
-                onError={(e) => {
-                  console.error('Failed to load small avatar:', post.user.avatar);
-                  e.currentTarget.style.display = 'none';
-                  const parent = e.currentTarget.parentElement;
-                  if (parent && post.user.firstName && post.user.lastName) {
-                    parent.innerHTML = `<div class="w-6 h-6 xs:w-8 xs:h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"><span class="text-white text-[9px] xs:text-xs font-semibold">${post.user.firstName[0]}${post.user.lastName[0]}</span></div>`;
-                  }
-                }}
-              />
-            ) : (
-              <div className="w-6 h-6 xs:w-8 xs:h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <span className="text-white text-[9px] xs:text-xs font-semibold">
-                  {post.user.firstName?.[0] || 'U'}{post.user.lastName?.[0] || ''}
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-0.5 xs:gap-1">
-              <p className="text-white text-[10px] xs:text-xs sm:text-sm font-medium truncate">
-                {post.user.firstName || 'Unknown'} {post.user.lastName || 'User'}
-              </p>
-              {((post.user as any)?.verificationBadge?.status === 'verified' || (post.user as any)?.verificationBadge?.status === 'active') && (
-                <svg className="w-2.5 h-2.5 xs:w-3.5 xs:h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              )}
-            </div>
-            <p className="text-gray-400 text-[9px] xs:text-[11px] truncate">@{post.user.username || 'unknown'}</p>
-          </div>
-        </Link>
-        
-        {/* Follow and Message buttons - Optimized for extra small */}
-        {post.user.id !== user?.id ? (
-          <div className="flex items-center gap-1 xs:gap-1.5 flex-shrink-0">
-            <button
-              onClick={() => handleFollow(post.user.id, (post.user as any).isFollowing || false)}
-              className={`px-1.5 xs:px-2.5 py-0.5 xs:py-1 text-[8px] xs:text-xs font-medium rounded transition-colors ${
-                (post.user as any).isMutual 
-                  ? 'bg-green-600 hover:bg-green-700 text-white' 
-                  : (post.user as any).isFollowing 
-                  ? 'bg-slate-700 hover:bg-slate-600 text-white' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-            >
-              {(post.user as any).isMutual ? 'Friends' : (post.user as any).isFollowing ? 'Unfollow' : 'Follow'}
-            </button>
-            <button
-              onClick={() => handleStartChat(post.user.id, post.user)}
-              className="p-1 xs:p-1.5 hover:bg-gray-700 rounded transition-colors"
-            >
-              <IoMailOutline className="w-4 h-4 xs:w-4 xs:h-4 text-gray-400" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={async () => {
-              if (confirm('Are you sure you want to delete this post?')) {
-                try {
-                  const response = await authFetch(`/api/posts/${post.id}`, {
-                    method: 'DELETE',
-                  });
-                  
-                  if (response.ok) {
-                    setPosts(posts.filter(p => p.id !== post.id));
-                    showToast('Post deleted successfully', 'success');
-                  } else {
-                    showToast('Failed to delete post', 'error');
-                  }
-                } catch (error) {
-                  console.error('Error deleting post:', error);
-                  showToast('Error deleting post', 'error');
-                }
-              }
-            }}
-            className="p-1.5 hover:bg-red-500/20 rounded-md transition-colors"
-            title="Delete post"
-          >
-            <IoTrashOutline className="w-4 h-4 text-red-400" />
-          </button>
-        )}
-      </div>
-
-      {/* Post Content - Compact Layout */}
-      {post.type === 'MARKETPLACE_LISTING' ? (
-        /* Marketplace Listing - Horizontal Layout */
-        <div className="px-3 pb-2">
-          <div className="flex gap-2 sm:gap-3 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-lg p-2 border border-green-700/30">
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-gray-700 flex-shrink-0">
-              {post.images && post.images[0] ? (
-                <img 
-                  src={post.images[0]} 
-                  alt="Listing image" 
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  onError={(e) => {
-                    console.error('Failed to load listing image:', post.images?.[0]);
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                  <IoImageOutline className="w-6 h-6 text-gray-500" />
-                </div>
-              )}
-              {post.status === 'SOLD' ? (
-                <div className="absolute top-0.5 left-0.5 bg-red-600 text-white text-[9px] px-1 py-0.5 rounded font-medium">
-                  SOLD
-                </div>
-              ) : (
-                <div className="absolute top-0.5 left-0.5 bg-green-600 text-white text-[9px] px-1 py-0.5 rounded font-medium">
-                  LISTING
-                </div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-              <div>
-                <p className={`text-white font-medium text-xs sm:text-sm line-clamp-1 ${post.status === 'SOLD' ? 'line-through opacity-60' : ''}`}>
-                  {post.title || 'Game Listing'}
-                </p>
-                <p className={`text-gray-400 text-[11px] sm:text-xs line-clamp-2 mt-0.5 ${post.status === 'SOLD' ? 'opacity-60' : ''}`}>
-                  {post.description}
-                </p>
-                {post.status === 'SOLD' && post.soldTo && (
-                  <p className="text-red-400 text-[10px] mt-1 font-semibold">
-                    ✓ Sold to @{post.soldTo.username}
-                  </p>
-                )}
-                {post.price && post.status !== 'SOLD' && (
-                  <p className="text-green-400 font-bold text-xs sm:text-sm mt-0.5">₦{post.price.toLocaleString()}</p>
-                )}
-              </div>
-              <Link
-                href={`/marketplace/${post.listingId || post.id}`}
-                className="text-blue-400 hover:text-blue-300 text-[11px] font-medium text-left inline-flex items-center gap-1 mt-1"
-              >
-                View Listing →
-              </Link>
-            </div>
-          </div>
-        </div>
-      ) : post.images && post.images.length > 0 ? (
-        /* Image Post - Extra Small for 0-360px */
-        <div className="px-1.5 xs:px-2.5 sm:px-3 pb-1.5 xs:pb-2 flex gap-1.5 xs:gap-2.5 sm:gap-3">
-          <button
-            onClick={() => setViewingPostId(post.id)}
-            className="relative w-16 h-16 xs:w-24 xs:h-24 sm:w-28 sm:h-28 rounded-md xs:rounded-lg overflow-hidden bg-gray-700 flex-shrink-0 hover:opacity-90 transition-opacity"
-          >
-            <img 
-              src={post.images?.[0] || ''} 
-              alt="Post image" 
-              className="w-full h-full object-cover"
-              loading="lazy"
-              onError={(e) => {
-                console.error('Failed to load post image:', post.images?.[0]);
-                e.currentTarget.style.display = 'none';
-              }}
-            />
-            {post.images && post.images.length > 1 && (
-              <div className="absolute top-0.5 right-0.5 xs:top-1 xs:right-1 bg-black/80 text-white text-[8px] xs:text-[10px] px-1 xs:px-1.5 py-0.5 rounded font-medium">
-                +{post.images.length - 1}
-              </div>
-            )}
-          </button>
-          <div className="flex-1 min-w-0 flex flex-col justify-between">
-            <p className="text-gray-300 text-[10px] xs:text-xs sm:text-sm line-clamp-4 leading-tight xs:leading-snug">{post.description}</p>
-            <button
-              onClick={() => setViewingPostId(post.id)}
-              className="text-blue-400 hover:text-blue-300 text-[9px] xs:text-[11px] font-medium mt-0.5 xs:mt-1 text-left inline-flex items-center gap-0.5"
-            >
-              <span>View</span>
-              <svg className="w-2.5 h-2.5 xs:w-3 xs:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* Text Only Post - Extra Small for 0-360px */
-        <div className="px-1.5 xs:px-2.5 sm:px-3 pb-1.5 xs:pb-2">
-          <p className="text-gray-300 text-[10px] xs:text-xs sm:text-sm line-clamp-4 leading-tight xs:leading-snug">{post.description}</p>
-          {post.description.length > 200 && (
-            <button
-              onClick={() => setViewingPostId(post.id)}
-              className="text-blue-400 hover:text-blue-300 text-[9px] xs:text-[11px] font-medium mt-1 inline-flex items-center gap-0.5"
-            >
-              View More
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Post Actions */}
-      <div className="px-3 py-2 border-t border-gray-700 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => handleLike(post.id)}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-red-500 transition-colors"
-          >
-            {post.isLiked ? (
-              <IoHeart className="w-4 h-4 text-red-500" />
-            ) : (
-              <IoHeartOutline className="w-4 h-4" />
-            )}
-            <span className="text-xs">{formatCount(post._count.likes)}</span>
-          </button>
-          <button 
-            onClick={() => {
-              if (post._count.comments > 0) {
-                loadComments(post.id);
-              }
-              setCommentingOnPost(commentingOnPost === post.id ? null : post.id);
-            }}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-blue-500 transition-colors"
-          >
-            <IoChatbubbleOutline className="w-4 h-4" />
-            <span className="text-xs">{formatCount(post._count.comments)}</span>
-          </button>
-          <button 
-            onClick={() => setSharingPostId(post.id)}
-            className="flex items-center gap-1.5 text-gray-400 hover:text-green-500 transition-colors"
-          >
-            <IoShareSocialOutline className="w-4 h-4" />
-          </button>
-        </div>
-        <button 
-          onClick={() => handleBookmark(post.id)}
-          className="text-gray-400 hover:text-yellow-500 transition-colors"
-        >
-          {post.isBookmarked ? (
-            <IoBookmark className="w-4 h-4 text-yellow-500" />
-          ) : (
-            <IoBookmarkOutline className="w-4 h-4" />
-          )}
-        </button>
-      </div>
-
-      {/* Comments Section - Compact */}
-      {viewingCommentsFor === post.id && (
-        <div className="border-t border-gray-700">
-          {/* Existing Comments */}
-          {loadingComments ? (
-            <div className="max-[360px]:px-2 max-[360px]:py-2 max-[360px]:text-[11px] px-3 py-4 text-center text-gray-400 text-sm">
-              Loading...
-            </div>
-          ) : comments[post.id] && comments[post.id].length > 0 ? (
-            <div className="max-h-96 overflow-y-auto">
-              {comments[post.id].map((comment: any) => (
-                <div key={comment.id} className="max-[360px]:px-2 max-[360px]:py-2 px-3 py-3 border-b border-gray-700/50 hover:bg-gray-700/20">
-                  <div className="flex gap-1.5 max-[360px]:gap-1">
-                    <div className="flex-shrink-0">
-                      {comment.user.avatar ? (
-                        <img
-                          src={comment.user.avatar}
-                          alt={comment.user.username}
-                          className="max-[360px]:w-6 max-[360px]:h-6 w-8 h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="max-[360px]:w-6 max-[360px]:h-6 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                          <span className="text-white max-[360px]:text-[9px] text-xs font-semibold">
-                            {comment.user.firstName?.[0]}{comment.user.lastName?.[0]}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-1 max-[360px]:gap-0.5 flex-1 min-w-0">
-                          <span className="text-white max-[360px]:text-[9px] text-[11px] xs:text-xs font-medium truncate">
-                            {comment.user.firstName || 'Unknown'} {comment.user.lastName || 'User'}
-                          </span>
-                          {((comment.user as any)?.verificationBadge?.status === 'verified' || (comment.user as any)?.verificationBadge?.status === 'active') && (
-                            <svg className="w-2.5 h-2.5 xs:w-3 xs:h-3 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                          <span className="text-gray-400 max-[360px]:text-[8px] text-[9px] xs:text-[10px] truncate">
-                            @{comment.user.username || 'unknown'}
-                          </span>
-                          <span className="text-gray-500 max-[360px]:text-[8px] text-[9px] xs:text-[10px] flex-shrink-0">
-                            · {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
-                        </div>
-                        {comment.user.id === user?.id && (
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              if (!confirm('Delete this comment?')) return;
-                              
-                              try {
-                                const token = localStorage.getItem('accessToken');
-                                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/comments/${comment.id}`, {
-                                  method: 'DELETE',
-                                  headers: { 'Authorization': `Bearer ${token}` },
-                                });
-
-                                if (response.ok) {
-                                  // Remove comment from state
-                                  setComments(prev => ({
-                                    ...prev,
-                                    [post.id]: prev[post.id].filter((c: any) => c.id !== comment.id)
-                                  }));
-                                  showToast('Comment deleted', 'success');
-                                } else {
-                                  const errorData = await response.json().catch(() => ({}));
-                                  console.error('Delete comment error:', response.status, errorData);
-                                  showToast(errorData.message || 'Failed to delete comment', 'error');
-                                }
-                              } catch (error: any) {
-                                console.error('Error deleting comment:', error);
-                                showToast(error.message || 'Error deleting comment', 'error');
-                              }
-                            }}
-                            className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-colors flex-shrink-0"
-                            title="Delete comment"
-                          >
-                            <IoTrashOutline className="w-3.5 h-3.5 max-[360px]:w-3 max-[360px]:h-3" />
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-gray-300 max-[360px]:text-[11px] max-[360px]:mt-0.5 text-sm mt-1">{comment.content}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="max-[360px]:px-2 max-[360px]:py-2 max-[360px]:text-[11px] px-3 py-4 text-center text-gray-400 text-sm">
-              No comments yet. Be first!
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Comment Input */}
-      {commentingOnPost === post.id && (
-        <div className="max-[360px]:px-2 max-[360px]:pb-2 px-3 pb-3 border-t border-gray-700">
-          <div className="flex gap-1.5 max-[360px]:gap-1 max-[360px]:mt-1.5 mt-2">
-            <input
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Write a comment..."
-              className="flex-1 max-[360px]:px-2 max-[360px]:py-1 max-[360px]:text-[11px] px-2 py-1.5 xs:px-3 xs:py-2 bg-gray-700/50 text-white text-xs xs:text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleComment(post.id);
-                }
-              }}
-            />
-            <button
-              onClick={() => handleComment(post.id)}
-              disabled={!commentText.trim()}
-              className="max-[360px]:px-2 max-[360px]:py-1 max-[360px]:text-[11px] px-2.5 py-1.5 xs:px-4 xs:py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs xs:text-sm font-medium rounded-lg transition-colors"
-            >
-              Post
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-    );
   };
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* TikTok-Style Compact Header - No Hero Section */}
-        <div className="sticky top-0 z-20 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700">
-          <div className="max-w-7xl mx-auto">
-            {/* Top Row: Tabs Left + Icons Right */}
-            <div className="flex items-center justify-between px-3 xs:px-4 py-2 xs:py-2.5">
-              {/* Tabs - Left Aligned with Logo Font */}
-              <div className="flex gap-4 xs:gap-6">
+      <div className="min-h-screen bg-black">
+        {/* KYC Banner */}
+        {!user?.isKYCVerified && showKYCBanner && (
+          <div className="bg-[#1a1a1a] border-b border-[#333] p-2">
+            <div className="max-w-2xl mx-auto flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-xs font-medium">Complete your KYC</p>
+                <p className="text-gray-400 text-[10px]">Verify to unlock all features</p>
+              </div>
+              <Link href="/kyc">
+                <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap">
+                  Verify
+                </button>
+              </Link>
+              <button onClick={() => setShowKYCBanner(false)} className="p-1 text-gray-500 hover:text-white flex-shrink-0">
+                <IoCloseOutline className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Feed */}
+        <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
+          {/* Tabs with Post Button */}
+          <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-xl border-b border-[#2f3336]">
+            <div className="flex items-center justify-between px-4 py-2">
+              <div className="flex-1 flex">
                 <button
                   onClick={() => setActiveTab('forYou')}
-                  className={`pb-1 px-1 text-sm xs:text-base font-bold tracking-tight transition-colors relative ${
-                    activeTab === 'forYou' ? 'text-white' : 'text-gray-400'
+                  className={`flex-1 py-2 text-sm font-semibold transition-colors relative ${
+                    activeTab === 'forYou' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
                   }`}
-                  style={{ fontFamily: 'Cal Sans, Inter, sans-serif' }}
                 >
                   For You
                   {activeTab === 'forYou' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-t-full"></div>
                   )}
                 </button>
                 <button
-                  onClick={() => setActiveTab('favorites')}
-                  className={`pb-1 px-1 text-sm xs:text-base font-bold tracking-tight transition-colors relative ${
-                    activeTab === 'favorites' ? 'text-white' : 'text-gray-400'
+                  onClick={() => setActiveTab('bookmarks')}
+                  className={`flex-1 py-2 text-sm font-semibold transition-colors relative ${
+                    activeTab === 'bookmarks' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
                   }`}
-                  style={{ fontFamily: 'Cal Sans, Inter, sans-serif' }}
                 >
-                  Favorites
-                  {activeTab === 'favorites' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+                  Bookmarks
+                  {activeTab === 'bookmarks' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-t-full"></div>
                   )}
                 </button>
               </div>
-
-              {/* Right Icons */}
-              <div className="flex items-center gap-1.5 xs:gap-2">
-                <button
-                  onClick={() => setShowSearch(!showSearch)}
-                  className="p-1 xs:p-1.5 hover:bg-slate-700 rounded-md transition-colors"
-                  title="Search"
-                >
-                  <svg className="w-4 h-4 xs:w-5 xs:h-5 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setCommentingOnPost('create-post-modal')}
-                  className="flex items-center justify-center gap-0.5 xs:gap-1 w-7 h-7 xs:w-auto xs:h-auto xs:px-2.5 xs:py-1.5 sm:px-3 sm:py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md xs:rounded-lg transition-all shadow-lg hover:shadow-xl text-xs xs:text-xs sm:text-sm font-semibold"
-                  title="Create Post"
-                >
-                  <svg className="w-4 h-4 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <Link href="/create-post">
+                <button className="ml-2 p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                   </svg>
-                  <span className="hidden xs:inline">Post</span>
                 </button>
-              </div>
+              </Link>
             </div>
-
-            {/* Search Bar - Collapsible */}
-            {showSearch && (
-              <div className="px-3 xs:px-4 pb-2 relative z-[30]">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={async (e) => {
-                    const query = e.target.value;
-                    setSearchQuery(query);
-                    
-                    if (query.trim().length > 1) {
-                      setSearching(true);
-                      try {
-                        const token = localStorage.getItem('accessToken');
-                        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/search?q=${encodeURIComponent(query)}`, {
-                          headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        if (response.ok) {
-                          const data = await response.json();
-                          setSearchResults(data.data || data.users || []);
-                        }
-                      } catch (error) {
-                        console.error('Search error:', error);
-                      } finally {
-                        setSearching(false);
-                      }
-                    } else {
-                      setSearchResults([]);
-                    }
-                  }}
-                  placeholder="Search users..."
-                  className="w-full px-4 py-2 bg-slate-700/50 text-white text-sm rounded-lg border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
-                />
-                
-                {/* Search Results Dropdown */}
-                {searchQuery.trim().length > 1 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 border border-slate-600 rounded-xl shadow-2xl max-h-[400px] overflow-y-auto z-[30]">
-                    {searching ? (
-                      <div className="p-6 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-                        <p className="text-gray-400 text-sm">Searching...</p>
-                      </div>
-                    ) : searchResults.length === 0 ? (
-                      <div className="p-6 text-center">
-                        <svg className="w-12 h-12 text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <p className="text-gray-400 text-sm">No users found</p>
-                      </div>
-                    ) : (
-                      <div className="py-1">
-                        {searchResults.map((user: any) => (
-                          <Link
-                            key={user.id}
-                            href={`/user/${user.id}`}
-                            className="flex items-center gap-2 px-3 py-2 hover:bg-slate-700/70 transition-all duration-200 border-b border-slate-700/50 last:border-0"
-                            onClick={() => {
-                              setShowSearch(false);
-                              setSearchQuery('');
-                              setSearchResults([]);
-                            }}
-                          >
-                            {user.avatar ? (
-                              <img src={user.avatar} alt={user.username} className="w-10 h-10 rounded-full object-cover ring-1 ring-slate-600" />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ring-1 ring-slate-600">
-                                <span className="text-white text-xs font-bold">
-                                  {user.firstName?.[0]}{user.lastName?.[0]}
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1">
-                                <p className="text-white font-medium text-sm truncate">
-                                  {user.firstName} {user.lastName}
-                                </p>
-                                {((user.verificationBadge?.status === 'verified' || user.verificationBadge?.status === 'active') && user.verificationBadge?.expiresAt && new Date(user.verificationBadge.expiresAt) > new Date()) && (
-                                  <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                  </svg>
-                                )}
-                              </div>
-                              <p className="text-gray-400 text-xs truncate">@{user.username}</p>
-                            </div>
-                            <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* Main Content - Full Width */}
-        <div className="w-full px-0 pt-2 xs:pt-2.5 sm:pt-3">
-          {activeTab === 'following' ? (
-            /* Following View - Full Width */
-            <div className="w-full space-y-2 xs:space-y-2.5 sm:space-y-3 px-2 xs:px-3 sm:px-4">
-              {loadingFollowing ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                  <p className="text-gray-400 mt-4">Loading following...</p>
-                </div>
-              ) : followingUsers.length === 0 ? (
-                <div className="text-center py-12 bg-gray-800/50 rounded-xl border border-gray-700">
-                  <IoPeopleOutline className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">Not following anyone yet</p>
-                  <p className="text-gray-500 text-sm mt-2">Start following users to see them here</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {followingUsers.map((followedUser: any) => (
-                    <div key={followedUser.id} className="bg-gray-800/50 rounded-lg border border-gray-700 p-4">
-                      <div className="flex items-center gap-3">
-                        <Link href={`/user/${followedUser.id}`} className="flex-shrink-0">
-                          {followedUser.avatar ? (
-                            <img 
-                              src={followedUser.avatar} 
-                              alt={followedUser.username} 
-                              className="w-12 h-12 rounded-full object-cover"
-                            />
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#2f3336]">
+              {posts
+                .filter(post => activeTab === 'forYou' || post.isBookmarked)
+                .map((post) => (
+                <Link key={post.id} href={`/post/${post.id}`}>
+                  <div className="p-3 hover:bg-[#080808] transition-colors cursor-pointer">
+                    <div className="flex gap-2">
+                      {/* Avatar */}
+                      <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="flex-shrink-0">
+                        <Link href={`/user/${post.user.id}`}>
+                          {post.user.avatar ? (
+                            <Image src={post.user.avatar} alt={post.user.username} width={36} height={36} className="w-9 h-9 rounded-full" unoptimized />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                              <span className="text-white font-semibold">
-                                {followedUser.firstName?.[0]}{followedUser.lastName?.[0]}
-                              </span>
+                            <div className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">{post.user.firstName[0]}</span>
                             </div>
                           )}
                         </Link>
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/user/${followedUser.id}`} className="hover:opacity-80">
-                            <div className="flex items-center gap-1">
-                              <p className="text-white font-medium truncate">
-                                {followedUser.firstName} {followedUser.lastName}
-                              </p>
-                              {followedUser.isKYCVerified && (
-                                <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                </svg>
-                              )}
-                            </div>
-                            <p className="text-gray-400 text-sm truncate">@{followedUser.username}</p>
-                          </Link>
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold text-white text-xs">{post.user.firstName} {post.user.lastName}</span>
+                          {((post.user as any).verificationBadge?.status === 'verified' || (post.user as any).verificationBadge?.status === 'active') && (
+                            <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                            <span className="text-gray-500 text-[10px]">@{post.user.username}</span>
+                          </div>
+                          
+                          {/* Delete button - only show for own posts */}
+                          {post.user.id === user?.id && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDelete(post.id);
+                              }}
+                              className="p-1 hover:bg-red-500/10 rounded-full transition-colors"
+                              title="Delete post"
+                            >
+                              <IoTrashOutline className="w-3.5 h-3.5 text-red-500" />
+                            </button>
+                          )}
                         </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleFollow(followedUser.id, true)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                              followedUser.isFriend 
-                                ? 'bg-green-600 hover:bg-green-700 text-white' 
-                                : 'bg-gray-700 hover:bg-gray-600 text-white'
-                            }`}
-                          >
-                            {followedUser.isFriend ? 'Friends' : 'Following'}
+
+                        <p className="text-white text-xs mb-2 whitespace-pre-wrap line-clamp-3">{post.description}</p>
+
+                        {post.images && post.images[0] && (
+                          <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336]">
+                            <Image src={post.images[0]} alt="Post" width={600} height={400} className="w-full" unoptimized />
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-between max-w-xs" onClick={(e) => e.preventDefault()}>
+                          <button className="flex items-center gap-1.5 text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full">
+                            <IoChatbubbleOutline className="w-[18px] h-[18px]" />
+                            <span className="text-xs font-medium">{post._count.comments}</span>
                           </button>
-                          <button
-                            onClick={() => handleStartChat(followedUser.id, followedUser)}
-                            className="p-1.5 hover:bg-gray-700 rounded-md transition-colors"
-                          >
-                            <IoMailOutline className="w-4 h-4 text-gray-400" />
+
+                          <button onClick={(e) => { e.stopPropagation(); handleLike(post.id); }} className="flex items-center gap-1.5 text-gray-300 hover:text-pink-500 transition-colors p-1.5 hover:bg-pink-500/10 rounded-full">
+                            {post.isLiked ? <IoHeart className="w-[18px] h-[18px] text-pink-500" /> : <IoHeartOutline className="w-[18px] h-[18px]" />}
+                            <span className="text-xs font-medium">{post._count.likes}</span>
+                          </button>
+
+                          <button className="text-gray-300 hover:text-green-500 transition-colors p-1.5 hover:bg-green-500/10 rounded-full">
+                            <IoShareSocialOutline className="w-[18px] h-[18px]" />
+                          </button>
+
+                          <button onClick={(e) => { e.stopPropagation(); handleBookmark(post.id); }} className="text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full">
+                            {post.isBookmarked ? <IoBookmark className="w-[18px] h-[18px] text-blue-500" /> : <IoBookmarkOutline className="w-[18px] h-[18px]" />}
                           </button>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : activeTab === 'favorites' ? (
-            /* Favorites View - Full Width */
-            <div className="w-full space-y-2 xs:space-y-2.5 sm:space-y-3 px-0">
-              {loading ? (
-                <div className="text-center py-10 xs:py-12">
-                  <div className="animate-spin rounded-full h-10 w-10 xs:h-12 xs:w-12 border-b-2 border-blue-500 mx-auto"></div>
-                  <p className="text-gray-400 mt-3 xs:mt-4 text-sm xs:text-base">Loading favorites...</p>
-                </div>
-              ) : favoritePosts.length === 0 ? (
-                <div className="text-center py-10 xs:py-12 bg-gray-800/50 rounded-lg xs:rounded-xl border border-gray-700">
-                  <IoBookmarkOutline className="w-12 h-12 xs:w-16 xs:h-16 text-gray-600 mx-auto mb-3 xs:mb-4" />
-                  <p className="text-gray-400 text-sm xs:text-base">No favorite posts yet</p>
-                  <p className="text-gray-500 text-xs xs:text-sm mt-2">Bookmark posts to see them here</p>
-                </div>
-              ) : (
-                favoritePosts.map(renderPost)
-              )}
-            </div>
-          ) : (
-            <div className="w-full space-y-2 xs:space-y-2.5 sm:space-y-3 px-0">
-              {/* What's New Banner */}
-              {activeTab === 'forYou' && !loading && <WhatsNewBanner />}
-              
-              {/* Posts - Full Width */}
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-10 w-10 xs:h-12 xs:w-12 border-b-2 border-blue-500 mx-auto"></div>
-                  <p className="text-gray-400 mt-3 xs:mt-4 text-sm xs:text-base">Loading feed...</p>
-                </div>
-              ) : posts.length === 0 ? (
-                <div className="text-center py-10 xs:py-12 bg-gray-800/50 rounded-lg xs:rounded-xl border border-gray-700">
-                  <IoPeopleOutline className="w-12 h-12 xs:w-16 xs:h-16 text-gray-600 mx-auto mb-3 xs:mb-4" />
-                  <p className="text-gray-400 text-sm xs:text-base">
-                    No posts available right now. Be the first to post!
-                  </p>
-                </div>
-              ) : (
-                posts.map(renderPost)
-              )}
+                  </div>
+                </Link>
+              ))}
             </div>
           )}
         </div>
       </div>
-
-      {/* Create Post Modal - Compact */}
-      {commentingOnPost === 'create-post-modal' && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-3"
-          onClick={() => setCommentingOnPost(null)}
-        >
-          <div 
-            className="bg-slate-800 rounded-xl max-w-md w-full p-4 border border-slate-700"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-white">Create Post</h2>
-              <button
-                onClick={() => setCommentingOnPost(null)}
-                className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="flex gap-2 mb-3">
-              {user?.avatar ? (
-                <img 
-                  src={user.avatar} 
-                  alt={user.username || 'User'} 
-                  className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm font-semibold">
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
-                  </span>
-                </div>
-              )}
-              <div className="flex-1">
-                <div className="flex items-center gap-1">
-                  <p className="text-white text-sm font-medium">{user?.firstName} {user?.lastName}</p>
-                  {((user as any)?.verificationBadge?.status === 'verified' || (user as any)?.verificationBadge?.status === 'active') && (
-                    <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </div>
-                <p className="text-gray-400 text-xs">@{user?.username}</p>
-              </div>
-            </div>
-
-            <textarea
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder="What's on your mind?"
-              className="w-full bg-slate-700/50 text-white text-sm rounded-lg p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 border border-slate-600 mb-3"
-              rows={4}
-              autoFocus
-            />
-
-            {newPostImage && (
-              <div className="mb-3 relative">
-                <img src={URL.createObjectURL(newPostImage)} alt="Preview" className="w-full max-h-48 object-cover rounded-lg" />
-                <button
-                  onClick={() => setNewPostImage(null)}
-                  className="absolute top-1.5 right-1.5 p-1.5 bg-black/50 hover:bg-black/70 rounded-full transition-colors"
-                >
-                  <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            )}
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg cursor-pointer transition-colors">
-                <IoImageOutline className="w-4 h-4" />
-                <span>Photo</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    
-                    // Check file size (10MB limit)
-                    const maxSize = 10 * 1024 * 1024; // 10MB
-                    if (file.size > maxSize) {
-                      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-                      showToast(`Image size (${sizeMB}MB) exceeds 10MB limit. Please compress or resize your image.`, 'error');
-                      e.target.value = '';
-                      return;
-                    }
-                    
-                    // Check verification status
-                    try {
-                      const token = localStorage.getItem('accessToken');
-                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/verification/status`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                      });
-                      
-                      if (response.ok) {
-                        const data = await response.json();
-                        if (data.data?.status !== 'active' && data.data?.status !== 'verified') {
-                          showToast('Get verified to post images! Purchase verification badge (₦2,000) in your profile.', 'error');
-                          e.target.value = '';
-                          return;
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Error checking verification:', error);
-                    }
-                    
-                    setNewPostImage(file);
-                  }}
-                  className="hidden"
-                />
-              </label>
-              <button
-                onClick={() => {
-                  handleCreatePost();
-                  setCommentingOnPost(null);
-                }}
-                disabled={!newPostContent.trim()}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Post
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Post Detail Modal - Fullscreen */}
-      {viewingPostId && (
-        <PostModal postId={viewingPostId} onClose={() => setViewingPostId(null)} />
-      )}
-
-      {/* Image Overlay Modal (for backward compatibility) */}
-      {viewingImage && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
-          onClick={() => setViewingImage(null)}
-        >
-          <button
-            onClick={() => setViewingImage(null)}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-          >
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <div className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center">
-            <Image
-              src={viewingImage}
-              alt="Full size image"
-              fill
-              className="object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Share Post Modal */}
-      {sharingPostId && (
-        <SharePostModal 
-          postId={sharingPostId} 
-          onClose={() => setSharingPostId(null)} 
-        />
-      )}
     </AppShell>
   );
 }

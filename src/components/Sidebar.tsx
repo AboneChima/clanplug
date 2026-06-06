@@ -13,7 +13,8 @@ import {
   IoShieldCheckmarkOutline,
   IoNotificationsOutline,
   IoHelpCircleOutline,
-  IoReceiptOutline
+  IoReceiptOutline,
+  IoTrophyOutline
 } from 'react-icons/io5';
 
 type User = {
@@ -46,6 +47,12 @@ const navItems = [
     href: '/posts', 
     label: 'Shop', 
     Icon: IoStorefrontOutline
+  },
+  { 
+    href: '/tournaments', 
+    label: 'Tournaments', 
+    Icon: IoTrophyOutline,
+    comingSoon: true
   },
   { 
     href: '/orders', 
@@ -135,8 +142,21 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 p-3 overflow-y-auto overscroll-contain min-h-0">
         <div className="space-y-1">
-          {navItems.map(({ href, label, Icon }) => {
+          {navItems.map(({ href, label, Icon, comingSoon }) => {
             const active = pathname === href || (href !== '/dashboard' && pathname?.startsWith(href));
+
+            if (comingSoon) {
+              return (
+                <div
+                  key={href}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl opacity-60 cursor-not-allowed"
+                >
+                  <Icon className="w-5 h-5 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-500 flex-1">{label}</span>
+                  <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wide">Soon</span>
+                </div>
+              );
+            }
 
             return (
               <Link

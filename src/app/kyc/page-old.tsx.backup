@@ -1,0 +1,574 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import AppShell from '@/components/AppShell';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
+import { 
+  IoShieldCheckmarkOutline, 
+  IoDocumentTextOutline,
+  IoPersonOutline,
+  IoCheckmarkCircleOutline,
+  IoCloudUploadOutline,
+  IoCameraOutline,
+  IoTimeOutline,
+  IoCloseCircleOutline,
+  IoArrowForwardOutline,
+  IoArrowBackOutline,
+  IoCheckmarkOutline
+} from 'react-icons/io5';
+import Image from 'next/image';
+
+export default function KYCPage() {
+  const { user, refetchUser } = useAuth();
+  const { showToast } = useToast();
+  const [kycStatus, setKycStatus] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form data
+  const [ninNumber, setNinNumber] = useState('');
+  const [selfieFile, setSelfieFile] = useState<File | null>(null);
+  const [selfiePreview, setSelfiePreview] = useState<string>('');
+  const [idFrontFile, setIdFrontFile] = useState<File | null>(null);
+  const [idFrontPreview, setIdFrontPreview] = useState<string>('');
+  const [showCamera, setShowCamera] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  // Check KYC status
+  useEffect(() => {
+    const checkKycStatus = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        
+        // Always check API status first (don't rely on user.isKYCVerified alone)
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/status`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data && data.data.status) {
+            setKycStatus(data.data.status);
+          } else if (user?.isKYCVerified) {
+            // Fallback to user status if API doesn't return status
+            setKycStatus('APPROVED');
+          }
+        } else if (user?.isKYCVerified) {
+          setKycStatus('APPROVED');
+        }
+      } catch (error) {
+        console.error('Error checking KYC status:', error);
+        // Fallback to user status on error
+        if (user?.isKYCVerified) {
+          setKycStatus('APPROVED');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkKycStatus();
+  }, [user?.isKYCVerified]);
+
+  const handleSelfieChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelfieFile(file);
+      setSelfiePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleIdFrontChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setIdFrontFile(file);
+      setIdFrontPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      const constraints = {
+        video: {
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      };
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      setStream(mediaStream);
+      setShowCamera(true);
+      
+      // Wait for video element to be ready
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          videoRef.current.play().catch(err => {
+            console.error('Play error:', err);
+            showToast('Cannot start video', 'error');
+          });
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Camera error:', error);
+      showToast('Cannot access camera', 'error');
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setStream(null);
+    setShowCamera(false);
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], 'selfie.jpg', { type: 'image/jpeg' });
+          setSelfieFile(file);
+          setSelfiePreview(URL.createObjectURL(file));
+          stopCamera();
+          showToast('Photo captured!', 'success');
+        }
+      }, 'image/jpeg', 0.95);
+    }
+  };
+
+  const validateNIN = (nin: string): boolean => {
+    return /^\d{11}$/.test(nin);
+  };
+
+  const handleSkipIDCard = () => {
+    setIdFrontFile(null);
+    setIdFrontPreview('');
+    handleSubmit();
+  };
+
+  const uploadFile = async (file: File, isKYCUpload: boolean = true) => {
+    const formData = new FormData();
+    formData.append('media', file);
+    if (isKYCUpload) {
+      formData.append('isKYCUpload', 'true');
+    }
+
+    const token = localStorage.getItem('accessToken');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload file');
+    }
+
+    const data = await response.json();
+    return data.data.url;
+  };
+
+  const handleSubmit = async () => {
+    if (!ninNumber || !selfieFile) {
+      showToast('Please complete required steps', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Upload files
+      const selfieUrl = await uploadFile(selfieFile);
+      let idFrontUrl = '';
+      
+      if (idFrontFile) {
+        idFrontUrl = await uploadFile(idFrontFile);
+      }
+
+      // Submit KYC with all required fields
+      const token = localStorage.getItem('accessToken');
+      const kycData: any = {
+        firstName: user?.firstName || '',
+        lastName: user?.lastName || '',
+        idType: 'nin',
+        idNumber: ninNumber,
+        selfieUrl: selfieUrl,
+        phoneNumber: user?.phoneNumber || '',
+        address: user?.address || 'N/A',
+        dateOfBirth: user?.dateOfBirth || '2000-01-01',
+      };
+
+      // Only add idFrontUrl if it exists
+      if (idFrontUrl) {
+        kycData.idFrontUrl = idFrontUrl;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/kyc/submit`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(kycData),
+      });
+
+      if (response.ok) {
+        setKycStatus('PENDING');
+        showToast('KYC submitted successfully!', 'success');
+        refetchUser();
+      } else {
+        const result = await response.json();
+        showToast(result.message || 'Failed to submit KYC', 'error');
+      }
+    } catch (error) {
+      console.error('KYC submission error:', error);
+      showToast('Error submitting KYC. Please try again.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isVerified = kycStatus === 'APPROVED' && user?.isKYCVerified;
+
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  return (
+    <AppShell>
+      <div className="min-h-screen bg-black pb-20 lg:pb-8">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-xl border-b border-[#2f3336] px-4 py-3">
+          <h1 className="text-xl font-bold text-white">KYC Verification</h1>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-6">
+          {isVerified ? (
+            /* Verified State */
+            <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-2xl p-8 text-center">
+              <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
+                <IoCheckmarkCircleOutline className="w-12 h-12 text-green-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Verified</h2>
+              <p className="text-gray-400">Your account is verified</p>
+            </div>
+          ) : kycStatus === 'PENDING' ? (
+            /* Pending State */
+            <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-2xl p-8 text-center">
+              <div className="w-20 h-20 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto mb-4">
+                <IoTimeOutline className="w-12 h-12 text-yellow-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Under Review</h2>
+              <p className="text-gray-400 mb-4">We're reviewing your submission</p>
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-left">
+                <p className="text-sm text-gray-300">Review time: 24-48 hours</p>
+              </div>
+            </div>
+          ) : kycStatus === 'REJECTED' ? (
+            /* Rejected State */
+            <div className="bg-gradient-to-br from-red-500/10 to-pink-500/10 border border-red-500/30 rounded-2xl p-8 text-center">
+              <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+                <IoCloseCircleOutline className="w-12 h-12 text-red-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Verification Failed</h2>
+              <p className="text-gray-400 mb-4">Your submission was not approved</p>
+              <button
+                onClick={() => {
+                  setKycStatus(null);
+                  setCurrentStep(1);
+                  setNinNumber('');
+                  setSelfieFile(null);
+                  setSelfiePreview('');
+                  setIdFrontFile(null);
+                  setIdFrontPreview('');
+                }}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (
+            /* KYC Form */
+            <div>
+              {/* Progress Steps */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between max-w-md mx-auto">
+                  {[1, 2, 3].map((step) => (
+                    <React.Fragment key={step}>
+                      <div className="flex flex-col items-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-all ${
+                          currentStep >= step 
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+                            : 'bg-[#2a2a2a] text-gray-500'
+                        }`}>
+                          {currentStep > step ? <IoCheckmarkOutline className="w-5 h-5" /> : step}
+                        </div>
+                        <span className={`text-xs mt-1 ${currentStep >= step ? 'text-blue-400' : 'text-gray-600'}`}>
+                          {step === 1 ? 'NIN' : step === 2 ? 'Selfie' : 'ID'}
+                        </span>
+                      </div>
+                      {step < 3 && (
+                        <div className={`flex-1 h-0.5 mx-2 transition-all ${
+                          currentStep > step ? 'bg-blue-600' : 'bg-[#2a2a2a]'
+                        }`} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 1: NIN Verification */}
+              {currentStep === 1 && (
+                <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2f3336]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-full bg-blue-600/20 flex items-center justify-center">
+                      <IoDocumentTextOutline className="w-6 h-6 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">NIN Verification</h3>
+                      <p className="text-sm text-gray-400">Enter your NIN</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        NIN Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={ninNumber}
+                        onChange={(e) => setNinNumber(e.target.value)}
+                        placeholder="Enter 11-digit NIN"
+                        maxLength={11}
+                        className="w-full px-4 py-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+
+                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                      <p className="text-sm text-blue-400">
+                        We use your NIN to verify your identity
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentStep(2)}
+                    disabled={!validateNIN(ninNumber)}
+                    className="w-full mt-6 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span>Continue</span>
+                    <IoArrowForwardOutline className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Step 2: Selfie Verification */}
+              {currentStep === 2 && (
+                <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2f3336]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-full bg-purple-600/20 flex items-center justify-center">
+                      <IoCameraOutline className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">Selfie Verification</h3>
+                      <p className="text-sm text-gray-400">Take a live photo</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {selfiePreview ? (
+                      <div className="relative">
+                        <Image src={selfiePreview} alt="Selfie" width={400} height={400} className="w-full h-64 object-cover rounded-xl" />
+                        <button
+                          onClick={() => {
+                            setSelfieFile(null);
+                            setSelfiePreview('');
+                          }}
+                          className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 rounded-full transition-colors"
+                        >
+                          <IoCloseCircleOutline className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+                    ) : showCamera ? (
+                      <div className="relative bg-black rounded-xl overflow-hidden">
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-64 object-cover"
+                        />
+                        <canvas ref={canvasRef} className="hidden" />
+                        
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                          <button
+                            onClick={capturePhoto}
+                            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-full font-medium transition-colors"
+                          >
+                            Capture
+                          </button>
+                          <button
+                            onClick={stopCamera}
+                            className="px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-full font-medium transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={startCamera}
+                        className="w-full h-64 border-2 border-dashed border-[#3a3a3a] rounded-xl hover:border-blue-500 transition-colors flex flex-col items-center justify-center gap-3"
+                      >
+                        <IoCameraOutline className="w-12 h-12 text-gray-500" />
+                        <p className="text-sm text-gray-400">Start Camera</p>
+                      </button>
+                    )}
+
+                    <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3">
+                      <p className="text-xs text-purple-400">
+                        Take a clear photo of your face
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-6">
+                    <button
+                      onClick={() => setCurrentStep(1)}
+                      className="flex-1 px-4 py-2.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white text-sm rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <IoArrowBackOutline className="w-4 h-4" />
+                      <span>Back</span>
+                    </button>
+                    <button
+                      onClick={() => setCurrentStep(3)}
+                      disabled={!selfieFile}
+                      className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <span>Continue</span>
+                      <IoArrowForwardOutline className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: ID Card Verification (Optional) */}
+              {currentStep === 3 && (
+                <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#2f3336]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-full bg-green-600/20 flex items-center justify-center">
+                      <IoPersonOutline className="w-6 h-6 text-green-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white">ID Card (Optional)</h3>
+                      <p className="text-sm text-gray-400">Upload government ID or skip</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {idFrontPreview ? (
+                      <div className="relative">
+                        <Image src={idFrontPreview} alt="ID Card" width={400} height={250} className="w-full h-48 object-cover rounded-xl" />
+                        <button
+                          onClick={() => {
+                            setIdFrontFile(null);
+                            setIdFrontPreview('');
+                          }}
+                          className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 rounded-full transition-colors"
+                        >
+                          <IoCloseCircleOutline className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="block w-full h-48 border-2 border-dashed border-[#3a3a3a] rounded-xl hover:border-blue-500 transition-colors cursor-pointer">
+                        <div className="flex flex-col items-center justify-center h-full">
+                          <IoCloudUploadOutline className="w-12 h-12 text-gray-500 mb-2" />
+                          <p className="text-sm text-gray-400">Click to upload</p>
+                          <p className="text-xs text-gray-600 mt-1">JPG, PNG (Max 5MB)</p>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleIdFrontChange}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-3">
+                      <p className="text-xs text-green-400">
+                        National ID, Driver's License, or Passport
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-6">
+                    <button
+                      onClick={() => setCurrentStep(2)}
+                      className="px-4 py-2.5 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white text-sm rounded-lg font-medium transition-colors flex items-center gap-2"
+                    >
+                      <IoArrowBackOutline className="w-4 h-4" />
+                      <span>Back</span>
+                    </button>
+                    <button
+                      onClick={handleSkipIDCard}
+                      disabled={isSubmitting}
+                      className="flex-1 px-4 py-2.5 bg-gray-600 hover:bg-gray-700 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
+                    >
+                      Skip
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!idFrontFile || isSubmitting}
+                      className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <IoCheckmarkCircleOutline className="w-4 h-4" />
+                          <span>Submit</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </AppShell>
+  );
+}

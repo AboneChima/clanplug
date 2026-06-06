@@ -61,6 +61,8 @@ function ListingsContent() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const gameName = searchParams.get('game') || '';
+  const hotDeal = searchParams.get('hotdeal') || '';
+  const displayName = hotDeal || gameName;
 
   const handleBookmark = async (postId: string) => {
     try {
@@ -104,7 +106,7 @@ function ListingsContent() {
 
   useEffect(() => {
     loadPosts();
-  }, [gameName]);
+  }, [gameName, hotDeal]);
 
   const loadPosts = async () => {
     try {
@@ -144,10 +146,11 @@ function ListingsContent() {
           type: p.type
         })));
         
-        // Filter by game name and add bookmark status
+        // Filter by game name or hot deal and add bookmark status
+        const searchTerm = hotDeal || gameName;
         const filtered = postsData
           .filter((p: Post) => 
-            p.gameTitle?.toLowerCase().includes(gameName.toLowerCase()) &&
+            p.gameTitle?.toLowerCase().includes(searchTerm.toLowerCase()) &&
             p.type !== 'SOCIAL_POST'
           )
           .map((p: Post) => ({
@@ -219,75 +222,74 @@ function ListingsContent() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-[200px] lg:pb-8">
-        {/* Header - Ultra Compact for 0-360px, Compact for 360px+ */}
-        <div className="bg-slate-800/50 border-b border-slate-700/50 backdrop-blur-sm mb-2">
-          <div className="max-w-7xl mx-auto px-2 xs:px-2.5 sm:px-3 py-1.5 xs:py-2 sm:py-3">
+      <div className="min-h-screen bg-black pb-[200px] lg:pb-8">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-xl border-b border-[#262626]">
+          <div className="max-w-7xl mx-auto px-4 py-3">
             <button
               onClick={() => router.push('/posts')}
-              className="inline-flex items-center gap-0.5 text-gray-400 hover:text-white mb-1 transition-colors"
+              className="inline-flex items-center gap-1 text-gray-400 hover:text-white mb-2 transition-colors text-sm"
             >
-              <IoArrowBack className="w-3 h-3" />
-              <span className="text-[10px] xs:text-xs">Back</span>
+              <IoArrowBack className="w-4 h-4" />
+              Back
             </button>
             
-            <div className="flex items-center justify-between gap-1.5 xs:gap-2">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <h1 className="text-xs xs:text-sm sm:text-lg font-bold text-white mb-0 xs:mb-0.5 capitalize truncate">
-                  {gameName.replace(/-/g, ' ')} Accounts
-                </h1>
-                <p className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400">{filteredPosts.length} listings</p>
+                <div className="flex items-baseline gap-2">
+                  <h1 className="text-xl font-bold text-white capitalize">
+                    {displayName.replace(/-/g, ' ')}
+                  </h1>
+                  <span className="text-sm text-gray-400">{filteredPosts.length} listings</span>
+                </div>
               </div>
               <button
-                onClick={() => router.push(`/marketplace/create?game=${gameName}`)}
-                className="flex items-center justify-center gap-0.5 xs:gap-1 w-7 h-7 xs:w-auto xs:h-auto xs:px-2.5 xs:py-1.5 sm:px-3 sm:py-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-md xs:rounded-lg transition-all shadow-lg hover:shadow-xl text-xs xs:text-xs sm:text-sm font-semibold"
-                title="Create Listing"
+                onClick={() => router.push(`/marketplace/create?game=${displayName}`)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all text-sm font-medium"
               >
-                <svg className="w-4 h-4 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-                <span className="hidden xs:inline">Post</span>
+                <IoAddOutline className="w-4 h-4" />
+                <span className="hidden sm:inline">Post</span>
               </button>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-2 xs:px-2.5 sm:px-3">
-          {/* Tabs - Ultra Compact for 0-360px, Compact for 360px+ */}
-          <div className="flex gap-1 xs:gap-1.5 mb-2">
+        <div className="max-w-7xl mx-auto px-4 pt-4">
+          {/* Tabs */}
+          <div className="flex gap-2 mb-4">
             <button
               onClick={() => setActiveTab('all')}
-              className={`px-2 xs:px-2.5 py-1 xs:py-1.5 rounded-md sm:rounded-lg text-[10px] xs:text-xs font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                 activeTab === 'all'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800 text-gray-400 hover:text-white'
+                  : 'bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#2a2a2a]'
               }`}
             >
               All
             </button>
             <button
               onClick={() => setActiveTab('saved')}
-              className={`px-2 xs:px-2.5 py-1 xs:py-1.5 rounded-md sm:rounded-lg text-[10px] xs:text-xs font-medium transition-colors flex items-center gap-0.5 xs:gap-1 ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
                 activeTab === 'saved'
                   ? 'bg-blue-600 text-white'
-                  : 'bg-slate-800 text-gray-400 hover:text-white'
+                  : 'bg-[#1a1a1a] text-gray-400 hover:text-white hover:bg-[#2a2a2a]'
               }`}
             >
-              <IoBookmark className="w-2.5 h-2.5 xs:w-3 xs:h-3" />
+              <IoBookmark className="w-3.5 h-3.5" />
               Saved
             </button>
           </div>
 
-          {/* Search - Ultra Compact for 0-360px, Compact for 360px+ */}
-          <div className="mb-2">
+          {/* Search */}
+          <div className="mb-4">
             <div className="relative max-w-2xl">
-              <IoSearchOutline className="absolute left-2 xs:left-2.5 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
+              <IoSearchOutline className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search listings..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-7 xs:pl-8 sm:pl-9 pr-2 xs:pr-2.5 sm:pr-3 py-1.5 xs:py-1.5 sm:py-2 bg-slate-800/80 border border-slate-700 rounded-md sm:rounded-lg text-white text-xs xs:text-xs sm:text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 bg-[#1a1a1a] border border-[#2f3336] rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-transparent transition-all"
               />
             </div>
           </div>
@@ -299,30 +301,30 @@ function ListingsContent() {
               <p className="text-gray-400 mt-4">Loading listings...</p>
             </div>
           ) : filteredPosts.length === 0 ? (
-            <div className="text-center py-20">
-              <IoGameControllerOutline className="w-20 h-20 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-2xl font-semibold text-white mb-3">No listings found</h3>
-              <p className="text-gray-400 mb-8">Be the first to create a listing!</p>
+            <div className="text-center py-16">
+              <IoGameControllerOutline className="w-16 h-16 text-gray-600 mx-auto mb-3" />
+              <h3 className="text-xl font-semibold text-white mb-2">No listings found</h3>
+              <p className="text-gray-400 text-sm mb-6">Be the first to create a listing!</p>
               <button
                 onClick={() => router.push(`/marketplace/create?game=${gameName}`)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all"
               >
-                <IoAddOutline className="w-5 h-5" />
-                Create First Listing
+                <IoAddOutline className="w-4 h-4" />
+                Create Listing
               </button>
             </div>
           ) : (
-            <div className={`grid gap-3 ${
-              gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i)
-                ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5' // Portrait for social media - 2 cols on mobile
-                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' // Landscape for games - 1 col on mobile
+            <div className={`grid gap-4 ${
+              displayName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i)
+                ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
             }`}>
               {filteredPosts.map((post) => {
-                const isSocialMedia = gameName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i);
+                const isSocialMedia = displayName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i);
                 return (
                 <div
                   key={post.id}
-                  className={`bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-xl overflow-hidden hover:border-slate-600 hover:shadow-xl hover:shadow-blue-500/10 transition-all group relative ${
+                  className={`bg-[#1a1a1a] border border-[#2f3336] rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all group relative ${
                     post.status === 'SOLD' ? 'opacity-60' : ''
                   }`}
                 >

@@ -129,76 +129,57 @@ export default function BroadcastOverlay() {
 
   return (
     <div 
-      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-200 ${
+      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm transition-all duration-200 ${
         isClosing ? 'opacity-0' : 'opacity-100'
       }`}
       onClick={handleClose}
     >
-      {/* Clean Modal - Force Dark Theme */}
+      {/* Minimal Modal */}
       <div 
         className={`relative w-full max-w-sm transform transition-all duration-200 ${
           isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Main Card - Slate Theme */}
-        <div className="relative bg-slate-800 rounded-3xl shadow-2xl overflow-hidden border border-slate-700">
+        {/* Card */}
+        <div className="relative bg-[#1a1a1a] rounded-2xl shadow-2xl overflow-hidden border border-[#333]">
           {/* Close Button */}
           <button
             onClick={handleClose}
-            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-gray-400 hover:bg-slate-600 hover:text-white transition-colors"
+            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-[#262626] flex items-center justify-center text-gray-400 hover:bg-[#333] hover:text-white transition-colors"
           >
             <IoCloseOutline className="w-5 h-5" />
           </button>
 
           {/* Content */}
           <div className="p-6 pt-8">
-            {/* Icon */}
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <IoInformationCircleOutline className="w-9 h-9 text-blue-400" />
-              </div>
-            </div>
-
             {/* Title */}
-            <h2 className="text-xl font-bold text-center text-white mb-3 px-2">
+            <h2 className="text-lg font-bold text-white mb-2">
               {message.title}
             </h2>
 
             {/* Message */}
-            <div className="mb-6">
-              <p className="text-sm text-gray-300 text-center leading-relaxed whitespace-pre-wrap px-2">
-                {message.message}
-              </p>
-            </div>
+            <p className="text-sm text-gray-400 mb-6 leading-relaxed">
+              {message.message}
+            </p>
 
             {/* Action Buttons */}
-            <div className="space-y-2.5">
-              {/* Custom Action Button - ALWAYS SHOW FOR TESTING */}
+            <div className="flex gap-2">
               {hasActionButton && (
                 <button
                   onClick={handleActionClick}
-                  className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg"
+                  className="flex-1 py-2.5 rounded-lg bg-white hover:bg-gray-100 text-black text-sm font-semibold transition-all"
                 >
-                  <span>{actionButton.text}</span>
-                  <IoArrowForwardOutline className="w-4 h-4" />
+                  {actionButton.text}
                 </button>
               )}
               
-              {/* Dismiss Button */}
               <button
                 onClick={handleClose}
-                className="w-full py-3.5 rounded-xl bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white text-sm font-semibold transition-all"
+                className={`${hasActionButton ? 'px-4' : 'flex-1'} py-2.5 rounded-lg bg-[#262626] hover:bg-[#333] text-white text-sm font-semibold transition-all`}
               >
-                {hasActionButton ? 'Maybe Later' : 'Got it'}
+                {hasActionButton ? 'Later' : 'Got it'}
               </button>
-            </div>
-
-            {/* Timestamp */}
-            <div className="text-center mt-4">
-              <span className="text-xs text-gray-500">
-                {new Date(message.createdAt).toLocaleString()}
-              </span>
             </div>
           </div>
         </div>

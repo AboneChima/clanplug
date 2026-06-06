@@ -27,13 +27,15 @@ export default function KYCPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form data
-  const [ninNumber, setNinNumber] = useState('');
+  const [ninImage, setNinImage] = useState<File | null>(null);
+  const [ninImagePreview, setNinImagePreview] = useState<string | null>(null);
   const [selfies, setSelfies] = useState<File[]>([]);
   const [selfiePreviews, setSelfiePreviews] = useState<string[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const ninInputRef = React.useRef<HTMLInputElement>(null);
 
   // Check KYC status
   useEffect(() => {
@@ -98,6 +100,18 @@ export default function KYCPage() {
     setShowCamera(false);
   };
 
+  const handleNinImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image size should be less than 5MB', 'error');
+        return;
+      }
+      setNinImage(file);
+      setNinImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current || selfies.length >= 3) return;
     
@@ -149,7 +163,7 @@ export default function KYCPage() {
   };
 
   const handleSubmit = async () => {
-    if (!ninNumber || selfies.length < 3) {
+    if (!ninImage || selfies.length < 3) {
       showToast('Please complete all steps', 'error');
       return;
     }
@@ -157,7 +171,8 @@ export default function KYCPage() {
     setIsSubmitting(true);
 
     try {
-      // Upload all selfies
+      // Upload NIN image and all selfies
+      const ninUrl = await uploadFile(ninImage);
       const selfieUrls = await Promise.all(selfies.map(file => uploadFile(file)));
 
       const token = localStorage.getItem('accessToken');
@@ -171,7 +186,8 @@ export default function KYCPage() {
           firstName: user?.firstName || '',
           lastName: user?.lastName || '',
           idType: 'nin',
-          idNumber: ninNumber,
+          idNumber: 'NIN_IMAGE_UPLOAD',
+          documentImages: [ninUrl],
           selfieUrl: selfieUrls[0],
           selfieUrl2: selfieUrls[1],
           selfieUrl3: selfieUrls[2],
@@ -244,7 +260,8 @@ export default function KYCPage() {
                 onClick={() => {
                   setKycStatus(null);
                   setCurrentStep(1);
-                  setNinNumber('');
+                  setNinImage(null);
+                  setNinImagePreview(null);
                   setSelfies([]);
                   setSelfiePreviews([]);
                 }}
@@ -276,7 +293,7 @@ export default function KYCPage() {
                 ))}
               </div>
 
-              {/* Step 1: NIN */}
+              {/* Step 1: NIN Image Upload */}
               {currentStep === 1 && (
                 <div className="bg-gradient-to-br from-[#1a1a1a] to-[#151515] rounded-2xl p-6 border border-[#2f3336] shadow-xl">
                   <div className="flex items-center gap-3 mb-6">
@@ -285,22 +302,65 @@ export default function KYCPage() {
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-white">NIN Verification</h3>
-                      <p className="text-xs text-gray-400">Enter your 11-digit NIN</p>
+                      <p className="text-xs text-gray-400">Upload or capture your NIN card</p>
                     </div>
                   </div>
 
-                  <input
-                    type="text"
-                    value={ninNumber}
-                    onChange={(e) => setNinNumber(e.target.value)}
-                    placeholder="Enter 11-digit NIN"
-                    maxLength={11}
-                    className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#3a3a3a] rounded-xl text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all shadow-inner"
-                  />
+                  {/* Warning Note */}
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mb-4 flex items-start gap-2">
+                    <IoInformationCircleOutline className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-yellow-300">
+                      <p className="font-semibold mb-1">Important:</p>
+                      <p>Ensure good lighting and all text on your NIN card is clearly visible. Avoid shadows and glare.</p>
+                    </div>
+                  </div>
+
+                  {ninImagePreview ? (
+                    <div className="relative mb-4">
+                      <Image 
+                        src={ninImagePreview} 
+                        alt="NIN Card" 
+                        width={400} 
+                        height={250} 
+                        className="w-full h-48 object-cover rounded-xl border border-[#2f3336]" 
+                        unoptimized 
+                      />
+                      <button
+                        onClick={() => {
+                          setNinImage(null);
+                          setNinImagePreview(null);
+                        }}
+                        className="absolute top-2 right-2 p-2 bg-red-500/90 hover:bg-red-500 rounded-lg transition-all"
+                      >
+                        <IoCloseCircleOutline className="w-5 h-5 text-white" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 mb-4">
+                      <input
+                        ref={ninInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleNinImageUpload}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => ninInputRef.current?.click()}
+                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm rounded-xl flex items-center justify-center gap-2 font-semibold transition-all shadow-lg shadow-blue-500/20"
+                      >
+                        <IoCameraOutline className="w-6 h-6" />
+                        Capture NIN Card with Camera
+                      </button>
+                      <p className="text-center text-xs text-gray-500">
+                        Click to open camera and take a photo of your NIN card
+                      </p>
+                    </div>
+                  )}
 
                   <button
                     onClick={() => setCurrentStep(2)}
-                    disabled={!/^\d{11}$/.test(ninNumber)}
+                    disabled={!ninImage}
                     className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-xl font-semibold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20"
                   >
                     Continue <IoArrowForwardOutline />

@@ -51,6 +51,9 @@ export interface PublicUser {
   state?: string;
   country?: string;
   phone?: string;
+  phoneNumber?: string;
+  address?: string;
+  dateOfBirth?: string;
   isKYCVerified?: boolean;
   kycStatus?: string;
   verificationBadge?: VerificationBadge;
