@@ -230,7 +230,7 @@ export default function MarketplaceDetailPage() {
   if (loading) {
     return (
       <AppShell>
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
       </AppShell>
@@ -240,7 +240,7 @@ export default function MarketplaceDetailPage() {
   if (!post) {
     return (
       <AppShell>
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-center">
             <p className="text-white text-xl">Listing not found</p>
             <button
@@ -257,9 +257,9 @@ export default function MarketplaceDetailPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pb-24 lg:pb-8">
+      <div className="min-h-screen bg-black pb-24 lg:pb-8">
         {/* Header */}
-        <div className="bg-slate-900/50 border-b border-slate-800 mb-3">
+        <div className="bg-black border-b border-[#1a1a1a] mb-3">
           <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2 sm:py-3">
             <button
               onClick={() => router.back()}
