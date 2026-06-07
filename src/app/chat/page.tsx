@@ -142,9 +142,17 @@ function ChatContent() {
         
         if (uploadRes.ok) {
           const data = await uploadRes.json();
-          // Handle both data.data.url and data.url formats
-          imageUrl = data.data?.url || data.url || '';
+          // Handle data.data.urls array format
+          if (data.data?.urls && data.data.urls.length > 0) {
+            imageUrl = data.data.urls[0];
+          } else if (data.data?.url) {
+            imageUrl = data.data.url;
+          } else if (data.url) {
+            imageUrl = data.url;
+          }
+          
           console.log('✅ Image uploaded successfully:', imageUrl);
+          console.log('📦 Full upload response:', data);
           
           if (!imageUrl) {
             console.error('❌ Upload response missing URL:', data);
@@ -487,9 +495,12 @@ function ChatContent() {
                   console.log('🔍 Rendering message:', { 
                     id: msg.id, 
                     type: msg.type, 
+                    hasImage,
                     hasAttachments: !!msg.attachments, 
                     attachmentsLength: msg.attachments?.length,
+                    attachments: msg.attachments,
                     firstAttachment: msg.attachments?.[0],
+                    content: msg.content?.substring(0, 30),
                     isListingShare
                   });
                   
