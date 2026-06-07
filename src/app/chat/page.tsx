@@ -6,13 +6,11 @@ import {
   IoSendOutline, 
   IoArrowBackOutline,
   IoCheckmarkDoneOutline,
-  IoSearchOutline,
   IoEllipsisVerticalOutline,
   IoImageOutline,
-  IoMicOutline,
   IoCloseOutline,
   IoAlertCircleOutline,
-  IoStopCircleOutline
+  IoHappyOutline
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,12 +38,11 @@ function ChatContent() {
   const [selectedReportReason, setSelectedReportReason] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+
+  const emojis = ['😊', '😂', '❤️', '👍', '🎉', '🔥', '😍', '🤔', '😭', '💯', '🙏', '👏', '✨', '💪', '🎮', '🎯', '🚀', '⭐', '💰', '🎁'];
 
   // Load chats on mount
   useEffect(() => {
@@ -189,80 +186,6 @@ function ChatContent() {
       }
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const audioFile = new File([audioBlob], 'voice-note.webm', { type: 'audio/webm' });
-        
-        // Upload voice note
-        const formData = new FormData();
-        formData.append('media', audioFile);
-        
-        const token = localStorage.getItem('accessToken');
-        const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formData,
-        });
-        
-        if (uploadRes.ok) {
-          const data = await uploadRes.json();
-          const voiceUrl = data.data.url;
-          
-          const messageData = {
-            content: 'Voice message',
-            type: 'FILE' as 'FILE',
-            attachments: [voiceUrl]
-          };
-          
-          const newMsg = await chatService.sendMessage(currentChat!.id, messageData as any, accessToken!);
-          setMessages(prev => [...prev, newMsg]);
-          showToast('Voice note sent!', 'success');
-        }
-        
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      
-      // Start timer
-      const startTime = Date.now();
-      const interval = setInterval(() => {
-        setRecordingTime(Math.floor((Date.now() - startTime) / 1000));
-      }, 1000);
-      
-      // Auto-stop after 60 seconds
-      setTimeout(() => {
-        if (mediaRecorderRef.current?.state === 'recording') {
-          stopRecording();
-        }
-        clearInterval(interval);
-      }, 60000);
-      
-    } catch (error) {
-      showToast('Cannot access microphone', 'error');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setRecordingTime(0);
     }
   };
 
@@ -547,13 +470,14 @@ function ChatContent() {
                       } ${hasImage ? 'p-1' : 'px-3 py-2'}`}>
                         {hasImage && (
                           <div className="mb-1">
-                            <Image 
+                            <img 
                               src={msg.attachments![0]} 
                               alt="Image" 
-                              width={200} 
-                              height={200} 
-                              className="rounded-xl max-w-full" 
-                              unoptimized 
+                              className="rounded-xl max-w-full max-h-[200px] object-cover" 
+                              onError={(e) => {
+                                console.error('Image failed to load:', msg.attachments![0]);
+                                e.currentTarget.style.display = 'none';
+                              }}
                             />
                           </div>
                         )}
@@ -581,7 +505,7 @@ function ChatContent() {
               {/* Image Preview */}
               {imagePreview && (
                 <div className="mb-2 relative inline-block">
-                  <Image src={imagePreview} alt="Preview" width={100} height={100} className="rounded-lg" unoptimized />
+                  <img src={imagePreview} alt="Preview" className="rounded-lg w-24 h-24 object-cover" />
                   <button
                     onClick={() => {
                       setImageFile(null);
@@ -594,17 +518,23 @@ function ChatContent() {
                 </div>
               )}
               
-              {/* Recording Indicator */}
-              {isRecording && (
-                <div className="mb-2 flex items-center gap-2 px-3 py-2 bg-red-500/20 border border-red-500/30 rounded-lg">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  <span className="text-red-400 text-xs">Recording... {recordingTime}s</span>
-                  <button
-                    onClick={stopRecording}
-                    className="ml-auto p-1 bg-red-500 rounded-full"
-                  >
-                    <IoStopCircleOutline className="w-4 h-4 text-white" />
-                  </button>
+              {/* Emoji Picker */}
+              {showEmojiPicker && (
+                <div className="mb-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3">
+                  <div className="grid grid-cols-10 gap-2">
+                    {emojis.map((emoji, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setMessageText(prev => prev + emoji);
+                          setShowEmojiPicker(false);
+                        }}
+                        className="text-2xl hover:bg-[#2a2a2a] rounded p-1 transition-colors"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
               
@@ -619,21 +549,19 @@ function ChatContent() {
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={sending || isRecording}
+                  disabled={sending}
                   className="p-2 text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-50"
                 >
                   <IoImageOutline className="w-5 h-5" />
                 </button>
                 
-                {/* Voice Note */}
+                {/* Emoji Picker Toggle */}
                 <button
-                  onClick={isRecording ? stopRecording : startRecording}
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                   disabled={sending}
-                  className={`p-2 transition-colors disabled:opacity-50 ${
-                    isRecording ? 'text-red-500' : 'text-gray-400 hover:text-blue-500'
-                  }`}
+                  className="p-2 text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-50"
                 >
-                  <IoMicOutline className="w-5 h-5" />
+                  <IoHappyOutline className="w-5 h-5" />
                 </button>
                 
                 <textarea
@@ -650,14 +578,14 @@ function ChatContent() {
                     }
                   }}
                   placeholder="Type a message"
-                  disabled={sending || isRecording}
+                  disabled={sending}
                   rows={1}
                   className="flex-1 min-w-0 px-3 py-2 border border-[#2a2a2a] rounded-full bg-[#2a2a2a] text-white text-xs placeholder-gray-500 focus:outline-none focus:border-blue-600 disabled:opacity-50 resize-none overflow-y-auto max-h-[100px]"
                   style={{ minHeight: '36px' }}
                 />
                 <button
                   onClick={handleSend}
-                  disabled={(!messageText.trim() && !imageFile) || sending || isRecording}
+                  disabled={(!messageText.trim() && !imageFile) || sending}
                   className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                 >
                   <IoSendOutline className="w-4 h-4" />
