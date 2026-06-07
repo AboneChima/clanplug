@@ -18,6 +18,7 @@ export interface SendMessageRequest {
   type?: MessageType;
   attachments?: string[];
   replyToId?: string;
+  metadata?: any;
 }
 
 export interface UpdateMessageRequest {
@@ -395,7 +396,7 @@ class ChatService {
 
   // Send message
   async sendMessage(request: SendMessageRequest): Promise<MessageWithDetails> {
-    const { chatId, userId, content, type = MessageType.TEXT, attachments = [], replyToId } = request;
+    const { chatId, userId, content, type = MessageType.TEXT, attachments = [], replyToId, metadata } = request;
 
     // Verify user is participant
     const participant = await prisma.chatParticipant.findFirst({
@@ -435,6 +436,7 @@ class ChatService {
         content,
         attachments,
         replyToId,
+        metadata,
       },
       include: {
         user: {

@@ -159,7 +159,7 @@ class ChatController {
     try {
       const userId = (req as any).user.id;
       const { chatId } = req.params;
-      const { content, type, attachments, replyToId } = req.body;
+      const { content, type, attachments, replyToId, metadata } = req.body;
 
       const message = await chatService.sendMessage({
         chatId,
@@ -168,6 +168,7 @@ class ChatController {
         type: type || MessageType.TEXT,
         attachments: attachments || [],
         replyToId,
+        metadata,
       });
 
       return res.status(201).json({
