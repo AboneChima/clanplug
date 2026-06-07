@@ -276,7 +276,7 @@ export default function MarketplaceDetailPage() {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-2 sm:space-y-4">
               {/* Video/Image - Compact */}
-              <div className="bg-slate-800/50 rounded-md sm:rounded-lg overflow-hidden border border-slate-700 relative">
+              <div className="bg-[#0a0a0a] rounded-md sm:rounded-lg overflow-hidden border border-[#1a1a1a] relative">
                 {/* Check if it's a social media listing for portrait ratio */}
                 <div className={`relative bg-black ${
                   post.gameTitle?.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i) 
@@ -330,7 +330,7 @@ export default function MarketplaceDetailPage() {
               </div>
 
               {/* Details - Compact */}
-              <div className="bg-slate-800/50 rounded-md sm:rounded-lg p-2 sm:p-4 lg:p-6 border border-slate-700">
+              <div className="bg-[#0a0a0a] rounded-md sm:rounded-lg p-2 sm:p-4 lg:p-6 border border-[#1a1a1a]">
                 <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-white mb-1.5 sm:mb-2">{post.title}</h1>
 
                 {/* Tags - Smaller */}
@@ -367,7 +367,7 @@ export default function MarketplaceDetailPage() {
 
                 {/* Account Details */}
                 {post.category === 'GAME_ACCOUNT' && (
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 p-2 sm:p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 p-2 sm:p-3 bg-[#0a0a0a] rounded-lg border border-[#1a1a1a]">
                     {post.accountRegion && (
                       <div>
                         <p className="text-gray-400 text-xs mb-0.5">Region</p>
@@ -390,7 +390,7 @@ export default function MarketplaceDetailPage() {
                 )}
 
                 {/* Stats */}
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-gray-400 text-xs mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-700">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-gray-400 text-xs mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[#1a1a1a]">
                   <span className="flex items-center gap-1 sm:gap-2">
                     <IoEyeOutline className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span className="hidden xs:inline">{post.views || 0} views</span>
@@ -413,7 +413,7 @@ export default function MarketplaceDetailPage() {
             {/* Sidebar - Compact */}
             <div className="space-y-2 sm:space-y-3">
               {/* Price & Buy - Compact */}
-              <div className="bg-slate-800/50 rounded-md sm:rounded-lg p-2 sm:p-3 border border-slate-700 lg:sticky lg:top-6">
+              <div className="bg-[#0a0a0a] rounded-md sm:rounded-lg p-2 sm:p-3 border border-[#1a1a1a] lg:sticky lg:top-6">
                 <div className="mb-2 sm:mb-3">
                   <p className="text-gray-400 text-[10px] sm:text-xs mb-0.5">Price</p>
                   <p className="text-lg sm:text-2xl font-bold text-green-400">
@@ -476,7 +476,7 @@ export default function MarketplaceDetailPage() {
               </div>
 
               {/* Seller Info - Compact */}
-              <div className="bg-slate-800/50 rounded-md sm:rounded-lg p-2 sm:p-3 border border-slate-700">
+              <div className="bg-[#0a0a0a] rounded-md sm:rounded-lg p-2 sm:p-3 border border-[#1a1a1a]">
                 <h3 className="text-xs sm:text-sm font-semibold text-white mb-1.5 sm:mb-2">Seller</h3>
                 
                 <div className="flex items-center gap-1.5 mb-2">
@@ -484,7 +484,7 @@ export default function MarketplaceDetailPage() {
                     <img
                       src={post.user.avatar}
                       alt={post.user.username}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-slate-600"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-[#2a2a2a]"
                     />
                   ) : (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
@@ -517,7 +517,7 @@ export default function MarketplaceDetailPage() {
               </div>
 
               {/* Safety Tips */}
-              <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700">
+              <div className="bg-[#0a0a0a] rounded-lg sm:rounded-xl p-3 sm:p-4 border border-[#1a1a1a]">
                 <div className="flex items-center gap-1.5 text-yellow-400 mb-2">
                   <IoWarningOutline className="w-4 h-4" />
                   <h3 className="text-sm font-semibold">Safety Tips</h3>
@@ -555,7 +555,7 @@ export default function MarketplaceDetailPage() {
           >
             <button
               onClick={() => setSelectedImage(null)}
-              className="absolute top-20 right-4 p-3 bg-slate-800/90 hover:bg-slate-700 rounded-full text-white transition-colors shadow-lg z-10"
+              className="absolute top-20 right-4 p-3 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded-full text-white transition-colors shadow-lg z-10"
             >
               <IoCloseOutline className="w-6 h-6" />
             </button>
