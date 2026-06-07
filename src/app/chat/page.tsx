@@ -16,7 +16,6 @@ import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { chatService, Chat, ChatMessage } from '@/services/chat.service';
-import Image from 'next/image';
 
 function ChatContent() {
   const searchParams = useSearchParams();
@@ -130,6 +129,7 @@ function ChatContent() {
       
       // Upload image if present
       if (imageFile) {
+        console.log('📤 Uploading image...', imageFile.name);
         const formData = new FormData();
         formData.append('media', imageFile);
         
@@ -142,25 +142,44 @@ function ChatContent() {
         
         if (uploadRes.ok) {
           const data = await uploadRes.json();
-          imageUrl = data.data.url;
+          // Handle both data.data.url and data.url formats
+          imageUrl = data.data?.url || data.url || '';
+          console.log('✅ Image uploaded successfully:', imageUrl);
+          
+          if (!imageUrl) {
+            console.error('❌ Upload response missing URL:', data);
+            showToast('Failed to get image URL', 'error');
+            setSending(false);
+            return;
+          }
+        } else {
+          const errorText = await uploadRes.text();
+          console.error('❌ Upload failed:', errorText);
+          showToast('Failed to upload image', 'error');
+          setSending(false);
+          return;
         }
       }
       
-      const content = messageText.trim() || 'Image';
-      const messageData = { 
+      const content = messageText.trim() || '';
+      const messageData: any = { 
         content, 
-        type: imageUrl ? ('IMAGE' as 'IMAGE') : ('TEXT' as 'TEXT')
+        type: imageUrl ? 'IMAGE' : 'TEXT'
       };
       
       if (imageUrl) {
-        (messageData as any).attachments = [imageUrl];
+        messageData.attachments = [imageUrl];
+        console.log('📨 Sending message with image:', { ...messageData, imageUrl });
       }
       
       setMessageText('');
       setImageFile(null);
       setImagePreview('');
       
+      console.log('📤 Calling sendMessage with:', messageData);
       const newMsg = await chatService.sendMessage(currentChat.id, messageData, accessToken);
+      console.log('✅ Message sent successfully:', newMsg);
+      
       setMessages(prev => [...prev, newMsg]);
       
       setChats(prevChats => {
@@ -171,6 +190,7 @@ function ChatContent() {
       
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     } catch (error: any) {
+      console.error('❌ Send error:', error);
       showToast(error.message || 'Failed to send', 'error');
     } finally {
       setSending(false);
@@ -462,36 +482,102 @@ function ChatContent() {
                 messages.map((msg) => {
                   const isOwn = msg.userId === user?.id;
                   const hasImage = msg.type === 'IMAGE' && msg.attachments && msg.attachments.length > 0;
+                  const isListingShare = (msg as any).metadata?.type === 'LISTING_SHARE';
+                  
+                  console.log('🔍 Rendering message:', { 
+                    id: msg.id, 
+                    type: msg.type, 
+                    hasAttachments: !!msg.attachments, 
+                    attachmentsLength: msg.attachments?.length,
+                    firstAttachment: msg.attachments?.[0],
+                    isListingShare
+                  });
                   
                   return (
                     <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[75%] rounded-2xl ${
+                      <div className={`max-w-[75%] ${
+                        isListingShare ? '' : 'rounded-2xl'
+                      } ${
                         isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-[#2a2a2a] text-white rounded-bl-md'
-                      } ${hasImage ? 'p-1' : 'px-3 py-2'}`}>
-                        {hasImage && (
+                      } ${hasImage && !isListingShare ? 'p-1' : isListingShare ? '' : 'px-3 py-2'}`}>
+                        
+                        {/* Listing Share - Clickable Card */}
+                        {isListingShare && (msg as any).metadata && (
+                          <a 
+                            href={`/marketplace/${(msg as any).metadata.listingId}`}
+                            className="block hover:opacity-90 transition-opacity"
+                          >
+                            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden">
+                              {(msg as any).metadata.listingImage && (
+                                <img 
+                                  src={(msg as any).metadata.listingImage} 
+                                  alt={(msg as any).metadata.listingTitle}
+                                  className="w-full h-48 object-cover"
+                                  onLoad={() => console.log('✅ Listing image loaded')}
+                                  onError={(e) => console.error('❌ Listing image failed')}
+                                />
+                              )}
+                              <div className="p-3">
+                                <p className="text-white font-semibold text-sm mb-1 line-clamp-2">
+                                  {(msg as any).metadata.listingTitle}
+                                </p>
+                                <p className="text-green-400 font-bold text-base mb-2">
+                                  {(msg as any).metadata.listingCurrency} {(msg as any).metadata.listingPrice?.toLocaleString()}
+                                </p>
+                                {msg.content && (
+                                  <p className="text-gray-400 text-xs">{msg.content}</p>
+                                )}
+                                <div className="flex items-center gap-1 mt-2 text-blue-400 text-xs">
+                                  <span>View Listing</span>
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
+                            <div className={`flex items-center justify-end gap-1 px-2 py-1 ${isOwn ? 'bg-blue-600' : 'bg-[#2a2a2a]'} rounded-b-lg`}>
+                              <span className="text-[10px] opacity-70">
+                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              {isOwn && (
+                                <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
+                              )}
+                            </div>
+                          </a>
+                        )}
+                        
+                        {/* Regular Image Message */}
+                        {!isListingShare && hasImage && (
                           <div className="mb-1">
                             <img 
                               src={msg.attachments![0]} 
                               alt="Image" 
-                              className="rounded-xl max-w-full max-h-[200px] object-cover" 
+                              className="rounded-xl max-w-full w-full max-h-[300px] object-cover" 
+                              onLoad={() => console.log('✅ Image loaded:', msg.attachments![0])}
                               onError={(e) => {
-                                console.error('Image failed to load:', msg.attachments![0]);
-                                e.currentTarget.style.display = 'none';
+                                console.error('❌ Image failed to load:', msg.attachments![0]);
+                                console.error('Error details:', e);
                               }}
                             />
                           </div>
                         )}
-                        {msg.content && msg.content !== 'Image' && (
-                          <p className={`text-xs break-words whitespace-pre-wrap ${hasImage ? 'px-2 pb-1' : ''}`}>{msg.content}</p>
+                        
+                        {/* Regular Text Message */}
+                        {!isListingShare && (
+                          <>
+                            {msg.content && msg.content !== 'Image' && (
+                              <p className={`text-xs break-words whitespace-pre-wrap ${hasImage ? 'px-2 pb-1' : ''}`}>{msg.content}</p>
+                            )}
+                            <div className={`flex items-center justify-end gap-1 ${hasImage ? 'px-2 pb-1' : 'mt-1'}`}>
+                              <span className="text-[10px] opacity-70">
+                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              {isOwn && (
+                                <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
+                              )}
+                            </div>
+                          </>
                         )}
-                        <div className={`flex items-center justify-end gap-1 ${hasImage ? 'px-2 pb-1' : 'mt-1'}`}>
-                          <span className="text-[10px] opacity-70">
-                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                          {isOwn && (
-                            <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
-                          )}
-                        </div>
                       </div>
                     </div>
                   );

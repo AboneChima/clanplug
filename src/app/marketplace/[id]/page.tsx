@@ -138,29 +138,34 @@ export default function MarketplaceDetailPage() {
         const chatId = chatData?.id;
         
         if (chatId) {
-          // Send the listing as context message
-          const listingMessage = {
-            type: 'LISTING_SHARE',
-            listingId: post.id,
-            listingTitle: post.title,
-            listingPrice: post.price,
-            listingCurrency: post.currency,
-            listingImage: post.images?.[0] || post.videos?.[0],
+          // Send the listing as a message with image attachment and metadata
+          const listingImage = post.images?.[0] || post.videos?.[0];
+          
+          const messagePayload = {
+            content: `I'm interested in: ${post.title}\nPrice: ${post.currency} ${post.price?.toLocaleString()}`,
+            type: listingImage ? 'IMAGE' : 'TEXT',
+            attachments: listingImage ? [listingImage] : undefined,
+            metadata: {
+              type: 'LISTING_SHARE',
+              listingId: post.id,
+              listingTitle: post.title,
+              listingPrice: post.price,
+              listingCurrency: post.currency,
+              listingImage: listingImage,
+            }
           };
           
-          // Send the listing context
+          // Send the message with listing
           await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats/${chatId}/messages`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              content: `I'm interested in: ${post.title}`,
-              metadata: listingMessage,
-            }),
+            body: JSON.stringify(messagePayload),
           });
           
+          // Navigate to chat
           router.push(`/chat?id=${chatId}`);
         } else {
           showToast('Failed to create chat', 'error');
