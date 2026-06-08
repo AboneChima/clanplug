@@ -180,6 +180,9 @@ function ChatContent() {
         console.log('📨 Sending message with image:', { ...messageData, imageUrl });
       }
       
+      // Don't send metadata for now to avoid validation errors
+      // TODO: Add metadata back once backend is updated
+      
       setMessageText('');
       setImageFile(null);
       setImagePreview('');
