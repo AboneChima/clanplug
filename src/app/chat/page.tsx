@@ -10,7 +10,8 @@ import {
   IoImageOutline,
   IoCloseOutline,
   IoAlertCircleOutline,
-  IoHappyOutline
+  IoHappyOutline,
+  IoShareOutline
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
