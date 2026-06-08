@@ -9,6 +9,7 @@ import prisma from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { initializeFirebase } from './services/firebase.service';
+import healthRoutes from './routes/health.routes';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import userDashboardRoutes from './routes/user-dashboard.routes';
@@ -132,6 +133,7 @@ app.get('/health', (req: any, res: any) => {
 });
 
 // API Routes
+app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/user', userDashboardRoutes);
