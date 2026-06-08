@@ -169,7 +169,14 @@ function ChatContent() {
         }
       }
       
-      const content = messageText.trim() || '';
+      const content = messageText.trim() || (imageUrl ? 'Image' : '');
+      
+      if (!content && !imageUrl) {
+        showToast('Please enter a message or select an image', 'error');
+        setSending(false);
+        return;
+      }
+      
       const messageData: any = { 
         content, 
         type: imageUrl ? 'IMAGE' : 'TEXT'
@@ -187,7 +194,7 @@ function ChatContent() {
       setImageFile(null);
       setImagePreview('');
       
-      console.log('📤 Calling sendMessage with:', messageData);
+      console.log('📤 Final message payload:', JSON.stringify(messageData, null, 2));
       const newMsg = await chatService.sendMessage(currentChat.id, messageData, accessToken);
       console.log('✅ Message sent successfully:', newMsg);
       
