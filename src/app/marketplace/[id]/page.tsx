@@ -138,22 +138,21 @@ export default function MarketplaceDetailPage() {
         const chatId = chatData?.id;
         
         if (chatId) {
-          // Send the listing as a message with image attachment
+          // Send the listing as a message with image attachment and metadata
           const listingImage = post.images?.[0] || post.videos?.[0];
           
           const messagePayload = {
             content: `I'm interested in: ${post.title}\nPrice: ${post.currency} ${post.price?.toLocaleString()}`,
             type: listingImage ? 'IMAGE' : 'TEXT',
             attachments: listingImage ? [listingImage] : undefined,
-            // Metadata disabled temporarily until backend is fully deployed
-            // metadata: {
-            //   type: 'LISTING_SHARE',
-            //   listingId: post.id,
-            //   listingTitle: post.title,
-            //   listingPrice: post.price,
-            //   listingCurrency: post.currency,
-            //   listingImage: listingImage,
-            // }
+            metadata: {
+              type: 'LISTING_SHARE',
+              listingId: post.id,
+              listingTitle: post.title,
+              listingPrice: post.price,
+              listingCurrency: post.currency,
+              listingImage: listingImage,
+            }
           };
           
           // Send the message with listing

@@ -38,10 +38,106 @@ function ChatContent() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
+  const [showMessageMenu, setShowMessageMenu] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const emojis = ['😊', '😂', '❤️', '👍', '🎉', '🔥', '😍', '🤔', '😭', '💯', '🙏', '👏', '✨', '💪', '🎮', '🎯', '🚀', '⭐', '💰', '🎁'];
+
+  const handleLongPressStart = (msg: ChatMessage) => {
+    const timer = setTimeout(() => {
+      setSelectedMessage(msg);
+      setShowMessageMenu(true);
+    }, 500); // 500ms long press
+    setLongPressTimer(timer);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const canDeleteForEveryone = (msg: ChatMessage): boolean => {
+    if (msg.userId !== user?.id) return false;
+    const messageTime = new Date(msg.createdAt).getTime();
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
+    return (now - messageTime) <= oneHour;
+  };
+
+  const handleDeleteForMe = async () => {
+    if (!selectedMessage) return;
+    try {
+      // Just hide it locally - you could also add a deletedByUsers array in backend
+      setMessages(prev => prev.filter(m => m.id !== selectedMessage.id));
+      showToast('Message deleted', 'success');
+      setShowMessageMenu(false);
+      setSelectedMessage(null);
+    } catch (error) {
+      showToast('Failed to delete message', 'error');
+    }
+  };
+
+  const handleDeleteForEveryone = async () => {
+    if (!selectedMessage || !currentChat) return;
+    
+    if (!canDeleteForEveryone(selectedMessage)) {
+      showToast('You can only delete messages within 1 hour', 'error');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats/${currentChat.id}/messages/${selectedMessage.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      setMessages(prev => prev.map(m => 
+        m.id === selectedMessage.id 
+          ? { ...m, isDeleted: true, content: 'This message was deleted' }
+          : m
+      ));
+      showToast('Message deleted for everyone', 'success');
+      setShowMessageMenu(false);
+      setSelectedMessage(null);
+    } catch (error) {
+      showToast('Failed to delete message', 'error');
+    }
+  };
+
+  const handleForwardMessage = () => {
+    if (!selectedMessage) return;
+    // TODO: Implement forward to another chat
+    showToast('Forward feature coming soon', 'info');
+    setShowMessageMenu(false);
+    setSelectedMessage(null);
+  };
+
+  const handleShareMessage = async () => {
+    if (!selectedMessage) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          text: selectedMessage.content,
+        });
+      } else {
+        await navigator.clipboard.writeText(selectedMessage.content);
+        showToast('Message copied to clipboard', 'success');
+      }
+      setShowMessageMenu(false);
+      setSelectedMessage(null);
+    } catch (error) {
+      showToast('Failed to share message', 'error');
+    }
+  };
 
   // Load chats on mount
   useEffect(() => {
@@ -515,7 +611,15 @@ function ChatContent() {
                   });
                   
                   return (
-                    <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                    <div 
+                      key={msg.id} 
+                      className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                      onTouchStart={() => handleLongPressStart(msg)}
+                      onTouchEnd={handleLongPressEnd}
+                      onMouseDown={() => handleLongPressStart(msg)}
+                      onMouseUp={handleLongPressEnd}
+                      onMouseLeave={handleLongPressEnd}
+                    >
                       <div className={`max-w-[75%] ${
                         isListingShare ? '' : 'rounded-2xl'
                       } ${
@@ -789,6 +893,70 @@ function ChatContent() {
                         Block
                       </button>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Message Actions Menu */}
+            {showMessageMenu && selectedMessage && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowMessageMenu(false)}>
+                <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-sm border border-[#2f3336]" onClick={(e) => e.stopPropagation()}>
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold text-gray-400 mb-3 px-2">Message Options</h3>
+                    
+                    {selectedMessage.userId === user?.id && canDeleteForEveryone(selectedMessage) && (
+                      <button
+                        onClick={handleDeleteForEveryone}
+                        className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-[#2a2a2a] transition-colors flex items-center gap-3 rounded-lg"
+                      >
+                        <IoCloseOutline className="w-5 h-5" />
+                        <div>
+                          <div className="font-medium">Delete for Everyone</div>
+                          <div className="text-xs text-gray-500">Remove for all chat members</div>
+                        </div>
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={handleDeleteForMe}
+                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#2a2a2a] transition-colors flex items-center gap-3 rounded-lg"
+                    >
+                      <IoCloseOutline className="w-5 h-5" />
+                      <div>
+                        <div className="font-medium">Delete for Me</div>
+                        <div className="text-xs text-gray-500">Remove from your chat</div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={handleShareMessage}
+                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#2a2a2a] transition-colors flex items-center gap-3 rounded-lg"
+                    >
+                      <IoShareOutline className="w-5 h-5" />
+                      <div>
+                        <div className="font-medium">Share</div>
+                        <div className="text-xs text-gray-500">Share message content</div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={handleForwardMessage}
+                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#2a2a2a] transition-colors flex items-center gap-3 rounded-lg"
+                    >
+                      <IoShareOutline className="w-5 h-5" />
+                      <div>
+                        <div className="font-medium">Forward</div>
+                        <div className="text-xs text-gray-500">Send to another chat</div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={() => setShowMessageMenu(false)}
+                      className="w-full px-4 py-3 text-center text-sm text-gray-400 hover:bg-[#2a2a2a] transition-colors rounded-lg mt-2"
+                    >
+                      Cancel
+                    </button>
                   </div>
                 </div>
               </div>
