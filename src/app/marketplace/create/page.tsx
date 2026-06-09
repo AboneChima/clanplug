@@ -102,9 +102,9 @@ function CreateListingForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // KYC check for marketplace listings
+    // CRITICAL: Only KYC verified users can post marketplace listings
     if (!user?.isKYCVerified) {
-      showToast('Please complete KYC verification before posting marketplace listings', 'error');
+      showToast('Complete KYC verification to post marketplace listings', 'error');
       router.push('/kyc');
       return;
     }

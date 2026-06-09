@@ -19,8 +19,33 @@ export default function CreatePostPage() {
   const [video, setVideo] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userPostCount, setUserPostCount] = useState(0);
+  const [loadingPostCount, setLoadingPostCount] = useState(true);
 
   const isVerified = (user as any)?.verificationBadge?.status === 'verified' || (user as any)?.verificationBadge?.status === 'active';
+
+  // Fetch user's post count on mount
+  useState(() => {
+    const fetchPostCount = async () => {
+      if (!user?.id) return;
+      try {
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts?userId=${user.id}&type=SOCIAL_POST`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const posts = Array.isArray(data.data) ? data.data : [];
+          setUserPostCount(posts.length);
+        }
+      } catch (error) {
+        console.error('Error fetching post count:', error);
+      } finally {
+        setLoadingPostCount(false);
+      }
+    };
+    fetchPostCount();
+  });
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -79,6 +104,19 @@ export default function CreatePostPage() {
       return;
     }
 
+    // Check posting limits for non-verified users
+    if (!isVerified && userPostCount >= 5) {
+      showToast('Free users can only make 5 posts. Purchase verification badge for unlimited posts!', 'error');
+      router.push('/verification-badge');
+      return;
+    }
+
+    // Video check - only verified badge users can post videos
+    if (video && !isVerified) {
+      showToast('Only verified badge users can post videos', 'error');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -105,7 +143,8 @@ export default function CreatePostPage() {
             }
             
             const data = await response.json();
-            const url = data.data?.url || data.url;
+            // Handle both data.data.url and data.data.urls[0] formats
+            const url = data.data?.urls?.[0] || data.data?.url || data.url;
             if (url) {
               mediaUrls.push(url);
             }
@@ -134,7 +173,8 @@ export default function CreatePostPage() {
           }
           
           const data = await response.json();
-          videoUrl = data.data?.url || data.url || null;
+          // Handle both data.data.url and data.data.urls[0] formats
+          videoUrl = data.data?.urls?.[0] || data.data?.url || data.url || null;
         } catch (err) {
           console.error('Video upload error:', err);
           showToast('Failed to upload video', 'error');
@@ -224,6 +264,31 @@ export default function CreatePostPage() {
             className="w-full bg-transparent text-white text-lg placeholder-gray-500 resize-none focus:outline-none mb-4"
             rows={6}
           />
+
+          {/* Post Limit Warning for Non-Verified Users */}
+          {!isVerified && !loadingPostCount && (
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mb-4">
+              <div className="flex items-start gap-2">
+                <IoShieldCheckmarkOutline className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-yellow-400 text-sm font-medium mb-1">
+                    Free Account: {userPostCount}/5 posts used
+                  </p>
+                  <p className="text-gray-400 text-xs mb-2">
+                    {userPostCount >= 5 
+                      ? 'You\'ve reached your limit. Get verified for unlimited posts and video upload!'
+                      : `${5 - userPostCount} posts remaining. Get verified badge for unlimited posts and video upload!`
+                    }
+                  </p>
+                  <Link href="/verification-badge">
+                    <button className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-medium rounded-lg transition-all">
+                      Get Verified Badge - ₦2,000/month
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Image Previews */}
           {imagePreviews.length > 0 && (

@@ -141,11 +141,13 @@ export default function VerificationBadgePage() {
           <div className="space-y-2">
             {[
               'Verified blue checkmark badge',
+              'Username protection & priority',
+              'Unlimited social media posting',
+              'Upload videos to social feed',
               'Priority listing visibility',
               'Enhanced profile credibility',
               'Build buyer trust instantly',
               'Stand out in marketplace',
-              'Exclusive verified tag',
             ].map((benefit, i) => (
               <div key={i} className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">

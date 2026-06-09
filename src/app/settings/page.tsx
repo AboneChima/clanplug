@@ -141,8 +141,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <AppShell>
-      <div className="min-h-screen bg-black pb-20 lg:pb-8">
+    <AppShell hideBottomNavOnMobile={true}>
+      <div className="min-h-screen bg-black pb-8">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-xl border-b border-[#2f3336] px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="p-2 hover:bg-[#1a1a1a] rounded-full transition-colors lg:hidden">
