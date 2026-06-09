@@ -37,7 +37,7 @@ export default function VerificationBadgePage() {
       id: 'monthly',
       name: 'Monthly',
       duration: '1 Month',
-      price: 5000,
+      price: 2000,
       discount: 0,
       icon: IoFlashOutline,
       color: 'from-blue-500 to-blue-600',
@@ -46,7 +46,7 @@ export default function VerificationBadgePage() {
       id: '6months',
       name: '6 Months',
       duration: '6 Months',
-      price: 28500, // 5% discount: 30000 - 1500
+      price: 11400, // 5% discount: 12000 - 600
       discount: 5,
       popular: true,
       icon: IoTrophyOutline,
@@ -56,7 +56,7 @@ export default function VerificationBadgePage() {
       id: 'yearly',
       name: 'Yearly',
       duration: '12 Months',
-      price: 54000, // 10% discount: 60000 - 6000
+      price: 21600, // 10% discount: 24000 - 2400
       discount: 10,
       icon: IoRocketOutline,
       color: 'from-green-500 to-green-600',
@@ -162,7 +162,7 @@ export default function VerificationBadgePage() {
           {plans.map((plan) => {
             const Icon = plan.icon;
             const isSelected = selectedPlan === plan.id;
-            const originalPrice = plan.duration === '6 Months' ? 30000 : plan.duration === '12 Months' ? 60000 : plan.price;
+            const originalPrice = plan.duration === '6 Months' ? 12000 : plan.duration === '12 Months' ? 24000 : plan.price;
             
             return (
               <div

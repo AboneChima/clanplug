@@ -15,6 +15,8 @@ type Profile = {
   username: string;
   email: string;
   avatar?: string;
+  phone?: string;
+  location?: string;
 };
 
 export default function SettingsPage() {
@@ -37,6 +39,8 @@ export default function SettingsPage() {
         username: user.username || '',
         email: user.email || '',
         avatar: user.avatar,
+        phone: user.phone || '',
+        location: user.location || '',
       });
       setAvatarPreview(user.avatar || '');
     }
@@ -96,6 +100,8 @@ export default function SettingsPage() {
           lastName: profile.lastName,
           username: profile.username,
           email: profile.email,
+          phone: profile.phone,
+          location: profile.location,
         }),
       });
       
@@ -195,22 +201,6 @@ export default function SettingsPage() {
                     <span className="text-white text-sm font-medium">Premium Verification</span>
                     <p className="text-gray-500 text-xs">Get the blue checkmark</p>
                   </div>
-                  <IoChevronForwardOutline className="w-5 h-5 text-gray-600" />
-                </button>
-
-                <button className="w-full px-4 py-4 flex items-center gap-3 hover:bg-[#333] transition-colors border-b border-[#3a3a3a]">
-                  <div className="w-10 h-10 rounded-full bg-[#3a3a3a] flex items-center justify-center">
-                    <IoPersonOutline className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="flex-1 text-left text-white text-sm">Profile details</span>
-                  <IoChevronForwardOutline className="w-5 h-5 text-gray-600" />
-                </button>
-
-                <button className="w-full px-4 py-4 flex items-center gap-3 hover:bg-[#333] transition-colors border-b border-[#3a3a3a]">
-                  <div className="w-10 h-10 rounded-full bg-[#3a3a3a] flex items-center justify-center">
-                    <IoLockClosedOutline className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="flex-1 text-left text-white text-sm">Password</span>
                   <IoChevronForwardOutline className="w-5 h-5 text-gray-600" />
                 </button>
 
@@ -338,6 +328,28 @@ export default function SettingsPage() {
                     type="email"
                     value={profile.email}
                     onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={profile.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    placeholder="+234 800 000 0000"
+                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Location</label>
+                  <input
+                    type="text"
+                    value={profile.location}
+                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                    placeholder="City, Country"
                     className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>

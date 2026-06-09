@@ -73,7 +73,11 @@ function ChatContent() {
   const handleDeleteForMe = async () => {
     if (!selectedMessage) return;
     try {
-      // Just hide it locally - you could also add a deletedByUsers array in backend
+      // Just hide it locally - store in localStorage for persistence
+      const hiddenMessages = JSON.parse(localStorage.getItem('hiddenMessages') || '{}');
+      hiddenMessages[selectedMessage.id] = true;
+      localStorage.setItem('hiddenMessages', JSON.stringify(hiddenMessages));
+      
       setMessages(prev => prev.filter(m => m.id !== selectedMessage.id));
       showToast('Message deleted', 'success');
       setShowMessageMenu(false);
@@ -184,7 +188,12 @@ function ChatContent() {
     try {
       setLoading(true);
       const msgs = await chatService.getMessages(chatId, accessToken);
-      setMessages(msgs);
+      
+      // Filter out messages that are deleted or hidden locally
+      const hiddenMessages = JSON.parse(localStorage.getItem('hiddenMessages') || '{}');
+      const filteredMsgs = msgs.filter(m => !m.isDeleted && !hiddenMessages[m.id]);
+      
+      setMessages(filteredMsgs);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
       markChatAsRead(chatId);
     } catch (error) {
@@ -594,7 +603,7 @@ function ChatContent() {
                   <p className="text-gray-500">No messages yet. Say hi! 👋</p>
                 </div>
               ) : (
-                messages.map((msg) => {
+                messages.filter(m => !m.isDeleted).map((msg) => {
                   const isOwn = msg.userId === user?.id;
                   const hasImage = msg.type === 'IMAGE' && msg.attachments && msg.attachments.length > 0;
                   const isListingShare = (msg as any).metadata?.type === 'LISTING_SHARE';

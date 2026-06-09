@@ -241,10 +241,12 @@ export default function FeedPage() {
 
                         {/* Actions */}
                         <div className="flex items-center justify-between max-w-xs" onClick={(e) => e.preventDefault()}>
-                          <button className="flex items-center gap-1.5 text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full">
-                            <IoChatbubbleOutline className="w-[18px] h-[18px]" />
-                            <span className="text-xs font-medium">{post._count.comments}</span>
-                          </button>
+                          <Link href={`/post/${post.id}`}>
+                            <button className="flex items-center gap-1.5 text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full">
+                              <IoChatbubbleOutline className="w-[18px] h-[18px]" />
+                              <span className="text-xs font-medium">{post._count.comments}</span>
+                            </button>
+                          </Link>
 
                           <button onClick={(e) => { e.stopPropagation(); handleLike(post.id); }} className="flex items-center gap-1.5 text-gray-300 hover:text-pink-500 transition-colors p-1.5 hover:bg-pink-500/10 rounded-full">
                             {post.isLiked ? <IoHeart className="w-[18px] h-[18px] text-pink-500" /> : <IoHeartOutline className="w-[18px] h-[18px]" />}

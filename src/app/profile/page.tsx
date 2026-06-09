@@ -172,6 +172,33 @@ export default function ProfilePage() {
     return (user?.username?.[0] || 'U').toUpperCase();
   };
 
+  const handleShareProfile = async () => {
+    const profileUrl = `${window.location.origin}/user/${user?.id}`;
+    const shareText = `Check out ${user?.firstName} ${user?.lastName}'s profile on Clanplug!`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${user?.firstName} ${user?.lastName} - Clanplug`,
+          text: shareText,
+          url: profileUrl,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Share error:', error);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(profileUrl);
+        showToast('Profile link copied to clipboard!', 'success');
+      } catch (error) {
+        console.error('Clipboard error:', error);
+        showToast('Failed to copy link', 'error');
+      }
+    }
+  };
+
   const openFollowModal = async (type: 'followers' | 'following') => {
     setFollowModalType(type);
     setShowFollowModal(true);
@@ -356,7 +383,10 @@ export default function ProfilePage() {
                   Edit Profile
                 </button>
               </Link>
-              <button className="px-4 py-2 bg-[#262626] hover:bg-[#363636] text-white text-sm font-semibold rounded-lg transition-colors">
+              <button 
+                onClick={handleShareProfile}
+                className="px-4 py-2 bg-[#262626] hover:bg-[#363636] text-white text-sm font-semibold rounded-lg transition-colors"
+              >
                 Share
               </button>
             </div>
