@@ -636,35 +636,36 @@ function ChatContent() {
                         isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-[#2a2a2a] text-white rounded-bl-md'
                       } ${hasImage && !isListingShare ? 'p-1' : isListingShare ? '' : 'px-3 py-2'}`}>
                         
-                        {/* Listing Share - Clickable Card */}
+                        {/* Listing Share - Compact YouTube-style Thumbnail */}
                         {isListingShare && (msg as any).metadata && (
                           <a 
                             href={`/marketplace/${(msg as any).metadata.listingId}`}
-                            className="block hover:opacity-90 transition-opacity"
+                            className="block hover:opacity-90 transition-opacity max-w-[280px]"
                           >
                             <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden">
+                              {/* Thumbnail - 16:9 ratio like YouTube */}
                               {(msg as any).metadata.listingImage && (
-                                <img 
-                                  src={(msg as any).metadata.listingImage} 
-                                  alt={(msg as any).metadata.listingTitle}
-                                  className="w-full h-48 object-cover"
-                                  onLoad={() => console.log('✅ Listing image loaded')}
-                                  onError={(e) => console.error('❌ Listing image failed')}
-                                />
+                                <div className="relative w-full aspect-video bg-black">
+                                  <img 
+                                    src={(msg as any).metadata.listingImage} 
+                                    alt={(msg as any).metadata.listingTitle}
+                                    className="w-full h-full object-cover"
+                                    onLoad={() => console.log('✅ Listing image loaded')}
+                                    onError={(e) => console.error('❌ Listing image failed')}
+                                  />
+                                </div>
                               )}
-                              <div className="p-3">
-                                <p className="text-white font-semibold text-sm mb-1 line-clamp-2">
+                              {/* Info - Compact */}
+                              <div className="p-2">
+                                <p className="text-white font-medium text-xs mb-1 line-clamp-2 leading-tight">
                                   {(msg as any).metadata.listingTitle}
                                 </p>
-                                <p className="text-green-400 font-bold text-base mb-2">
+                                <p className="text-green-400 font-bold text-sm">
                                   {(msg as any).metadata.listingCurrency} {(msg as any).metadata.listingPrice?.toLocaleString()}
                                 </p>
-                                {msg.content && (
-                                  <p className="text-gray-400 text-xs">{msg.content}</p>
-                                )}
-                                <div className="flex items-center gap-1 mt-2 text-blue-400 text-xs">
+                                <div className="flex items-center gap-1 mt-1 text-blue-400 text-[10px]">
                                   <span>View Listing</span>
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                   </svg>
                                 </div>

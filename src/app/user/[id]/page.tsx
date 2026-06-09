@@ -296,8 +296,15 @@ export default function UserProfilePage() {
                     </div>
                   )}
                 </div>
+                
+                {/* Bio */}
                 {user.bio && (
-                  <p className="text-white text-sm">{user.bio}</p>
+                  <p className="text-white text-sm leading-relaxed mb-2 whitespace-pre-line">{user.bio}</p>
+                )}
+                
+                {/* Location */}
+                {((user as any)?.location || user.city) && (
+                  <p className="text-gray-400 text-xs mb-2">📍 {(user as any)?.location || user.city}</p>
                 )}
               </div>
 

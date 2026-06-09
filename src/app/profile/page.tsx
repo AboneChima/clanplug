@@ -343,8 +343,18 @@ export default function ProfilePage() {
                 )}
               </div>
               
+              {/* Bio */}
+              {user?.bio && (
+                <p className="text-white text-sm leading-relaxed mb-2 whitespace-pre-line">{user.bio}</p>
+              )}
+              
+              {/* Location */}
+              {((user as any)?.location || user?.city) && (
+                <p className="text-gray-400 text-xs mb-2">📍 {(user as any)?.location || user?.city}</p>
+              )}
+              
               {/* KYC Status Badge */}
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2">
                 {user?.isKYCVerified ? (
                   <div className="flex items-center gap-1 px-2 py-0.5 bg-green-600/20 border border-green-500/30 rounded-full">
                     <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -370,10 +380,6 @@ export default function ProfilePage() {
                   </Link>
                 )}
               </div>
-              
-              {user?.bio && (
-                <p className="text-white text-sm">{user.bio}</p>
-              )}
             </div>
 
             {/* Action Buttons */}

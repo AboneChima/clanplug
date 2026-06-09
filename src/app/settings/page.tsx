@@ -17,6 +17,7 @@ type Profile = {
   avatar?: string;
   phone?: string;
   location?: string;
+  bio?: string;
 };
 
 export default function SettingsPage() {
@@ -41,6 +42,7 @@ export default function SettingsPage() {
         avatar: user.avatar,
         phone: user.phone || '',
         location: (user as any).location || user.city || '',
+        bio: user.bio || '',
       });
       setAvatarPreview(user.avatar || '');
     }
@@ -102,6 +104,7 @@ export default function SettingsPage() {
           email: profile.email,
           phone: profile.phone,
           location: profile.location,
+          bio: profile.bio,
         }),
       });
       
@@ -330,6 +333,19 @@ export default function SettingsPage() {
                     onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                     className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Bio</label>
+                  <textarea
+                    value={profile.bio}
+                    onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                    placeholder="Tell us about yourself..."
+                    rows={3}
+                    maxLength={150}
+                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{profile.bio?.length || 0}/150 characters</p>
                 </div>
 
                 <div>
