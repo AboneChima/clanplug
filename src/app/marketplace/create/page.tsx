@@ -40,13 +40,10 @@ function CreateListingForm() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
     description: '',
     price: '',
     gameTitle: '',
     type: 'GAME_ACCOUNT',
-    accountRegion: '',
-    loginMethod: '',
   });
   const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string>('');
@@ -72,16 +69,6 @@ function CreateListingForm() {
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Check if it's a social media marketplace listing (based on game title)
-    const socialMediaTypes = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter', 'google', 'vpn'];
-    const isSocialMedia = socialMediaTypes.includes(formData.gameTitle);
-
-    // For social media marketplace, only allow images
-    if (isSocialMedia && !file.type.startsWith('image/')) {
-      showToast('Social media accounts only allow images', 'error');
-      return;
-    }
 
     // Check file size (50MB for videos, 10MB for images)
     const maxSize = file.type.startsWith('video/') ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -122,23 +109,13 @@ function CreateListingForm() {
       return;
     }
     
-    if (!formData.title || !formData.description || !formData.gameTitle) {
+    if (!formData.description || !formData.gameTitle) {
       showToast('Please fill in all required fields', 'error');
       return;
     }
 
-    if (!formData.accountRegion) {
-      showToast('Please select account region/country', 'error');
-      return;
-    }
-
-    if (formData.type === 'GAME_ACCOUNT' && !formData.loginMethod) {
-      showToast('Please select login method', 'error');
-      return;
-    }
-
     if (!selectedMedia) {
-      showToast(`Please upload ${formData.type === 'MARKETPLACE_LISTING' ? 'an image' : 'a video or image'}`, 'error');
+      showToast('Please upload a video or image', 'error');
       return;
     }
 
@@ -146,15 +123,11 @@ function CreateListingForm() {
 
     try {
       const token = localStorage.getItem('accessToken');
-      // No verification checks for marketplace - all users can post
       
       // Step 1: Upload media first
       const mediaFormData = new FormData();
       mediaFormData.append('media', selectedMedia);
-      // Send a flag to indicate if it's social media (images only) or game (videos allowed)
-      const socialMediaTypes = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter', 'google', 'vpn'];
-      const isSocialMedia = socialMediaTypes.includes(formData.gameTitle);
-      mediaFormData.append('postType', isSocialMedia ? 'SOCIAL_MEDIA_LISTING' : formData.type);
+      mediaFormData.append('postType', 'MARKETPLACE_LISTING');
 
       console.log('Step 1: Uploading media...');
       const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
@@ -169,7 +142,6 @@ function CreateListingForm() {
       console.log('Upload response:', uploadResponse.status, uploadData);
 
       if (!uploadResponse.ok) {
-        // Show detailed error message
         let errorMsg = uploadData.message || 'Failed to upload media';
         if (uploadData.errors && uploadData.errors.length > 0) {
           const errorDetails = uploadData.errors.map((e: any) => e.message || e.error).join(', ');
@@ -190,15 +162,14 @@ function CreateListingForm() {
       console.log('Media uploaded successfully:', mediaUrl);
 
       // Step 2: Create post with media URL
+      // Use first 50 chars of description as title
+      const title = formData.description.slice(0, 50).trim() + (formData.description.length > 50 ? '...' : '');
+      
       const postData = {
-        title: formData.title,
+        title,
         description: formData.description,
         gameTitle: formData.gameTitle,
         type: formData.type,
-        accountDetails: {
-          region: formData.accountRegion,
-          ...(formData.loginMethod && { loginMethod: formData.loginMethod })
-        },
         ...(mediaType === 'video' ? { videos: [mediaUrl] } : { images: [mediaUrl] }),
         ...(formData.price && {
           price: parseFloat(formData.price),
@@ -279,22 +250,7 @@ function CreateListingForm() {
               </p>
             </div>
 
-            {/* Title */}
-            <div>
-              <label className="block text-white text-sm font-medium mb-1.5">
-                Listing Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g., Legendary Account with Rare Skins"
-                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            {/* Description */}
+            {/* Description - Now includes region and login method */}
             <div>
               <label className="block text-white text-sm font-medium mb-1.5">
                 Description <span className="text-red-500">*</span>
@@ -302,61 +258,15 @@ function CreateListingForm() {
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Describe your account in detail..."
-                rows={4}
+                placeholder="Include: Country/Region and Login Method&#10;&#10;Example:&#10;Region: Nigeria&#10;Login: Google&#10;&#10;Then describe your account in detail..."
+                rows={6}
                 className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 required
               />
+              <p className="text-xs text-gray-400 mt-1">
+                Please include region/country and login method in your description
+              </p>
             </div>
-
-            {/* Account Region/Country */}
-            <div>
-              <label className="block text-white text-sm font-medium mb-1.5">
-                Account Region/Country <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.accountRegion}
-                onChange={(e) => setFormData({ ...formData, accountRegion: e.target.value })}
-                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select region/country</option>
-                <option value="Nigeria">Nigeria</option>
-                <option value="United Kingdom">United Kingdom</option>
-                <option value="United States">United States</option>
-                <option value="Canada">Canada</option>
-                <option value="Ghana">Ghana</option>
-                <option value="South Africa">South Africa</option>
-                <option value="Kenya">Kenya</option>
-                <option value="Global">Global/International</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-
-            {/* Login Method (Only for Game Accounts) */}
-            {formData.type === 'GAME_ACCOUNT' && (
-              <div>
-                <label className="block text-white text-sm font-medium mb-1.5">
-                  Login Method <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.loginMethod}
-                  onChange={(e) => setFormData({ ...formData, loginMethod: e.target.value })}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  <option value="">Select login method</option>
-                  <option value="Email & Password">Email & Password</option>
-                  <option value="Google">Google</option>
-                  <option value="Apple ID">Apple ID</option>
-                  <option value="Facebook">Facebook</option>
-                  <option value="Game Center">Game Center (iOS)</option>
-                  <option value="Play Games">Play Games (Android)</option>
-                  <option value="Phone Number">Phone Number</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            )}
 
             {/* Price (Optional) */}
             <div>
@@ -373,33 +283,25 @@ function CreateListingForm() {
               />
             </div>
 
-            {/* Media Upload */}
+            {/* Media Upload - NO VERIFICATION REQUIRED FOR MARKETPLACE */}
             <div>
               <label className="block text-white text-sm font-medium mb-1.5">
-                {formData.type === 'MARKETPLACE_LISTING' ? 'Image' : 'Video/Image'} <span className="text-red-500">*</span>
-                <span className="text-gray-400 text-xs ml-2">
-                  {formData.type === 'MARKETPLACE_LISTING' 
-                    ? '(Max 10MB)' 
-                    : '(Max 2 min, 50MB)'}
-                </span>
+                Video/Image <span className="text-red-500">*</span>
+                <span className="text-gray-400 text-xs ml-2">(Max 2 min, 50MB)</span>
               </label>
               <div className="space-y-3">
                 {!mediaPreview ? (
                   <label className="flex flex-col items-center justify-center w-full px-3 py-8 sm:py-10 bg-slate-800/80 border-2 border-dashed border-slate-700 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
                     <IoVideocamOutline className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mb-2" />
                     <span className="text-gray-300 text-sm font-medium mb-0.5">
-                      {formData.type === 'MARKETPLACE_LISTING' 
-                        ? 'Click to upload image' 
-                        : 'Click to upload video or image'}
+                      Click to upload video or image
                     </span>
                     <span className="text-gray-500 text-xs">
-                      {formData.type === 'MARKETPLACE_LISTING' 
-                        ? 'JPG, PNG, GIF' 
-                        : 'MP4, MOV, AVI or JPG, PNG'}
+                      MP4, MOV, AVI or JPG, PNG
                     </span>
                     <input
                       type="file"
-                      accept={formData.type === 'MARKETPLACE_LISTING' ? 'image/*' : 'image/*,video/*'}
+                      accept="image/*,video/*"
                       onChange={handleMediaSelect}
                       className="hidden"
                     />

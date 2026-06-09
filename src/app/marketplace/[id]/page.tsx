@@ -119,7 +119,51 @@ export default function MarketplaceDetailPage() {
     try {
       const token = localStorage.getItem('accessToken');
       
-      // Create or get existing chat
+      // First, check if a chat already exists with this user
+      const chatsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (chatsResponse.ok) {
+        const chatsData = await chatsResponse.json();
+        const existingChat = (chatsData.data || chatsData || []).find((chat: any) => {
+          const otherParticipant = chat.participants?.find((p: any) => p.userId !== user.id);
+          return otherParticipant?.userId === post.userId && chat.type === 'DIRECT';
+        });
+        
+        if (existingChat) {
+          // Chat exists, just send message to existing chat
+          const listingImage = post.images?.[0] || post.videos?.[0];
+          
+          const messagePayload = {
+            content: `I'm interested in: ${post.title}\nPrice: ${post.currency} ${post.price?.toLocaleString()}`,
+            type: listingImage ? 'IMAGE' : 'TEXT',
+            attachments: listingImage ? [listingImage] : undefined,
+            metadata: {
+              type: 'LISTING_SHARE',
+              listingId: post.id,
+              listingTitle: post.title,
+              listingPrice: post.price,
+              listingCurrency: post.currency,
+              listingImage: listingImage,
+            }
+          };
+          
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats/${existingChat.id}/messages`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(messagePayload),
+          });
+          
+          router.push(`/chat?id=${existingChat.id}`);
+          return;
+        }
+      }
+      
+      // No existing chat, create new one
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats`, {
         method: 'POST',
         headers: {
