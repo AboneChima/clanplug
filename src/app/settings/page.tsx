@@ -40,7 +40,7 @@ export default function SettingsPage() {
         email: user.email || '',
         avatar: user.avatar,
         phone: user.phone || '',
-        location: user.location || '',
+        location: (user as any).location || user.city || '',
       });
       setAvatarPreview(user.avatar || '');
     }
