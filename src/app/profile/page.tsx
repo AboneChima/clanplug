@@ -481,7 +481,7 @@ export default function ProfilePage() {
               <div className="px-2 pt-2 space-y-2">
                 {currentPosts.map((post) => (
                   <div key={post.id} className="bg-[#1a1a1a] rounded-lg overflow-hidden hover:bg-[#252525] transition-colors relative group">
-                    <Link href={`/marketplace/${post.id}`}>
+                    <Link href={`/marketplace/${post.id}`} className="block">
                       <div className="flex gap-2 p-2">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-black flex-shrink-0">
                           {post.images?.[0] || post.videos?.[0] ? (
@@ -513,14 +513,15 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     </Link>
-                    {/* Delete Button */}
+                    {/* Delete Button - Only visible on hover */}
                     <button
                       onClick={(e) => {
                         e.preventDefault();
+                        e.stopPropagation();
                         handleDeletePost(post.id, post.type || 'MARKETPLACE_LISTING');
                       }}
                       disabled={deletingPostId === post.id}
-                      className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-md opacity-0 group-hover:opacity-100 transition-all z-10"
+                      className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-md transition-opacity opacity-0 group-hover:opacity-100 z-10"
                       title="Delete listing"
                     >
                       {deletingPostId === post.id ? (
@@ -538,7 +539,7 @@ export default function ProfilePage() {
                   const media = post.images?.[0] || post.videos?.[0];
                   return (
                     <div key={post.id} className="relative group">
-                      <Link href={`/post/${post.id}`}>
+                      <Link href={`/post/${post.id}`} className="block">
                         <div className="aspect-square bg-[#1a1a1a] relative overflow-hidden">
                           {media ? (
                             <Image src={media} alt="Post" fill className="object-cover" unoptimized />
@@ -549,14 +550,15 @@ export default function ProfilePage() {
                           )}
                         </div>
                       </Link>
-                      {/* Delete Button */}
+                      {/* Delete Button - Only visible on hover */}
                       <button
                         onClick={(e) => {
                           e.preventDefault();
+                          e.stopPropagation();
                           handleDeletePost(post.id, post.type || 'SOCIAL_POST');
                         }}
                         disabled={deletingPostId === post.id}
-                        className="absolute top-1 right-1 p-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-md opacity-0 group-hover:opacity-100 transition-all z-10"
+                        className="absolute top-1 right-1 p-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-md transition-opacity opacity-0 group-hover:opacity-100 z-10"
                         title="Delete post"
                       >
                         {deletingPostId === post.id ? (
