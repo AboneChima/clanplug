@@ -411,12 +411,21 @@ export const postService = {
         return { success: false, message: 'Unauthorized to delete this post', error: 'UNAUTHORIZED' };
       }
 
-      await prisma.post.delete({
-        where: { id: postId },
-      });
+      // Delete related records first to avoid foreign key constraints
+      await prisma.$transaction([
+        // Delete comments
+        prisma.comment.deleteMany({ where: { postId } }),
+        // Delete likes
+        prisma.like.deleteMany({ where: { postId } }),
+        // Delete bookmarks
+        prisma.bookmark.deleteMany({ where: { postId } }),
+        // Delete the post itself
+        prisma.post.delete({ where: { id: postId } }),
+      ]);
 
       return { success: true, message: 'Post deleted successfully' };
     } catch (error: any) {
+      console.error('Error deleting post:', error);
       return { success: false, message: 'Failed to delete post', error: error.message || 'DELETE_POST_ERROR' };
     }
   },
