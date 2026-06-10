@@ -257,20 +257,12 @@ function MarketplaceContent() {
   const [showAllSocials, setShowAllSocials] = useState(false);
   const [listingCounts, setListingCounts] = useState<CategoryCount>({});
 
-  // Fetch listing counts for each category
+  // Fetch listing counts for each category - disabled for now
+  // This endpoint doesn't exist yet on backend
   useEffect(() => {
-    const fetchListingCounts = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/listings/counts`);
-        if (response.ok) {
-          const data = await response.json();
-          setListingCounts(data.counts || {});
-        }
-      } catch (error) {
-        console.error('Failed to fetch listing counts:', error);
-      }
-    };
-    fetchListingCounts();
+    // TODO: Implement /api/listings/counts endpoint on backend
+    // For now, listing counts are disabled
+    setListingCounts({});
   }, []);
 
   useEffect(() => {

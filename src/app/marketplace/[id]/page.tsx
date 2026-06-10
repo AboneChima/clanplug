@@ -20,6 +20,7 @@ import {
   IoChatbubbleOutline,
   IoCloseOutline,
   IoCallOutline,
+  IoTrashOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -72,6 +73,7 @@ export default function MarketplaceDetailPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [markingSold, setMarkingSold] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -255,6 +257,34 @@ export default function MarketplaceDetailPage() {
       showToast('Error marking as sold', 'error');
     } finally {
       setMarkingSold(false);
+    }
+  };
+
+  const handleDeleteListing = async () => {
+    if (!post || !user || post.userId !== user.id) return;
+
+    if (!confirm('Are you sure you want to delete this listing? This action cannot be undone.')) return;
+
+    try {
+      setDeleting(true);
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${post.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        showToast('Listing deleted successfully!', 'success');
+        router.push('/profile');
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Failed to delete listing', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+      showToast('Error deleting listing', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -475,13 +505,32 @@ export default function MarketplaceDetailPage() {
                     Sold Out
                   </div>
                 ) : post.userId === user?.id ? (
-                  <button
-                    onClick={handleMarkAsSold}
-                    disabled={markingSold}
-                    className="w-full py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-md transition-all mb-2"
-                  >
-                    {markingSold ? 'Marking...' : 'Mark as Sold'}
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleMarkAsSold}
+                      disabled={markingSold}
+                      className="w-full py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-md transition-all"
+                    >
+                      {markingSold ? 'Marking...' : 'Mark as Sold'}
+                    </button>
+                    <button
+                      onClick={handleDeleteListing}
+                      disabled={deleting}
+                      className="w-full py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+                    >
+                      {deleting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Deleting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <IoTrashOutline className="w-4 h-4" />
+                          <span>Delete Listing</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {/* Call Button */}

@@ -57,6 +57,7 @@ export default function ProfilePage() {
   const [followModalType, setFollowModalType] = useState<'followers' | 'following'>('followers');
   const [followUsers, setFollowUsers] = useState<FollowUser[]>([]);
   const [loadingFollows, setLoadingFollows] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.avatar) setAvatarPreview(user.avatar);
@@ -237,6 +238,40 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error('Error toggling follow:', error);
+    }
+  };
+
+  const handleDeletePost = async (postId: string, postType: string) => {
+    if (!confirm(`Are you sure you want to delete this ${postType === 'SOCIAL_POST' ? 'post' : 'listing'}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingPostId(postId);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        // Remove from the appropriate list
+        if (postType === 'SOCIAL_POST') {
+          setPosts(posts.filter(p => p.id !== postId));
+        } else {
+          setMarketListings(marketListings.filter(p => p.id !== postId));
+        }
+        setStats(prev => ({ ...prev, posts: prev.posts - 1 }));
+        showToast('Deleted successfully!', 'success');
+      } else {
+        const error = await response.json();
+        showToast(error.message || 'Failed to delete', 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      showToast('Error deleting post', 'error');
+    } finally {
+      setDeletingPostId(null);
     }
   };
 
@@ -445,8 +480,8 @@ export default function ProfilePage() {
             ) : activeTab === 'market' ? (
               <div className="px-2 pt-2 space-y-2">
                 {currentPosts.map((post) => (
-                  <Link key={post.id} href={`/marketplace/${post.id}`}>
-                    <div className="bg-[#1a1a1a] rounded-lg overflow-hidden hover:bg-[#252525] transition-colors">
+                  <div key={post.id} className="bg-[#1a1a1a] rounded-lg overflow-hidden hover:bg-[#252525] transition-colors relative group">
+                    <Link href={`/marketplace/${post.id}`}>
                       <div className="flex gap-2 p-2">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-black flex-shrink-0">
                           {post.images?.[0] || post.videos?.[0] ? (
@@ -477,8 +512,24 @@ export default function ProfilePage() {
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                    {/* Delete Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleDeletePost(post.id, post.type || 'MARKETPLACE_LISTING');
+                      }}
+                      disabled={deletingPostId === post.id}
+                      className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-md opacity-0 group-hover:opacity-100 transition-all z-10"
+                      title="Delete listing"
+                    >
+                      {deletingPostId === post.id ? (
+                        <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <IoCloseOutline className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
                 ))}
               </div>
             ) : (
@@ -486,17 +537,35 @@ export default function ProfilePage() {
                 {currentPosts.map((post) => {
                   const media = post.images?.[0] || post.videos?.[0];
                   return (
-                    <Link key={post.id} href={`/post/${post.id}`}>
-                      <div className="aspect-square bg-[#1a1a1a] relative overflow-hidden">
-                        {media ? (
-                          <Image src={media} alt="Post" fill className="object-cover" unoptimized />
+                    <div key={post.id} className="relative group">
+                      <Link href={`/post/${post.id}`}>
+                        <div className="aspect-square bg-[#1a1a1a] relative overflow-hidden">
+                          {media ? (
+                            <Image src={media} alt="Post" fill className="object-cover" unoptimized />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#262626]">
+                              <IoNewspaperOutline className="w-8 h-8 text-gray-700" />
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                      {/* Delete Button */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDeletePost(post.id, post.type || 'SOCIAL_POST');
+                        }}
+                        disabled={deletingPostId === post.id}
+                        className="absolute top-1 right-1 p-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-md opacity-0 group-hover:opacity-100 transition-all z-10"
+                        title="Delete post"
+                      >
+                        {deletingPostId === post.id ? (
+                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-[#262626]">
-                            <IoNewspaperOutline className="w-8 h-8 text-gray-700" />
-                          </div>
+                          <IoCloseOutline className="w-3 h-3" />
                         )}
-                      </div>
-                    </Link>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
