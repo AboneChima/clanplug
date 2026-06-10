@@ -6,10 +6,12 @@ import {
   IoArrowBack,
   IoCloseOutline,
   IoVideocamOutline,
+  IoShieldCheckmarkOutline,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import Link from 'next/link';
 
 const gameNames: { [key: string]: string } = {
   'cod-mobile': 'Call of Duty Mobile',
@@ -48,6 +50,33 @@ function CreateListingForm() {
   const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string>('');
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
+  const [userListingCount, setUserListingCount] = useState(0);
+  const [loadingListingCount, setLoadingListingCount] = useState(true);
+
+  // Fetch user's marketplace listing count on mount
+  useEffect(() => {
+    const fetchListingCount = async () => {
+      if (!user?.id) return;
+      try {
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts?userId=${user.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const listings = Array.isArray(data.data) ? data.data : [];
+          // Count only marketplace listings (not social posts)
+          const marketplaceListings = listings.filter((l: any) => l.type !== 'SOCIAL_POST');
+          setUserListingCount(marketplaceListings.length);
+        }
+      } catch (error) {
+        console.error('Error fetching listing count:', error);
+      } finally {
+        setLoadingListingCount(false);
+      }
+    };
+    fetchListingCount();
+  }, [user?.id]);
 
   // Pre-fill game from URL parameter and determine if it's social media
   useEffect(() => {
@@ -105,6 +134,13 @@ function CreateListingForm() {
     // CRITICAL: Only KYC verified users can post marketplace listings
     if (!user?.isKYCVerified) {
       showToast('Complete KYC verification to post marketplace listings', 'error');
+      router.push('/kyc');
+      return;
+    }
+
+    // Non-KYC users have a 5 listing limit
+    if (!user?.isKYCVerified && userListingCount >= 5) {
+      showToast('Free users can only make 5 marketplace listings. Complete KYC verification for unlimited listings!', 'error');
       router.push('/kyc');
       return;
     }
@@ -231,6 +267,31 @@ function CreateListingForm() {
 
         <div className="max-w-3xl mx-auto px-4">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Listing Limit Warning for Non-KYC Users */}
+            {!user?.isKYCVerified && !loadingListingCount && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <IoShieldCheckmarkOutline className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-yellow-400 text-sm font-medium mb-1">
+                      {userListingCount}/5 marketplace listings used
+                    </p>
+                    <p className="text-gray-400 text-xs mb-2">
+                      {userListingCount >= 5 
+                        ? 'You\'ve reached your limit. Complete KYC verification for unlimited marketplace listings!'
+                        : `${5 - userListingCount} listings remaining. Complete KYC verification for unlimited listings!`
+                      }
+                    </p>
+                    <Link href="/kyc">
+                      <button type="button" className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-medium rounded-lg transition-all">
+                        Complete KYC Verification
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Game/Social Media Selection */}
             <div>
               <label className="block text-white text-[11px] xs:text-xs sm:text-sm font-medium mb-1 xs:mb-1.5">
