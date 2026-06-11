@@ -362,15 +362,19 @@ export const postController = {
       // Skip verification check for KYC document uploads AND marketplace listings
       const isMarketplaceListing = postType === 'MARKETPLACE_LISTING' || postType === 'GAME_ACCOUNT';
       
-      if (!isKYCUpload && !isMarketplaceListing) {
-        // Only check verification badge for SOCIAL FEED posts with videos
+      // Only check verification badge for SOCIAL FEED posts with VIDEOS
+      // Images are allowed for all users
+      const hasVideo = files.some(file => file.mimetype.startsWith('video/'));
+      
+      if (!isKYCUpload && !isMarketplaceListing && hasVideo) {
+        // Only check verification badge for video uploads on social feed
         const { verificationService } = await import('../services/verification.service');
         const canPost = await verificationService.canPostMedia(userId);
         
         if (!canPost) {
           res.status(403).json({
             success: false,
-            message: 'Purchase verification badge (₦2,000) to post videos on social feed. Visit your profile!',
+            message: 'Purchase verification badge (₦2,000) to post videos on social feed. Images are allowed!',
             error: 'VERIFICATION_REQUIRED',
           });
           return;
