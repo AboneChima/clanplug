@@ -38,8 +38,19 @@ export async function register(req: Request, res: Response) {
   }
 
   try {
+    // Normalize email and username to lowercase
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedUsername = username.toLowerCase().trim();
+
     console.log('Checking for existing user...');
-    const existing = await prisma.user.findFirst({ where: { OR: [{ email }, { username }] } });
+    const existing = await prisma.user.findFirst({ 
+      where: { 
+        OR: [
+          { email: { equals: normalizedEmail, mode: 'insensitive' } }, 
+          { username: { equals: normalizedUsername, mode: 'insensitive' } }
+        ] 
+      } 
+    });
     if (existing) {
       return res.status(409).json({ success: false, message: 'Email or username already exists', code: 'CONFLICT' });
     }
@@ -47,7 +58,7 @@ export async function register(req: Request, res: Response) {
     // Check if username is reserved by a verified user
     const reservedUsername = await prisma.user.findFirst({
       where: { 
-        username: { equals: username, mode: 'insensitive' },
+        username: { equals: normalizedUsername, mode: 'insensitive' },
         verificationBadge: {
           status: 'verified',
           expiresAt: { gt: new Date() }
@@ -83,8 +94,8 @@ export async function register(req: Request, res: Response) {
     console.log('Creating user in database...');
     const user = await prisma.user.create({
       data: {
-        email,
-        username,
+        email: normalizedEmail,
+        username: normalizedUsername,
         firstName: fName,
         lastName: lName,
         phone: phone || undefined,
@@ -173,16 +184,28 @@ export async function login(req: Request, res: Response) {
   }
 
   try {
+    // Normalize email to lowercase for case-insensitive comparison
+    const normalizedEmail = email ? email.toLowerCase().trim() : undefined;
+    const normalizedUsername = username ? username.toLowerCase().trim() : undefined;
+
     const user = await prisma.user.findFirst({ 
-      where: { OR: [{ email: email || undefined }, { username: username || undefined }] },
+      where: { 
+        OR: [
+          normalizedEmail ? { email: { equals: normalizedEmail, mode: 'insensitive' } } : {},
+          normalizedUsername ? { username: { equals: normalizedUsername, mode: 'insensitive' } } : {}
+        ].filter(obj => Object.keys(obj).length > 0)
+      },
       include: { verificationBadge: true }
     });
+    
     if (!user) {
+      console.log('Login failed: User not found', { email: normalizedEmail, username: normalizedUsername });
       return res.status(401).json({ success: false, message: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
     }
 
     const valid = await passwordUtils.verify(password, user.passwordHash);
     if (!valid) {
+      console.log('Login failed: Invalid password for user', user.email);
       return res.status(401).json({ success: false, message: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
     }
 
