@@ -326,7 +326,7 @@ function MarketplaceContent() {
                   onClick={() => handleHotDealClick(deal.id)}
                   className="group hover:scale-105 transition-all duration-300 relative"
                 >
-                  <div className="aspect-[3/4] rounded-xl overflow-hidden shadow-lg border border-[#2f3336] bg-[#1a1a1a] relative">
+                  <div className="aspect-square rounded-xl overflow-hidden shadow-lg border border-[#2f3336] bg-[#1a1a1a] relative">
                     <img
                       src={deal.image}
                       alt={deal.name}
@@ -366,7 +366,7 @@ function MarketplaceContent() {
                       </span>
                     </div>
                   )}
-                  <div className="aspect-[3/4] rounded-xl overflow-hidden shadow-lg mb-2 border border-[#2f3336]">
+                  <div className="aspect-square rounded-xl overflow-hidden shadow-lg mb-2 border border-[#2f3336]">
                     <img
                       src={game.image}
                       alt={game.name}
@@ -473,7 +473,7 @@ function MarketplaceContent() {
                   key={i}
                   className="group hover:scale-105 transition-transform duration-300 relative"
                 >
-                  <div className="aspect-[3/4] rounded-xl overflow-hidden shadow-lg mb-2 border border-[#2f3336] bg-[#1a1a1a] flex items-center justify-center">
+                  <div className="aspect-square rounded-xl overflow-hidden shadow-lg mb-2 border border-[#2f3336] bg-[#1a1a1a] flex items-center justify-center">
                     <div className="text-center p-4">
                       <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center mx-auto mb-2">
                         <IoGameControllerOutline className="w-6 h-6 text-gray-600" />

@@ -537,6 +537,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-3 gap-px bg-black">
                 {currentPosts.map((post) => {
                   const media = post.images?.[0] || post.videos?.[0];
+                  const isTextOnly = !media;
                   return (
                     <div key={post.id} className="relative group">
                       <Link href={`/post/${post.id}`} className="block">
@@ -544,8 +545,21 @@ export default function ProfilePage() {
                           {media ? (
                             <Image src={media} alt="Post" fill className="object-cover" unoptimized />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-[#262626]">
-                              <IoNewspaperOutline className="w-8 h-8 text-gray-700" />
+                            <div className="w-full h-full flex flex-col items-start justify-start bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] p-3 border border-[#2f3336]">
+                              <div className="flex items-center gap-1 mb-2">
+                                <IoNewspaperOutline className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                                <span className="text-[9px] text-gray-500 font-medium">TEXT POST</span>
+                              </div>
+                              {post.title && (
+                                <h3 className="text-white text-xs font-semibold mb-1 line-clamp-2 leading-tight">
+                                  {post.title}
+                                </h3>
+                              )}
+                              {post.description && (
+                                <p className="text-gray-400 text-[10px] line-clamp-4 leading-relaxed">
+                                  {post.description}
+                                </p>
+                              )}
                             </div>
                           )}
                         </div>
