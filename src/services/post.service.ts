@@ -82,7 +82,7 @@ export const postService = {
       // MARKETPLACE: No restrictions - all users can post with images/videos
       // Only apply limits to SOCIAL FEED posts
       if (!isVerified && payload.type === 'SOCIAL_POST') {
-        // For SOCIAL FEED posts, check total limit (20 posts) and image restriction
+        // For SOCIAL FEED posts, check total limit (20 posts)
         const totalSocialPostsCount = await prisma.post.count({
           where: { 
             userId: authorId,
@@ -98,11 +98,11 @@ export const postService = {
           };
         }
         
-        // SOCIAL FEED: Block images for non-verified users
-        if (payload.images && payload.images.length > 0) {
+        // SOCIAL FEED: Block VIDEOS for non-badge users, but allow IMAGES for everyone
+        if (payload.videos && payload.videos.length > 0) {
           return {
             success: false,
-            message: 'Get verified to post images! Purchase verification badge (₦2,000) to unlock media posting.',
+            message: 'Verification badge required to post videos! Images are allowed for all users.',
             error: 'VERIFICATION_REQUIRED'
           };
         }
