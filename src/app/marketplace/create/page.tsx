@@ -131,10 +131,20 @@ function CreateListingForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if user has exceeded their listing limit (non-KYC users have 5 limit)
-    if (!user?.isKYCVerified && userListingCount >= 5) {
-      showToast('You\'ve reached your listing limit (5). Complete KYC verification for unlimited listings!', 'error');
+    // RULE 1: Must be KYC verified to post on marketplace
+    if (!user?.isKYCVerified) {
+      showToast('Complete KYC verification to post on marketplace', 'error');
       router.push('/kyc');
+      return;
+    }
+
+    // RULE 2: KYC verified users without badge have 5 listing limit
+    const hasVerificationBadge = (user as any)?.verificationBadge?.status === 'verified' || 
+                                  (user as any)?.verificationBadge?.status === 'active';
+    
+    if (!hasVerificationBadge && userListingCount >= 5) {
+      showToast('You\'ve reached your listing limit (5). Purchase verification badge for unlimited listings!', 'error');
+      router.push('/verification-badge');
       return;
     }
     
@@ -260,8 +270,30 @@ function CreateListingForm() {
 
         <div className="max-w-3xl mx-auto px-4">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Listing Limit Warning for Non-KYC Users */}
-            {!user?.isKYCVerified && !loadingListingCount && (
+            {/* KYC Required Banner for Non-KYC Users */}
+            {!user?.isKYCVerified && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-4">
+                <div className="flex items-start gap-2">
+                  <IoShieldCheckmarkOutline className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-red-400 text-sm font-medium mb-1">
+                      KYC Verification Required
+                    </p>
+                    <p className="text-gray-400 text-xs mb-2">
+                      You must complete KYC verification to post on the marketplace.
+                    </p>
+                    <Link href="/kyc">
+                      <button type="button" className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-all">
+                        Complete KYC Verification
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Listing Limit Warning for KYC Users Without Badge */}
+            {user?.isKYCVerified && !((user as any)?.verificationBadge?.status === 'verified' || (user as any)?.verificationBadge?.status === 'active') && !loadingListingCount && (
               <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mb-4">
                 <div className="flex items-start gap-2">
                   <IoShieldCheckmarkOutline className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
@@ -271,13 +303,13 @@ function CreateListingForm() {
                     </p>
                     <p className="text-gray-400 text-xs mb-2">
                       {userListingCount >= 5 
-                        ? 'You\'ve reached your limit. Complete KYC verification for unlimited marketplace listings!'
-                        : `${5 - userListingCount} listings remaining. Complete KYC verification for unlimited listings!`
+                        ? 'You\'ve reached your limit. Purchase verification badge for unlimited marketplace listings!'
+                        : `${5 - userListingCount} listings remaining. Purchase verification badge for unlimited listings!`
                       }
                     </p>
-                    <Link href="/kyc">
+                    <Link href="/verification-badge">
                       <button type="button" className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-medium rounded-lg transition-all">
-                        Complete KYC Verification
+                        Get Verification Badge - ₦2,000/month
                       </button>
                     </Link>
                   </div>
