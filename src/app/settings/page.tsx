@@ -267,111 +267,111 @@ export default function SettingsPage() {
         {/* Profile Edit Modal */}
         {showProfileEdit && profile && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-md border border-[#2f3336]">
-              <div className="p-4 border-b border-[#2f3336]">
+            <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-md border border-[#2f3336] max-h-[90vh] flex flex-col">
+              <div className="p-4 border-b border-[#2f3336] flex-shrink-0">
                 <h2 className="text-lg font-bold text-white">Edit Profile</h2>
               </div>
               
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-3 overflow-y-auto flex-1">
                 {/* Avatar */}
-                <div className="flex flex-col items-center gap-3">
+                <div className="flex flex-col items-center gap-2">
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-blue-600 via-blue-500 to-slate-700">
+                    <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-tr from-blue-600 via-blue-500 to-slate-700">
                       <div className="w-full h-full rounded-full overflow-hidden bg-black p-0.5">
                         {avatarPreview ? (
-                          <Image src={avatarPreview} alt="Avatar" width={80} height={80} className="w-full h-full rounded-full object-cover" unoptimized />
+                          <Image src={avatarPreview} alt="Avatar" width={64} height={64} className="w-full h-full rounded-full object-cover" unoptimized />
                         ) : (
                           <div className="w-full h-full rounded-full bg-[#3a3a3a] flex items-center justify-center">
-                            <span className="text-white text-xl font-bold">{getUserInitials()}</span>
+                            <span className="text-white text-lg font-bold">{getUserInitials()}</span>
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
-                  <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg cursor-pointer transition-colors">
+                  <label className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg cursor-pointer transition-colors">
                     Change Photo
                     <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
                   </label>
                 </div>
 
-                {/* Form Fields */}
+                {/* Form Fields - Smaller */}
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">First Name</label>
+                  <label className="block text-xs text-gray-400 mb-1">First Name</label>
                   <input
                     type="text"
                     value={profile.firstName}
                     onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Last Name</label>
+                  <label className="block text-xs text-gray-400 mb-1">Last Name</label>
                   <input
                     type="text"
                     value={profile.lastName}
                     onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Username</label>
+                  <label className="block text-xs text-gray-400 mb-1">Username</label>
                   <input
                     type="text"
                     value={profile.username}
                     onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Email</label>
+                  <label className="block text-xs text-gray-400 mb-1">Email</label>
                   <input
                     type="email"
                     value={profile.email}
                     onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Bio</label>
+                  <label className="block text-xs text-gray-400 mb-1">Bio</label>
                   <textarea
                     value={profile.bio}
                     onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                     placeholder="Tell us about yourself..."
-                    rows={3}
+                    rows={2}
                     maxLength={150}
-                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
+                    className="w-full px-2.5 py-1.5 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
                   />
-                  <p className="text-xs text-gray-500 mt-1">{profile.bio?.length || 0}/150 characters</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">{profile.bio?.length || 0}/150 characters</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Phone Number</label>
+                  <label className="block text-xs text-gray-400 mb-1">Phone Number</label>
                   <input
                     type="tel"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                     placeholder="+234 800 000 0000"
-                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Location</label>
+                  <label className="block text-xs text-gray-400 mb-1">Location</label>
                   <input
                     type="text"
                     value={profile.location}
                     onChange={(e) => setProfile({ ...profile, location: e.target.value })}
                     placeholder="City, Country"
-                    className="w-full px-3 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full px-2.5 py-1.5 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              <div className="p-4 border-t border-[#2f3336] flex gap-2">
+              <div className="p-3 border-t border-[#2f3336] flex gap-2 flex-shrink-0">
                 <button
                   onClick={() => {
                     setShowProfileEdit(false);

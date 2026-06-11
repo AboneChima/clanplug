@@ -25,6 +25,18 @@ interface Post {
   isLiked: boolean;
   isBookmarked?: boolean;
   createdAt: string;
+  comments?: Array<{
+    id: string;
+    content: string;
+    createdAt: string;
+    user: {
+      id: string;
+      username: string;
+      firstName: string;
+      lastName: string;
+      avatar?: string;
+    };
+  }>;
 }
 
 export default function FeedPage() {
@@ -37,6 +49,7 @@ export default function FeedPage() {
   const [showCommentBox, setShowCommentBox] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [loadingComments, setLoadingComments] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -131,10 +144,11 @@ export default function FeedPage() {
           text: shareText,
           url: shareUrl,
         });
+        // Only show success toast after successful share
         showToast('Shared successfully!', 'success');
         return;
       } catch (error) {
-        // User cancelled the share dialog
+        // User cancelled the share dialog - don't show error
         if ((error as Error).name === 'AbortError') {
           return;
         }
@@ -143,7 +157,7 @@ export default function FeedPage() {
       }
     }
     
-    // Fallback to clipboard
+    // Fallback to clipboard - only show toast on successful copy
     try {
       await navigator.clipboard.writeText(shareUrl);
       showToast('Link copied! Share it anywhere you like 🚀', 'success');
@@ -181,13 +195,21 @@ export default function FeedPage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
+        const newComment = data.data;
+        
         setCommentText('');
-        setShowCommentBox(null);
-        setPosts(posts.map(post => 
-          post.id === postId 
-            ? { ...post, _count: { ...post._count, comments: post._count.comments + 1 }}
-            : post
-        ));
+        // Update posts with new comment and increment count
+        setPosts(posts.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              _count: { ...post._count, comments: post._count.comments + 1 },
+              comments: [newComment, ...(post.comments || [])]
+            };
+          }
+          return post;
+        }));
         showToast('Comment added!', 'success');
       } else {
         showToast('Failed to add comment', 'error');
@@ -197,6 +219,43 @@ export default function FeedPage() {
       showToast('Failed to add comment', 'error');
     } finally {
       setSubmittingComment(false);
+    }
+  };
+
+  const loadComments = async (postId: string) => {
+    setLoadingComments(postId);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/comments`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const comments = data.data || [];
+        setPosts(posts.map(post => 
+          post.id === postId ? { ...post, comments } : post
+        ));
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setLoadingComments(null);
+    }
+  };
+
+  const toggleCommentBox = (postId: string) => {
+    const isOpening = showCommentBox !== postId;
+    setShowCommentBox(isOpening ? postId : null);
+    
+    // Load comments when opening
+    if (isOpening) {
+      const post = posts.find(p => p.id === postId);
+      if (!post?.comments) {
+        loadComments(postId);
+      }
+    } else {
+      setCommentText('');
     }
   };
 
@@ -347,7 +406,7 @@ export default function FeedPage() {
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            setShowCommentBox(showCommentBox === post.id ? null : post.id);
+                            toggleCommentBox(post.id);
                           }}
                           className="flex items-center gap-1.5 text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full"
                         >
@@ -378,12 +437,48 @@ export default function FeedPage() {
                       {/* Inline Comment Box */}
                       {showCommentBox === post.id && (
                         <div className="mt-2 pt-2 border-t border-[#2f3336]">
-                          <div className="flex gap-2">
+                          {/* Previous Comments - Show latest 3 */}
+                          {loadingComments === post.id ? (
+                            <div className="flex items-center justify-center py-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                            </div>
+                          ) : post.comments && post.comments.length > 0 ? (
+                            <div className="mb-2 space-y-2 max-h-40 overflow-y-auto">
+                              {post.comments.slice(0, 3).map((comment) => (
+                                <div key={comment.id} className="flex gap-2">
+                                  {comment.user.avatar ? (
+                                    <Image src={comment.user.avatar} alt={comment.user.username} width={20} height={20} className="w-5 h-5 rounded-full flex-shrink-0" unoptimized />
+                                  ) : (
+                                    <div className="w-5 h-5 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
+                                      <span className="text-white text-[8px] font-bold">{comment.user.firstName[0]}</span>
+                                    </div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-white text-[10px] font-medium">{comment.user.firstName}</span>
+                                      <span className="text-gray-500 text-[8px]">@{comment.user.username}</span>
+                                    </div>
+                                    <p className="text-gray-300 text-[11px] break-words">{comment.content}</p>
+                                  </div>
+                                </div>
+                              ))}
+                              {post.comments.length > 3 && (
+                                <Link href={`/post/${post.id}`}>
+                                  <button className="text-blue-400 text-[10px] hover:underline">
+                                    View all {post.comments.length} comments
+                                  </button>
+                                </Link>
+                              )}
+                            </div>
+                          ) : null}
+
+                          {/* Add Comment */}
+                          <div className="flex gap-1.5">
                             {user?.avatar ? (
-                              <Image src={user.avatar} alt="You" width={24} height={24} className="w-6 h-6 rounded-full flex-shrink-0" unoptimized />
+                              <Image src={user.avatar} alt="You" width={20} height={20} className="w-5 h-5 rounded-full flex-shrink-0" unoptimized />
                             ) : (
-                              <div className="w-6 h-6 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                                <span className="text-white text-[10px] font-bold">{user?.firstName?.[0]}</span>
+                              <div className="w-5 h-5 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
+                                <span className="text-white text-[8px] font-bold">{user?.firstName?.[0]}</span>
                               </div>
                             )}
                             <div className="flex-1">
@@ -391,24 +486,24 @@ export default function FeedPage() {
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
                                 placeholder="Write a comment..."
-                                className="w-full bg-[#1a1a1a] border border-[#2f3336] rounded-lg px-2 py-1.5 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
-                                rows={2}
+                                className="w-full bg-[#1a1a1a] border border-[#2f3336] rounded-lg px-2 py-1 text-white text-[11px] placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                                rows={1}
                                 autoFocus
                               />
-                              <div className="flex justify-end gap-2 mt-1">
+                              <div className="flex justify-end gap-1.5 mt-1">
                                 <button
                                   onClick={() => {
                                     setShowCommentBox(null);
                                     setCommentText('');
                                   }}
-                                  className="px-3 py-1 text-xs text-gray-400 hover:text-white transition-colors"
+                                  className="px-2 py-0.5 text-[10px] text-gray-400 hover:text-white transition-colors"
                                 >
                                   Cancel
                                 </button>
                                 <button
                                   onClick={() => handleSubmitComment(post.id)}
                                   disabled={!commentText.trim() || submittingComment}
-                                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs rounded-full transition-colors"
+                                  className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[10px] rounded-full transition-colors"
                                 >
                                   {submittingComment ? 'Posting...' : 'Comment'}
                                 </button>
