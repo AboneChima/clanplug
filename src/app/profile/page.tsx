@@ -406,11 +406,11 @@ export default function ProfilePage() {
                   </div>
                 ) : (
                   <Link href="/kyc">
-                    <div className="flex items-center gap-1 px-2 py-0.5 bg-blue-600/20 border border-blue-500/30 rounded-full hover:bg-blue-600/30 transition-colors cursor-pointer">
-                      <svg className="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    <div className="flex items-center gap-1 px-2 py-0.5 bg-red-600/20 border border-red-500/30 rounded-full hover:bg-red-600/30 transition-colors cursor-pointer">
+                      <svg className="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
                       </svg>
-                      <span className="text-[10px] text-blue-400 font-semibold">Verify KYC</span>
+                      <span className="text-[10px] text-red-400 font-semibold">KYC Unverified</span>
                     </div>
                   </Link>
                 )}
