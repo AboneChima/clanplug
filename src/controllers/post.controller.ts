@@ -105,36 +105,24 @@ export const postController = {
 
       const authorId = (req as any).user.id;
       
-      // Check KYC verification for MARKETPLACE posts
+      // Check KYC verification ONLY for MARKETPLACE posts when user is NOT KYC verified
       const isMarketplacePost = type === 'MARKETPLACE_LISTING' || type === 'GAME_ACCOUNT';
       
-      if (isMarketplacePost) {
-        const user = await import('../config/database').then(m => m.prisma.user.findUnique({
-          where: { id: authorId },
-          select: { isKYCVerified: true }
-        }));
-        
-        if (!user?.isKYCVerified) {
-          res.status(403).json({
-            success: false,
-            message: 'KYC verification required to post on marketplace. Please complete KYC verification.',
-          });
-          return;
-        }
-      }
+      // No automatic KYC requirement - users can create marketplace listings
+      // The limit check (5 listings for non-KYC users) is handled on frontend
       
-      // Check verification badge for SOCIAL_POST with media
-      const hasMedia = (images && images.length > 0) || (videos && videos.length > 0);
+      // Check verification badge for SOCIAL_POST with VIDEOS only
+      const hasVideos = videos && videos.length > 0;
       const isSocialPost = type === 'SOCIAL_POST';
       
-      if (hasMedia && isSocialPost) {
+      if (hasVideos && isSocialPost) {
         const { verificationService } = await import('../services/verification.service');
         const canPostMedia = await verificationService.canPostMedia(authorId);
         
         if (!canPostMedia) {
           res.status(403).json({
             success: false,
-            message: 'Verification badge required to post images on social feed. Text posts are allowed.',
+            message: 'Verification badge required to post videos on social feed. Images are allowed for all users.',
           });
           return;
         }
@@ -359,16 +347,18 @@ export const postController = {
         return;
       }
 
-      // Skip verification check for KYC document uploads
-      if (!isKYCUpload) {
-        // Check if user has verification badge for media uploads (social feed posts)
+      // Skip verification check for KYC document uploads AND marketplace listings
+      const isMarketplaceListing = postType === 'MARKETPLACE_LISTING' || postType === 'GAME_ACCOUNT';
+      
+      if (!isKYCUpload && !isMarketplaceListing) {
+        // Only check verification badge for SOCIAL FEED posts with videos
         const { verificationService } = await import('../services/verification.service');
         const canPost = await verificationService.canPostMedia(userId);
         
         if (!canPost) {
           res.status(403).json({
             success: false,
-            message: 'Purchase verification badge (₦2,000) to post images on social feed. Visit your profile!',
+            message: 'Purchase verification badge (₦2,000) to post videos on social feed. Visit your profile!',
             error: 'VERIFICATION_REQUIRED',
           });
           return;
