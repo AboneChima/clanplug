@@ -345,7 +345,7 @@ export default function FeedPage() {
                       </Link>
                     </div>
 
-                    {/* Content */}
+                    {/* Content - Full width */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1 mb-1">
                         <div className="flex items-center gap-1">
@@ -434,9 +434,9 @@ export default function FeedPage() {
                         </button>
                       </div>
 
-                      {/* Inline Comment Box */}
+                      {/* Inline Comment Box - Full Width */}
                       {showCommentBox === post.id && (
-                        <div className="mt-2 pt-2 border-t border-[#2f3336]">
+                        <div className="mt-3 pt-3 border-t border-[#2f3336]">
                           {/* Previous Comments - Show latest 3 with better visibility */}
                           {loadingComments === post.id ? (
                             <div className="flex items-center justify-center py-2">
@@ -446,17 +446,23 @@ export default function FeedPage() {
                             <div className="mb-3 space-y-2.5 max-h-48 overflow-y-auto">
                               {post.comments.slice(0, 3).map((comment) => (
                                 <div key={comment.id} className="flex gap-2">
-                                  {comment.user.avatar ? (
-                                    <Image src={comment.user.avatar} alt={comment.user.username} width={28} height={28} className="w-7 h-7 rounded-full flex-shrink-0" unoptimized />
-                                  ) : (
-                                    <div className="w-7 h-7 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                                      <span className="text-white text-[10px] font-bold">{comment.user.firstName[0]}</span>
-                                    </div>
-                                  )}
+                                  <Link href={`/user/${comment.user.id}`} onClick={(e) => e.stopPropagation()}>
+                                    {comment.user.avatar ? (
+                                      <Image src={comment.user.avatar} alt={comment.user.username} width={28} height={28} className="w-7 h-7 rounded-full flex-shrink-0 hover:opacity-80 transition-opacity" unoptimized />
+                                    ) : (
+                                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0 hover:bg-[#2a2a2a] transition-colors">
+                                        <span className="text-white text-[10px] font-bold">{comment.user.firstName[0]}</span>
+                                      </div>
+                                    )}
+                                  </Link>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="text-white text-xs font-medium">{comment.user.firstName}</span>
-                                      <span className="text-gray-500 text-[10px]">@{comment.user.username}</span>
+                                      <Link href={`/user/${comment.user.id}`} onClick={(e) => e.stopPropagation()}>
+                                        <span className="text-white text-xs font-medium hover:underline cursor-pointer">{comment.user.firstName}</span>
+                                      </Link>
+                                      <Link href={`/user/${comment.user.id}`} onClick={(e) => e.stopPropagation()}>
+                                        <span className="text-gray-500 text-[10px] hover:text-gray-400 cursor-pointer">@{comment.user.username}</span>
+                                      </Link>
                                     </div>
                                     <p className="text-gray-300 text-xs break-words leading-relaxed">{comment.content}</p>
                                   </div>
@@ -472,8 +478,8 @@ export default function FeedPage() {
                             </div>
                           ) : null}
 
-                          {/* Add Comment - Small Input */}
-                          <div className="flex gap-1.5">
+                          {/* Add Comment - Small Input - Full Width */}
+                          <div className="flex gap-2">
                             {user?.avatar ? (
                               <Image src={user.avatar} alt="You" width={24} height={24} className="w-6 h-6 rounded-full flex-shrink-0" unoptimized />
                             ) : (
@@ -484,26 +490,37 @@ export default function FeedPage() {
                             <div className="flex-1">
                               <textarea
                                 value={commentText}
-                                onChange={(e) => setCommentText(e.target.value)}
+                                onChange={(e) => {
+                                  setCommentText(e.target.value);
+                                  // Auto-resize textarea
+                                  e.target.style.height = 'auto';
+                                  e.target.style.height = e.target.scrollHeight + 'px';
+                                }}
                                 placeholder="Write a comment..."
-                                className="w-full bg-[#1a1a1a] border border-[#2f3336] rounded-lg px-2 py-1 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                                className="w-full bg-[#1a1a1a] border border-[#2f3336] rounded-lg px-2.5 py-1.5 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none overflow-hidden"
                                 rows={1}
+                                style={{ maxHeight: '120px' }}
+                                onInput={(e) => {
+                                  const target = e.target as HTMLTextAreaElement;
+                                  target.style.height = 'auto';
+                                  target.style.height = Math.min(target.scrollHeight, 120) + 'px';
+                                }}
                                 autoFocus
                               />
-                              <div className="flex justify-end gap-1.5 mt-1">
+                              <div className="flex justify-end gap-2 mt-1.5">
                                 <button
                                   onClick={() => {
                                     setShowCommentBox(null);
                                     setCommentText('');
                                   }}
-                                  className="px-2 py-0.5 text-[10px] text-gray-400 hover:text-white transition-colors"
+                                  className="px-3 py-1 text-xs text-gray-400 hover:text-white transition-colors"
                                 >
                                   Cancel
                                 </button>
                                 <button
                                   onClick={() => handleSubmitComment(post.id)}
                                   disabled={!commentText.trim() || submittingComment}
-                                  className="px-2.5 py-0.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[10px] rounded-full transition-colors"
+                                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs rounded-full transition-colors"
                                 >
                                   {submittingComment ? 'Posting...' : 'Comment'}
                                 </button>
