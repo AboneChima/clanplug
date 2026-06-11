@@ -46,8 +46,8 @@ export async function register(req: Request, res: Response) {
     const existing = await prisma.user.findFirst({ 
       where: { 
         OR: [
-          { email: { equals: normalizedEmail, mode: 'insensitive' } }, 
-          { username: { equals: normalizedUsername, mode: 'insensitive' } }
+          { email: normalizedEmail }, 
+          { username: normalizedUsername }
         ] 
       } 
     });
@@ -58,7 +58,7 @@ export async function register(req: Request, res: Response) {
     // Check if username is reserved by a verified user
     const reservedUsername = await prisma.user.findFirst({
       where: { 
-        username: { equals: normalizedUsername, mode: 'insensitive' },
+        username: normalizedUsername,
         verificationBadge: {
           status: 'verified',
           expiresAt: { gt: new Date() }
@@ -191,8 +191,8 @@ export async function login(req: Request, res: Response) {
     const user = await prisma.user.findFirst({ 
       where: { 
         OR: [
-          normalizedEmail ? { email: { equals: normalizedEmail, mode: 'insensitive' } } : {},
-          normalizedUsername ? { username: { equals: normalizedUsername, mode: 'insensitive' } } : {}
+          normalizedEmail ? { email: normalizedEmail } : {},
+          normalizedUsername ? { username: normalizedUsername } : {}
         ].filter(obj => Object.keys(obj).length > 0)
       },
       include: { verificationBadge: true }
