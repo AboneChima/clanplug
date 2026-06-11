@@ -105,11 +105,23 @@ export const postController = {
 
       const authorId = (req as any).user.id;
       
-      // Check KYC verification ONLY for MARKETPLACE posts when user is NOT KYC verified
+      // Check KYC verification for MARKETPLACE posts - REQUIRED for all marketplace posts
       const isMarketplacePost = type === 'MARKETPLACE_LISTING' || type === 'GAME_ACCOUNT';
       
-      // No automatic KYC requirement - users can create marketplace listings
-      // The limit check (5 listings for non-KYC users) is handled on frontend
+      if (isMarketplacePost) {
+        const user = await import('../config/database').then(m => m.prisma.user.findUnique({
+          where: { id: authorId },
+          select: { isKYCVerified: true }
+        }));
+        
+        if (!user?.isKYCVerified) {
+          res.status(403).json({
+            success: false,
+            message: 'KYC verification required to post on marketplace. Please complete KYC verification.',
+          });
+          return;
+        }
+      }
       
       // Check verification badge for SOCIAL_POST with VIDEOS only
       const hasVideos = videos && videos.length > 0;
