@@ -5,6 +5,7 @@ import config from '../config/config';
 import { supabaseStorage } from './supabase.service';
 
 // Configure Cloudinary if credentials are provided (kept as fallback)
+// Force redeploy - updated 2026-06-11
 if (config.CLOUDINARY_CLOUD_NAME && config.CLOUDINARY_API_KEY && config.CLOUDINARY_API_SECRET) {
   cloudinary.config({
     cloud_name: config.CLOUDINARY_CLOUD_NAME,
