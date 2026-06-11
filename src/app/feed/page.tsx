@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoCloseOutline, IoTrashOutline, IoEllipsisVerticalOutline } from 'react-icons/io5';
+import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoCloseOutline, IoTrashOutline } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
@@ -34,6 +34,9 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [showKYCBanner, setShowKYCBanner] = useState(true);
   const [activeTab, setActiveTab] = useState<'forYou' | 'bookmarks'>('forYou');
+  const [showCommentBox, setShowCommentBox] = useState<string | null>(null);
+  const [commentText, setCommentText] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -116,6 +119,87 @@ export default function FeedPage() {
     }
   };
 
+  const handleShare = async (post: Post) => {
+    const shareUrl = `https://www.clanplug.site/post/${post.id}`;
+    const shareText = `Check out this post by ${post.user.firstName} ${post.user.lastName} on Clanplug!\n\n${post.description.slice(0, 100)}${post.description.length > 100 ? '...' : ''}`;
+
+    // Try native share API first (works on mobile and some desktop browsers)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Post by ${post.user.firstName} ${post.user.lastName}`,
+          text: shareText,
+          url: shareUrl,
+        });
+        showToast('Shared successfully!', 'success');
+        return;
+      } catch (error) {
+        // User cancelled the share dialog
+        if ((error as Error).name === 'AbortError') {
+          return;
+        }
+        console.error('Share error:', error);
+        // Fall through to clipboard method
+      }
+    }
+    
+    // Fallback to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast('Link copied! Share it anywhere you like 🚀', 'success');
+    } catch (error) {
+      console.error('Clipboard error:', error);
+      // Last resort: create a temporary input element
+      try {
+        const tempInput = document.createElement('input');
+        tempInput.value = shareUrl;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+        showToast('Link copied to clipboard!', 'success');
+      } catch (fallbackError) {
+        console.error('Fallback copy error:', fallbackError);
+        showToast('Could not copy link. Please try again.', 'error');
+      }
+    }
+  };
+
+  const handleSubmitComment = async (postId: string) => {
+    if (!commentText.trim()) return;
+
+    setSubmittingComment(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: commentText }),
+      });
+
+      if (response.ok) {
+        setCommentText('');
+        setShowCommentBox(null);
+        setPosts(posts.map(post => 
+          post.id === postId 
+            ? { ...post, _count: { ...post._count, comments: post._count.comments + 1 }}
+            : post
+        ));
+        showToast('Comment added!', 'success');
+      } else {
+        showToast('Failed to add comment', 'error');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showToast('Failed to add comment', 'error');
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
   return (
     <AppShell>
       <div className="min-h-screen bg-black">
@@ -187,99 +271,155 @@ export default function FeedPage() {
               {posts
                 .filter(post => activeTab === 'forYou' || post.isBookmarked)
                 .map((post) => (
-                <Link key={post.id} href={`/post/${post.id}`}>
-                  <div className="p-3 hover:bg-[#080808] transition-colors cursor-pointer">
-                    <div className="flex gap-2">
-                      {/* Avatar */}
-                      <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} className="flex-shrink-0">
-                        <Link href={`/user/${post.user.id}`}>
-                          {post.user.avatar ? (
-                            <Image src={post.user.avatar} alt={post.user.username} width={36} height={36} className="w-9 h-9 rounded-full" unoptimized />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center">
-                              <span className="text-white text-xs font-bold">{post.user.firstName[0]}</span>
+                <div key={post.id} className="p-3 hover:bg-[#080808] transition-colors">
+                  <div className="flex gap-2">
+                    {/* Avatar */}
+                    <div onClick={(e) => { e.stopPropagation(); }} className="flex-shrink-0">
+                      <Link href={`/user/${post.user.id}`}>
+                        {post.user.avatar ? (
+                          <Image src={post.user.avatar} alt={post.user.username} width={36} height={36} className="w-9 h-9 rounded-full" unoptimized />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">{post.user.firstName[0]}</span>
+                          </div>
+                        )}
+                      </Link>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <div className="flex items-center gap-1">
+                          <span className="font-bold text-white text-xs">{post.user.firstName} {post.user.lastName}</span>
+                        {((post.user as any).verificationBadge?.status === 'verified' || (post.user as any).verificationBadge?.status === 'active') && (
+                          <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                          <span className="text-gray-500 text-[10px]">@{post.user.username}</span>
+                        </div>
+                        
+                        {/* Delete button - only show for own posts */}
+                        {post.user.id === user?.id && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(post.id);
+                            }}
+                            className="p-1 hover:bg-red-500/10 rounded-full transition-colors"
+                            title="Delete post"
+                          >
+                            <IoTrashOutline className="w-3.5 h-3.5 text-red-500" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Post content - clickable to go to full post */}
+                      <Link href={`/post/${post.id}`}>
+                        <div className="cursor-pointer">
+                          <p className="text-white text-xs mb-2 whitespace-pre-wrap line-clamp-3">{post.description}</p>
+
+                          {/* Images */}
+                          {post.images && post.images[0] && (
+                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336]">
+                              <Image src={post.images[0]} alt="Post" width={600} height={400} className="w-full" unoptimized />
                             </div>
                           )}
-                        </Link>
-                      </div>
 
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1 mb-1">
-                          <div className="flex items-center gap-1">
-                            <span className="font-bold text-white text-xs">{post.user.firstName} {post.user.lastName}</span>
-                          {((post.user as any).verificationBadge?.status === 'verified' || (post.user as any).verificationBadge?.status === 'active') && (
-                            <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                            <span className="text-gray-500 text-[10px]">@{post.user.username}</span>
-                          </div>
-                          
-                          {/* Delete button - only show for own posts */}
-                          {post.user.id === user?.id && (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleDelete(post.id);
-                              }}
-                              className="p-1 hover:bg-red-500/10 rounded-full transition-colors"
-                              title="Delete post"
-                            >
-                              <IoTrashOutline className="w-3.5 h-3.5 text-red-500" />
-                            </button>
+                          {/* Videos */}
+                          {post.videos && post.videos[0] && (
+                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336]">
+                              <video
+                                src={post.videos[0]}
+                                className="w-full"
+                                controls
+                                playsInline
+                                preload="metadata"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
                           )}
                         </div>
+                      </Link>
 
-                        <p className="text-white text-xs mb-2 whitespace-pre-wrap line-clamp-3">{post.description}</p>
+                      {/* Actions */}
+                      <div className="flex items-center justify-between max-w-xs">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowCommentBox(showCommentBox === post.id ? null : post.id);
+                          }}
+                          className="flex items-center gap-1.5 text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full"
+                        >
+                          <IoChatbubbleOutline className="w-[18px] h-[18px]" />
+                          <span className="text-xs font-medium">{post._count.comments}</span>
+                        </button>
 
-                        {/* Images */}
-                        {post.images && post.images[0] && (
-                          <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336]">
-                            <Image src={post.images[0]} alt="Post" width={600} height={400} className="w-full" unoptimized />
-                          </div>
-                        )}
+                        <button onClick={(e) => { e.stopPropagation(); handleLike(post.id); }} className="flex items-center gap-1.5 text-gray-300 hover:text-pink-500 transition-colors p-1.5 hover:bg-pink-500/10 rounded-full">
+                          {post.isLiked ? <IoHeart className="w-[18px] h-[18px] text-pink-500" /> : <IoHeartOutline className="w-[18px] h-[18px]" />}
+                          <span className="text-xs font-medium">{post._count.likes}</span>
+                        </button>
 
-                        {/* Videos */}
-                        {post.videos && post.videos[0] && (
-                          <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336]">
-                            <video
-                              src={post.videos[0]}
-                              className="w-full"
-                              controls
-                              playsInline
-                              preload="metadata"
-                            />
-                          </div>
-                        )}
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            handleShare(post); 
+                          }} 
+                          className="text-gray-300 hover:text-green-500 transition-colors p-1.5 hover:bg-green-500/10 rounded-full"
+                        >
+                          <IoShareSocialOutline className="w-[18px] h-[18px]" />
+                        </button>
 
-                        {/* Actions */}
-                        <div className="flex items-center justify-between max-w-xs" onClick={(e) => e.preventDefault()}>
-                          <Link href={`/post/${post.id}`}>
-                            <button className="flex items-center gap-1.5 text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full">
-                              <IoChatbubbleOutline className="w-[18px] h-[18px]" />
-                              <span className="text-xs font-medium">{post._count.comments}</span>
-                            </button>
-                          </Link>
-
-                          <button onClick={(e) => { e.stopPropagation(); handleLike(post.id); }} className="flex items-center gap-1.5 text-gray-300 hover:text-pink-500 transition-colors p-1.5 hover:bg-pink-500/10 rounded-full">
-                            {post.isLiked ? <IoHeart className="w-[18px] h-[18px] text-pink-500" /> : <IoHeartOutline className="w-[18px] h-[18px]" />}
-                            <span className="text-xs font-medium">{post._count.likes}</span>
-                          </button>
-
-                          <button className="text-gray-300 hover:text-green-500 transition-colors p-1.5 hover:bg-green-500/10 rounded-full">
-                            <IoShareSocialOutline className="w-[18px] h-[18px]" />
-                          </button>
-
-                          <button onClick={(e) => { e.stopPropagation(); handleBookmark(post.id); }} className="text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full">
-                            {post.isBookmarked ? <IoBookmark className="w-[18px] h-[18px] text-blue-500" /> : <IoBookmarkOutline className="w-[18px] h-[18px]" />}
-                          </button>
-                        </div>
+                        <button onClick={(e) => { e.stopPropagation(); handleBookmark(post.id); }} className="text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full">
+                          {post.isBookmarked ? <IoBookmark className="w-[18px] h-[18px] text-blue-500" /> : <IoBookmarkOutline className="w-[18px] h-[18px]" />}
+                        </button>
                       </div>
+
+                      {/* Inline Comment Box */}
+                      {showCommentBox === post.id && (
+                        <div className="mt-2 pt-2 border-t border-[#2f3336]">
+                          <div className="flex gap-2">
+                            {user?.avatar ? (
+                              <Image src={user.avatar} alt="You" width={24} height={24} className="w-6 h-6 rounded-full flex-shrink-0" unoptimized />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
+                                <span className="text-white text-[10px] font-bold">{user?.firstName?.[0]}</span>
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <textarea
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                placeholder="Write a comment..."
+                                className="w-full bg-[#1a1a1a] border border-[#2f3336] rounded-lg px-2 py-1.5 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                                rows={2}
+                                autoFocus
+                              />
+                              <div className="flex justify-end gap-2 mt-1">
+                                <button
+                                  onClick={() => {
+                                    setShowCommentBox(null);
+                                    setCommentText('');
+                                  }}
+                                  className="px-3 py-1 text-xs text-gray-400 hover:text-white transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => handleSubmitComment(post.id)}
+                                  disabled={!commentText.trim() || submittingComment}
+                                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs rounded-full transition-colors"
+                                >
+                                  {submittingComment ? 'Posting...' : 'Comment'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           )}

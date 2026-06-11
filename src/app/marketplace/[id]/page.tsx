@@ -533,14 +533,14 @@ export default function MarketplaceDetailPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {/* Call Button */}
+                    {/* Call Button with Phone Number */}
                     {post.user.phone ? (
                       <a
                         href={`tel:${post.user.phone}`}
                         className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2"
                       >
                         <IoCallOutline className="w-4 h-4" />
-                        <span>Call Seller</span>
+                        <span>Call: {post.user.phone}</span>
                       </a>
                     ) : (
                       <div className="w-full py-2 bg-gray-700 text-gray-400 text-xs sm:text-sm font-medium rounded-md text-center">
