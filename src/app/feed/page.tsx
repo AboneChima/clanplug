@@ -12,6 +12,7 @@ interface Post {
   id: string;
   description: string;
   images?: string[];
+  videos?: string[];
   type?: string;
   user: {
     id: string;
@@ -233,9 +234,23 @@ export default function FeedPage() {
 
                         <p className="text-white text-xs mb-2 whitespace-pre-wrap line-clamp-3">{post.description}</p>
 
+                        {/* Images */}
                         {post.images && post.images[0] && (
                           <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336]">
                             <Image src={post.images[0]} alt="Post" width={600} height={400} className="w-full" unoptimized />
+                          </div>
+                        )}
+
+                        {/* Videos */}
+                        {post.videos && post.videos[0] && (
+                          <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336]">
+                            <video
+                              src={post.videos[0]}
+                              className="w-full"
+                              controls
+                              playsInline
+                              preload="metadata"
+                            />
                           </div>
                         )}
 

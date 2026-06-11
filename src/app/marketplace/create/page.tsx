@@ -131,16 +131,9 @@ function CreateListingForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // CRITICAL: Only KYC verified users can post marketplace listings
-    if (!user?.isKYCVerified) {
-      showToast('Complete KYC verification to post marketplace listings', 'error');
-      router.push('/kyc');
-      return;
-    }
-
-    // Non-KYC users have a 5 listing limit
+    // Check if user has exceeded their listing limit (non-KYC users have 5 limit)
     if (!user?.isKYCVerified && userListingCount >= 5) {
-      showToast('Free users can only make 5 marketplace listings. Complete KYC verification for unlimited listings!', 'error');
+      showToast('You\'ve reached your listing limit (5). Complete KYC verification for unlimited listings!', 'error');
       router.push('/kyc');
       return;
     }
