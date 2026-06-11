@@ -437,34 +437,34 @@ export default function FeedPage() {
                       {/* Inline Comment Box */}
                       {showCommentBox === post.id && (
                         <div className="mt-2 pt-2 border-t border-[#2f3336]">
-                          {/* Previous Comments - Show latest 3 */}
+                          {/* Previous Comments - Show latest 3 with better visibility */}
                           {loadingComments === post.id ? (
                             <div className="flex items-center justify-center py-2">
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                             </div>
                           ) : post.comments && post.comments.length > 0 ? (
-                            <div className="mb-2 space-y-2 max-h-40 overflow-y-auto">
+                            <div className="mb-3 space-y-2.5 max-h-48 overflow-y-auto">
                               {post.comments.slice(0, 3).map((comment) => (
                                 <div key={comment.id} className="flex gap-2">
                                   {comment.user.avatar ? (
-                                    <Image src={comment.user.avatar} alt={comment.user.username} width={20} height={20} className="w-5 h-5 rounded-full flex-shrink-0" unoptimized />
+                                    <Image src={comment.user.avatar} alt={comment.user.username} width={28} height={28} className="w-7 h-7 rounded-full flex-shrink-0" unoptimized />
                                   ) : (
-                                    <div className="w-5 h-5 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                                      <span className="text-white text-[8px] font-bold">{comment.user.firstName[0]}</span>
+                                    <div className="w-7 h-7 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
+                                      <span className="text-white text-[10px] font-bold">{comment.user.firstName[0]}</span>
                                     </div>
                                   )}
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-white text-[10px] font-medium">{comment.user.firstName}</span>
-                                      <span className="text-gray-500 text-[8px]">@{comment.user.username}</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-white text-xs font-medium">{comment.user.firstName}</span>
+                                      <span className="text-gray-500 text-[10px]">@{comment.user.username}</span>
                                     </div>
-                                    <p className="text-gray-300 text-[11px] break-words">{comment.content}</p>
+                                    <p className="text-gray-300 text-xs break-words leading-relaxed">{comment.content}</p>
                                   </div>
                                 </div>
                               ))}
                               {post.comments.length > 3 && (
                                 <Link href={`/post/${post.id}`}>
-                                  <button className="text-blue-400 text-[10px] hover:underline">
+                                  <button className="text-blue-400 text-xs hover:underline">
                                     View all {post.comments.length} comments
                                   </button>
                                 </Link>
@@ -472,13 +472,13 @@ export default function FeedPage() {
                             </div>
                           ) : null}
 
-                          {/* Add Comment */}
+                          {/* Add Comment - Small Input */}
                           <div className="flex gap-1.5">
                             {user?.avatar ? (
-                              <Image src={user.avatar} alt="You" width={20} height={20} className="w-5 h-5 rounded-full flex-shrink-0" unoptimized />
+                              <Image src={user.avatar} alt="You" width={24} height={24} className="w-6 h-6 rounded-full flex-shrink-0" unoptimized />
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                                <span className="text-white text-[8px] font-bold">{user?.firstName?.[0]}</span>
+                              <div className="w-6 h-6 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
+                                <span className="text-white text-[10px] font-bold">{user?.firstName?.[0]}</span>
                               </div>
                             )}
                             <div className="flex-1">
@@ -486,7 +486,7 @@ export default function FeedPage() {
                                 value={commentText}
                                 onChange={(e) => setCommentText(e.target.value)}
                                 placeholder="Write a comment..."
-                                className="w-full bg-[#1a1a1a] border border-[#2f3336] rounded-lg px-2 py-1 text-white text-[11px] placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                                className="w-full bg-[#1a1a1a] border border-[#2f3336] rounded-lg px-2 py-1 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
                                 rows={1}
                                 autoFocus
                               />
@@ -503,7 +503,7 @@ export default function FeedPage() {
                                 <button
                                   onClick={() => handleSubmitComment(post.id)}
                                   disabled={!commentText.trim() || submittingComment}
-                                  className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[10px] rounded-full transition-colors"
+                                  className="px-2.5 py-0.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[10px] rounded-full transition-colors"
                                 >
                                   {submittingComment ? 'Posting...' : 'Comment'}
                                 </button>
