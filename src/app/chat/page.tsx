@@ -63,17 +63,14 @@ function ChatContent() {
       }
       setSelectedMessage(msg);
       setShowMessageMenu(true);
-      setLongPressTimer(null); // Clear immediately after opening
+      // Don't clear timer - let it stay null
     }, 500);
     setLongPressTimer(timer);
   };
 
   const handleLongPressEnd = () => {
-    // Clear timer only if menu hasn't opened
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
+    // Don't clear anything on touch end
+    // Only touch move should cancel
   };
 
   const handleTouchMove = () => {
@@ -179,13 +176,32 @@ function ChatContent() {
 
   const handleReactWithEmoji = (emoji: string) => {
     if (!selectedMessage) return;
-    // Add emoji reaction under message bubble
-    setMessageReactions(prev => ({
-      ...prev,
-      [selectedMessage.id]: emoji
-    }));
+    // Toggle emoji reaction - if same emoji, remove it
+    setMessageReactions(prev => {
+      const current = prev[selectedMessage.id];
+      if (current === emoji) {
+        // Remove reaction
+        const newReactions = { ...prev };
+        delete newReactions[selectedMessage.id];
+        return newReactions;
+      } else {
+        // Add or replace reaction
+        return {
+          ...prev,
+          [selectedMessage.id]: emoji
+        };
+      }
+    });
     setShowMessageMenu(false);
     setSelectedMessage(null);
+  };
+
+  const handleRemoveReaction = (msgId: string) => {
+    setMessageReactions(prev => {
+      const newReactions = { ...prev };
+      delete newReactions[msgId];
+      return newReactions;
+    });
   };
 
   const handlePinMessage = () => {
@@ -766,13 +782,14 @@ function ChatContent() {
                       onTouchMove={handleTouchMove}
                       onMouseDown={() => handleLongPressStart(msg)}
                       onMouseUp={handleLongPressEnd}
-                      onMouseLeave={handleLongPressEnd}
+                      onMouseLeave={handleTouchMove}
                     >
-                      <div className={`max-w-[75%] ${
-                        isListingShare ? '' : 'rounded-2xl'
-                      } ${
-                        isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-[#2a2a2a] text-white rounded-bl-md'
-                      } ${hasImage && !isListingShare ? 'p-1' : isListingShare ? '' : 'px-3 py-2'}`}>
+                      <div className="relative max-w-[75%]">
+                        <div className={`${
+                          isListingShare ? '' : 'rounded-2xl'
+                        } ${
+                          isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-[#2a2a2a] text-white rounded-bl-md'
+                        } ${hasImage && !isListingShare ? 'p-1' : isListingShare ? '' : 'px-3 py-2'}`}>
                         
                         {/* Listing Share - Compact YouTube-style Thumbnail */}
                         {isListingShare && (msg as any).metadata && (
@@ -885,16 +902,18 @@ function ChatContent() {
                             </div>
                           </>
                         )}
-                      </div>
-                      
-                      {/* Emoji Reaction - Displayed under bubble */}
-                      {messageReactions[msg.id] && (
-                        <div className={`mt-1 ${isOwn ? 'flex justify-end' : 'flex justify-start'}`}>
-                          <div className="bg-white border-2 border-gray-700 rounded-full px-2 py-0.5 shadow-lg">
-                            <span className="text-base">{messageReactions[msg.id]}</span>
-                          </div>
                         </div>
-                      )}
+                        
+                        {/* Emoji Reaction - Bottom right corner of bubble */}
+                        {messageReactions[msg.id] && (
+                          <button
+                            onClick={() => handleRemoveReaction(msg.id)}
+                            className={`absolute -bottom-2 ${isOwn ? 'right-0' : 'left-0'} bg-white border border-gray-300 rounded-full px-1.5 py-0.5 shadow-md hover:scale-110 transition-transform`}
+                          >
+                            <span className="text-sm">{messageReactions[msg.id]}</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
