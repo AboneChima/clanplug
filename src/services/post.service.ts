@@ -290,6 +290,7 @@ export const postService = {
               firstName: true,
               lastName: true,
               avatar: true,
+              phone: true,
               isKYCVerified: true,
               verificationBadge: {
                 select: {
