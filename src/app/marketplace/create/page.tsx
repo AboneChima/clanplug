@@ -46,12 +46,16 @@ function CreateListingForm() {
     price: '',
     gameTitle: '',
     type: 'GAME_ACCOUNT',
+    location: '',
   });
   const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string>('');
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [userListingCount, setUserListingCount] = useState(0);
   const [loadingListingCount, setLoadingListingCount] = useState(true);
+  
+  // Check if current selection is Games & Gadgets
+  const isGamesAndGadgets = formData.gameTitle === 'games-gadgets';
 
   // Fetch user's marketplace listing count on mount
   useEffect(() => {
@@ -153,6 +157,12 @@ function CreateListingForm() {
       return;
     }
 
+    // Validate location for Games & Gadgets
+    if (isGamesAndGadgets && !formData.location.trim()) {
+      showToast('Please provide a location for Games & Gadgets', 'error');
+      return;
+    }
+
     if (!selectedMedia) {
       showToast('Please upload a video or image', 'error');
       return;
@@ -204,9 +214,14 @@ function CreateListingForm() {
       // Use first 50 chars of description as title
       const title = formData.description.slice(0, 50).trim() + (formData.description.length > 50 ? '...' : '');
       
+      // For Games & Gadgets, append location to description
+      const finalDescription = isGamesAndGadgets && formData.location
+        ? `${formData.description}\n\nLocation: ${formData.location}`
+        : formData.description;
+      
       const postData = {
         title,
-        description: formData.description,
+        description: finalDescription,
         gameTitle: formData.gameTitle,
         type: formData.type,
         ...(mediaType === 'video' ? { videos: [mediaUrl] } : { images: [mediaUrl] }),
@@ -336,23 +351,49 @@ function CreateListingForm() {
               </p>
             </div>
 
-            {/* Description - Now includes region and login method */}
+            {/* Description - Custom for Games & Gadgets */}
             <div>
               <label className="block text-white text-sm font-medium mb-1.5">
-                Description <span className="text-red-500">*</span>
+                {isGamesAndGadgets ? 'Condition' : 'Description'} <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Include: Country/Region and Login Method&#10;&#10;Example:&#10;Region: Nigeria&#10;Login: Google&#10;&#10;Then describe your account in detail..."
+                placeholder={
+                  isGamesAndGadgets 
+                    ? "Condition of the product (e.g., Brand new, Used - Like new, Used - Good condition)\n\nProvide details about the product condition, any wear and tear, accessories included, etc."
+                    : "Include: Country/Region and Login Method\n\nExample:\nRegion: Nigeria\nLogin: Google\n\nThen describe your account in detail..."
+                }
                 rows={6}
                 className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 required
               />
-              <p className="text-xs text-gray-400 mt-1">
-                Please include region/country and login method in your description
-              </p>
+              {!isGamesAndGadgets && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Please include region/country and login method in your description
+                </p>
+              )}
             </div>
+
+            {/* Location - Only for Games & Gadgets */}
+            {isGamesAndGadgets && (
+              <div>
+                <label className="block text-white text-sm font-medium mb-1.5">
+                  Location <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  placeholder="e.g., Lagos, Nigeria or Abuja, FCT"
+                  className="w-full px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-lg text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required={isGamesAndGadgets}
+                />
+                <p className="text-xs text-gray-400 mt-1">
+                  Specify where the item can be picked up or shipped from
+                </p>
+              </div>
+            )}
 
             {/* Price (Optional) */}
             <div>

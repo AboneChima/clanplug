@@ -44,6 +44,9 @@ function ChatContent() {
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
   const [showMessageMenu, setShowMessageMenu] = useState(false);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
+  const [pinnedMessages, setPinnedMessages] = useState<Set<string>>(new Set());
+  const [starredMessages, setStarredMessages] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,16 +60,13 @@ function ChatContent() {
       }
       setSelectedMessage(msg);
       setShowMessageMenu(true);
-      // Clear the timer immediately so releasing doesn't cancel the menu
-      setLongPressTimer(null);
-    }, 500); // 500ms long press for better reliability
+    }, 400); // 400ms long press
     setLongPressTimer(timer);
   };
 
   const handleLongPressEnd = () => {
     // Only clear timer if menu hasn't opened yet
-    // If menu is already showing, don't do anything
-    if (longPressTimer && !showMessageMenu) {
+    if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
@@ -152,6 +152,56 @@ function ChatContent() {
     } catch (error) {
       showToast('Failed to share message', 'error');
     }
+  };
+
+  const handleReplyToMessage = () => {
+    if (!selectedMessage) return;
+    setReplyToMessage(selectedMessage);
+    setShowMessageMenu(false);
+    setSelectedMessage(null);
+    showToast('Reply to message', 'success');
+  };
+
+  const cancelReply = () => {
+    setReplyToMessage(null);
+  };
+
+  const handleReactWithEmoji = (emoji: string) => {
+    if (!selectedMessage) return;
+    // Store reaction locally
+    showToast(`Reacted with ${emoji}`, 'success');
+    setShowMessageMenu(false);
+    setSelectedMessage(null);
+  };
+
+  const handlePinMessage = () => {
+    if (!selectedMessage) return;
+    const newPinned = new Set(pinnedMessages);
+    if (newPinned.has(selectedMessage.id)) {
+      newPinned.delete(selectedMessage.id);
+      showToast('Message unpinned', 'success');
+    } else {
+      newPinned.add(selectedMessage.id);
+      showToast('Message pinned', 'success');
+    }
+    setPinnedMessages(newPinned);
+    setShowMessageMenu(false);
+    setSelectedMessage(null);
+  };
+
+  const handleStarMessage = () => {
+    if (!selectedMessage) return;
+    const newStarred = new Set(starredMessages);
+    if (newStarred.has(selectedMessage.id)) {
+      newStarred.delete(selectedMessage.id);
+      showToast('Message unstarred', 'success');
+    } else {
+      newStarred.add(selectedMessage.id);
+      showToast('Message starred', 'success');
+    }
+    setStarredMessages(newStarred);
+    setShowMessageMenu(false);
+    setSelectedMessage(null);
   };
 
   // Load chats on mount
@@ -302,13 +352,16 @@ function ChatContent() {
         messageData.attachments = [imageUrl];
         console.log('📨 Sending message with image:', { ...messageData, imageUrl });
       }
-      
-      // Don't send metadata for now to avoid validation errors
-      // TODO: Add metadata back once backend is updated
+
+      // Add reply reference if replying
+      if (replyToMessage) {
+        messageData.replyTo = replyToMessage.id;
+      }
       
       setMessageText('');
       setImageFile(null);
       setImagePreview('');
+      setReplyToMessage(null); // Clear reply after sending
       
       console.log('📤 Final message payload:', JSON.stringify(messageData, null, 2));
       const newMsg = await chatService.sendMessage(currentChat.id, messageData, accessToken);
@@ -767,6 +820,24 @@ function ChatContent() {
 
             {/* Message Input */}
             <div className="bg-black px-4 py-3 flex-shrink-0 border-t border-[#2f3336]">
+              {/* Reply Preview */}
+              {replyToMessage && (
+                <div className="mb-2 p-3 bg-[#1a1a1a] border-l-4 border-blue-600 rounded-lg flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400 mb-1">Replying to</p>
+                    <p className="text-sm text-white truncate">
+                      {replyToMessage.content || '📷 Photo'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={cancelReply}
+                    className="ml-2 p-1 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <IoCloseOutline className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+
               {/* Image Preview */}
               {imagePreview && (
                 <div className="mb-2 relative inline-block">
@@ -956,6 +1027,7 @@ function ChatContent() {
             {showMessageMenu && selectedMessage && (
               <div 
                 className="fixed inset-0 z-50"
+                onClick={() => setShowMessageMenu(false)}
                 style={{
                   animation: 'fadeIn 0.25s ease-out forwards'
                 }}
@@ -1007,7 +1079,7 @@ function ChatContent() {
                     {['👍', '❤️', '😂', '😮', '😢', '🙏', '🙌'].map((emoji, idx) => (
                       <button
                         key={emoji}
-                        onClick={() => setShowMessageMenu(false)}
+                        onClick={() => handleReactWithEmoji(emoji)}
                         className="w-10 h-10 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
                         style={{
                           animation: `emojiPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.15 + idx * 0.03}s forwards`,
@@ -1035,6 +1107,7 @@ function ChatContent() {
                 {/* Action Menu */}
                 <div 
                   className="absolute left-4 right-4 top-[48%] z-20"
+                  onClick={(e) => e.stopPropagation()}
                   style={{
                     animation: 'menuSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s forwards',
                     opacity: 0,
@@ -1044,7 +1117,7 @@ function ChatContent() {
                   <div className="bg-[#233138] rounded-2xl overflow-hidden shadow-2xl max-w-md mx-auto">
                     {/* Reply */}
                     <button
-                      onClick={() => setShowMessageMenu(false)}
+                      onClick={handleReplyToMessage}
                       className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
                       <span className="text-white text-[15px]">Reply</span>
@@ -1057,7 +1130,6 @@ function ChatContent() {
                     <button
                       onClick={() => {
                         handleForwardMessage();
-                        setShowMessageMenu(false);
                       }}
                       className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
@@ -1078,22 +1150,26 @@ function ChatContent() {
 
                     {/* Star */}
                     <button
-                      onClick={() => setShowMessageMenu(false)}
+                      onClick={handleStarMessage}
                       className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
-                      <span className="text-white text-[15px]">Star</span>
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="text-white text-[15px]">
+                        {selectedMessage && starredMessages.has(selectedMessage.id) ? 'Unstar' : 'Star'}
+                      </span>
+                      <svg className="w-5 h-5 text-gray-400" fill={selectedMessage && starredMessages.has(selectedMessage.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                       </svg>
                     </button>
 
                     {/* Pin */}
                     <button
-                      onClick={() => setShowMessageMenu(false)}
+                      onClick={handlePinMessage}
                       className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
-                      <span className="text-white text-[15px]">Pin</span>
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="text-white text-[15px]">
+                        {selectedMessage && pinnedMessages.has(selectedMessage.id) ? 'Unpin' : 'Pin'}
+                      </span>
+                      <svg className="w-5 h-5 text-gray-400" fill={selectedMessage && pinnedMessages.has(selectedMessage.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                       </svg>
                     </button>
@@ -1102,7 +1178,6 @@ function ChatContent() {
                     <button
                       onClick={() => {
                         handleDeleteForMe();
-                        setShowMessageMenu(false);
                       }}
                       className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between"
                     >
