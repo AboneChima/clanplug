@@ -896,8 +896,6 @@ function ChatContent() {
                   );
                 })
               )}
-                </>
-              )}
               <div ref={messagesEndRef} />
             </div>
 
