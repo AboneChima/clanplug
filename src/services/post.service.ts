@@ -428,9 +428,7 @@ export const postService = {
           prisma.$executeRaw`DELETE FROM "Report" WHERE "postId" = ${postId}`,
           // Delete the post itself
           prisma.post.delete({ where: { id: postId } }),
-        ], {
-          timeout: 10000, // 10 second timeout
-        });
+        ]);
       } catch (txError: any) {
         console.error('Transaction error during delete:', txError);
         // If transaction fails, try to delete the post directly (force delete)
