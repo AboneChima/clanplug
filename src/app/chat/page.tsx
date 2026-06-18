@@ -57,12 +57,16 @@ function ChatContent() {
       }
       setSelectedMessage(msg);
       setShowMessageMenu(true);
-    }, 400); // 400ms long press (slightly faster than before)
+      // Clear the timer immediately so releasing doesn't cancel the menu
+      setLongPressTimer(null);
+    }, 500); // 500ms long press for better reliability
     setLongPressTimer(timer);
   };
 
   const handleLongPressEnd = () => {
-    if (longPressTimer) {
+    // Only clear timer if menu hasn't opened yet
+    // If menu is already showing, don't do anything
+    if (longPressTimer && !showMessageMenu) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
@@ -953,26 +957,30 @@ function ChatContent() {
               <div 
                 className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center"
                 style={{
-                  animation: 'fadeIn 0.2s ease-out forwards'
+                  animation: 'fadeIn 0.3s ease-out forwards'
                 }}
-                onClick={() => setShowMessageMenu(false)}
               >
-                {/* Backdrop with blur */}
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+                {/* Backdrop with blur - don't close on click, only on Cancel button */}
+                <div 
+                  className="absolute inset-0 bg-black/60 backdrop-blur-md transition-all duration-300" 
+                  style={{
+                    animation: 'blurIn 0.3s ease-out forwards'
+                  }}
+                />
                 
-                {/* Message preview (iOS style - shows message floating) */}
-                <div className="absolute inset-x-4 top-1/4 pointer-events-none">
+                {/* Message preview (iOS style - shows message floating and pulsing) */}
+                <div className="absolute inset-x-4 top-1/3 pointer-events-none z-10">
                   <div 
-                    className="max-w-[75%] mx-auto"
+                    className={`max-w-[75%] ${selectedMessage.userId === user?.id ? 'ml-auto' : 'mr-auto'}`}
                     style={{
-                      animation: 'messagePopUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                      animation: 'messageBubbleOut 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
                     }}
                   >
                     <div className={`rounded-2xl shadow-2xl ${
                       selectedMessage.userId === user?.id 
-                        ? 'bg-blue-600 text-white ml-auto' 
+                        ? 'bg-blue-600 text-white' 
                         : 'bg-[#2a2a2a] text-white'
-                    } px-3 py-2 max-w-fit`}>
+                    } px-3 py-2 transform scale-110`}>
                       <p className="text-sm break-words whitespace-pre-wrap">
                         {selectedMessage.content || '📷 Photo'}
                       </p>
@@ -985,13 +993,29 @@ function ChatContent() {
 
                 {/* Action Menu - Slides up from bottom */}
                 <div 
-                  className="relative w-full sm:w-auto sm:min-w-[320px] sm:max-w-sm"
+                  className="relative w-full sm:w-auto sm:min-w-[320px] sm:max-w-sm z-20"
                   style={{
-                    animation: 'slideUpSpring 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                    animation: 'slideUpSpring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
                   }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="bg-[#1a1a1a]/95 backdrop-blur-xl sm:rounded-2xl border-t sm:border border-[#2f3336] shadow-2xl">
+                  <div className="bg-[#1a1a1a]/95 backdrop-blur-xl sm:rounded-2xl border-t sm:border border-[#2f3336] shadow-2xl overflow-hidden">
+                    {/* Quick Reactions Bar */}
+                    <div className="flex items-center justify-around px-4 py-3 border-b border-[#2f3336]/50">
+                      {['👍', '❤️', '😂', '😮', '😢', '🙏', '👏'].map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => {
+                            // Handle emoji reaction
+                            setShowMessageMenu(false);
+                          }}
+                          className="text-2xl hover:scale-125 active:scale-110 transition-transform"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+
                     {/* Actions */}
                     <div className="divide-y divide-[#2f3336]/50">
                       {selectedMessage.userId === user?.id && canDeleteForEveryone(selectedMessage) && (
@@ -1071,7 +1095,7 @@ function ChatContent() {
                   </div>
                   
                   {/* Safe area spacing for iOS */}
-                  <div className="h-safe-area-inset-bottom sm:hidden" />
+                  <div className="h-8 sm:hidden" />
                 </div>
 
                 {/* CSS Animations */}
@@ -1085,23 +1109,40 @@ function ChatContent() {
                     }
                   }
                   
-                  @keyframes messagePopUp {
+                  @keyframes blurIn {
                     from {
-                      opacity: 0;
-                      transform: scale(0.9) translateY(20px);
+                      backdrop-filter: blur(0px);
+                      background-color: rgba(0, 0, 0, 0);
                     }
                     to {
+                      backdrop-filter: blur(16px);
+                      background-color: rgba(0, 0, 0, 0.6);
+                    }
+                  }
+                  
+                  @keyframes messageBubbleOut {
+                    0% {
+                      opacity: 0;
+                      transform: scale(0.8) translateY(20px);
+                    }
+                    60% {
+                      transform: scale(1.15) translateY(-5px);
+                    }
+                    100% {
                       opacity: 1;
-                      transform: scale(1) translateY(0);
+                      transform: scale(1.1) translateY(0);
                     }
                   }
                   
                   @keyframes slideUpSpring {
-                    from {
+                    0% {
                       opacity: 0;
                       transform: translateY(100%);
                     }
-                    to {
+                    60% {
+                      transform: translateY(-10px);
+                    }
+                    100% {
                       opacity: 1;
                       transform: translateY(0);
                     }
