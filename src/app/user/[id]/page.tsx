@@ -258,14 +258,7 @@ export default function UserProfilePage() {
                     </div>
                   </div>
                   
-                  {/* Verification Badge on Avatar */}
-                  {(user.isKYCVerified || (user as any)?.verificationBadge?.status === 'verified' || (user as any)?.verificationBadge?.status === 'active') && (
-                    <div className="absolute bottom-0 right-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center border-2 border-black">
-                      <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
+                  {/* NO Verification Badge on Avatar - removed */}
                 </div>
 
                 {/* Stats */}
@@ -394,15 +387,30 @@ export default function UserProfilePage() {
                     <Link key={post.id} href={`/marketplace/${post.id}`}>
                       <div className="bg-[#1a1a1a] rounded-lg overflow-hidden">
                         <div className="flex gap-3 p-3">
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-black flex-shrink-0">
-                            {post.images?.[0] || post.videos?.[0] ? (
+                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-black flex-shrink-0 relative">
+                            {post.images?.[0] ? (
                               <Image 
-                                src={post.images?.[0] || post.videos?.[0] || ''} 
+                                src={post.images[0]} 
                                 alt={post.title} 
                                 width={80} 
                                 height={80} 
-                                className="w-full h-full object-cover" 
+                                className="w-full h-full object-cover"
+                                unoptimized
                               />
+                            ) : post.videos?.[0] ? (
+                              <>
+                                <video 
+                                  src={post.videos[0]} 
+                                  className="w-full h-full object-cover"
+                                  muted
+                                  playsInline
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
+                              </>
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
                                 <IoStorefrontOutline className="w-6 h-6 text-gray-700" />

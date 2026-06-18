@@ -318,14 +318,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 
-                {/* Verification Badge on Avatar */}
-                {(user?.isKYCVerified || (user as any)?.verificationBadge?.status === 'verified' || (user as any)?.verificationBadge?.status === 'active') && (
-                  <div className="absolute bottom-0 right-0 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center border-2 border-black">
-                    <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
+                {/* NO Verification Badge on Avatar - removed */}
                 
                 <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
                 {isUploading && (
@@ -480,7 +473,7 @@ export default function ProfilePage() {
             ) : activeTab === 'market' ? (
               <div className="px-2 pt-2 space-y-2">
                 {currentPosts.map((post) => (
-                  <div key={post.id} className="bg-[#1a1a1a] rounded-lg overflow-hidden hover:bg-[#252525] transition-colors relative group">
+                  <div key={post.id} className="bg-[#1a1a1a] rounded-lg overflow-hidden hover:bg-[#252525] transition-colors relative">
                     <Link href={`/marketplace/${post.id}`} className="block">
                       <div className="flex gap-2 p-2">
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-black flex-shrink-0">
@@ -513,7 +506,7 @@ export default function ProfilePage() {
                         </div>
                       </div>
                     </Link>
-                    {/* Delete Button - Only visible on hover */}
+                    {/* Delete Button - Always visible at top right */}
                     <button
                       onClick={(e) => {
                         e.preventDefault();
@@ -521,13 +514,15 @@ export default function ProfilePage() {
                         handleDeletePost(post.id, post.type || 'MARKETPLACE_LISTING');
                       }}
                       disabled={deletingPostId === post.id}
-                      className="absolute top-2 right-2 p-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-md transition-opacity opacity-0 group-hover:opacity-100 z-10"
+                      className="absolute top-2 right-2 p-1.5 bg-red-600/90 hover:bg-red-700 disabled:opacity-50 text-white rounded-md transition-colors z-10 shadow-lg"
                       title="Delete listing"
                     >
                       {deletingPostId === post.id ? (
                         <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
                       ) : (
-                        <IoCloseOutline className="w-3 h-3" />
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 448 512">
+                          <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
+                        </svg>
                       )}
                     </button>
                   </div>
@@ -539,7 +534,7 @@ export default function ProfilePage() {
                   const media = post.images?.[0] || post.videos?.[0];
                   const isTextOnly = !media;
                   return (
-                    <div key={post.id} className="relative group">
+                    <div key={post.id} className="relative">
                       <Link href={`/post/${post.id}`} className="block">
                         <div className="aspect-square bg-[#1a1a1a] relative overflow-hidden">
                           {media ? (
@@ -580,7 +575,7 @@ export default function ProfilePage() {
                           )}
                         </div>
                       </Link>
-                      {/* Delete Button - Only visible on hover */}
+                      {/* Delete Button - Always visible at top right */}
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -588,13 +583,15 @@ export default function ProfilePage() {
                           handleDeletePost(post.id, post.type || 'SOCIAL_POST');
                         }}
                         disabled={deletingPostId === post.id}
-                        className="absolute top-1 right-1 p-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-md transition-opacity opacity-0 group-hover:opacity-100 z-10"
+                        className="absolute top-1 right-1 p-1.5 bg-red-600/90 hover:bg-red-700 disabled:opacity-50 text-white rounded-md transition-colors z-10 shadow-lg"
                         title="Delete post"
                       >
                         {deletingPostId === post.id ? (
                           <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
                         ) : (
-                          <IoCloseOutline className="w-3 h-3" />
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 448 512">
+                            <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
+                          </svg>
                         )}
                       </button>
                     </div>
