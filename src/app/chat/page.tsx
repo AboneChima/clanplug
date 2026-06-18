@@ -952,195 +952,216 @@ function ChatContent() {
               </div>
             )}
 
-            {/* Message Actions Menu - iOS WhatsApp Style */}
+            {/* Message Actions Menu - Exact WhatsApp iOS Style */}
             {showMessageMenu && selectedMessage && (
               <div 
-                className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center"
+                className="fixed inset-0 z-50"
                 style={{
-                  animation: 'fadeIn 0.3s ease-out forwards'
+                  animation: 'fadeIn 0.25s ease-out forwards'
                 }}
               >
-                {/* Backdrop with blur - don't close on click, only on Cancel button */}
+                {/* Backdrop with blur */}
                 <div 
-                  className="absolute inset-0 bg-black/60 backdrop-blur-md transition-all duration-300" 
+                  className="absolute inset-0"
                   style={{
-                    animation: 'blurIn 0.3s ease-out forwards'
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
                   }}
                 />
                 
-                {/* Message preview (iOS style - shows message floating and pulsing) */}
-                <div className="absolute inset-x-4 top-1/3 pointer-events-none z-10">
+                {/* Message preview at original position */}
+                <div className="absolute inset-x-4 top-1/4 pointer-events-none z-10">
                   <div 
-                    className={`max-w-[75%] ${selectedMessage.userId === user?.id ? 'ml-auto' : 'mr-auto'}`}
+                    className={`max-w-[85%] ${selectedMessage.userId === user?.id ? 'ml-auto' : 'mr-auto'}`}
                     style={{
-                      animation: 'messageBubbleOut 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+                      animation: 'messagePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
                     }}
                   >
-                    <div className={`rounded-2xl shadow-2xl ${
+                    <div className={`rounded-lg shadow-2xl ${
                       selectedMessage.userId === user?.id 
-                        ? 'bg-blue-600 text-white' 
-                        : 'bg-[#2a2a2a] text-white'
-                    } px-3 py-2 transform scale-110`}>
-                      <p className="text-sm break-words whitespace-pre-wrap">
+                        ? 'bg-[#056162]' 
+                        : 'bg-[#1f2c34]'
+                    } p-3`}>
+                      <p className="text-white text-sm break-words">
                         {selectedMessage.content || '📷 Photo'}
                       </p>
-                      <span className="text-[10px] opacity-70 block text-right mt-1">
-                        {new Date(selectedMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                      <div className="flex items-center justify-end gap-1 mt-1">
+                        <span className="text-[11px] text-gray-300">
+                          {new Date(selectedMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Action Menu - Slides up from bottom */}
+                {/* Emoji Reactions Bar */}
                 <div 
-                  className="relative w-full sm:w-auto sm:min-w-[320px] sm:max-w-sm z-20"
+                  className="absolute top-[38%] left-1/2 transform -translate-x-1/2 z-20"
                   style={{
-                    animation: 'slideUpSpring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+                    animation: 'emojiBarSlide 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s forwards',
+                    opacity: 0
                   }}
-                  onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="bg-[#1a1a1a]/95 backdrop-blur-xl sm:rounded-2xl border-t sm:border border-[#2f3336] shadow-2xl overflow-hidden">
-                    {/* Quick Reactions Bar */}
-                    <div className="flex items-center justify-around px-4 py-3 border-b border-[#2f3336]/50">
-                      {['👍', '❤️', '😂', '😮', '😢', '🙏', '👏'].map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => {
-                            // Handle emoji reaction
-                            setShowMessageMenu(false);
-                          }}
-                          className="text-2xl hover:scale-125 active:scale-110 transition-transform"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="divide-y divide-[#2f3336]/50">
-                      {selectedMessage.userId === user?.id && canDeleteForEveryone(selectedMessage) && (
-                        <button
-                          onClick={() => {
-                            handleDeleteForEveryone();
-                            setShowMessageMenu(false);
-                          }}
-                          className="w-full px-5 py-4 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center gap-4"
-                        >
-                          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
-                            <IoTrashOutline className="w-5 h-5 text-red-400" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-white text-sm">Delete for Everyone</div>
-                            <div className="text-xs text-gray-400 mt-0.5">Remove for all chat members</div>
-                          </div>
-                        </button>
-                      )}
-                      
+                  <div className="bg-[#233138] rounded-full px-2 py-2.5 flex items-center gap-1 shadow-2xl">
+                    {['👍', '❤️', '😂', '😮', '😢', '🙏', '🙌'].map((emoji, idx) => (
                       <button
-                        onClick={() => {
-                          handleDeleteForMe();
-                          setShowMessageMenu(false);
+                        key={emoji}
+                        onClick={() => setShowMessageMenu(false)}
+                        className="w-10 h-10 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform"
+                        style={{
+                          animation: `emojiPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) ${0.15 + idx * 0.03}s forwards`,
+                          opacity: 0,
+                          transform: 'scale(0)'
                         }}
-                        className="w-full px-5 py-4 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center gap-4"
                       >
-                        <div className="w-10 h-10 rounded-full bg-gray-500/20 flex items-center justify-center flex-shrink-0">
-                          <IoTrashOutline className="w-5 h-5 text-gray-300" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-white text-sm">Delete for Me</div>
-                          <div className="text-xs text-gray-400 mt-0.5">Remove from your chat</div>
-                        </div>
+                        <span className="text-2xl">{emoji}</span>
                       </button>
-                      
-                      <button
-                        onClick={() => {
-                          handleShareMessage();
-                          setShowMessageMenu(false);
-                        }}
-                        className="w-full px-5 py-4 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center gap-4"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                          <IoShareOutline className="w-5 h-5 text-blue-400" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-white text-sm">Share</div>
-                          <div className="text-xs text-gray-400 mt-0.5">Share message content</div>
-                        </div>
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          handleForwardMessage();
-                          setShowMessageMenu(false);
-                        }}
-                        className="w-full px-5 py-4 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center gap-4"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                          <IoArrowForwardOutline className="w-5 h-5 text-green-400" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-white text-sm">Forward</div>
-                          <div className="text-xs text-gray-400 mt-0.5">Send to another chat</div>
-                        </div>
-                      </button>
-                    </div>
-                    
-                    {/* Cancel Button */}
+                    ))}
                     <button
                       onClick={() => setShowMessageMenu(false)}
-                      className="w-full px-5 py-4 text-center text-sm font-semibold text-blue-400 hover:bg-white/5 active:bg-white/10 transition-colors border-t border-[#2f3336]/50"
+                      className="w-10 h-10 flex items-center justify-center text-gray-400 hover:scale-110 active:scale-95 transition-transform"
+                      style={{
+                        animation: 'emojiPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.36s forwards',
+                        opacity: 0,
+                        transform: 'scale(0)'
+                      }}
                     >
-                      Cancel
+                      <span className="text-2xl">+</span>
                     </button>
                   </div>
-                  
-                  {/* Safe area spacing for iOS */}
-                  <div className="h-8 sm:hidden" />
+                </div>
+
+                {/* Action Menu */}
+                <div 
+                  className="absolute left-4 right-4 top-[48%] z-20"
+                  style={{
+                    animation: 'menuSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s forwards',
+                    opacity: 0,
+                    transform: 'translateY(30px)'
+                  }}
+                >
+                  <div className="bg-[#233138] rounded-2xl overflow-hidden shadow-2xl max-w-md mx-auto">
+                    {/* Reply */}
+                    <button
+                      onClick={() => setShowMessageMenu(false)}
+                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                    >
+                      <span className="text-white text-[15px]">Reply</span>
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                      </svg>
+                    </button>
+
+                    {/* Forward */}
+                    <button
+                      onClick={() => {
+                        handleForwardMessage();
+                        setShowMessageMenu(false);
+                      }}
+                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                    >
+                      <span className="text-white text-[15px]">Forward</span>
+                      <IoArrowForwardOutline className="w-5 h-5 text-gray-400" />
+                    </button>
+
+                    {/* Info */}
+                    <button
+                      onClick={() => setShowMessageMenu(false)}
+                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                    >
+                      <span className="text-white text-[15px]">Info</span>
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+
+                    {/* Star */}
+                    <button
+                      onClick={() => setShowMessageMenu(false)}
+                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                    >
+                      <span className="text-white text-[15px]">Star</span>
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                    </button>
+
+                    {/* Pin */}
+                    <button
+                      onClick={() => setShowMessageMenu(false)}
+                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                    >
+                      <span className="text-white text-[15px]">Pin</span>
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                      </svg>
+                    </button>
+
+                    {/* Delete */}
+                    <button
+                      onClick={() => {
+                        handleDeleteForMe();
+                        setShowMessageMenu(false);
+                      }}
+                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between"
+                    >
+                      <span className="text-[#ff3b30] text-[15px]">Delete</span>
+                      <IoTrashOutline className="w-5 h-5 text-[#ff3b30]" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* CSS Animations */}
                 <style jsx>{`
                   @keyframes fadeIn {
-                    from {
-                      opacity: 0;
-                    }
-                    to {
-                      opacity: 1;
-                    }
+                    from { opacity: 0; }
+                    to { opacity: 1; }
                   }
                   
-                  @keyframes blurIn {
-                    from {
-                      backdrop-filter: blur(0px);
-                      background-color: rgba(0, 0, 0, 0);
-                    }
-                    to {
-                      backdrop-filter: blur(16px);
-                      background-color: rgba(0, 0, 0, 0.6);
-                    }
-                  }
-                  
-                  @keyframes messageBubbleOut {
+                  @keyframes messagePop {
                     0% {
-                      opacity: 0;
-                      transform: scale(0.8) translateY(20px);
+                      opacity: 0.5;
+                      transform: scale(0.95);
                     }
                     60% {
-                      transform: scale(1.15) translateY(-5px);
+                      transform: scale(1.02);
                     }
                     100% {
                       opacity: 1;
-                      transform: scale(1.1) translateY(0);
+                      transform: scale(1);
                     }
                   }
                   
-                  @keyframes slideUpSpring {
+                  @keyframes emojiBarSlide {
                     0% {
                       opacity: 0;
-                      transform: translateY(100%);
+                      transform: translateX(-50%) translateY(20px);
+                    }
+                    100% {
+                      opacity: 1;
+                      transform: translateX(-50%) translateY(0);
+                    }
+                  }
+                  
+                  @keyframes emojiPop {
+                    0% {
+                      opacity: 0;
+                      transform: scale(0);
                     }
                     60% {
-                      transform: translateY(-10px);
+                      transform: scale(1.1);
+                    }
+                    100% {
+                      opacity: 1;
+                      transform: scale(1);
+                    }
+                  }
+                  
+                  @keyframes menuSlideUp {
+                    0% {
+                      opacity: 0;
+                      transform: translateY(30px);
                     }
                     100% {
                       opacity: 1;
