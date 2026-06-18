@@ -11,7 +11,9 @@ import {
   IoCloseOutline,
   IoAlertCircleOutline,
   IoHappyOutline,
-  IoShareOutline
+  IoShareOutline,
+  IoArrowForwardOutline,
+  IoTrashOutline
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,9 +51,13 @@ function ChatContent() {
 
   const handleLongPressStart = (msg: ChatMessage) => {
     const timer = setTimeout(() => {
+      // Haptic feedback (vibration)
+      if (navigator.vibrate) {
+        navigator.vibrate(50); // Short vibration
+      }
       setSelectedMessage(msg);
       setShowMessageMenu(true);
-    }, 500); // 500ms long press
+    }, 400); // 400ms long press (slightly faster than before)
     setLongPressTimer(timer);
   };
 
@@ -651,7 +657,26 @@ function ChatContent() {
                                     alt={(msg as any).metadata.listingTitle}
                                     className="w-full h-full object-cover"
                                     onLoad={() => console.log('✅ Listing image loaded')}
-                                    onError={(e) => console.error('❌ Listing image failed')}
+                                    onError={(e) => {
+                                      console.error('❌ Listing image failed');
+                                      // Hide broken image and show placeholder
+                                      const target = e.target as HTMLImageElement;
+                                      target.style.display = 'none';
+                                      const parent = target.parentElement;
+                                      if (parent && !parent.querySelector('.listing-image-fallback')) {
+                                        const fallback = document.createElement('div');
+                                        fallback.className = 'listing-image-fallback absolute inset-0 flex items-center justify-center bg-[#0a0a0a]';
+                                        fallback.innerHTML = `
+                                          <div class="text-center p-4">
+                                            <svg class="w-12 h-12 mx-auto text-gray-600 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                                              <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                            </svg>
+                                            <p class="text-gray-500 text-xs">Image unavailable</p>
+                                          </div>
+                                        `;
+                                        parent.appendChild(fallback);
+                                      }
+                                    }}
                                   />
                                 </div>
                               )}
@@ -923,67 +948,165 @@ function ChatContent() {
               </div>
             )}
 
-            {/* Message Actions Menu */}
+            {/* Message Actions Menu - iOS WhatsApp Style */}
             {showMessageMenu && selectedMessage && (
-              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowMessageMenu(false)}>
-                <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-sm border border-[#2f3336]" onClick={(e) => e.stopPropagation()}>
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold text-gray-400 mb-3 px-2">Message Options</h3>
-                    
-                    {selectedMessage.userId === user?.id && canDeleteForEveryone(selectedMessage) && (
+              <div 
+                className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center"
+                style={{
+                  animation: 'fadeIn 0.2s ease-out forwards'
+                }}
+                onClick={() => setShowMessageMenu(false)}
+              >
+                {/* Backdrop with blur */}
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+                
+                {/* Message preview (iOS style - shows message floating) */}
+                <div className="absolute inset-x-4 top-1/4 pointer-events-none">
+                  <div 
+                    className="max-w-[75%] mx-auto"
+                    style={{
+                      animation: 'messagePopUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                    }}
+                  >
+                    <div className={`rounded-2xl shadow-2xl ${
+                      selectedMessage.userId === user?.id 
+                        ? 'bg-blue-600 text-white ml-auto' 
+                        : 'bg-[#2a2a2a] text-white'
+                    } px-3 py-2 max-w-fit`}>
+                      <p className="text-sm break-words whitespace-pre-wrap">
+                        {selectedMessage.content || '📷 Photo'}
+                      </p>
+                      <span className="text-[10px] opacity-70 block text-right mt-1">
+                        {new Date(selectedMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Menu - Slides up from bottom */}
+                <div 
+                  className="relative w-full sm:w-auto sm:min-w-[320px] sm:max-w-sm"
+                  style={{
+                    animation: 'slideUpSpring 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="bg-[#1a1a1a]/95 backdrop-blur-xl sm:rounded-2xl border-t sm:border border-[#2f3336] shadow-2xl">
+                    {/* Actions */}
+                    <div className="divide-y divide-[#2f3336]/50">
+                      {selectedMessage.userId === user?.id && canDeleteForEveryone(selectedMessage) && (
+                        <button
+                          onClick={() => {
+                            handleDeleteForEveryone();
+                            setShowMessageMenu(false);
+                          }}
+                          className="w-full px-5 py-4 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center gap-4"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                            <IoTrashOutline className="w-5 h-5 text-red-400" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-white text-sm">Delete for Everyone</div>
+                            <div className="text-xs text-gray-400 mt-0.5">Remove for all chat members</div>
+                          </div>
+                        </button>
+                      )}
+                      
                       <button
-                        onClick={handleDeleteForEveryone}
-                        className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-[#2a2a2a] transition-colors flex items-center gap-3 rounded-lg"
+                        onClick={() => {
+                          handleDeleteForMe();
+                          setShowMessageMenu(false);
+                        }}
+                        className="w-full px-5 py-4 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center gap-4"
                       >
-                        <IoCloseOutline className="w-5 h-5" />
-                        <div>
-                          <div className="font-medium">Delete for Everyone</div>
-                          <div className="text-xs text-gray-500">Remove for all chat members</div>
+                        <div className="w-10 h-10 rounded-full bg-gray-500/20 flex items-center justify-center flex-shrink-0">
+                          <IoTrashOutline className="w-5 h-5 text-gray-300" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-white text-sm">Delete for Me</div>
+                          <div className="text-xs text-gray-400 mt-0.5">Remove from your chat</div>
                         </div>
                       </button>
-                    )}
+                      
+                      <button
+                        onClick={() => {
+                          handleShareMessage();
+                          setShowMessageMenu(false);
+                        }}
+                        className="w-full px-5 py-4 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center gap-4"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                          <IoShareOutline className="w-5 h-5 text-blue-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-white text-sm">Share</div>
+                          <div className="text-xs text-gray-400 mt-0.5">Share message content</div>
+                        </div>
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          handleForwardMessage();
+                          setShowMessageMenu(false);
+                        }}
+                        className="w-full px-5 py-4 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center gap-4"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                          <IoArrowForwardOutline className="w-5 h-5 text-green-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-medium text-white text-sm">Forward</div>
+                          <div className="text-xs text-gray-400 mt-0.5">Send to another chat</div>
+                        </div>
+                      </button>
+                    </div>
                     
-                    <button
-                      onClick={handleDeleteForMe}
-                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#2a2a2a] transition-colors flex items-center gap-3 rounded-lg"
-                    >
-                      <IoCloseOutline className="w-5 h-5" />
-                      <div>
-                        <div className="font-medium">Delete for Me</div>
-                        <div className="text-xs text-gray-500">Remove from your chat</div>
-                      </div>
-                    </button>
-                    
-                    <button
-                      onClick={handleShareMessage}
-                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#2a2a2a] transition-colors flex items-center gap-3 rounded-lg"
-                    >
-                      <IoShareOutline className="w-5 h-5" />
-                      <div>
-                        <div className="font-medium">Share</div>
-                        <div className="text-xs text-gray-500">Share message content</div>
-                      </div>
-                    </button>
-                    
-                    <button
-                      onClick={handleForwardMessage}
-                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#2a2a2a] transition-colors flex items-center gap-3 rounded-lg"
-                    >
-                      <IoShareOutline className="w-5 h-5" />
-                      <div>
-                        <div className="font-medium">Forward</div>
-                        <div className="text-xs text-gray-500">Send to another chat</div>
-                      </div>
-                    </button>
-                    
+                    {/* Cancel Button */}
                     <button
                       onClick={() => setShowMessageMenu(false)}
-                      className="w-full px-4 py-3 text-center text-sm text-gray-400 hover:bg-[#2a2a2a] transition-colors rounded-lg mt-2"
+                      className="w-full px-5 py-4 text-center text-sm font-semibold text-blue-400 hover:bg-white/5 active:bg-white/10 transition-colors border-t border-[#2f3336]/50"
                     >
                       Cancel
                     </button>
                   </div>
+                  
+                  {/* Safe area spacing for iOS */}
+                  <div className="h-safe-area-inset-bottom sm:hidden" />
                 </div>
+
+                {/* CSS Animations */}
+                <style jsx>{`
+                  @keyframes fadeIn {
+                    from {
+                      opacity: 0;
+                    }
+                    to {
+                      opacity: 1;
+                    }
+                  }
+                  
+                  @keyframes messagePopUp {
+                    from {
+                      opacity: 0;
+                      transform: scale(0.9) translateY(20px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: scale(1) translateY(0);
+                    }
+                  }
+                  
+                  @keyframes slideUpSpring {
+                    from {
+                      opacity: 0;
+                      transform: translateY(100%);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
+                  }
+                `}</style>
               </div>
             )}
           </div>
