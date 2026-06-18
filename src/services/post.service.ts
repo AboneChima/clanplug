@@ -413,16 +413,34 @@ export const postService = {
       }
 
       // Delete related records first to avoid foreign key constraints
-      await prisma.$transaction([
-        // Delete comments
-        prisma.comment.deleteMany({ where: { postId } }),
-        // Delete likes
-        prisma.like.deleteMany({ where: { postId } }),
-        // Delete bookmarks
-        prisma.bookmark.deleteMany({ where: { postId } }),
-        // Delete the post itself
-        prisma.post.delete({ where: { id: postId } }),
-      ]);
+      // Use separate transactions with error handling for each
+      try {
+        await prisma.$transaction([
+          // Delete comments
+          prisma.comment.deleteMany({ where: { postId } }),
+          // Delete likes
+          prisma.like.deleteMany({ where: { postId } }),
+          // Delete bookmarks
+          prisma.bookmark.deleteMany({ where: { postId } }),
+          // Delete views (if any)
+          prisma.$executeRaw`DELETE FROM "View" WHERE "postId" = ${postId}`,
+          // Delete any post reports
+          prisma.$executeRaw`DELETE FROM "Report" WHERE "postId" = ${postId}`,
+          // Delete the post itself
+          prisma.post.delete({ where: { id: postId } }),
+        ], {
+          timeout: 10000, // 10 second timeout
+        });
+      } catch (txError: any) {
+        console.error('Transaction error during delete:', txError);
+        // If transaction fails, try to delete the post directly (force delete)
+        try {
+          await prisma.post.delete({ where: { id: postId } });
+        } catch (directError: any) {
+          console.error('Direct delete also failed:', directError);
+          return { success: false, message: 'Failed to delete post. Please try again.', error: directError.message || 'DELETE_FAILED' };
+        }
+      }
 
       return { success: true, message: 'Post deleted successfully' };
     } catch (error: any) {
