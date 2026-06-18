@@ -244,21 +244,37 @@ function ChatContent() {
     if (!selectedMessage) return;
     try {
       const token = localStorage.getItem('accessToken');
+      
+      console.log('🔄 Forwarding message:', selectedMessage);
+      console.log('📤 To chat:', chatId);
+      
       const messageData: any = {
-        content: selectedMessage.content,
+        content: selectedMessage.content || '',
         type: selectedMessage.type,
       };
       
       if (selectedMessage.attachments && selectedMessage.attachments.length > 0) {
         messageData.attachments = selectedMessage.attachments;
+        console.log('📎 With attachments:', messageData.attachments);
       }
       
-      await chatService.sendMessage(chatId, messageData, token!);
-      showToast('Message forwarded', 'success');
+      console.log('📨 Sending message data:', messageData);
+      
+      const result = await chatService.sendMessage(chatId, messageData, token!);
+      
+      console.log('✅ Forward result:', result);
+      
+      showToast('Message forwarded successfully', 'success');
       setShowForwardModal(false);
       setSelectedMessage(null);
-    } catch (error) {
-      showToast('Failed to forward message', 'error');
+      
+      // Reload messages if forwarding to current chat
+      if (chatId === currentChat?.id) {
+        await loadMessages(chatId);
+      }
+    } catch (error: any) {
+      console.error('❌ Forward error:', error);
+      showToast(error.message || 'Failed to forward message', 'error');
     }
   };
 
