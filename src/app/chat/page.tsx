@@ -228,11 +228,14 @@ function ChatContent() {
     if (!selectedMessage) return;
     try {
       const token = localStorage.getItem('accessToken');
-      const messageData = {
+      const messageData: any = {
         content: selectedMessage.content,
         type: selectedMessage.type,
-        ...(selectedMessage.attachments && { attachments: selectedMessage.attachments })
       };
+      
+      if (selectedMessage.attachments && selectedMessage.attachments.length > 0) {
+        messageData.attachments = selectedMessage.attachments;
+      }
       
       await chatService.sendMessage(chatId, messageData, token!);
       showToast('Message forwarded', 'success');
