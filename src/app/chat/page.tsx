@@ -47,6 +47,9 @@ function ChatContent() {
   const [replyToMessage, setReplyToMessage] = useState<ChatMessage | null>(null);
   const [pinnedMessages, setPinnedMessages] = useState<Set<string>>(new Set());
   const [starredMessages, setStarredMessages] = useState<Set<string>>(new Set());
+  const [messageReactions, setMessageReactions] = useState<{[key: string]: string}>({});
+  const [showMessageInfo, setShowMessageInfo] = useState(false);
+  const [showForwardModal, setShowForwardModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,16 +59,25 @@ function ChatContent() {
     const timer = setTimeout(() => {
       // Haptic feedback (vibration)
       if (navigator.vibrate) {
-        navigator.vibrate(50); // Short vibration
+        navigator.vibrate(50);
       }
       setSelectedMessage(msg);
       setShowMessageMenu(true);
-    }, 400); // 400ms long press
+      setLongPressTimer(null); // Clear immediately after opening
+    }, 500);
     setLongPressTimer(timer);
   };
 
   const handleLongPressEnd = () => {
-    // Only clear timer if menu hasn't opened yet
+    // Clear timer only if menu hasn't opened
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  const handleTouchMove = () => {
+    // Cancel long press if user moves finger
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
@@ -159,7 +171,6 @@ function ChatContent() {
     setReplyToMessage(selectedMessage);
     setShowMessageMenu(false);
     setSelectedMessage(null);
-    showToast('Reply to message', 'success');
   };
 
   const cancelReply = () => {
@@ -168,8 +179,11 @@ function ChatContent() {
 
   const handleReactWithEmoji = (emoji: string) => {
     if (!selectedMessage) return;
-    // Store reaction locally
-    showToast(`Reacted with ${emoji}`, 'success');
+    // Add emoji reaction under message bubble
+    setMessageReactions(prev => ({
+      ...prev,
+      [selectedMessage.id]: emoji
+    }));
     setShowMessageMenu(false);
     setSelectedMessage(null);
   };
@@ -179,10 +193,8 @@ function ChatContent() {
     const newPinned = new Set(pinnedMessages);
     if (newPinned.has(selectedMessage.id)) {
       newPinned.delete(selectedMessage.id);
-      showToast('Message unpinned', 'success');
     } else {
       newPinned.add(selectedMessage.id);
-      showToast('Message pinned', 'success');
     }
     setPinnedMessages(newPinned);
     setShowMessageMenu(false);
@@ -194,14 +206,41 @@ function ChatContent() {
     const newStarred = new Set(starredMessages);
     if (newStarred.has(selectedMessage.id)) {
       newStarred.delete(selectedMessage.id);
-      showToast('Message unstarred', 'success');
     } else {
       newStarred.add(selectedMessage.id);
-      showToast('Message starred', 'success');
     }
     setStarredMessages(newStarred);
     setShowMessageMenu(false);
     setSelectedMessage(null);
+  };
+
+  const handleShowMessageInfo = () => {
+    setShowMessageMenu(false);
+    setShowMessageInfo(true);
+  };
+
+  const handleShowForwardModal = () => {
+    setShowMessageMenu(false);
+    setShowForwardModal(true);
+  };
+
+  const handleForwardToChat = async (chatId: string) => {
+    if (!selectedMessage) return;
+    try {
+      const token = localStorage.getItem('accessToken');
+      const messageData = {
+        content: selectedMessage.content,
+        type: selectedMessage.type,
+        ...(selectedMessage.attachments && { attachments: selectedMessage.attachments })
+      };
+      
+      await chatService.sendMessage(chatId, messageData, token!);
+      showToast('Message forwarded', 'success');
+      setShowForwardModal(false);
+      setSelectedMessage(null);
+    } catch (error) {
+      showToast('Failed to forward message', 'error');
+    }
   };
 
   // Load chats on mount
@@ -666,7 +705,39 @@ function ChatContent() {
                   <p className="text-gray-500">No messages yet. Say hi! 👋</p>
                 </div>
               ) : (
-                messages.filter(m => !m.isDeleted).map((msg) => {
+                <>
+                  {/* Pinned Messages Section */}
+                  {Array.from(pinnedMessages).length > 0 && (
+                    <div className="sticky top-0 z-10 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                          </svg>
+                          <span className="text-sm font-medium text-blue-400">Pinned Messages</span>
+                        </div>
+                        <button
+                          onClick={() => setPinnedMessages(new Set())}
+                          className="text-xs text-gray-400 hover:text-white"
+                        >
+                          Clear All
+                        </button>
+                      </div>
+                      {messages.filter(m => pinnedMessages.has(m.id)).map((msg) => {
+                        const isOwn = msg.userId === user?.id;
+                        return (
+                          <div key={msg.id} className="mb-2 last:mb-0">
+                            <div className={`text-xs p-2 rounded ${isOwn ? 'bg-blue-600/20' : 'bg-[#2a2a2a]'}`}>
+                              <p className="text-white line-clamp-2">{msg.content || '📷 Photo'}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Regular Messages */}
+                  {messages.filter(m => !m.isDeleted).map((msg) => {
                   const isOwn = msg.userId === user?.id;
                   const hasImage = msg.type === 'IMAGE' && msg.attachments && msg.attachments.length > 0;
                   const isListingShare = (msg as any).metadata?.type === 'LISTING_SHARE';
@@ -689,6 +760,7 @@ function ChatContent() {
                       className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                       onTouchStart={() => handleLongPressStart(msg)}
                       onTouchEnd={handleLongPressEnd}
+                      onTouchMove={handleTouchMove}
                       onMouseDown={() => handleLongPressStart(msg)}
                       onMouseUp={handleLongPressEnd}
                       onMouseLeave={handleLongPressEnd}
@@ -811,9 +883,20 @@ function ChatContent() {
                           </>
                         )}
                       </div>
+                      
+                      {/* Emoji Reaction - Displayed under bubble */}
+                      {messageReactions[msg.id] && (
+                        <div className={`mt-1 ${isOwn ? 'flex justify-end' : 'flex justify-start'}`}>
+                          <div className="bg-white border-2 border-gray-700 rounded-full px-2 py-0.5 shadow-lg">
+                            <span className="text-base">{messageReactions[msg.id]}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })
+              )}
+                </>
               )}
               <div ref={messagesEndRef} />
             </div>
@@ -1128,9 +1211,7 @@ function ChatContent() {
 
                     {/* Forward */}
                     <button
-                      onClick={() => {
-                        handleForwardMessage();
-                      }}
+                      onClick={handleShowForwardModal}
                       className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
                       <span className="text-white text-[15px]">Forward</span>
@@ -1139,7 +1220,7 @@ function ChatContent() {
 
                     {/* Info */}
                     <button
-                      onClick={() => setShowMessageMenu(false)}
+                      onClick={handleShowMessageInfo}
                       className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
                       <span className="text-white text-[15px]">Info</span>
@@ -1244,6 +1325,114 @@ function ChatContent() {
                     }
                   }
                 `}</style>
+              </div>
+            )}
+
+            {/* Message Info Modal */}
+            {showMessageInfo && selectedMessage && (
+              <div 
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                onClick={() => setShowMessageInfo(false)}
+              >
+                <div 
+                  className="bg-[#1a1a1a] rounded-2xl w-full max-w-md border border-[#2f3336]"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-4 border-b border-[#2f3336] flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-white">Message Info</h3>
+                    <button
+                      onClick={() => setShowMessageInfo(false)}
+                      className="p-1 hover:bg-[#2a2a2a] rounded-full transition-colors"
+                    >
+                      <IoCloseOutline className="w-6 h-6 text-white" />
+                    </button>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">Message</p>
+                      <div className="bg-[#2a2a2a] rounded-lg p-3">
+                        <p className="text-white text-sm">{selectedMessage.content || '📷 Photo'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">Sent</p>
+                        <p className="text-white text-sm">
+                          {new Date(selectedMessage.createdAt).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">Status</p>
+                        <div className="flex items-center gap-1">
+                          <IoCheckmarkDoneOutline className="w-4 h-4 text-blue-400" />
+                          <p className="text-white text-sm">Delivered</p>
+                        </div>
+                      </div>
+                    </div>
+                    {starredMessages.has(selectedMessage.id) && (
+                      <div className="flex items-center gap-2 text-yellow-400">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        <span className="text-sm">Starred</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Forward Modal */}
+            {showForwardModal && selectedMessage && (
+              <div 
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                onClick={() => setShowForwardModal(false)}
+              >
+                <div 
+                  className="bg-[#1a1a1a] rounded-2xl w-full max-w-md border border-[#2f3336] max-h-[80vh] flex flex-col"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-4 border-b border-[#2f3336] flex items-center justify-between flex-shrink-0">
+                    <h3 className="text-lg font-bold text-white">Forward to...</h3>
+                    <button
+                      onClick={() => setShowForwardModal(false)}
+                      className="p-1 hover:bg-[#2a2a2a] rounded-full transition-colors"
+                    >
+                      <IoCloseOutline className="w-6 h-6 text-white" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    {chats.filter(c => c.id !== currentChat?.id).map((chat) => (
+                      <button
+                        key={chat.id}
+                        onClick={() => handleForwardToChat(chat.id)}
+                        className="w-full p-4 hover:bg-[#2a2a2a] transition-colors text-left flex items-center gap-3 border-b border-[#2f3336]"
+                      >
+                        {getAvatar(chat) ? (
+                          <img src={getAvatar(chat)!} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center flex-shrink-0">
+                            <span className="text-white font-semibold">{getDisplayName(chat).charAt(0)}</span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-white truncate">{getDisplayName(chat)}</h3>
+                          <p className="text-xs text-gray-400">Tap to forward</p>
+                        </div>
+                      </button>
+                    ))}
+                    {chats.filter(c => c.id !== currentChat?.id).length === 0 && (
+                      <div className="text-center py-16 px-4">
+                        <p className="text-gray-500 text-sm">No other chats available</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
