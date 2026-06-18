@@ -492,17 +492,16 @@ export default function ProfilePage() {
                             </div>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <div className="flex-1 min-w-0 flex flex-col justify-center pr-8">
                           <h3 className="text-white font-medium text-xs mb-1 line-clamp-1">{post.title}</h3>
+                          {post.description && (
+                            <p className="text-gray-400 text-[10px] line-clamp-1 mb-1">{post.description}</p>
+                          )}
                           {post.price && (
-                            <p className="text-green-500 font-semibold text-xs mb-1">
+                            <p className="text-green-500 font-semibold text-xs">
                               {formatPrice(post.price, post.currency)}
                             </p>
                           )}
-                          <div className="flex items-center gap-2 text-gray-500 text-[10px]">
-                            <span>{post.views || 0} views</span>
-                            <span>{post.likes || 0} likes</span>
-                          </div>
                         </div>
                       </div>
                     </Link>
