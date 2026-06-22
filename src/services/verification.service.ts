@@ -84,14 +84,14 @@ export const verificationService = {
       },
     });
 
-    if (!paymentResult.success || !paymentResult.authorizationUrl) {
+    if (!paymentResult.success || !paymentResult.data?.authorizationUrl) {
       throw new Error(paymentResult.message || 'Failed to create payment link');
     }
 
     return {
       success: true,
-      paymentUrl: paymentResult.authorizationUrl || '',
-      reference: paymentResult.reference || '',
+      paymentUrl: paymentResult.data.authorizationUrl,
+      reference: paymentResult.data.reference,
       amount: VERIFICATION_COST,
       message: 'Complete payment to activate verification badge',
     };
