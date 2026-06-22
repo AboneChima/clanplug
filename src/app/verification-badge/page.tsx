@@ -78,25 +78,27 @@ export default function VerificationBadgePage() {
       if (!plan) return;
 
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/verification-badge/subscribe`, {
+      
+      // Call the purchase endpoint to get Flutterwave payment link
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/verification/purchase`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          plan: planId,
-          amount: plan.price,
-        }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        showToast('Verification badge activated!', 'success');
-        router.push('/profile');
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Redirect to Flutterwave payment page
+        if (data.data.paymentUrl) {
+          window.location.href = data.data.paymentUrl;
+        } else {
+          showToast('Payment link not available', 'error');
+        }
       } else {
-        const error = await response.json();
-        showToast(error.message || 'Failed to subscribe', 'error');
+        showToast(data.message || 'Failed to initiate payment', 'error');
       }
     } catch (error) {
       console.error('Subscription error:', error);
