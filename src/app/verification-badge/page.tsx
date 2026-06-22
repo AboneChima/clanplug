@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   IoShieldCheckmarkOutline,
@@ -25,7 +25,7 @@ type Plan = {
   color: string;
 };
 
-export default function VerificationBadgePage() {
+function VerificationBadgeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, refreshUser } = useAuth();
@@ -262,5 +262,17 @@ export default function VerificationBadgePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerificationBadgePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    }>
+      <VerificationBadgeContent />
+    </Suspense>
   );
 }
