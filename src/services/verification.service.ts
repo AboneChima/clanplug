@@ -55,7 +55,7 @@ export const verificationService = {
       where: { userId },
     });
 
-    if (existing?.status === 'verified' && existing.expiresAt && new Date() < existing.expiresAt) {
+    if ((existing?.status === 'verified' || existing?.status === 'active') && existing.expiresAt && new Date() < existing.expiresAt) {
       throw new Error('Verification badge is already active');
     }
 
@@ -69,7 +69,7 @@ export const verificationService = {
       throw new Error('User email not found');
     }
 
-    // Create Flutterwave payment link
+    // Override the reference generation to include VER- prefix (handled in initiateFlutterwaveDeposit)
     const paymentResult = await paymentService.initiateFlutterwaveDeposit({
       userId,
       amount: VERIFICATION_COST,
@@ -90,8 +90,10 @@ export const verificationService = {
 
     return {
       success: true,
-      paymentUrl: paymentResult.data.authorizationUrl,
-      reference: paymentResult.data.reference,
+      data: {
+        paymentUrl: paymentResult.data.authorizationUrl,
+        reference: paymentResult.data.reference,
+      },
       amount: VERIFICATION_COST,
       message: 'Complete payment to activate verification badge',
     };
