@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   IoShieldCheckmarkOutline,
   IoCheckmarkCircleOutline,
@@ -27,10 +27,33 @@ type Plan = {
 
 export default function VerificationBadgePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const { user, refreshUser } = useAuth();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+
+  // Handle payment callback
+  useEffect(() => {
+    const payment = searchParams?.get('payment');
+    const message = searchParams?.get('message');
+
+    if (payment === 'success') {
+      showToast(message || 'Verification badge activated successfully!', 'success');
+      // Refresh user data to show new badge status
+      if (refreshUser) {
+        refreshUser();
+      }
+      // Clear URL parameters
+      router.replace('/verification-badge');
+    } else if (payment === 'error') {
+      showToast(message || 'Payment failed. Please try again.', 'error');
+      router.replace('/verification-badge');
+    } else if (payment === 'cancelled') {
+      showToast('Payment was cancelled', 'info');
+      router.replace('/verification-badge');
+    }
+  }, [searchParams, showToast, router, refreshUser]);
 
   const plans: Plan[] = [
     {
