@@ -115,9 +115,12 @@ function VerificationBadgeContent() {
 
       if (response.ok && data.success) {
         // Redirect to Flutterwave payment page
-        if (data.data.paymentUrl) {
-          window.location.href = data.data.paymentUrl;
+        // Backend returns: { success: true, data: { paymentUrl, reference }, amount, message }
+        const paymentUrl = data.data?.data?.paymentUrl || data.data?.paymentUrl;
+        if (paymentUrl) {
+          window.location.href = paymentUrl;
         } else {
+          console.error('Payment response:', data);
           showToast('Payment link not available', 'error');
         }
       } else {
