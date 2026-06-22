@@ -121,8 +121,8 @@ function VerificationBadgeContent() {
         console.log('✅ Success response');
         console.log('🔍 data.data:', data.data);
         
-        // Backend returns: { success: true, data: { paymentUrl, reference }, amount, message }
-        const paymentUrl = data.data?.paymentUrl;
+        // Backend returns: { success: true, data: { data: { paymentUrl, reference }, amount, message } }
+        const paymentUrl = data.data?.data?.paymentUrl || data.data?.paymentUrl;
         console.log('🔗 Payment URL:', paymentUrl);
         
         if (paymentUrl) {
