@@ -226,7 +226,14 @@ export const paymentController = {
       // Handle cancellation - when user cancels, Flutterwave doesn't send transaction_id
       if (!transaction_id || typeof transaction_id !== 'string') {
         console.log('Payment cancelled or invalid transaction_id:', { transaction_id, status, tx_ref });
-        const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=cancelled&message=Payment was cancelled`;
+        
+        // Check if it was a verification payment by looking at tx_ref
+        const isVerificationPayment = tx_ref && typeof tx_ref === 'string' && tx_ref.includes('VER-');
+        
+        const redirectUrl = isVerificationPayment
+          ? `${config.FRONTEND_URL}/verification-badge?payment=cancelled&message=Payment was cancelled`
+          : `${config.FRONTEND_URL}/profile?payment=cancelled&message=Payment was cancelled`;
+        
         res.redirect(redirectUrl);
         return;
       }
@@ -234,7 +241,24 @@ export const paymentController = {
       const verification = await paymentService.verifyFlutterwavePayment(transaction_id);
 
       if (!verification.success) {
-        const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=error&message=${encodeURIComponent(verification.message)}`;
+        // Check if it's a verification payment for proper redirect
+        const { default: prisma } = await import('../config/database');
+        const transaction = await prisma.transaction.findFirst({
+          where: { 
+            OR: [
+              { reference: verification.data?.reference },
+              { reference: tx_ref as string }
+            ]
+          },
+        });
+
+        const metadata = transaction?.metadata as any;
+        const isVerificationPayment = metadata?.type === 'verification_badge';
+
+        const redirectUrl = isVerificationPayment
+          ? `${config.FRONTEND_URL}/verification-badge?payment=error&message=${encodeURIComponent(verification.message)}`
+          : `${config.FRONTEND_URL}/profile?payment=error&message=${encodeURIComponent(verification.message)}`;
+        
         res.redirect(redirectUrl);
         return;
       }
@@ -253,26 +277,34 @@ export const paymentController = {
         const isVerificationPayment = metadata?.type === 'verification_badge';
 
         if (isVerificationPayment) {
-          // Process verification badge activation
-          const { verificationService } = await import('../services/verification.service');
-          await verificationService.processVerificationPayment(verification.data!.reference);
+          try {
+            // Process verification badge activation
+            const { verificationService } = await import('../services/verification.service');
+            await verificationService.processVerificationPayment(verification.data!.reference);
 
-          // Redirect to verification badge page with success
-          const redirectUrl = `${config.FRONTEND_URL}/verification-badge?payment=success&message=Verification badge activated!`;
-          res.redirect(redirectUrl);
+            console.log('✅ Verification badge activated for transaction:', verification.data!.reference);
+
+            // Redirect to verification badge page with success
+            const redirectUrl = `${config.FRONTEND_URL}/verification-badge?payment=success&message=Verification badge activated successfully!`;
+            res.redirect(redirectUrl);
+          } catch (activationError: any) {
+            console.error('❌ Badge activation error:', activationError);
+            const redirectUrl = `${config.FRONTEND_URL}/verification-badge?payment=error&message=${encodeURIComponent('Payment successful but badge activation failed. Contact support.')}`;
+            res.redirect(redirectUrl);
+          }
         } else {
-          // Regular wallet deposit - redirect to wallet
-          const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=success&amount=${verification.data!.amount}&currency=${verification.data!.currency}&reference=${verification.data!.reference}`;
+          // Regular wallet deposit - redirect to profile instead of wallet
+          const redirectUrl = `${config.FRONTEND_URL}/profile?payment=success&amount=${verification.data!.amount}&currency=${verification.data!.currency}`;
           res.redirect(redirectUrl);
         }
       } else {
-        // Redirect to frontend with error status
-        const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=error&message=Failed to process payment`;
+        // Redirect with error status
+        const redirectUrl = `${config.FRONTEND_URL}/profile?payment=error&message=Failed to process payment`;
         res.redirect(redirectUrl);
       }
     } catch (error: any) {
       console.error('Flutterwave callback error:', error);
-      const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=error&message=${encodeURIComponent('Failed to process callback')}`;
+      const redirectUrl = `${config.FRONTEND_URL}/profile?payment=error&message=${encodeURIComponent('Failed to process callback')}`;
       res.redirect(redirectUrl);
     }
   },
