@@ -28,7 +28,7 @@ type Plan = {
 function VerificationBadgeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
@@ -40,10 +40,6 @@ function VerificationBadgeContent() {
 
     if (payment === 'success') {
       showToast(message || 'Verification badge activated successfully!', 'success');
-      // Refresh user data to show new badge status
-      if (refreshUser) {
-        refreshUser();
-      }
       // Clear URL parameters
       router.replace('/verification-badge');
     } else if (payment === 'error') {
@@ -53,7 +49,7 @@ function VerificationBadgeContent() {
       showToast('Payment was cancelled', 'info');
       router.replace('/verification-badge');
     }
-  }, [searchParams, showToast, router, refreshUser]);
+  }, [searchParams, showToast, router]);
 
   const plans: Plan[] = [
     {
