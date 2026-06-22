@@ -100,6 +100,8 @@ export const verificationService = {
   // Process verification payment after Flutterwave callback
   async processVerificationPayment(reference: string) {
     try {
+      console.log('🔄 Processing verification payment for reference:', reference);
+
       // Get transaction
       const transaction = await prisma.transaction.findUnique({
         where: { reference },
@@ -107,22 +109,39 @@ export const verificationService = {
       });
 
       if (!transaction) {
+        console.error('❌ Transaction not found:', reference);
         throw new Error('Transaction not found');
       }
 
+      console.log('✅ Transaction found:', {
+        id: transaction.id,
+        userId: transaction.userId,
+        status: transaction.status,
+        amount: transaction.amount,
+      });
+
       if (transaction.status !== 'COMPLETED') {
+        console.error('❌ Payment not completed. Status:', transaction.status);
         throw new Error('Payment not completed');
       }
 
       // Check if it's a verification badge payment
       const metadata = transaction.metadata as any;
       if (metadata?.type !== 'verification_badge') {
+        console.error('❌ Not a verification badge payment. Type:', metadata?.type);
         throw new Error('Not a verification badge payment');
       }
+
+      console.log('✅ Verified as verification badge payment');
 
       // Activate badge
       const now = new Date();
       const expiresAt = new Date(now.getTime() + VERIFICATION_DURATION_DAYS * 24 * 60 * 60 * 1000);
+
+      console.log('🔄 Creating/updating verification badge:', {
+        userId: transaction.userId,
+        expiresAt: expiresAt.toISOString(),
+      });
 
       const badge = await prisma.verificationBadge.upsert({
         where: { userId: transaction.userId },
@@ -139,17 +158,25 @@ export const verificationService = {
         },
       });
 
+      console.log('✅ Verification badge created/updated:', {
+        id: badge.id,
+        userId: badge.userId,
+        status: badge.status,
+        expiresAt: badge.expiresAt,
+      });
+
       // Send notification
       await prisma.notification.create({
         data: {
           userId: transaction.userId,
           type: 'SYSTEM',
           title: '✅ Verification Badge Activated!',
-          message: `Your verification badge is now active for 30 days! You can now post videos on social feed.`,
+          message: `Your verification badge is now active for 30 days! You can now post videos on social feed and enjoy all premium features.`,
         },
       });
 
-      console.log(`✅ Verification badge activated for user ${transaction.userId}`);
+      console.log('✅ Notification sent to user:', transaction.userId);
+      console.log(`🎉 Verification badge successfully activated for user ${transaction.userId}`);
 
       return {
         success: true,
@@ -157,7 +184,11 @@ export const verificationService = {
         message: 'Verification badge activated successfully!',
       };
     } catch (error: any) {
-      console.error('Process verification payment error:', error);
+      console.error('❌ Process verification payment error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+      });
       throw error;
     }
   },
