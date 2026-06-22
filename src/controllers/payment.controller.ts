@@ -243,9 +243,27 @@ export const paymentController = {
       const processed = await paymentService.processSuccessfulPayment(verification.data!.reference, verification.data);
 
       if (processed) {
-        // Redirect to frontend wallet with success status
-        const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=success&amount=${verification.data!.amount}&currency=${verification.data!.currency}&reference=${verification.data!.reference}`;
-        res.redirect(redirectUrl);
+        // Check if this is a verification badge payment
+        const transaction = await prisma.transaction.findUnique({
+          where: { reference: verification.data!.reference },
+        });
+
+        const metadata = transaction?.metadata as any;
+        const isVerificationPayment = metadata?.type === 'verification_badge';
+
+        if (isVerificationPayment) {
+          // Process verification badge activation
+          const { verificationService } = await import('../services/verification.service');
+          await verificationService.processVerificationPayment(verification.data!.reference);
+
+          // Redirect to verification badge page with success
+          const redirectUrl = `${config.FRONTEND_URL}/verification-badge?payment=success&message=Verification badge activated!`;
+          res.redirect(redirectUrl);
+        } else {
+          // Regular wallet deposit - redirect to wallet
+          const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=success&amount=${verification.data!.amount}&currency=${verification.data!.currency}&reference=${verification.data!.reference}`;
+          res.redirect(redirectUrl);
+        }
       } else {
         // Redirect to frontend with error status
         const redirectUrl = `${config.FRONTEND_URL}/wallet?payment=error&message=Failed to process payment`;

@@ -1,4 +1,6 @@
 import prisma from '../config/database';
+import { paymentService } from './payment.service';
+import config from '../config';
 
 const VERIFICATION_COST = 2000; // ₦2,000
 const VERIFICATION_DURATION_DAYS = 30;
@@ -47,7 +49,7 @@ export const verificationService = {
     };
   },
 
-  // Purchase verification
+  // Purchase verification - Create Flutterwave payment link
   async purchaseVerification(userId: string) {
     // Check if already active
     const existing = await prisma.verificationBadge.findUnique({
@@ -58,66 +60,107 @@ export const verificationService = {
       throw new Error('Verification badge is already active');
     }
 
-    // Get NGN wallet
-    const wallet = await prisma.wallet.findFirst({
-      where: { userId, currency: 'NGN' },
+    // Get user details
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, username: true, firstName: true, lastName: true },
     });
 
-    if (!wallet) {
-      throw new Error('NGN wallet not found');
+    if (!user || !user.email) {
+      throw new Error('User email not found');
     }
 
-    if (wallet.balance.toNumber() < VERIFICATION_COST) {
-      throw new Error('Insufficient balance. Please deposit funds to your NGN wallet.');
+    // Create Flutterwave payment link
+    const paymentResult = await paymentService.initiateFlutterwaveDeposit({
+      userId,
+      amount: VERIFICATION_COST,
+      currency: 'NGN',
+      email: user.email,
+      description: '✅ Verification Badge Purchase (30 days)',
+      metadata: {
+        type: 'verification_badge',
+        userId,
+        username: user.username,
+        duration: VERIFICATION_DURATION_DAYS,
+      },
+    });
+
+    if (!paymentResult.success || !paymentResult.paymentUrl) {
+      throw new Error(paymentResult.message || 'Failed to create payment link');
     }
-
-    // Deduct from wallet
-    await prisma.wallet.update({
-      where: { id: wallet.id },
-      data: { balance: { decrement: VERIFICATION_COST } },
-    });
-
-    // Create transaction record
-    await prisma.transaction.create({
-      data: {
-        userId,
-        walletId: wallet.id,
-        type: 'DEPOSIT',
-        status: 'COMPLETED',
-        amount: VERIFICATION_COST,
-        fee: 0,
-        netAmount: VERIFICATION_COST,
-        currency: 'NGN',
-        reference: `VER-${Date.now()}`,
-        description: 'Verification Badge Purchase',
-        processedAt: new Date(),
-      },
-    });
-
-    // Activate badge - use 'active' status for consistency
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + VERIFICATION_DURATION_DAYS * 24 * 60 * 60 * 1000);
-
-    const badge = await prisma.verificationBadge.upsert({
-      where: { userId },
-      create: {
-        userId,
-        status: 'active',
-        purchasedAt: now,
-        expiresAt,
-      },
-      update: {
-        status: 'active',
-        purchasedAt: now,
-        expiresAt,
-      },
-    });
 
     return {
       success: true,
-      badge,
-      message: 'Verification badge activated successfully!',
+      paymentUrl: paymentResult.paymentUrl,
+      reference: paymentResult.reference,
+      amount: VERIFICATION_COST,
+      message: 'Complete payment to activate verification badge',
     };
+  },
+
+  // Process verification payment after Flutterwave callback
+  async processVerificationPayment(reference: string) {
+    try {
+      // Get transaction
+      const transaction = await prisma.transaction.findUnique({
+        where: { reference },
+        include: { user: true },
+      });
+
+      if (!transaction) {
+        throw new Error('Transaction not found');
+      }
+
+      if (transaction.status !== 'COMPLETED') {
+        throw new Error('Payment not completed');
+      }
+
+      // Check if it's a verification badge payment
+      const metadata = transaction.metadata as any;
+      if (metadata?.type !== 'verification_badge') {
+        throw new Error('Not a verification badge payment');
+      }
+
+      // Activate badge
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + VERIFICATION_DURATION_DAYS * 24 * 60 * 60 * 1000);
+
+      const badge = await prisma.verificationBadge.upsert({
+        where: { userId: transaction.userId },
+        create: {
+          userId: transaction.userId,
+          status: 'active',
+          purchasedAt: now,
+          expiresAt,
+        },
+        update: {
+          status: 'active',
+          purchasedAt: now,
+          expiresAt,
+        },
+      });
+
+      // Send notification
+      await prisma.notification.create({
+        data: {
+          userId: transaction.userId,
+          type: 'SYSTEM',
+          title: '✅ Verification Badge Activated!',
+          message: `Your verification badge is now active for 30 days! You can now post videos on social feed.`,
+        },
+      });
+
+      console.log(`✅ Verification badge activated for user ${transaction.userId}`);
+
+      return {
+        success: true,
+        badge,
+        message: 'Verification badge activated successfully!',
+      };
+    } catch (error: any) {
+      console.error('Process verification payment error:', error);
+      throw error;
+    }
   },
 
   // Renew verification
