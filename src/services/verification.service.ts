@@ -1,6 +1,5 @@
 import prisma from '../config/database';
 import { paymentService } from './payment.service';
-import config from '../config';
 
 const VERIFICATION_COST = 2000; // ₦2,000
 const VERIFICATION_DURATION_DAYS = 30;
@@ -85,14 +84,14 @@ export const verificationService = {
       },
     });
 
-    if (!paymentResult.success || !paymentResult.paymentUrl) {
+    if (!paymentResult.success || !paymentResult.authorizationUrl) {
       throw new Error(paymentResult.message || 'Failed to create payment link');
     }
 
     return {
       success: true,
-      paymentUrl: paymentResult.paymentUrl,
-      reference: paymentResult.reference,
+      paymentUrl: paymentResult.authorizationUrl || '',
+      reference: paymentResult.reference || '',
       amount: VERIFICATION_COST,
       message: 'Complete payment to activate verification badge',
     };

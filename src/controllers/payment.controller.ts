@@ -244,6 +244,7 @@ export const paymentController = {
 
       if (processed) {
         // Check if this is a verification badge payment
+        const { default: prisma } = await import('../config/database');
         const transaction = await prisma.transaction.findUnique({
           where: { reference: verification.data!.reference },
         });
