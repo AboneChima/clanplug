@@ -102,6 +102,8 @@ function VerificationBadgeContent() {
 
       const token = localStorage.getItem('accessToken');
       
+      console.log('🔄 Calling purchase API...');
+      
       // Call the purchase endpoint to get Flutterwave payment link
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/verification/purchase`, {
         method: 'POST',
@@ -111,16 +113,23 @@ function VerificationBadgeContent() {
         },
       });
 
+      console.log('📥 Response status:', response.status);
       const data = await response.json();
+      console.log('📦 Full response:', JSON.stringify(data, null, 2));
 
       if (response.ok && data.success) {
-        // Redirect to Flutterwave payment page
+        console.log('✅ Success response');
+        console.log('🔍 data.data:', data.data);
+        
         // Backend returns: { success: true, data: { paymentUrl, reference }, amount, message }
-        const paymentUrl = data.data?.data?.paymentUrl || data.data?.paymentUrl;
+        const paymentUrl = data.data?.paymentUrl;
+        console.log('🔗 Payment URL:', paymentUrl);
+        
         if (paymentUrl) {
+          console.log('✅ Redirecting to payment...');
           window.location.href = paymentUrl;
         } else {
-          console.error('Payment response:', data);
+          console.error('❌ No paymentUrl in response');
           showToast('Payment link not available', 'error');
         }
       } else {
