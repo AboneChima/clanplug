@@ -89,7 +89,6 @@ export const verificationService = {
     }
 
     return {
-      success: true,
       data: {
         paymentUrl: paymentResult.data.authorizationUrl,
         reference: paymentResult.data.reference,
