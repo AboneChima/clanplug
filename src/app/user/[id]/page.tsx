@@ -80,7 +80,11 @@ export default function UserProfilePage() {
 
       if (userRes.ok) {
         const data = await userRes.json();
-        setUser(data.data || data.user);
+        console.log('👤 User profile API response:', data);
+        const userData = data.data || data.user;
+        console.log('👤 Extracted user data:', userData);
+        console.log('📍 User city field:', userData?.city);
+        setUser(userData);
       }
 
       if (postsRes.ok) {
@@ -325,9 +329,11 @@ export default function UserProfilePage() {
                   <p className="text-white text-sm leading-relaxed mb-2 whitespace-pre-line">{user.bio}</p>
                 )}
                 
-                {/* Location */}
-                {user.city && (
-                  <p className="text-gray-400 text-xs mb-2">📍 {user.city}</p>
+                {/* Location - Check multiple possible fields */}
+                {(user.city || user.location || user.state) && (
+                  <p className="text-gray-400 text-xs mb-2">
+                    📍 {user.city || user.location || user.state}
+                  </p>
                 )}
               </div>
 

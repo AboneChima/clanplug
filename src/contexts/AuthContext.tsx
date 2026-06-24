@@ -156,7 +156,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUser = (userData: Partial<User>) => {
     if (user) {
+      console.log('🔄 Updating user context with:', userData);
       const updatedUser = { ...user, ...userData };
+      console.log('✅ Updated user object:', updatedUser);
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
     }
