@@ -52,8 +52,40 @@ function ChatContent() {
   const [showForwardModal, setShowForwardModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   const emojis = ['😊', '😂', '❤️', '👍', '🎉', '🔥', '😍', '🤔', '😭', '💯', '🙏', '👏', '✨', '💪', '🎮', '🎯', '🚀', '⭐', '💰', '🎁'];
+
+  // Setup real-time chat connection
+  useEffect(() => {
+    if (currentChat && accessToken) {
+      console.log('🔌 Connecting to real-time chat...');
+      chatService.connectRealtime(accessToken);
+      
+      const unsubscribeMessage = chatService.onMessage((newMessage) => {
+        console.log('📨 New message received:', newMessage);
+        if (newMessage.chatId === currentChat.id) {
+          setMessages(prev => {
+            // Avoid duplicates
+            if (prev.some(m => m.id === newMessage.id)) return prev;
+            return [...prev, newMessage];
+          });
+          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        }
+      });
+
+      const unsubscribeConnection = chatService.onConnectionChange((connected) => {
+        console.log('🔌 Chat connection status:', connected);
+        setIsConnected(connected);
+      });
+
+      return () => {
+        unsubscribeMessage();
+        unsubscribeConnection();
+        chatService.disconnectRealtime();
+      };
+    }
+  }, [currentChat?.id, accessToken]);
 
   const handleLongPressStart = (msg: ChatMessage) => {
     const timer = setTimeout(() => {

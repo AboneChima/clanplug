@@ -30,6 +30,66 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+
+  // Nigerian cities and states
+  const nigerianLocations = [
+    'Lagos, Nigeria', 'Abuja, Nigeria', 'Kano, Nigeria', 'Ibadan, Nigeria', 'Port Harcourt, Nigeria',
+    'Benin City, Nigeria', 'Kaduna, Nigeria', 'Enugu, Nigeria', 'Aba, Nigeria', 'Jos, Nigeria',
+    'Ilorin, Nigeria', 'Oyo, Nigeria', 'Abeokuta, Nigeria', 'Warri, Nigeria', 'Calabar, Nigeria',
+    'Owerri, Nigeria', 'Uyo, Nigeria', 'Sokoto, Nigeria', 'Maiduguri, Nigeria', 'Akure, Nigeria',
+    'Bauchi, Nigeria', 'Awka, Nigeria', 'Asaba, Nigeria', 'Yola, Nigeria', 'Makurdi, Nigeria',
+    'Osogbo, Nigeria', 'Gombe, Nigeria', 'Umuahia, Nigeria', 'Lokoja, Nigeria', 'Damaturu, Nigeria',
+    'Minna, Nigeria', 'Ado-Ekiti, Nigeria', 'Lafia, Nigeria', 'Jalingo, Nigeria', 'Gusau, Nigeria',
+    'Dutse, Nigeria', 'Birnin Kebbi, Nigeria', 'Abakaliki, Nigeria', 'Yenagoa, Nigeria',
+  ];
+
+  const handleLocationChange = (value: string) => {
+    setProfile({ ...profile, location: value });
+    if (value.length > 0) {
+      const filtered = nigerianLocations.filter(loc => 
+        loc.toLowerCase().includes(value.toLowerCase())
+      );
+      setLocationSuggestions(filtered.slice(0, 5));
+      setShowLocationSuggestions(true);
+    } else {
+      setShowLocationSuggestions(false);
+    }
+  };
+
+  const selectLocation = (location: string) => {
+    setProfile({ ...profile, location });
+    setShowLocationSuggestions(false);
+  };
+
+  const detectLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            // Use reverse geocoding to get city name
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`
+            );
+            const data = await response.json();
+            const city = data.address.city || data.address.town || data.address.state;
+            if (city) {
+              setProfile({ ...profile, location: `${city}, Nigeria` });
+              showToast('Location detected!', 'success');
+            }
+          } catch (error) {
+            showToast('Could not detect city', 'error');
+          }
+        },
+        () => {
+          showToast('Location access denied', 'error');
+        }
+      );
+    } else {
+      showToast('Geolocation not supported', 'error');
+    }
+  };
 
   useEffect(() => {
     if (user) {
@@ -375,15 +435,40 @@ export default function SettingsPage() {
                   />
                 </div>
 
-                <div>
+                <div className="relative">
                   <label className="block text-xs text-gray-400 mb-1">Location</label>
-                  <input
-                    type="text"
-                    value={profile.location}
-                    onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                    placeholder="City, Country"
-                    className="w-full px-2.5 py-1.5 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
-                  />
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={profile.location}
+                      onChange={(e) => handleLocationChange(e.target.value)}
+                      onFocus={() => profile.location && setShowLocationSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                      placeholder="Start typing city name..."
+                      className="flex-1 px-2.5 py-1.5 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={detectLocation}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      📍 Detect
+                    </button>
+                  </div>
+                  {showLocationSuggestions && locationSuggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg shadow-xl max-h-40 overflow-y-auto">
+                      {locationSuggestions.map((loc, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => selectLocation(loc)}
+                          className="w-full px-3 py-2 text-left text-sm text-white hover:bg-[#2a2a2a] transition-colors"
+                        >
+                          📍 {loc}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
