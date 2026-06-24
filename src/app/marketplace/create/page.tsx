@@ -361,7 +361,7 @@ function CreateListingForm() {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder={
                   isGamesAndGadgets 
-                    ? "Condition of the product (e.g., Brand new, Used - Like new, Used - Good condition)\n\nProvide details about the product condition, any wear and tear, accessories included, etc."
+                    ? "Describe the device/gadget condition and details\n\nExample:\nBrand: Samsung Galaxy S23\nCondition: Used - Like New\nStorage: 256GB\nColor: Phantom Black\nAccessories: Original charger, box, warranty card\n\nProvide details about any wear, scratches, functionality issues, etc."
                     : "Include: Country/Region and Login Method\n\nExample:\nRegion: Nigeria\nLogin: Google\n\nThen describe your account in detail..."
                 }
                 rows={6}

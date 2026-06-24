@@ -194,6 +194,22 @@ export default function SettingsPage() {
               {/* Settings Group 1 */}
               <div className="bg-[#2a2a2a] rounded-2xl overflow-hidden">
                 <button 
+                  onClick={() => router.push('/kyc')}
+                  className="w-full px-4 py-4 flex items-center gap-3 hover:bg-[#333] transition-colors border-b border-[#3a3a3a]"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
+                    <IoShieldCheckmarkOutline className="w-5 h-5 text-green-400" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <span className="text-white text-sm font-medium">KYC Verification</span>
+                    <p className="text-gray-500 text-xs">
+                      {user?.isKYCVerified ? 'Verified ✓' : 'Verify your identity'}
+                    </p>
+                  </div>
+                  <IoChevronForwardOutline className="w-5 h-5 text-gray-600" />
+                </button>
+
+                <button 
                   onClick={() => router.push('/verification-badge')}
                   className="w-full px-4 py-4 flex items-center gap-3 hover:bg-[#333] transition-colors border-b border-[#3a3a3a]"
                 >
