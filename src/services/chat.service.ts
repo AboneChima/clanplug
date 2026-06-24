@@ -269,26 +269,33 @@ export class ChatService {
   // Real-time Communication
   connectRealtime(accessToken: string): void {
     if (this.eventSource) {
+      console.log('🔌 Closing existing EventSource connection');
       this.eventSource.close();
     }
 
     const url = `${process.env.NEXT_PUBLIC_API_URL}/api/chats/stream?token=${accessToken}`;
+    console.log('🔌 Creating new EventSource connection to:', url);
     this.eventSource = new EventSource(url);
 
     this.eventSource.onopen = () => {
+      console.log('✅ EventSource connection opened successfully');
       this.connectionHandlers.forEach(handler => handler(true));
     };
 
     this.eventSource.onmessage = (event) => {
       try {
+        console.log('📥 Raw SSE event data:', event.data);
         const message = JSON.parse(event.data);
+        console.log('📨 Parsed SSE message:', message);
         this.messageHandlers.forEach(handler => handler(message));
       } catch (error) {
-        console.error('Failed to parse message:', error);
+        console.error('❌ Failed to parse SSE message:', error, 'Raw data:', event.data);
       }
     };
 
-    this.eventSource.onerror = () => {
+    this.eventSource.onerror = (error) => {
+      console.error('❌ EventSource error:', error);
+      console.log('EventSource readyState:', this.eventSource?.readyState);
       this.connectionHandlers.forEach(handler => handler(false));
     };
   }

@@ -128,6 +128,7 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     if (!profile) return;
     
+    console.log('💾 Saving profile with location:', profile.location);
     setSaving(true);
     try {
       const token = localStorage.getItem('accessToken');
@@ -155,27 +156,31 @@ export default function SettingsPage() {
         }
       }
       
-      // Step 2: Update profile data (without avatar)
+      // Step 2: Update profile data (location saved to city field)
+      const profileData = {
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        username: profile.username,
+        email: profile.email,
+        phone: profile.phone,
+        city: profile.location, // Save location to city field
+        bio: profile.bio,
+      };
+      
+      console.log('📤 Sending profile update:', profileData);
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          firstName: profile.firstName,
-          lastName: profile.lastName,
-          username: profile.username,
-          email: profile.email,
-          phone: profile.phone,
-          city: profile.location, // Save location to city field
-          bio: profile.bio,
-        }),
+        body: JSON.stringify(profileData),
       });
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Profile update response:', data);
+        console.log('✅ Profile update response:', data);
         
         // Update user context with new data
         const updatedUser = {
@@ -190,11 +195,11 @@ export default function SettingsPage() {
         setAvatarFile(null);
       } else {
         const error = await response.json();
-        console.error('Profile update failed:', error);
+        console.error('❌ Profile update failed:', error);
         showToast(error.message || 'Failed to update profile', 'error');
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('❌ Error updating profile:', error);
       showToast('Error updating profile', 'error');
     } finally {
       setSaving(false);

@@ -59,27 +59,34 @@ function ChatContent() {
   // Setup real-time chat connection
   useEffect(() => {
     if (currentChat && accessToken) {
-      console.log('🔌 Connecting to real-time chat...');
+      console.log('🔌 Connecting to real-time chat for chat:', currentChat.id);
       chatService.connectRealtime(accessToken);
       
       const unsubscribeMessage = chatService.onMessage((newMessage) => {
-        console.log('📨 New message received:', newMessage);
+        console.log('📨 New message received via SSE:', newMessage);
         if (newMessage.chatId === currentChat.id) {
           setMessages(prev => {
             // Avoid duplicates
-            if (prev.some(m => m.id === newMessage.id)) return prev;
+            if (prev.some(m => m.id === newMessage.id)) {
+              console.log('⚠️ Duplicate message, skipping:', newMessage.id);
+              return prev;
+            }
+            console.log('✅ Adding new message to chat');
             return [...prev, newMessage];
           });
           setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        } else {
+          console.log('⚠️ Message for different chat, ignoring');
         }
       });
 
       const unsubscribeConnection = chatService.onConnectionChange((connected) => {
-        console.log('🔌 Chat connection status:', connected);
+        console.log('🔌 Chat connection status:', connected ? 'CONNECTED' : 'DISCONNECTED');
         setIsConnected(connected);
       });
 
       return () => {
+        console.log('🔌 Cleaning up chat connection');
         unsubscribeMessage();
         unsubscribeConnection();
         chatService.disconnectRealtime();
@@ -725,7 +732,21 @@ function ChatContent() {
                       </svg>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500">Online</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-gray-500">
+                      {isConnected ? (
+                        <span className="flex items-center gap-1">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          Online
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                          Offline
+                        </span>
+                      )}
+                    </p>
+                  </div>
                 </div>
               </button>
               

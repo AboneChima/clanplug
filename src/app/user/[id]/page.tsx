@@ -163,18 +163,20 @@ export default function UserProfilePage() {
       if (chatsResponse.ok) {
         const chatsData = await chatsResponse.json();
         const existingChat = (chatsData.data || chatsData || []).find((chat: any) => {
-          const otherParticipant = chat.participants?.find((p: any) => p.userId !== user?.id);
+          const otherParticipant = chat.participants?.find((p: any) => p.userId !== currentUser?.id);
           return otherParticipant?.userId === params.id && chat.type === 'DIRECT';
         });
         
         if (existingChat) {
           // Chat exists, just open it
+          console.log('✅ Found existing chat:', existingChat.id);
           router.push(`/chat?id=${existingChat.id}`);
           return;
         }
       }
       
       // No existing chat, create new one
+      console.log('📝 Creating new chat with user:', params.id);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats`, {
         method: 'POST',
         headers: {
@@ -190,6 +192,7 @@ export default function UserProfilePage() {
       if (response.ok) {
         const data = await response.json();
         const chatId = data.data?.id || data.id;
+        console.log('✅ Created new chat:', chatId);
         router.push(`/chat?id=${chatId}`);
       } else {
         const error = await response.json();
