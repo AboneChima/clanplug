@@ -36,6 +36,14 @@ router.get('/',
   asyncHandler(chatController.getUserChats.bind(chatController))
 );
 
+// GET /api/chats/stream - Real-time SSE endpoint (MUST BE BEFORE /:chatId route!)
+router.get('/stream', 
+  authenticate, 
+  asyncHandler(async (req: Request, res: Response) => {
+    await chatController.streamMessages(req, res);
+  })
+);
+
 // POST /api/chats - Create new chat (NO KYC REQUIRED - Everyone can chat)
 router.post('/', 
   authenticate, 
@@ -152,14 +160,6 @@ router.post('/:chatId/upload',
   param('chatId').notEmpty().withMessage('Chat ID is required'),
   handleValidationErrors,
   asyncHandler(chatController.uploadFile.bind(chatController))
-);
-
-// GET /api/chats/stream - Real-time SSE endpoint (must be before export default)
-router.get('/stream', 
-  authenticate, 
-  asyncHandler(async (req: Request, res: Response) => {
-    await chatController.streamMessages(req, res);
-  })
 );
 
 export default router;
