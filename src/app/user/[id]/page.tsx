@@ -309,7 +309,7 @@ export default function UserProfilePage() {
 
               {/* Username, KYC Badge & Bio */}
               <div className="mb-3">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <h2 className="text-white text-sm font-semibold">{user.username}</h2>
                   {user.isKYCVerified ? (
                     <div className="px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded-md flex items-center gap-1">
@@ -322,18 +322,20 @@ export default function UserProfilePage() {
                       <span className="text-[10px] font-medium text-red-400">KYC Unverified</span>
                     </div>
                   )}
+                  {/* Location Badge - Right after KYC */}
+                  {(user.city || user.location || user.state) && (
+                    <div className="px-2 py-0.5 bg-blue-500/20 border border-blue-500/30 rounded-md flex items-center gap-1">
+                      <IoLocationOutline className="w-3 h-3 text-blue-400" />
+                      <span className="text-[10px] font-medium text-blue-400">
+                        {user.city || user.location || user.state}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Bio */}
                 {user.bio && (
                   <p className="text-white text-sm leading-relaxed mb-2 whitespace-pre-line">{user.bio}</p>
-                )}
-                
-                {/* Location - Check multiple possible fields */}
-                {(user.city || user.location || user.state) && (
-                  <p className="text-gray-400 text-xs mb-2">
-                    📍 {user.city || user.location || user.state}
-                  </p>
                 )}
               </div>
 
