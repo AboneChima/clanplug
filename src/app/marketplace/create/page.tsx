@@ -35,6 +35,17 @@ const socialMediaNames: { [key: string]: string } = {
   'vpn': 'VPN Services',
 };
 
+const gadgetNames: { [key: string]: string } = {
+  'ipad-tablets': 'iPad/Tablets',
+  'ps-xbox': 'PS/Xbox',
+  'gaming-phones': 'Gaming Phones',
+  'headphones': 'Headphones',
+  'tv-monitor': 'TV/Monitor',
+  'internet-wifi': 'Internet/WiFi',
+  'game-accessories': 'Game Accessories',
+  'pc-laptops': 'PC/Laptops',
+};
+
 function CreateListingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -54,8 +65,9 @@ function CreateListingForm() {
   const [userListingCount, setUserListingCount] = useState(0);
   const [loadingListingCount, setLoadingListingCount] = useState(true);
   
-  // Check if current selection is Games & Gadgets
-  const isGamesAndGadgets = formData.gameTitle === 'games-gadgets';
+  // Check if current selection is Games & Gadgets category
+  const gadgetCategories = ['ipad-tablets', 'ps-xbox', 'gaming-phones', 'headphones', 'tv-monitor', 'internet-wifi', 'game-accessories', 'pc-laptops'];
+  const isGamesAndGadgets = gadgetCategories.includes(formData.gameTitle);
 
   // Fetch user's marketplace listing count on mount
   useEffect(() => {
@@ -276,7 +288,7 @@ function CreateListingForm() {
               <h1 className="text-lg font-bold text-white">Create Listing</h1>
               {formData.gameTitle && (
                 <p className="text-xs text-gray-400">
-                  {gameNames[formData.gameTitle] || socialMediaNames[formData.gameTitle] || formData.gameTitle.replace(/-/g, ' ')}
+                  {gameNames[formData.gameTitle] || socialMediaNames[formData.gameTitle] || gadgetNames[formData.gameTitle] || formData.gameTitle.replace(/-/g, ' ')}
                 </p>
               )}
             </div>
@@ -339,9 +351,11 @@ function CreateListingForm() {
               </label>
               <div className="w-full px-2 py-1.5 xs:px-3 xs:py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-md xs:rounded-lg text-white text-xs xs:text-sm">
                 {formData.gameTitle ? (
-                  formData.type === 'MARKETPLACE_LISTING' 
-                    ? socialMediaNames[formData.gameTitle] || formData.gameTitle 
-                    : gameNames[formData.gameTitle] || formData.gameTitle
+                  gadgetNames[formData.gameTitle] || 
+                  (formData.type === 'MARKETPLACE_LISTING' 
+                    ? socialMediaNames[formData.gameTitle] 
+                    : gameNames[formData.gameTitle]) || 
+                  formData.gameTitle
                 ) : (
                   formData.type === 'MARKETPLACE_LISTING' ? 'No platform selected' : 'No game selected'
                 )}

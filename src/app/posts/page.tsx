@@ -468,20 +468,42 @@ function MarketplaceContent() {
           <div className="mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Games & Gadgets</h2>
             <div className="grid grid-cols-4 gap-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
-                <div
+              {[
+                { name: 'IPAD/TABLETS', image: '/Ipad and tablet.jpg', id: 'ipad-tablets' },
+                { name: 'PS/XBOX', image: '/xbox vs ps.jpg', id: 'ps-xbox' },
+                { name: 'GAMING PHONES', image: '/Gaming phones.jpg', id: 'gaming-phones' },
+                { name: 'HEADPHONES', image: '/headphones.jpg', id: 'headphones' },
+                { name: 'TV/MONITOR', image: '/TV MONITOR.jpg', id: 'tv-monitor' },
+                { name: 'INTERNET/WIFI', image: '/internet wifi.jpg', id: 'internet-wifi' },
+                { name: 'GAME ACCESSORIES', image: '/game accessories.jpg', id: 'game-accessories' },
+                { name: 'PC/LAPTOPS', image: '/Laptop pc.jpg', id: 'pc-laptops' },
+              ].map((gadget, i) => (
+                <button
                   key={i}
+                  onClick={() => handleGameClick(gadget.id)}
                   className="group hover:scale-105 transition-transform duration-300 relative"
                 >
-                  <div className="aspect-square rounded-xl overflow-hidden shadow-lg mb-2 border border-[#2f3336] bg-[#1a1a1a] flex items-center justify-center">
-                    <div className="text-center p-4">
-                      <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center mx-auto mb-2">
-                        <IoGameControllerOutline className="w-6 h-6 text-gray-600" />
-                      </div>
-                      <p className="text-gray-600 text-[10px]">Coming Soon</p>
+                  {listingCounts[gadget.id] > 0 && (
+                    <div className="absolute -top-1 -right-1 z-10 flex items-center justify-center">
+                      <span className="relative flex h-5 w-5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-5 w-5 bg-blue-600 items-center justify-center text-white text-[9px] font-bold shadow-lg">
+                          {listingCounts[gadget.id] > 9 ? '9+' : listingCounts[gadget.id]}
+                        </span>
+                      </span>
                     </div>
+                  )}
+                  <div className="aspect-square rounded-xl overflow-hidden shadow-lg mb-2 border border-[#2f3336]">
+                    <img
+                      src={gadget.image}
+                      alt={gadget.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </div>
+                  <h3 className="text-white font-semibold text-[10px] xs:text-xs text-center px-1 line-clamp-2">
+                    {gadget.name}
+                  </h3>
+                </button>
               ))}
             </div>
           </div>
