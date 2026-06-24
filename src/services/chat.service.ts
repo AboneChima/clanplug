@@ -273,9 +273,15 @@ export class ChatService {
       this.eventSource.close();
     }
 
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/chats/stream?token=${accessToken}`;
+    // Try with Authorization header approach using EventSource polyfill won't work
+    // Use token in URL for now (SSE doesn't support custom headers natively)
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/api/chats/stream`;
     console.log('🔌 Creating new EventSource connection to:', url);
-    this.eventSource = new EventSource(url);
+    console.log('🔑 Using access token:', accessToken.substring(0, 20) + '...');
+    
+    // Create EventSource with Authorization in URL query (workaround for SSE limitations)
+    const urlWithAuth = `${url}?token=${encodeURIComponent(accessToken)}`;
+    this.eventSource = new EventSource(urlWithAuth);
 
     this.eventSource.onopen = () => {
       console.log('✅ EventSource connection opened successfully');
@@ -287,7 +293,11 @@ export class ChatService {
         console.log('📥 Raw SSE event data:', event.data);
         const message = JSON.parse(event.data);
         console.log('📨 Parsed SSE message:', message);
-        this.messageHandlers.forEach(handler => handler(message));
+        
+        // Only forward actual chat messages, not connection status messages
+        if (message.type !== 'connected') {
+          this.messageHandlers.forEach(handler => handler(message));
+        }
       } catch (error) {
         console.error('❌ Failed to parse SSE message:', error, 'Raw data:', event.data);
       }
@@ -296,7 +306,18 @@ export class ChatService {
     this.eventSource.onerror = (error) => {
       console.error('❌ EventSource error:', error);
       console.log('EventSource readyState:', this.eventSource?.readyState);
+      console.log('0 = CONNECTING, 1 = OPEN, 2 = CLOSED');
       this.connectionHandlers.forEach(handler => handler(false));
+      
+      // Auto-reconnect after 5 seconds if closed unexpectedly
+      if (this.eventSource?.readyState === 2) {
+        console.log('🔄 Attempting to reconnect in 5 seconds...');
+        setTimeout(() => {
+          if (this.eventSource?.readyState === 2) {
+            this.connectRealtime(accessToken);
+          }
+        }, 5000);
+      }
     };
   }
 
