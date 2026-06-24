@@ -37,12 +37,17 @@ export type AuthenticatedRequest = Request & {
   };
 };
 
-// Extract token from request headers
+// Extract token from request headers or query parameter (for SSE)
 const extractToken = (req: Request): string | null => {
+  // First check Authorization header
   const authHeader = req.headers.authorization;
-  
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authHeader.substring(7);
+  }
+  
+  // For SSE endpoints, check query parameter
+  if (req.query.token && typeof req.query.token === 'string') {
+    return req.query.token;
   }
   
   return null;
