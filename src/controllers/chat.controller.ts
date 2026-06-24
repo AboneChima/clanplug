@@ -5,6 +5,9 @@ import multer = require('multer');
 import * as path from 'path';
 import * as fs from 'fs';
 
+// Store SSE connections
+const sseConnections = new Map<string, Response>();
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -38,6 +41,19 @@ const upload = multer({
     }
   },
 });
+
+// Helper to broadcast message to user's SSE connections
+function broadcastToUser(userId: string, message: any) {
+  const connection = sseConnections.get(userId);
+  if (connection) {
+    try {
+      connection.write(`data: ${JSON.stringify(message)}\n\n`);
+    } catch (error) {
+      console.error('Error broadcasting to user:', userId, error);
+      sseConnections.delete(userId);
+    }
+  }
+}
 
 class ChatController {
   // GET /api/chats - Get user chats
@@ -170,6 +186,16 @@ class ChatController {
         replyToId,
         metadata,
       });
+
+      // Broadcast message to all chat participants via SSE
+      const chat = await chatService.getChatById(chatId, userId);
+      if (chat && chat.participants) {
+        chat.participants.forEach((participant: any) => {
+          if (participant.userId !== userId) {
+            broadcastToUser(participant.userId, message);
+          }
+        });
+      }
 
       return res.status(201).json({
         success: true,
@@ -419,6 +445,47 @@ class ChatController {
       }
     });
   }
+
+  // GET /api/chats/stream - SSE endpoint for real-time messages
+  async streamMessages(req: Request, res: Response): Promise<void> {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      res.status(401).json({ success: false, message: 'Unauthorized' });
+      return;
+    }
+
+    // Set up SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    // Store connection
+    sseConnections.set(userId, res);
+    console.log(`[SSE] User ${userId} connected to chat stream`);
+
+    // Send initial connection message
+    res.write(`data: ${JSON.stringify({ type: 'connected', userId, time: new Date().toISOString() })}\n\n`);
+
+    // Send keepalive ping every 30 seconds
+    const keepAlive = setInterval(() => {
+      try {
+        res.write(`:keepalive\n\n`);
+      } catch (error) {
+        clearInterval(keepAlive);
+        sseConnections.delete(userId);
+      }
+    }, 30000);
+
+    // Clean up on disconnect
+    req.on('close', () => {
+      clearInterval(keepAlive);
+      sseConnections.delete(userId);
+      console.log(`[SSE] User ${userId} disconnected from chat stream`);
+      res.end();
+    });
+  }
 }
 
 export const chatController = new ChatController();
+export { sseConnections, broadcastToUser };

@@ -154,34 +154,12 @@ router.post('/:chatId/upload',
   asyncHandler(chatController.uploadFile.bind(chatController))
 );
 
+// GET /api/chats/stream - Real-time SSE endpoint (must be before export default)
+router.get('/stream', 
+  authenticate, 
+  asyncHandler(async (req: Request, res: Response) => {
+    await chatController.streamMessages(req, res);
+  })
+);
+
 export default router;
-
-// Simple Server-Sent Events stream for real-time demo
-router.get('/stream', optionalAuthenticate, asyncHandler(async (req: Request, res: Response) => {
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-
-  const userId = (req as any).user?.id || 'anonymous';
-  const sendEvent = (event: string, data: any) => {
-    res.write(`event: ${event}\n`);
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  };
-
-  sendEvent('hello', { message: 'connected', userId, time: new Date().toISOString() });
-
-  const interval = setInterval(() => {
-    sendEvent('message', {
-      id: makeMsgId(),
-      chatId: 'stream',
-      senderId: 'system',
-      content: `ping ${new Date().toLocaleTimeString()}`,
-      createdAt: new Date().toISOString(),
-    });
-  }, 5000);
-
-  req.on('close', () => {
-    clearInterval(interval);
-    res.end();
-  });
-}));
