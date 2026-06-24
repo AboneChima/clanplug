@@ -106,7 +106,7 @@ export default function SettingsPage() {
         email: user.email || '',
         avatar: user.avatar,
         phone: user.phone || '',
-        location: (user as any).location || user.city || '',
+        location: (user as any).city || '', // Load from city field
         bio: user.bio || '',
       });
       setAvatarPreview(user.avatar || '');
@@ -168,7 +168,7 @@ export default function SettingsPage() {
           username: profile.username,
           email: profile.email,
           phone: profile.phone,
-          location: profile.location,
+          city: profile.location, // Save location to city field
           bio: profile.bio,
         }),
       });

@@ -15,6 +15,7 @@ interface UserProfile {
   lastName?: string;
   avatar?: string;
   bio?: string;
+  location?: string;
   city?: string;
   state?: string;
   country?: string;
@@ -153,6 +154,27 @@ export default function UserProfilePage() {
   const startChat = async () => {
     try {
       const token = localStorage.getItem('accessToken');
+      
+      // First, check if a chat already exists with this user
+      const chatsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (chatsResponse.ok) {
+        const chatsData = await chatsResponse.json();
+        const existingChat = (chatsData.data || chatsData || []).find((chat: any) => {
+          const otherParticipant = chat.participants?.find((p: any) => p.userId !== user?.id);
+          return otherParticipant?.userId === params.id && chat.type === 'DIRECT';
+        });
+        
+        if (existingChat) {
+          // Chat exists, just open it
+          router.push(`/chat?id=${existingChat.id}`);
+          return;
+        }
+      }
+      
+      // No existing chat, create new one
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chats`, {
         method: 'POST',
         headers: {
@@ -301,8 +323,8 @@ export default function UserProfilePage() {
                 )}
                 
                 {/* Location */}
-                {((user as any)?.location || user.city) && (
-                  <p className="text-gray-400 text-xs mb-2">📍 {(user as any)?.location || user.city}</p>
+                {user.city && (
+                  <p className="text-gray-400 text-xs mb-2">📍 {user.city}</p>
                 )}
               </div>
 
