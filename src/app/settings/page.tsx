@@ -46,7 +46,9 @@ export default function SettingsPage() {
   ];
 
   const handleLocationChange = (value: string) => {
-    setProfile({ ...profile, location: value });
+    if (profile) {
+      setProfile({ ...profile, location: value });
+    }
     if (value.length > 0) {
       const filtered = nigerianLocations.filter(loc => 
         loc.toLowerCase().includes(value.toLowerCase())
@@ -59,11 +61,14 @@ export default function SettingsPage() {
   };
 
   const selectLocation = (location: string) => {
-    setProfile({ ...profile, location });
+    if (profile) {
+      setProfile({ ...profile, location });
+    }
     setShowLocationSuggestions(false);
   };
 
   const detectLocation = () => {
+    if (!profile) return;
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -74,7 +79,7 @@ export default function SettingsPage() {
             );
             const data = await response.json();
             const city = data.address.city || data.address.town || data.address.state;
-            if (city) {
+            if (city && profile) {
               setProfile({ ...profile, location: `${city}, Nigeria` });
               showToast('Location detected!', 'success');
             }
