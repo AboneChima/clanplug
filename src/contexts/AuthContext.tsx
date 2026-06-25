@@ -61,6 +61,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
+  // Add function to refetch user data from API (defined early so login can use it)
+  const refetchUser = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      console.log('🔄 Fetching full user profile from API...');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ User profile fetched:', data);
+        if (data.success && data.data) {
+          setUser(data.data);
+          localStorage.setItem('user', JSON.stringify(data.data));
+        }
+      }
+    } catch (error) {
+      console.error('❌ Refetch user error:', error);
+    }
+  };
+
   const login = async (email: string, password: string) => {
     try {
       const response: ApiResponse<LoginData> = await apiClient.login({ email, password });
@@ -76,6 +102,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // Also set cookies for API routes
         setCookie('token', response.data.tokens.accessToken);
+        
+        // Fetch full user profile to get bio and location
+        console.log('✅ Login successful, fetching full user profile...');
+        await refetchUser();
       }
     } catch (error) {
       throw error;
@@ -161,30 +191,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ Updated user object:', updatedUser);
       setUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
-  };
-
-  // Add function to refetch user data from API
-  const refetchUser = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/profile`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setUser(data.data);
-          localStorage.setItem('user', JSON.stringify(data.data));
-        }
-      }
-    } catch (error) {
-      console.error('Refetch user error:', error);
     }
   };
 
