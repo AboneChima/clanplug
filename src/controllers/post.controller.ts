@@ -349,7 +349,9 @@ export const postController = {
     try {
       const userId = (req as any).user?.id;
       const files = req.files as Express.Multer.File[];
-      const { postType, isKYCUpload } = req.body; // Get post type and KYC flag
+      const { postType, isKYCUpload } = req.body;
+      
+      console.log('📤 Upload request:', { userId, fileCount: files?.length, postType, isKYCUpload });
       
       if (!files || files.length === 0) {
         res.status(400).json({
@@ -363,11 +365,9 @@ export const postController = {
       const isMarketplaceListing = postType === 'MARKETPLACE_LISTING' || postType === 'GAME_ACCOUNT';
       
       // Only check verification badge for SOCIAL FEED posts with VIDEOS
-      // Images are allowed for all users
       const hasVideo = files.some(file => file.mimetype.startsWith('video/'));
       
       if (!isKYCUpload && !isMarketplaceListing && hasVideo) {
-        // Only check verification badge for video uploads on social feed
         const { verificationService } = await import('../services/verification.service');
         const canPost = await verificationService.canPostMedia(userId);
         
@@ -381,40 +381,32 @@ export const postController = {
         }
       }
 
-      const uploadPromises = files.map(async (file) => {
-        const filename = `${Date.now()}-${file.originalname}`;
-        const folder = isKYCUpload ? 'kyc' : 'posts';
-        return postService.uploadMedia(file.buffer, filename, folder, postType);
-      });
-
-      const results = await Promise.all(uploadPromises);
+      // Use local storage - files are already on disk from multer
+      const { getFileUrl } = await import('../services/local-storage.service');
       
-      const successfulUploads = results.filter(result => result.success);
-      const failedUploads = results.filter(result => !result.success);
-
-      if (successfulUploads.length === 0) {
-        res.status(400).json({
-          success: false,
-          message: 'All uploads failed',
-          errors: failedUploads.map(f => ({ error: f.error, message: f.message })),
-        });
-        return;
-      }
+      const urls = files.map((file) => getFileUrl(file.path));
+      
+      console.log('✅ Upload successful:', { urls });
 
       res.json({
         success: true,
-        message: `${successfulUploads.length} file(s) uploaded successfully`,
         data: {
-          urls: successfulUploads.map(result => result.url),
-          failed: failedUploads.length,
-          failedReasons: failedUploads.map(f => f.message),
-        },
+          urls: urls,
+          files: files.map((file, idx) => ({
+            url: urls[idx],
+            type: file.mimetype.startsWith('video/') ? 'video' : 'image',
+            filename: file.filename,
+            size: file.size
+          }))
+        }
       });
     } catch (error: any) {
+      console.error('❌ Upload error:', error);
       res.status(500).json({
         success: false,
-        message: 'Failed to upload media',
-        error: error.message,
+        message: `File upload error: ${error.message}`,
+        code: 'VALIDATION_ERROR',
+        statusCode: 500
       });
     }
   },

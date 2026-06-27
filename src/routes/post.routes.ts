@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { authenticate, requireKYC, optionalAuthenticate } from '../middleware/auth.middleware';
 import { asyncHandler } from '../middleware/errorHandler';
-import { postController, uploadMiddleware } from '../controllers/post.controller';
+import { postController } from '../controllers/post.controller';
+import { upload } from '../services/local-storage.service';
 import { commentController } from '../controllers/comment.controller';
 import { reportController } from '../controllers/report.controller';
 
@@ -28,8 +29,8 @@ router.get('/user/:userId', optionalAuthenticate, asyncHandler(postController.ge
 // GET /api/posts/bookmarks - Get user's bookmarked posts
 router.get('/bookmarks', authenticate, asyncHandler(postController.getBookmarkedPosts));
 
-// POST /api/posts/upload-media - Upload media files (removed KYC requirement for social posts)
-router.post('/upload-media', authenticate, uploadMiddleware, asyncHandler(postController.uploadMedia));
+// POST /api/posts/upload-media - Upload media files (accepts 'media' field name)
+router.post('/upload-media', authenticate, upload.array('media', 10), asyncHandler(postController.uploadMedia));
 
 // GET /api/posts/:postId - Get post by ID
 router.get('/:postId', optionalAuthenticate, asyncHandler(postController.getPostById));
