@@ -287,6 +287,8 @@ export default function FeedPage() {
         <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
           {/* Search Bar */}
           <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-xl border-b border-[#2f3336] p-4">
+            {/* VERSION MARKER - DELETE AFTER CONFIRMING DEPLOYMENT */}
+            <div className="text-xs text-green-500 mb-2">✅ v2.0 - Push Notifications Enabled</div>
             <SearchBar 
               placeholder="Search users, posts, or listings..."
             />
