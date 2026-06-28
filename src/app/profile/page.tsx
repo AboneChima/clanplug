@@ -476,16 +476,34 @@ export default function ProfilePage() {
                   <div key={post.id} className="bg-[#1a1a1a] rounded-lg overflow-hidden hover:bg-[#252525] transition-colors relative">
                     <Link href={`/marketplace/${post.id}`} className="block">
                       <div className="flex gap-2 p-2">
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-black flex-shrink-0">
-                          {post.images?.[0] || post.videos?.[0] ? (
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-black flex-shrink-0 relative">
+                          {post.images?.[0] ? (
                             <Image 
-                              src={post.images?.[0] || post.videos?.[0] || ''} 
+                              src={post.images[0]} 
                               alt={post.title} 
                               width={64} 
                               height={64} 
                               className="w-full h-full object-cover"
                               unoptimized
                             />
+                          ) : post.videos?.[0] ? (
+                            <div className="relative w-full h-full bg-black">
+                              <video 
+                                src={`${post.videos[0]}#t=0.1`}
+                                className="w-full h-full object-cover"
+                                muted
+                                playsInline
+                                preload="metadata"
+                                poster={post.videos[0]}
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <div className="w-6 h-6 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+                                  <svg className="w-3 h-3 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <IoStorefrontOutline className="w-6 h-6 text-gray-700" />
@@ -531,45 +549,63 @@ export default function ProfilePage() {
               <div className="grid grid-cols-3 gap-px bg-black">
                 {currentPosts.map((post) => {
                   const media = post.images?.[0] || post.videos?.[0];
-                  const isTextOnly = !media;
+                  
+                  // Check if text is emoji-only or very short
+                  const text = post.title || post.description || '';
+                  const isEmojiOnly = /^[\p{Emoji}\s]+$/u.test(text) && text.trim().length > 0;
+                  const hasText = text.trim().length > 0;
+                  
                   return (
                     <div key={post.id} className="relative">
                       <Link href={`/post/${post.id}`} className="block">
                         <div className="aspect-square bg-[#1a1a1a] relative overflow-hidden">
                           {media ? (
                             <Image src={media} alt="Post" fill className="object-cover" unoptimized />
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] p-4 relative border border-[#2f3336]">
+                          ) : hasText ? (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] p-3 relative border border-[#2f3336]">
                               {/* Decorative corner accents */}
-                              <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-blue-500/30"></div>
-                              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-blue-500/30"></div>
+                              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-blue-500/30"></div>
+                              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-blue-500/30"></div>
                               
-                              {/* Quote icon at top */}
-                              <div className="absolute top-3 left-3">
-                                <svg className="w-5 h-5 text-blue-500/40" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
-                                </svg>
-                              </div>
-
-                              {/* Content */}
-                              <div className="text-center space-y-2 z-10">
-                                {post.title && (
-                                  <h3 className="text-white text-sm font-bold line-clamp-3 leading-snug px-1">
-                                    {post.title}
-                                  </h3>
-                                )}
-                                {post.description && (
-                                  <p className="text-gray-300 text-[11px] line-clamp-4 leading-relaxed px-1">
-                                    {post.description}
-                                  </p>
+                              {/* Content - Emoji or Text */}
+                              <div className="text-center space-y-1 z-10 w-full">
+                                {isEmojiOnly ? (
+                                  <div className="text-5xl leading-none">
+                                    {text.trim()}
+                                  </div>
+                                ) : (
+                                  <>
+                                    {/* Quote icon at top for text posts */}
+                                    <div className="absolute top-2 left-2">
+                                      <svg className="w-4 h-4 text-blue-500/40" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                                      </svg>
+                                    </div>
+                                    {post.title && (
+                                      <h3 className="text-white text-xs font-bold line-clamp-4 leading-tight px-1">
+                                        {post.title}
+                                      </h3>
+                                    )}
+                                    {post.description && !post.title && (
+                                      <p className="text-gray-300 text-[10px] line-clamp-6 leading-snug px-1">
+                                        {post.description}
+                                      </p>
+                                    )}
+                                  </>
                                 )}
                               </div>
 
                               {/* Bottom indicator */}
-                              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 bg-black/40 backdrop-blur-sm rounded-full">
-                                <IoNewspaperOutline className="w-3 h-3 text-blue-400" />
-                                <span className="text-[8px] text-gray-300 font-semibold uppercase tracking-wider">Text</span>
+                              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-1 px-1.5 py-0.5 bg-black/50 backdrop-blur-sm rounded-full">
+                                <IoNewspaperOutline className="w-2.5 h-2.5 text-blue-400" />
+                                <span className="text-[7px] text-gray-300 font-semibold uppercase tracking-wider">
+                                  {isEmojiOnly ? 'Emoji' : 'Text'}
+                                </span>
                               </div>
+                            </div>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+                              <IoNewspaperOutline className="w-8 h-8 text-gray-700" />
                             </div>
                           )}
                         </div>

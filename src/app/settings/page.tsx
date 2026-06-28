@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import PushNotificationToggle from '@/components/PushNotificationToggle';
 
 type Profile = {
   id: string;
@@ -303,6 +304,11 @@ export default function SettingsPage() {
                   <span className="flex-1 text-left text-white text-sm">Notifications</span>
                   <IoChevronForwardOutline className="w-5 h-5 text-gray-600" />
                 </button>
+
+                {/* Push Notifications Toggle */}
+                <div className="w-full px-4 py-4 border-b border-[#3a3a3a]">
+                  <PushNotificationToggle />
+                </div>
 
                 <div className="w-full px-4 py-4 flex items-center gap-3 border-b border-[#3a3a3a]">
                   <div className="w-10 h-10 rounded-full bg-[#3a3a3a] flex items-center justify-center">

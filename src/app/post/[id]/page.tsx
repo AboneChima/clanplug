@@ -31,6 +31,7 @@ interface Post {
   id: string;
   description: string;
   images?: string[];
+  videos?: string[];
   type?: string;
   user: User;
   _count: { likes: number; comments: number };
@@ -222,6 +223,19 @@ export default function PostDetailPage() {
             {post.images && post.images[0] && (
               <div className="mb-3 rounded-xl overflow-hidden border border-[#2f3336]">
                 <Image src={post.images[0]} alt="Post" width={600} height={400} className="w-full" unoptimized />
+              </div>
+            )}
+
+            {post.videos && post.videos[0] && (
+              <div className="mb-3 rounded-xl overflow-hidden border border-[#2f3336]">
+                <video
+                  src={post.videos[0]}
+                  className="w-full"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  autoPlay
+                />
               </div>
             )}
 

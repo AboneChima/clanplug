@@ -94,26 +94,33 @@ function ChatContent() {
     }
   }, [currentChat?.id, accessToken]);
 
-  const handleLongPressStart = (msg: ChatMessage) => {
+  const handleLongPressStart = (e: React.TouchEvent | React.MouseEvent, msg: ChatMessage) => {
+    // Prevent default context menu on long press
+    e.preventDefault();
+    
     const timer = setTimeout(() => {
-      // Haptic feedback (vibration)
+      // Haptic feedback (vibration) - WhatsApp uses 50ms
       if (navigator.vibrate) {
         navigator.vibrate(50);
       }
       setSelectedMessage(msg);
       setShowMessageMenu(true);
-      // Don't clear timer - let it stay null
-    }, 500);
+      setLongPressTimer(null); // Clear timer reference after triggering
+    }, 500); // WhatsApp standard is 500ms
+    
     setLongPressTimer(timer);
   };
 
   const handleLongPressEnd = () => {
-    // Don't clear anything on touch end
-    // Only touch move should cancel
+    // Clear timer if menu hasn't been triggered yet
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
   };
 
   const handleTouchMove = () => {
-    // Cancel long press if user moves finger
+    // Cancel long press if user moves finger (scrolling)
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
@@ -846,12 +853,13 @@ function ChatContent() {
                     <div 
                       key={msg.id} 
                       className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                      onTouchStart={() => handleLongPressStart(msg)}
+                      onTouchStart={(e) => handleLongPressStart(e, msg)}
                       onTouchEnd={handleLongPressEnd}
                       onTouchMove={handleTouchMove}
-                      onMouseDown={() => handleLongPressStart(msg)}
+                      onMouseDown={(e) => handleLongPressStart(e, msg)}
                       onMouseUp={handleLongPressEnd}
                       onMouseLeave={handleTouchMove}
+                      onContextMenu={(e) => e.preventDefault()} 
                     >
                       <div className="relative max-w-[75%]">
                         <div className={`${

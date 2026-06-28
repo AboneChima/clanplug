@@ -11,6 +11,7 @@ import {
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import UploadProgress from '@/components/UploadProgress';
 import Link from 'next/link';
 
 const gameNames: { [key: string]: string } = {
@@ -64,6 +65,8 @@ function CreateListingForm() {
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [userListingCount, setUserListingCount] = useState(0);
   const [loadingListingCount, setLoadingListingCount] = useState(true);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Check if current selection is Games & Gadgets category
   const gadgetCategories = ['ipad-tablets', 'ps-xbox', 'gaming-phones', 'headphones', 'tv-monitor', 'internet-wifi', 'game-accessories', 'pc-laptops'];
@@ -181,28 +184,64 @@ function CreateListingForm() {
     }
 
     setLoading(true);
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       const token = localStorage.getItem('accessToken');
       
-      // Step 1: Upload media first
+      // Step 1: Upload media with progress tracking
       const mediaFormData = new FormData();
       mediaFormData.append('media', selectedMedia);
       mediaFormData.append('postType', 'MARKETPLACE_LISTING');
 
-      console.log('Step 1: Uploading media...');
-      const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: mediaFormData,
+      console.log('Step 1: Uploading media...', {
+        fileName: selectedMedia.name,
+        fileSize: selectedMedia.size,
+        fileType: selectedMedia.type
       });
 
-      const uploadData = await uploadResponse.json();
-      console.log('Upload response:', uploadResponse.status, uploadData);
+      // Use XMLHttpRequest for progress tracking
+      const uploadPromise = new Promise<any>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-      if (!uploadResponse.ok) {
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            setUploadProgress(percentComplete);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              resolve(response);
+            } catch (e) {
+              reject(new Error('Invalid response from server'));
+            }
+          } else {
+            try {
+              const error = JSON.parse(xhr.responseText);
+              reject(new Error(error.message || 'Upload failed'));
+            } catch (e) {
+              reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
+          }
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+        xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
+
+        xhr.open('POST', `${process.env.NEXT_PUBLIC_API_URL}/api/posts/upload-media`);
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(mediaFormData);
+      });
+
+      const uploadData = await uploadPromise;
+      console.log('Upload response:', uploadData);
+
+      if (!uploadData.success) {
         let errorMsg = uploadData.message || 'Failed to upload media';
         if (uploadData.errors && uploadData.errors.length > 0) {
           const errorDetails = uploadData.errors.map((e: any) => e.message || e.error).join(', ');
@@ -210,6 +249,7 @@ function CreateListingForm() {
         }
         showToast(errorMsg, 'error');
         console.error('Upload failed:', uploadData);
+        setIsUploading(false);
         return;
       }
 
@@ -217,10 +257,12 @@ function CreateListingForm() {
       if (!mediaUrl) {
         showToast('No media URL returned from upload', 'error');
         console.error('No media URL in response:', uploadData);
+        setIsUploading(false);
         return;
       }
 
       console.log('Media uploaded successfully:', mediaUrl);
+      setIsUploading(false);
 
       // Step 2: Create post with media URL
       // Use first 50 chars of description as title
@@ -267,6 +309,7 @@ function CreateListingForm() {
     } catch (error) {
       console.error('Error creating listing:', error);
       showToast('Error creating listing', 'error');
+      setIsUploading(false);
     } finally {
       setLoading(false);
     }
@@ -274,6 +317,15 @@ function CreateListingForm() {
 
   return (
     <AppShell>
+      {/* Upload Progress Overlay */}
+      {isUploading && (
+        <UploadProgress
+          progress={uploadProgress}
+          fileName={selectedMedia?.name || 'file'}
+          fileSize={selectedMedia ? `${(selectedMedia.size / 1024 / 1024).toFixed(2)} MB` : '0 MB'}
+        />
+      )}
+      
       <div className="min-h-screen bg-black pb-24 lg:pb-8">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-xl border-b border-[#262626] mb-4">

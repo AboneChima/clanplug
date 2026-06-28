@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoCloseOutline, IoTrashOutline } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
+import SearchBar from '@/components/SearchBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
@@ -284,8 +285,15 @@ export default function FeedPage() {
 
         {/* Feed */}
         <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
+          {/* Search Bar */}
+          <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-xl border-b border-[#2f3336] p-4">
+            <SearchBar 
+              placeholder="Search users, posts, or listings..."
+            />
+          </div>
+
           {/* Tabs with Post Button */}
-          <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-xl border-b border-[#2f3336]">
+          <div className="sticky top-[72px] z-10 bg-black/95 backdrop-blur-xl border-b border-[#2f3336]">
             <div className="flex items-center justify-between px-4 py-2">
               <div className="flex-1 flex">
                 <button
@@ -376,7 +384,17 @@ export default function FeedPage() {
                       {/* Post content - clickable to go to full post */}
                       <Link href={`/post/${post.id}`}>
                         <div className="cursor-pointer">
-                          <p className="text-white text-xs mb-2 whitespace-pre-wrap line-clamp-3">{post.description}</p>
+                          {(() => {
+                            // Check if content is emoji-only
+                            const text = post.description || '';
+                            const isEmojiOnly = /^[\p{Emoji}\s]+$/u.test(text) && text.trim().length > 0 && text.trim().length <= 20;
+                            
+                            if (isEmojiOnly) {
+                              return <p className="text-5xl mb-2 leading-tight">{text.trim()}</p>;
+                            } else {
+                              return <p className="text-white text-xs mb-2 whitespace-pre-wrap line-clamp-3">{post.description}</p>;
+                            }
+                          })()}
 
                           {/* Images */}
                           {post.images && post.images[0] && (

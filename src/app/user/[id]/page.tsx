@@ -55,11 +55,25 @@ export default function UserProfilePage() {
   const [marketListings, setMarketListings] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowingMe, setIsFollowingMe] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'market' | 'social'>('market');
 
+  // Debug: Log state changes
   useEffect(() => {
-    if (params.id) loadUserProfile();
+    console.log('📊 State Update - isFollowing:', isFollowing, '| isFollowingMe:', isFollowingMe);
+    console.log('   🎯 Button should display:', 
+      isFollowing ? 'UNFOLLOW' : (isFollowingMe ? 'FOLLOW BACK' : 'FOLLOW')
+    );
+  }, [isFollowing, isFollowingMe]);
+
+  useEffect(() => {
+    if (params.id) {
+      // Reset states when user changes
+      setIsFollowing(false);
+      setIsFollowingMe(false);
+      loadUserProfile();
+    }
   }, [params.id]);
 
   const loadUserProfile = async () => {
@@ -109,15 +123,57 @@ export default function UserProfilePage() {
         }));
       }
 
-      // Check if following
+      // Check follow statuses
       if (currentUser?.id && params.id !== currentUser.id) {
-        const followCheckRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${params.id}/status`, {
+        console.log('🔍 Checking follow relationships');
+        console.log('   Current user:', currentUser.id);
+        console.log('   Profile user:', params.id);
+        
+        // Check if I'm following them: GET /api/follow/{theirId}/check
+        // This checks if logged-in user (me) is following params.id (them)
+        const iFollowThemRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${params.id}/check`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (followCheckRes.ok) {
-          const data = await followCheckRes.json();
-          setIsFollowing(data.isFollowing || false);
+        
+        console.log('   📡 Check response status:', iFollowThemRes.status);
+        
+        if (iFollowThemRes.ok) {
+          const data = await iFollowThemRes.json();
+          console.log('   📊 Full API response:', JSON.stringify(data, null, 2));
+          console.log('   📊 data.success:', data.success);
+          console.log('   📊 data.isFollowing:', data.isFollowing);
+          console.log('   📊 typeof data.isFollowing:', typeof data.isFollowing);
+          
+          const following = data.isFollowing === true;
+          console.log('   ✅ Computed following value:', following);
+          setIsFollowing(following);
+          console.log('   ✅ Set isFollowing state to:', following);
+          console.log('   🎯 Button should show:', following ? 'UNFOLLOW' : 'FOLLOW');
+        } else {
+          console.error('   ❌ Follow check failed:', iFollowThemRes.status);
+          const errorData = await iFollowThemRes.json().catch(() => ({}));
+          console.error('   ❌ Error data:', errorData);
         }
+        
+        // Check if they follow me: fetch my followers and see if their ID is there
+        const theyFollowMeRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${currentUser.id}/followers?limit=1000`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (theyFollowMeRes.ok) {
+          const data = await theyFollowMeRes.json();
+          const followers = data.data || [];
+          const theyFollowMe = followers.some((f: any) => f.id === params.id);
+          setIsFollowingMe(theyFollowMe);
+          console.log('   ✅ They follow me:', theyFollowMe);
+        }
+        
+        // Log final state after a brief delay to ensure state updates have processed
+        setTimeout(() => {
+          console.log('🏁 Final states after update:');
+          console.log('   isFollowing:', isFollowing);
+          console.log('   isFollowingMe:', isFollowingMe);
+        }, 100);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -135,21 +191,84 @@ export default function UserProfilePage() {
     try {
       setFollowLoading(true);
       const token = localStorage.getItem('accessToken');
+      
+      // Determine action based on current state
+      const action = isFollowing ? 'unfollow' : 'follow';
+      const method = isFollowing ? 'DELETE' : 'POST';
+      
+      console.log('🔄 Follow action START:', { 
+        userId: params.id,
+        currentUser: currentUser.id,
+        currentlyFollowing: isFollowing,
+        action,
+        method,
+        endpoint: `${process.env.NEXT_PUBLIC_API_URL}/api/follow/${params.id}`
+      });
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/follow/${params.id}`, {
-        method: isFollowing ? 'DELETE' : 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        method,
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
+      const data = await response.json();
+      console.log('📡 Follow response:', response.status, data);
+      
       if (response.ok) {
-        setIsFollowing(!isFollowing);
+        console.log('✅ Follow success, toggling state');
+        
+        // Toggle the follow state immediately
+        const newFollowState = !isFollowing;
+        setIsFollowing(newFollowState);
+        
+        console.log('🔄 State toggled:', { 
+          oldState: isFollowing, 
+          newState: newFollowState,
+          shouldShow: newFollowState ? 'UNFOLLOW' : 'FOLLOW'
+        });
+        
+        // Update follower count
         setStats(prev => ({
           ...prev,
-          followers: isFollowing ? prev.followers - 1 : prev.followers + 1
+          followers: newFollowState ? prev.followers + 1 : prev.followers - 1
         }));
-        showToast(isFollowing ? 'Unfollowed' : 'Following', 'success');
+        
+        showToast(newFollowState ? 'Now following' : 'Unfollowed', 'success');
+      } else {
+        console.error('❌ Follow action failed:', {
+          status: response.status,
+          message: data.message,
+          currentState: isFollowing,
+          attemptedAction: action
+        });
+        
+        // If we get "Already following" error, force sync the state
+        if (data.message?.includes('Already following')) {
+          console.log('⚠️ State out of sync - fixing...');
+          setIsFollowing(true); // Force the state to match reality
+          showToast('You are already following this user', 'info');
+        } else if (data.message?.includes('Not following')) {
+          console.log('⚠️ State out of sync - fixing...');
+          setIsFollowing(false); // Force the state to match reality
+          showToast('You are not following this user', 'info');
+        } else {
+          showToast(data.message || 'Failed to update follow status', 'error');
+        }
+        
+        // Reload profile to ensure state is synced
+        setTimeout(() => {
+          loadUserProfile();
+        }, 300);
       }
     } catch (error) {
+      console.error('❌ Follow error:', error);
       showToast('Failed to update follow status', 'error');
+      // Reload to sync state after error
+      setTimeout(() => {
+        loadUserProfile();
+      }, 300);
     } finally {
       setFollowLoading(false);
     }
@@ -353,17 +472,22 @@ export default function UserProfilePage() {
                 </div>
               ) : (
                 <div className="flex gap-2">
+                  {/* Single follow/unfollow button with dynamic text */}
                   <button
                     onClick={handleFollow}
                     disabled={followLoading}
-                    className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${
-                      isFollowing
-                        ? 'bg-[#262626] hover:bg-[#363636] text-white'
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                    className={`flex-1 py-1.5 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50 ${
+                      isFollowing 
+                        ? 'bg-[#262626] hover:bg-[#363636]' 
+                        : 'bg-blue-500 hover:bg-blue-600'
                     }`}
                   >
-                    {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
+                    {followLoading ? '...' : (
+                      isFollowing ? 'Unfollow' : (isFollowingMe ? 'Follow Back' : 'Follow')
+                    )}
                   </button>
+                  
+                  {/* Message button always visible */}
                   <button 
                     onClick={startChat}
                     className="px-4 py-1.5 bg-[#262626] hover:bg-[#363636] text-white text-sm font-semibold rounded-lg transition-colors"
@@ -431,19 +555,23 @@ export default function UserProfilePage() {
                                 unoptimized
                               />
                             ) : post.videos?.[0] ? (
-                              <>
+                              <div className="relative w-full h-full bg-black">
                                 <video 
-                                  src={post.videos[0]} 
+                                  src={`${post.videos[0]}#t=0.1`}
                                   className="w-full h-full object-cover"
                                   muted
                                   playsInline
+                                  preload="metadata"
+                                  poster={post.videos[0]}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z"/>
-                                  </svg>
+                                  <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+                                    <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                  </div>
                                 </div>
-                              </>
+                              </div>
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
                                 <IoStorefrontOutline className="w-6 h-6 text-gray-700" />
@@ -471,43 +599,62 @@ export default function UserProfilePage() {
                 <div className="grid grid-cols-3 gap-px bg-black">
                   {currentPosts.map((post) => {
                     const media = post.images?.[0] || post.videos?.[0];
+                    
+                    // Check if text is emoji-only or very short
+                    const text = post.title || post.description || '';
+                    const isEmojiOnly = /^[\p{Emoji}\s]+$/u.test(text) && text.trim().length > 0;
+                    const hasText = text.trim().length > 0;
+                    
                     return (
                       <Link key={post.id} href={`/post/${post.id}`}>
                         <div className="aspect-square bg-[#1a1a1a] relative overflow-hidden">
                           {media ? (
                             <Image src={media} alt="Post" fill className="object-cover" unoptimized />
-                          ) : (
-                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] p-4 relative border border-[#2f3336]">
+                          ) : hasText ? (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] p-3 relative border border-[#2f3336]">
                               {/* Decorative corner accents */}
-                              <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-blue-500/30"></div>
-                              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-blue-500/30"></div>
+                              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-blue-500/30"></div>
+                              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-blue-500/30"></div>
                               
-                              {/* Quote icon at top */}
-                              <div className="absolute top-3 left-3">
-                                <svg className="w-5 h-5 text-blue-500/40" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
-                                </svg>
-                              </div>
-
-                              {/* Content */}
-                              <div className="text-center space-y-2 z-10">
-                                {post.title && (
-                                  <h3 className="text-white text-sm font-bold line-clamp-3 leading-snug px-1">
-                                    {post.title}
-                                  </h3>
-                                )}
-                                {post.description && (
-                                  <p className="text-gray-300 text-[11px] line-clamp-4 leading-relaxed px-1">
-                                    {post.description}
-                                  </p>
+                              {/* Content - Emoji or Text */}
+                              <div className="text-center space-y-1 z-10 w-full">
+                                {isEmojiOnly ? (
+                                  <div className="text-5xl leading-none">
+                                    {text.trim()}
+                                  </div>
+                                ) : (
+                                  <>
+                                    {/* Quote icon at top for text posts */}
+                                    <div className="absolute top-2 left-2">
+                                      <svg className="w-4 h-4 text-blue-500/40" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+                                      </svg>
+                                    </div>
+                                    {post.title && (
+                                      <h3 className="text-white text-xs font-bold line-clamp-4 leading-tight px-1">
+                                        {post.title}
+                                      </h3>
+                                    )}
+                                    {post.description && !post.title && (
+                                      <p className="text-gray-300 text-[10px] line-clamp-6 leading-snug px-1">
+                                        {post.description}
+                                      </p>
+                                    )}
+                                  </>
                                 )}
                               </div>
 
                               {/* Bottom indicator */}
-                              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 bg-black/40 backdrop-blur-sm rounded-full">
-                                <IoNewspaperOutline className="w-3 h-3 text-blue-400" />
-                                <span className="text-[8px] text-gray-300 font-semibold uppercase tracking-wider">Text</span>
+                              <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex items-center gap-1 px-1.5 py-0.5 bg-black/50 backdrop-blur-sm rounded-full">
+                                <IoNewspaperOutline className="w-2.5 h-2.5 text-blue-400" />
+                                <span className="text-[7px] text-gray-300 font-semibold uppercase tracking-wider">
+                                  {isEmojiOnly ? 'Emoji' : 'Text'}
+                                </span>
                               </div>
+                            </div>
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+                              <IoNewspaperOutline className="w-8 h-8 text-gray-700" />
                             </div>
                           )}
                         </div>

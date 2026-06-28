@@ -18,6 +18,7 @@ import {
   IoLogoTwitter,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
+import SearchBar from '@/components/SearchBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
@@ -291,6 +292,13 @@ function MarketplaceContent() {
     <AppShell>
       <div className="min-h-screen bg-black pb-20 lg:pb-8 pt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
+
+          {/* Search Bar */}
+          <div className="mb-8">
+            <SearchBar 
+              placeholder="Search listings, users, or categories..."
+            />
+          </div>
 
           {/* Hot Deals Section */}
           <div className="mb-12">

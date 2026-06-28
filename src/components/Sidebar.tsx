@@ -14,7 +14,8 @@ import {
   IoNotificationsOutline,
   IoHelpCircleOutline,
   IoReceiptOutline,
-  IoTrophyOutline
+  IoTrophyOutline,
+  IoPeopleOutline
 } from 'react-icons/io5';
 
 type User = {
@@ -47,6 +48,18 @@ const navItems = [
     href: '/posts', 
     label: 'Shop', 
     Icon: IoStorefrontOutline
+  },
+  { 
+    href: '/top-up', 
+    label: 'Top Up', 
+    Icon: IoWalletOutline,
+    comingSoon: true
+  },
+  { 
+    href: '/groups', 
+    label: 'Groups', 
+    Icon: IoPeopleOutline,
+    comingSoon: true
   },
   { 
     href: '/tournaments', 
