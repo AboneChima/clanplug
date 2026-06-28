@@ -1,19 +1,41 @@
 // Service Worker for Push Notifications
+// Version: 2.0.1 - Message Push Notifications
+const SW_VERSION = '2.0.1';
+
+console.log('🔄 Service Worker loaded, version:', SW_VERSION);
+
 self.addEventListener('push', function(event) {
+  console.log('🔔 PUSH EVENT RECEIVED in Service Worker');
+  console.log('📅 Service Worker Version:', SW_VERSION);
+  
   const data = event.data?.json() || {};
+  console.log('📦 Push data:', data);
+  
   const title = data.title || 'ClanPlug Notification';
+  
+  // Determine if persistent based on tag
+  const isPersistent = data.tag === 'transaction' || data.tag === 'escrow';
+  
   const options = {
     body: data.message || data.body || 'You have a new notification',
-    icon: '/icon-192x192.png',
-    badge: '/badge-72x72.png',
+    icon: data.icon || '/favicon.ico',
+    badge: '/favicon.ico',
     tag: data.tag || 'notification',
     data: data,
-    actions: data.actions || [],
     vibrate: [200, 100, 200],
+    requireInteraction: isPersistent, // Only important notifications stay
+    silent: false,
+    timestamp: data.timestamp || Date.now(),
+    dir: 'ltr',
   };
+
+  console.log('🔔 Showing notification with title:', title);
+  console.log('🔔 Notification options:', options);
 
   event.waitUntil(
     self.registration.showNotification(title, options)
+      .then(() => console.log('✅ Notification displayed successfully'))
+      .catch(err => console.error('❌ Failed to show notification:', err))
   );
 });
 

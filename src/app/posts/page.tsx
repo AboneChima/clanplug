@@ -1,5 +1,6 @@
 'use client';
 
+// Marketplace/Posts Page - Search removed from main page (only in listings)
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
@@ -18,7 +19,6 @@ import {
   IoLogoTwitter,
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
-import SearchBar from '@/components/SearchBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
@@ -293,12 +293,7 @@ function MarketplaceContent() {
       <div className="min-h-screen bg-black pb-20 lg:pb-8 pt-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
 
-          {/* Search Bar */}
-          <div className="mb-8">
-            <SearchBar 
-              placeholder="Search listings, users, or categories..."
-            />
-          </div>
+          {/* Game Categories Section */}
 
           {/* Hot Deals Section */}
           <div className="mb-12">

@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://clanplug-brieltm9y-oracles-projects-0d30db20.vercel.app',
   },
+  // Add cache control headers
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
@@ -26,6 +40,14 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '**.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.clanplug.site',
+      },
+      {
+        protocol: 'http',
+        hostname: '176.57.189.248',
       },
     ],
   },

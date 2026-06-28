@@ -41,6 +41,9 @@ interface Post {
 }
 
 export default function FeedPage() {
+  // DEBUG: Version check - if you see this, you're on the latest version
+  console.log('🚀 Feed Page Version: 2.1.0 - Likes & Comments ACTIVE');
+  
   const { user } = useAuth();
   const { showToast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -66,6 +69,10 @@ export default function FeedPage() {
       if (response.ok) {
         const data = await response.json();
         const postsData = Array.isArray(data.data) ? data.data : [];
+        console.log('📊 FEED API RESPONSE - First Post:', postsData[0]);
+        console.log('📊 _count field:', postsData[0]?._count);
+        console.log('📊 Likes count:', postsData[0]?._count?.likes);
+        console.log('📊 Comments count:', postsData[0]?._count?.comments);
         const socialPosts = postsData.filter((p: Post) => !p.type || p.type === 'SOCIAL_POST');
         setPosts(socialPosts);
       }
@@ -287,8 +294,6 @@ export default function FeedPage() {
         <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
           {/* Search Bar */}
           <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-xl border-b border-[#2f3336] p-4">
-            {/* VERSION MARKER - DELETE AFTER CONFIRMING DEPLOYMENT */}
-            <div className="text-xs text-green-500 mb-2">✅ v2.0 - Push Notifications Enabled</div>
             <SearchBar 
               placeholder="Search users, posts, or listings..."
             />

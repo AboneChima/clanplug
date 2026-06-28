@@ -189,8 +189,12 @@ export class PushNotificationService {
     if (permission === 'granted') {
       await this.registration.showNotification(title, {
         body,
-        icon: '/icon-192x192.png',
-        badge: '/badge-72x72.png',
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        requireInteraction: true, // Keep visible until user clicks
+        vibrate: [200, 100, 200, 100, 200],
+        silent: false, // Play sound
+        timestamp: Date.now(),
       } as NotificationOptions);
     }
   }
