@@ -54,6 +54,7 @@ export default function FeedPage() {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [loadingComments, setLoadingComments] = useState<string | null>(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [showInstallModal, setShowInstallModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
@@ -293,25 +294,33 @@ export default function FeedPage() {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      // Android/Chrome install
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User response to install prompt: ${outcome}`);
-      setDeferredPrompt(null);
-      setShowInstallBanner(false);
-    } else {
-      // iOS or other browsers - just show instructions
-      setShowInstallBanner(false);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        showToast('Tap the Share button, then "Add to Home Screen"', 'info');
-      } else {
-        showToast('Use your browser menu to install the app', 'info');
+      // Android/Chrome - Show native prompt directly
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install prompt: ${outcome}`);
+        if (outcome === 'accepted') {
+          setShowInstallBanner(false);
+          showToast('App added to home screen!', 'success');
+        }
+        setDeferredPrompt(null);
+      } catch (error) {
+        console.error('Install prompt error:', error);
+        setShowInstallModal(true);
       }
+    } else {
+      // iOS or browsers without native prompt - Show instructions modal
+      setShowInstallModal(true);
     }
   };
 
   const handleDismissInstallBanner = () => {
+    setShowInstallBanner(false);
+    localStorage.setItem('installBannerDismissed', 'true');
+  };
+
+  const handleConfirmInstall = () => {
+    setShowInstallModal(false);
     setShowInstallBanner(false);
     localStorage.setItem('installBannerDismissed', 'true');
   };
@@ -341,6 +350,149 @@ export default function FeedPage() {
 
         {/* Feed */}
         <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
+          {/* Install App Banner - Modern iOS/Web3 Style - Above Fixed Header */}
+          {showInstallBanner && (
+            <div className="px-4 py-2 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 border-b border-blue-500/20 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                {/* App Icon - Simple "C" Logo */}
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-[1px] shadow-lg shadow-blue-500/20 flex-shrink-0">
+                  <div className="w-full h-full rounded-[11px] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
+                    <span className="text-2xl font-black bg-gradient-to-br from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                      C
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-xs font-semibold leading-tight">Add ClanPlug to Home</p>
+                  <p className="text-gray-400 text-[10px] leading-tight">Quick access, native feel</p>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleInstallClick}
+                    className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold rounded-lg shadow-lg shadow-blue-500/25 transition-all active:scale-95 whitespace-nowrap"
+                  >
+                    Add to Home
+                  </button>
+                  <button
+                    onClick={handleDismissInstallBanner}
+                    className="p-1 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <IoCloseOutline className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Install Instructions Modal - iOS Style */}
+          {showInstallModal && (
+            <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowInstallModal(false)}>
+              <div className="w-full max-w-md bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] rounded-3xl shadow-2xl shadow-blue-500/20 border border-blue-500/20 overflow-hidden animate-slide-up" onClick={(e) => e.stopPropagation()}>
+                {/* Header with Icon */}
+                <div className="pt-6 pb-4 px-6 border-b border-[#2f3336]">
+                  <div className="flex flex-col items-center gap-3">
+                    {/* Large App Icon */}
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-[2px] shadow-xl shadow-blue-500/30">
+                      <div className="w-full h-full rounded-[14px] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
+                        <span className="text-4xl font-black bg-gradient-to-br from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                          C
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-white text-lg font-bold mb-1">Add to Home Screen</h3>
+                      <p className="text-gray-400 text-sm">Install ClanPlug for quick access</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instructions */}
+                <div className="p-6 space-y-4">
+                  {/iPad|iPhone|iPod/.test(navigator.userAgent) ? (
+                    <>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
+                          <span className="text-blue-400 font-bold text-sm">1</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-sm font-medium mb-1">Tap the Share button</p>
+                          <div className="flex items-center gap-2 text-gray-400 text-xs">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                            </svg>
+                            <span>(at the bottom or top of Safari)</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
+                          <span className="text-blue-400 font-bold text-sm">2</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-sm font-medium mb-1">Select "Add to Home Screen"</p>
+                          <p className="text-gray-400 text-xs">Scroll down if you don't see it</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
+                          <span className="text-blue-400 font-bold text-sm">3</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-sm font-medium mb-1">Tap "Add"</p>
+                          <p className="text-gray-400 text-xs">The app will appear on your home screen</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
+                          <span className="text-blue-400 font-bold text-sm">1</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-sm font-medium mb-1">Open browser menu</p>
+                          <p className="text-gray-400 text-xs">Tap the three dots (⋮) in the top right</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
+                          <span className="text-blue-400 font-bold text-sm">2</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-sm font-medium mb-1">Select "Add to Home screen"</p>
+                          <p className="text-gray-400 text-xs">Or "Install app" option</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
+                          <span className="text-blue-400 font-bold text-sm">3</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-sm font-medium mb-1">Confirm installation</p>
+                          <p className="text-gray-400 text-xs">The app will be added to your home screen</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Action Button */}
+                <div className="p-6 pt-2">
+                  <button
+                    onClick={handleConfirmInstall}
+                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 transition-all active:scale-95"
+                  >
+                    Got it!
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Fixed Header - Stays on scroll */}
           <div className="sticky top-14 lg:top-0 z-50 bg-black/95 backdrop-blur-md border-b border-[#2f3336]">
             <div className="flex items-center gap-2 px-4 py-3">
@@ -385,50 +537,6 @@ export default function FeedPage() {
               </Link>
             </div>
           </div>
-
-          {/* Install App Banner - Modern iOS/Web3 Style */}
-          {showInstallBanner && (
-            <div className="px-4 py-2 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 border-b border-blue-500/20 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                {/* App Icon */}
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-0.5 shadow-lg flex-shrink-0">
-                  <div className="w-full h-full rounded-[10px] bg-black flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <rect x="6" y="4" width="12" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                      <circle cx="9" cy="8" r="1"/>
-                      <circle cx="15" cy="8" r="1"/>
-                      <circle cx="9" cy="12" r="1"/>
-                      <circle cx="15" cy="12" r="1"/>
-                      <path d="M8 18h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                      <path d="M10 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  </div>
-                </div>
-                
-                {/* Text */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-semibold leading-tight">Install ClanPlug</p>
-                  <p className="text-gray-400 text-[10px] leading-tight">Get the full app experience</p>
-                </div>
-                
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleInstallClick}
-                    className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold rounded-lg shadow-lg shadow-blue-500/25 transition-all active:scale-95"
-                  >
-                    Install
-                  </button>
-                  <button
-                    onClick={handleDismissInstallBanner}
-                    className="p-1 text-gray-400 hover:text-white transition-colors"
-                  >
-                    <IoCloseOutline className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Content */}
 

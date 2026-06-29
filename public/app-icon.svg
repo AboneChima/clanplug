@@ -6,56 +6,35 @@
       <stop offset="50%" style="stop-color:#2563eb;stop-opacity:1" />
       <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
     </linearGradient>
-    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="letterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#e0e7ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e0e7ff;stop-opacity:0.9" />
     </linearGradient>
-    <!-- Soft shadow -->
-    <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
-      <feOffset dx="0" dy="4" result="offsetblur"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.3"/>
-      </feComponentTransfer>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-  </defs>
-  
-  <!-- Rounded square background with gradient -->
-  <rect width="512" height="512" rx="115" fill="url(#bgGradient)"/>
-  
-  <!-- Subtle highlight at top -->
-  <rect width="512" height="256" rx="115" fill="url(#topLight)" opacity="0.1"/>
-  <defs>
+    <!-- Subtle top highlight -->
     <linearGradient id="topLight" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.2" />
       <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0" />
     </linearGradient>
   </defs>
   
-  <!-- Main icon - Gaming controller/device hybrid -->
-  <g filter="url(#softShadow)">
-    <!-- Device/tablet shape -->
-    <rect x="128" y="96" width="256" height="320" rx="32" fill="none" stroke="url(#iconGradient)" stroke-width="20" stroke-linecap="round"/>
-    
-    <!-- Top dots (like controller buttons) -->
-    <circle cx="192" cy="176" r="16" fill="url(#iconGradient)"/>
-    <circle cx="320" cy="176" r="16" fill="url(#iconGradient)"/>
-    
-    <!-- Middle dots -->
-    <circle cx="192" cy="256" r="16" fill="url(#iconGradient)"/>
-    <circle cx="320" cy="256" r="16" fill="url(#iconGradient)"/>
-    
-    <!-- Bottom line (like menu button) -->
-    <line x1="176" y1="352" x2="336" y2="352" stroke="url(#iconGradient)" stroke-width="20" stroke-linecap="round"/>
-    
-    <!-- Center line (like action button) -->
-    <line x1="216" y1="304" x2="296" y2="304" stroke="url(#iconGradient)" stroke-width="20" stroke-linecap="round"/>
-  </g>
+  <!-- Rounded square background with gradient (iOS style) -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGradient)"/>
+  
+  <!-- Subtle highlight at top for depth -->
+  <rect width="512" height="200" rx="115" fill="url(#topLight)"/>
+  
+  <!-- Large "C" Letter - Bold and modern -->
+  <text 
+    x="256" 
+    y="360" 
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+    font-size="360" 
+    font-weight="900" 
+    fill="url(#letterGradient)" 
+    text-anchor="middle"
+    style="text-shadow: 0 8px 24px rgba(0,0,0,0.3);"
+  >C</text>
   
   <!-- Subtle bottom shadow for depth -->
-  <ellipse cx="256" cy="480" rx="180" ry="20" fill="#000000" opacity="0.1"/>
+  <ellipse cx="256" cy="490" rx="200" ry="15" fill="#000000" opacity="0.15"/>
 </svg>
