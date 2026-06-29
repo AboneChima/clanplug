@@ -412,28 +412,17 @@ export default function FeedPage() {
 
                           {/* Videos */}
                           {post.videos && post.videos[0] && (
-                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-black relative">
-                              <video
-                                src={post.videos[0]}
-                                className="w-full"
-                                controls
-                                playsInline
-                                preload="metadata"
-                                onClick={(e) => e.stopPropagation()}
-                                onLoadedMetadata={(e) => {
-                                  const video = e.currentTarget;
-                                  video.currentTime = 0.1;
-                                }}
-                              >
-                                <source src={post.videos[0]} type="video/mp4" />
-                              </video>
-                              {/* Play button overlay */}
-                              <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ display: 'none' }}>
-                                <div className="w-16 h-16 bg-black/70 rounded-full flex items-center justify-center">
-                                  <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z"/>
-                                  </svg>
-                                </div>
+                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-black">
+                              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                                <video
+                                  src={post.videos[0]}
+                                  className="absolute inset-0 w-full h-full object-contain"
+                                  controls
+                                  playsInline
+                                  preload="metadata"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{ backgroundColor: '#000' }}
+                                />
                               </div>
                             </div>
                           )}
