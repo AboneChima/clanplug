@@ -598,7 +598,6 @@ export default function FeedPage() {
               ))}
             </div>
           )}
-          </div>
         </div>
       </div>
     </AppShell>
