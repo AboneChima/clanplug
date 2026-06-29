@@ -270,7 +270,7 @@ export default function FeedPage() {
 
   return (
     <AppShell>
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-black pb-24">
         {/* KYC Banner */}
         {!user?.isKYCVerified && showKYCBanner && (
           <div className="bg-[#1a1a1a] border-b border-[#333] p-2">
@@ -293,77 +293,83 @@ export default function FeedPage() {
 
         {/* Feed */}
         <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
-          {/* Modern Header - Sticky and Fixed */}
-          <div className="sticky top-0 z-30 bg-black border-b border-[#2f3336] shadow-lg">
-            <div className="flex items-center gap-2 px-4 py-3">
-              {/* Tabs */}
-              <button
-                onClick={() => setActiveTab('forYou')}
-                className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-all duration-200 whitespace-nowrap ${
-                  activeTab === 'forYou' 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' 
-                    : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
-                }`}
-              >
-                For You
-              </button>
-              <button
-                onClick={() => setActiveTab('bookmarks')}
-                className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-all duration-200 whitespace-nowrap ${
-                  activeTab === 'bookmarks' 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' 
-                    : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
-                }`}
-              >
-                Bookmarks
-              </button>
-              
-              <div className="flex-1"></div>
-              
-              {/* Ultra Smooth Animated Search Button */}
-              <Link href="/search">
-                <button 
-                  onMouseEnter={() => setSearchExpanded(true)}
-                  onMouseLeave={() => setSearchExpanded(false)}
-                  className={`group relative flex items-center gap-2 rounded-full transition-all duration-500 ease-out overflow-hidden ${
-                    searchExpanded ? 'bg-[#2a2a2a] shadow-lg' : 'bg-[#1a1a1a]'
-                  }`}
-                  style={{
-                    width: searchExpanded ? '200px' : '40px',
-                  }}
-                >
-                  <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                    <svg 
-                      className={`w-5 h-5 transition-all duration-300 ${
-                        searchExpanded ? 'text-blue-400 scale-110' : 'text-gray-400'
-                      }`} 
-                      fill="none" 
-                      stroke="currentColor" 
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <span 
-                    className={`text-sm whitespace-nowrap pr-4 transition-all duration-500 ${
-                      searchExpanded ? 'text-white opacity-100 translate-x-0' : 'text-gray-400 opacity-0 -translate-x-4'
+          {/* Fixed Sticky Header - Never Hides */}
+          <div className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-[#2f3336]">
+            <div className="max-w-2xl mx-auto">
+              <div className="flex items-center gap-2 px-4 py-3">
+                {/* Tabs - Shrink when search expands */}
+                <div className={`flex gap-2 transition-all duration-700 ease-out ${searchExpanded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+                  <button
+                    onClick={() => setActiveTab('forYou')}
+                    className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-all duration-200 whitespace-nowrap ${
+                      activeTab === 'forYou' 
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' 
+                        : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
                     }`}
                   >
-                    Search anything...
-                  </span>
-                </button>
-              </Link>
-              
-              {/* Post Button */}
-              <Link href="/create-post">
-                <button className="w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all duration-200 shadow-lg hover:shadow-blue-500/50 hover:scale-110 flex-shrink-0">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </Link>
+                    For You
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('bookmarks')}
+                    className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-all duration-200 whitespace-nowrap ${
+                      activeTab === 'bookmarks' 
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50' 
+                        : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                    }`}
+                  >
+                    Bookmarks
+                  </button>
+                </div>
+                
+                {/* Expandable Search - Grows from Left to Right */}
+                <div className="flex-1 flex justify-end">
+                  <Link href="/search" className={`transition-all duration-700 ease-out ${searchExpanded ? 'w-full' : 'w-auto'}`}>
+                    <button 
+                      onMouseEnter={() => setSearchExpanded(true)}
+                      onMouseLeave={() => setSearchExpanded(false)}
+                      className={`w-full flex items-center gap-3 rounded-full transition-all duration-700 ease-out ${
+                        searchExpanded 
+                          ? 'bg-[#2a2a2a] shadow-xl px-4 py-2.5' 
+                          : 'bg-[#1a1a1a] w-10 h-10 justify-center'
+                      }`}
+                    >
+                      <svg 
+                        className={`flex-shrink-0 transition-all duration-500 ${
+                          searchExpanded ? 'w-5 h-5 text-blue-400' : 'w-5 h-5 text-gray-400'
+                        }`} 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <span 
+                        className={`text-sm whitespace-nowrap transition-all duration-700 ${
+                          searchExpanded 
+                            ? 'opacity-100 text-white translate-x-0' 
+                            : 'opacity-0 w-0 overflow-hidden -translate-x-4'
+                        }`}
+                      >
+                        Search users, posts, listings...
+                      </span>
+                    </button>
+                  </Link>
+                </div>
+                
+                {/* Post Button - Stays Visible */}
+                <Link href="/create-post">
+                  <button className={`w-10 h-10 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all duration-200 shadow-lg hover:shadow-blue-500/50 hover:scale-110 flex-shrink-0 ${searchExpanded ? 'ml-2' : 'ml-0'}`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </Link>
+              </div>
             </div>
           </div>
+
+          {/* Content with top padding to account for fixed header */}
+          <div className="pt-16">
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
