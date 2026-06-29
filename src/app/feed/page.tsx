@@ -65,6 +65,14 @@ export default function FeedPage() {
                        (window.navigator as any).standalone === true;
     const bannerDismissed = localStorage.getItem('installBannerDismissed');
     
+    console.log('📱 PWA Status Check:', {
+      isInstalled,
+      bannerDismissed,
+      isSecureContext: window.isSecureContext,
+      hasServiceWorker: 'serviceWorker' in navigator,
+      userAgent: navigator.userAgent
+    });
+    
     if (!isInstalled && !bannerDismissed) {
       // Show banner after 3 seconds
       setTimeout(() => setShowInstallBanner(true), 3000);
@@ -72,6 +80,7 @@ export default function FeedPage() {
 
     // Listen for beforeinstallprompt event (for Android/Chrome)
     const handleBeforeInstallPrompt = (e: any) => {
+      console.log('✅ beforeinstallprompt event fired!', e);
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallBanner(true);
@@ -293,23 +302,30 @@ export default function FeedPage() {
   };
 
   const handleInstallClick = async () => {
+    console.log('🎯 Install button clicked, deferredPrompt:', !!deferredPrompt);
+    
     if (deferredPrompt) {
       // Android/Chrome - Show native prompt directly
       try {
-        deferredPrompt.prompt();
+        console.log('📲 Showing native install prompt...');
+        await deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to install prompt: ${outcome}`);
+        console.log(`✅ User response to install prompt: ${outcome}`);
+        
         if (outcome === 'accepted') {
           setShowInstallBanner(false);
           showToast('App added to home screen!', 'success');
+          localStorage.setItem('installBannerDismissed', 'true');
         }
         setDeferredPrompt(null);
       } catch (error) {
-        console.error('Install prompt error:', error);
+        console.error('❌ Install prompt error:', error);
+        // Fallback to instructions modal
         setShowInstallModal(true);
       }
     } else {
-      // iOS or browsers without native prompt - Show instructions modal
+      // No native prompt available - Show instructions modal
+      console.log('📖 No native prompt, showing instructions modal');
       setShowInstallModal(true);
     }
   };
