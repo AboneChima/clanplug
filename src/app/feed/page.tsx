@@ -412,15 +412,18 @@ export default function FeedPage() {
 
                           {/* Videos */}
                           {post.videos && post.videos[0] && (
-                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336]">
+                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-black relative">
                               <video
                                 src={post.videos[0]}
                                 className="w-full"
                                 controls
                                 playsInline
                                 preload="metadata"
+                                poster={`${post.videos[0]}#t=0.1`}
                                 onClick={(e) => e.stopPropagation()}
-                              />
+                              >
+                                <source src={post.videos[0]} type="video/mp4" />
+                              </video>
                             </div>
                           )}
                         </div>
