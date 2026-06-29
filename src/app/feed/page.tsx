@@ -292,47 +292,45 @@ export default function FeedPage() {
 
         {/* Feed */}
         <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
-          {/* Search Bar */}
-          <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-xl border-b border-[#2f3336] p-4">
-            <SearchBar 
-              placeholder="Search users, posts, or listings..."
-            />
-          </div>
-
-          {/* Tabs with Post Button */}
-          <div className="sticky top-[72px] z-10 bg-black/95 backdrop-blur-xl border-b border-[#2f3336]">
-            <div className="flex items-center justify-between px-4 py-2">
-              <div className="flex-1 flex">
-                <button
-                  onClick={() => setActiveTab('forYou')}
-                  className={`flex-1 py-2 text-sm font-semibold transition-colors relative ${
-                    activeTab === 'forYou' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                >
-                  For You
-                  {activeTab === 'forYou' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-t-full"></div>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab('bookmarks')}
-                  className={`flex-1 py-2 text-sm font-semibold transition-colors relative ${
-                    activeTab === 'bookmarks' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
-                  }`}
-                >
-                  Bookmarks
-                  {activeTab === 'bookmarks' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-t-full"></div>
-                  )}
-                </button>
-              </div>
+          {/* Modern Header with Tabs, Search, and Post Button */}
+          <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-xl border-b border-[#2f3336]">
+            {/* Tabs Row */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-[#2f3336]/50">
+              <button
+                onClick={() => setActiveTab('forYou')}
+                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all ${
+                  activeTab === 'forYou' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                }`}
+              >
+                For You
+              </button>
+              <button
+                onClick={() => setActiveTab('bookmarks')}
+                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all ${
+                  activeTab === 'bookmarks' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
+                }`}
+              >
+                Bookmarks
+              </button>
+              <div className="flex-1"></div>
               <Link href="/create-post">
-                <button className="ml-2 p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg hover:shadow-blue-500/50">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                   </svg>
                 </button>
               </Link>
+            </div>
+            
+            {/* Search Bar Row */}
+            <div className="px-4 py-3">
+              <SearchBar 
+                placeholder="Search users, posts, or listings..."
+              />
             </div>
           </div>
 
