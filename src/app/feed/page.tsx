@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoCloseOutline, IoTrashOutline } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
-import SearchBar from '@/components/SearchBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
@@ -293,7 +292,7 @@ export default function FeedPage() {
         {/* Feed */}
         <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
           {/* Fixed Header - Stays on scroll */}
-          <div className="sticky top-0 z-50 bg-black border-b border-[#2f3336]">
+          <div className="sticky top-14 lg:top-0 z-50 bg-black/95 backdrop-blur-md border-b border-[#2f3336]">
             <div className="flex items-center gap-2 px-4 py-3">
               <button
                 onClick={() => setActiveTab('forYou')}
