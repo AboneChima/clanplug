@@ -53,9 +53,34 @@ export default function FeedPage() {
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [loadingComments, setLoadingComments] = useState<string | null>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
     fetchPosts();
+    
+    // Check if app is already installed or user dismissed banner
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
+                       (window.navigator as any).standalone === true;
+    const bannerDismissed = localStorage.getItem('installBannerDismissed');
+    
+    if (!isInstalled && !bannerDismissed) {
+      // Show banner after 3 seconds
+      setTimeout(() => setShowInstallBanner(true), 3000);
+    }
+
+    // Listen for beforeinstallprompt event (for Android/Chrome)
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
   const fetchPosts = async () => {
@@ -266,6 +291,31 @@ export default function FeedPage() {
     }
   };
 
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      // Android/Chrome install
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to install prompt: ${outcome}`);
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    } else {
+      // iOS or other browsers - just show instructions
+      setShowInstallBanner(false);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        showToast('Tap the Share button, then "Add to Home Screen"', 'info');
+      } else {
+        showToast('Use your browser menu to install the app', 'info');
+      }
+    }
+  };
+
+  const handleDismissInstallBanner = () => {
+    setShowInstallBanner(false);
+    localStorage.setItem('installBannerDismissed', 'true');
+  };
+
   return (
     <AppShell>
       <div className="min-h-screen bg-black pb-24">
@@ -335,6 +385,50 @@ export default function FeedPage() {
               </Link>
             </div>
           </div>
+
+          {/* Install App Banner - Modern iOS/Web3 Style */}
+          {showInstallBanner && (
+            <div className="px-4 py-2 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 border-b border-blue-500/20 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                {/* App Icon */}
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-0.5 shadow-lg flex-shrink-0">
+                  <div className="w-full h-full rounded-[10px] bg-black flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                      <rect x="6" y="4" width="12" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                      <circle cx="9" cy="8" r="1"/>
+                      <circle cx="15" cy="8" r="1"/>
+                      <circle cx="9" cy="12" r="1"/>
+                      <circle cx="15" cy="12" r="1"/>
+                      <path d="M8 18h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <path d="M10 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                </div>
+                
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-xs font-semibold leading-tight">Install ClanPlug</p>
+                  <p className="text-gray-400 text-[10px] leading-tight">Get the full app experience</p>
+                </div>
+                
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleInstallClick}
+                    className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold rounded-lg shadow-lg shadow-blue-500/25 transition-all active:scale-95"
+                  >
+                    Install
+                  </button>
+                  <button
+                    onClick={handleDismissInstallBanner}
+                    className="p-1 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <IoCloseOutline className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Content */}
 
