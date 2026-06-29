@@ -419,11 +419,22 @@ export default function FeedPage() {
                                 controls
                                 playsInline
                                 preload="metadata"
-                                poster={`${post.videos[0]}#t=0.1`}
                                 onClick={(e) => e.stopPropagation()}
+                                onLoadedMetadata={(e) => {
+                                  const video = e.currentTarget;
+                                  video.currentTime = 0.1;
+                                }}
                               >
                                 <source src={post.videos[0]} type="video/mp4" />
                               </video>
+                              {/* Play button overlay */}
+                              <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ display: 'none' }}>
+                                <div className="w-16 h-16 bg-black/70 rounded-full flex items-center justify-center">
+                                  <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
+                              </div>
                             </div>
                           )}
                         </div>
