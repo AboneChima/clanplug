@@ -291,9 +291,8 @@ export default function FeedPage() {
         )}
 
         {/* Feed */}
-        {/* Feed */}
-        <div className="max-w-2xl mx-auto border-x border-[#2f3336] relative">
-          {/* Fixed Sticky Header - Never Hides */}
+        <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
+          {/* Fixed Header - Stays on scroll */}
           <div className="sticky top-0 z-50 bg-black border-b border-[#2f3336]">
             <div className="flex items-center gap-2 px-4 py-3">
               <button
@@ -337,10 +336,8 @@ export default function FeedPage() {
               </Link>
             </div>
           </div>
-          </div>
 
           {/* Content */}
-          <div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
@@ -409,10 +406,35 @@ export default function FeedPage() {
                             }
                           })()}
 
-                          {/* Images */}
+                          {/* Images with fallback */}
                           {post.images && post.images[0] && (
-                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336]">
-                              <Image src={post.images[0]} alt="Post" width={600} height={400} className="w-full" unoptimized />
+                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-[#1a1a1a]">
+                              <Image 
+                                src={post.images[0]} 
+                                alt="Post" 
+                                width={600} 
+                                height={400} 
+                                className="w-full" 
+                                unoptimized 
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const parent = target.parentElement;
+                                  if (parent && !parent.querySelector('.fallback-placeholder')) {
+                                    const fallback = document.createElement('div');
+                                    fallback.className = 'fallback-placeholder flex items-center justify-center h-64 bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f]';
+                                    fallback.innerHTML = `
+                                      <div class="text-center">
+                                        <svg class="w-16 h-16 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <p class="text-gray-500 text-sm">Image unavailable</p>
+                                      </div>
+                                    `;
+                                    parent.appendChild(fallback);
+                                  }
+                                }}
+                              />
                             </div>
                           )}
 
