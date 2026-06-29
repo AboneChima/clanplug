@@ -54,6 +54,7 @@ export default function FeedPage() {
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [loadingComments, setLoadingComments] = useState<string | null>(null);
+  const [searchExpanded, setSearchExpanded] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -292,13 +293,13 @@ export default function FeedPage() {
 
         {/* Feed */}
         <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
-          {/* Modern Header with Tabs, Search, and Post Button */}
+          {/* Modern Header - All in One Line */}
           <div className="sticky top-0 z-20 bg-black/95 backdrop-blur-xl border-b border-[#2f3336]">
-            {/* Tabs Row */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-[#2f3336]/50">
+            <div className="flex items-center gap-2 px-4 py-3">
+              {/* Tabs */}
               <button
                 onClick={() => setActiveTab('forYou')}
-                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all ${
+                className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-all whitespace-nowrap ${
                   activeTab === 'forYou' 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
@@ -308,7 +309,7 @@ export default function FeedPage() {
               </button>
               <button
                 onClick={() => setActiveTab('bookmarks')}
-                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all ${
+                className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-all whitespace-nowrap ${
                   activeTab === 'bookmarks' 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
@@ -316,21 +317,45 @@ export default function FeedPage() {
               >
                 Bookmarks
               </button>
+              
               <div className="flex-1"></div>
+              
+              {/* Animated Search Button */}
+              <Link href="/search">
+                <button 
+                  onMouseEnter={() => setSearchExpanded(true)}
+                  onMouseLeave={() => setSearchExpanded(false)}
+                  className="group relative flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#2a2a2a] rounded-full transition-all overflow-hidden"
+                  style={{
+                    width: searchExpanded ? '180px' : '40px',
+                    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
+                >
+                  <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <span 
+                    className="text-sm text-gray-400 group-hover:text-white whitespace-nowrap pr-3 transition-opacity"
+                    style={{
+                      opacity: searchExpanded ? 1 : 0,
+                      transition: 'opacity 0.3s ease-in-out'
+                    }}
+                  >
+                    Search...
+                  </span>
+                </button>
+              </Link>
+              
+              {/* Post Button */}
               <Link href="/create-post">
-                <button className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg hover:shadow-blue-500/50">
+                <button className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg hover:shadow-blue-500/50 flex-shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                   </svg>
                 </button>
               </Link>
-            </div>
-            
-            {/* Search Bar Row */}
-            <div className="px-4 py-3">
-              <SearchBar 
-                placeholder="Search users, posts, or listings..."
-              />
             </div>
           </div>
 
