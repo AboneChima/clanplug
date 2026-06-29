@@ -60,6 +60,9 @@ export default function FeedPage() {
   useEffect(() => {
     fetchPosts();
     
+    // TEMPORARY DEBUG: Clear dismissal for testing
+    // localStorage.removeItem('installBannerDismissed'); // Uncomment to reset
+    
     // Check if app is already installed or user dismissed banner
     const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
                        (window.navigator as any).standalone === true;
@@ -70,23 +73,46 @@ export default function FeedPage() {
       bannerDismissed,
       isSecureContext: window.isSecureContext,
       hasServiceWorker: 'serviceWorker' in navigator,
+      manifestUrl: '/manifest.json',
       userAgent: navigator.userAgent
     });
     
+    // Check if manifest is valid
+    if (document.querySelector('link[rel="manifest"]')) {
+      console.log('✅ Manifest link found in HTML');
+    } else {
+      console.warn('⚠️ Manifest link NOT found in HTML');
+    }
+    
     if (!isInstalled && !bannerDismissed) {
       // Show banner after 3 seconds
-      setTimeout(() => setShowInstallBanner(true), 3000);
+      setTimeout(() => {
+        console.log('📱 Showing install banner');
+        setShowInstallBanner(true);
+      }, 3000);
     }
 
     // Listen for beforeinstallprompt event (for Android/Chrome)
     const handleBeforeInstallPrompt = (e: any) => {
-      console.log('✅ beforeinstallprompt event fired!', e);
+      console.log('✅✅✅ beforeinstallprompt event fired! Native install available!', e);
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallBanner(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Check after 5 seconds if event fired
+    setTimeout(() => {
+      if (!deferredPrompt) {
+        console.warn('⚠️ beforeinstallprompt did NOT fire after 5 seconds');
+        console.warn('Possible reasons:');
+        console.warn('1. App is already installed');
+        console.warn('2. User previously dismissed install prompt');
+        console.warn('3. PWA requirements not met (check manifest, icons, service worker)');
+        console.warn('4. Not using Chrome/Edge on Android');
+      }
+    }, 5000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -337,8 +363,7 @@ export default function FeedPage() {
 
   const handleConfirmInstall = () => {
     setShowInstallModal(false);
-    setShowInstallBanner(false);
-    localStorage.setItem('installBannerDismissed', 'true');
+    // Don't dismiss banner permanently - user might want to try again
   };
 
   return (

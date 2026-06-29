@@ -1,7 +1,7 @@
 {
-  "name": "ClanPlug",
+  "name": "ClanPlug - Social Marketplace for Gamers",
   "short_name": "ClanPlug",
-  "description": "Social marketplace for gamers",
+  "description": "Connect, trade, and game with the ClanPlug community",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
@@ -9,15 +9,9 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
