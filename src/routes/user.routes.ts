@@ -97,7 +97,7 @@ router.put('/profile', authenticate, upload.single('avatar'), asyncHandler(async
   }
   
   // Handle other profile updates
-  const { firstName, lastName, bio, city, state, country, website, username, email } = req.body;
+  const { firstName, lastName, bio, city, state, country, website, username, email, phone } = req.body;
   const updateData: any = {};
   if (firstName !== undefined) updateData.firstName = firstName;
   if (lastName !== undefined) updateData.lastName = lastName;
@@ -107,6 +107,7 @@ router.put('/profile', authenticate, upload.single('avatar'), asyncHandler(async
   if (country !== undefined) updateData.country = country;
   if (username !== undefined) updateData.username = username;
   if (email !== undefined) updateData.email = email;
+  if (phone !== undefined) updateData.phone = phone;
   
   const result = await userService.updateUserProfile(userId, updateData);
   if (result.success) {

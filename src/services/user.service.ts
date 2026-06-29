@@ -353,7 +353,7 @@ export const userService = {
     };
   },
 
-  async updateUserProfile(userId: string, data: Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'city' | 'state' | 'country' | 'avatar' | 'username' | 'email'>>): Promise<{ success: boolean; message?: string; user?: any; error?: string }> {
+  async updateUserProfile(userId: string, data: Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'city' | 'state' | 'country' | 'avatar' | 'username' | 'email' | 'phone'>>): Promise<{ success: boolean; message?: string; user?: any; error?: string }> {
     try {
       // Get current user data
       const currentUser = await prisma.user.findUnique({
