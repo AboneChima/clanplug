@@ -606,7 +606,8 @@ export default function UserProfilePage() {
               ) : (
                 <div className="grid grid-cols-3 gap-px bg-black">
                   {currentPosts.map((post) => {
-                    const media = post.images?.[0] || post.videos?.[0];
+                    const hasImage = post.images?.[0];
+                    const hasVideo = post.videos?.[0];
                     
                     // Check if text is emoji-only or very short
                     const text = post.title || post.description || '';
@@ -616,8 +617,25 @@ export default function UserProfilePage() {
                     return (
                       <Link key={post.id} href={`/post/${post.id}`}>
                         <div className="aspect-square bg-[#1a1a1a] relative overflow-hidden">
-                          {media ? (
-                            <Image src={media} alt="Post" fill className="object-cover" unoptimized />
+                          {hasImage ? (
+                            <Image src={post.images![0]} alt="Post" fill className="object-cover" unoptimized />
+                          ) : hasVideo ? (
+                            <div className="relative w-full h-full bg-black">
+                              <video 
+                                src={`${post.videos![0]}#t=0.1`}
+                                className="w-full h-full object-cover"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+                                  <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
                           ) : hasText ? (
                             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] p-3 relative border border-[#2f3336]">
                               {/* Decorative corner accents */}
