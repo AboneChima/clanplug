@@ -292,11 +292,11 @@ export default function FeedPage() {
         )}
 
         {/* Feed */}
-        <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
+        {/* Feed */}
+        <div className="max-w-2xl mx-auto border-x border-[#2f3336] relative">
           {/* Fixed Sticky Header - Never Hides */}
-          <div className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-[#2f3336]">
-            <div className="max-w-2xl mx-auto">
-              <div className="flex items-center gap-2 px-4 py-3">
+          <div className="sticky top-0 z-50 bg-black border-b border-[#2f3336]">
+            <div className="flex items-center gap-2 px-4 py-3">
                 {/* Tabs - Shrink when search expands */}
                 <div className={`flex gap-2 transition-all duration-700 ease-out ${searchExpanded ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
                   <button
@@ -368,8 +368,8 @@ export default function FeedPage() {
             </div>
           </div>
 
-          {/* Content with top padding to account for fixed header */}
-          <div className="pt-16">
+          {/* Content */}
+          <div>
 
           {loading ? (
             <div className="flex items-center justify-center py-20">
