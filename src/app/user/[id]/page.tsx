@@ -584,10 +584,15 @@ export default function UserProfilePage() {
                                 <video 
                                   className="w-full h-full object-cover"
                                   src={post.videos[0]}
-                                  poster={`${post.videos[0]}#t=0.5`}
                                   muted
                                   playsInline
                                   preload="metadata"
+                                  onLoadedMetadata={(e) => {
+                                    const video = e.target as HTMLVideoElement;
+                                    if (video.duration > 0.5) {
+                                      video.currentTime = 0.5;
+                                    }
+                                  }}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                   <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
@@ -666,10 +671,15 @@ export default function UserProfilePage() {
                                 <video 
                                   className="w-full h-full object-cover"
                                   src={post.videos![0]}
-                                  poster={`${post.videos![0]}#t=0.5`}
                                   muted
                                   playsInline
                                   preload="metadata"
+                                  onLoadedMetadata={(e) => {
+                                    const video = e.target as HTMLVideoElement;
+                                    if (video.duration > 0.5) {
+                                      video.currentTime = 0.5;
+                                    }
+                                  }}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                   <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">

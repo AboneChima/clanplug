@@ -184,9 +184,11 @@ export default function PostDetailPage() {
         <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
           {/* Header */}
           <div className="sticky top-0 z-10 bg-black/95 backdrop-blur-xl border-b border-[#2f3336] px-3 py-2 flex items-center gap-3">
-            <button onClick={() => router.back()} className="p-2 hover:bg-[#1a1a1a] rounded-full transition-colors">
-              <IoArrowBackOutline className="w-5 h-5 text-white" />
-            </button>
+            <Link href="/feed">
+              <button className="p-2 hover:bg-[#1a1a1a] rounded-full transition-colors">
+                <IoArrowBackOutline className="w-5 h-5 text-white" />
+              </button>
+            </Link>
             <h1 className="text-base font-bold text-white">Post</h1>
           </div>
 
