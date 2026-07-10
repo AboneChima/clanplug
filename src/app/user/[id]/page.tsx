@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import VideoThumbnail from '@/components/VideoThumbnail';
 
 interface UserProfile {
   id: string;
@@ -595,38 +596,12 @@ export default function UserProfilePage() {
                                 }}
                               />
                             ) : post.videos?.[0] ? (
-                              <div className="relative w-full h-full bg-black">
-                                {(() => {
-                                  // Get thumbnail URL - either from backend or generate from Cloudinary
-                                  let thumbnailUrl = post.videoThumbnails?.[0];
-                                  
-                                  // If no thumbnail but video is from Cloudinary, generate thumbnail URL
-                                  if (!thumbnailUrl && post.videos[0].includes('cloudinary')) {
-                                    // Cloudinary video URL transformation to get thumbnail
-                                    thumbnailUrl = post.videos[0].replace(
-                                      '/video/upload/',
-                                      '/video/upload/so_1,w_720,h_720,c_fill/'
-                                    ).replace(/\.(mp4|mov|avi|3gp)$/, '.jpg');
-                                  }
-                                  
-                                  return thumbnailUrl ? (
-                                    <img 
-                                      src={thumbnailUrl}
-                                      alt="Video thumbnail"
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
-                                      <IoStorefrontOutline className="w-8 h-8 text-gray-700" />
-                                    </div>
-                                  );
-                                })()}
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
-                                  <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
-                                    <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M8 5v14l11-7z"/>
-                                    </svg>
-                                  </div>
+                              <div className="relative w-full h-full bg-black flex items-center justify-center">
+                                {/* Simple black background with play icon */}
+                                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                                  <svg className="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
                                 </div>
                               </div>
                             ) : (
@@ -693,43 +668,18 @@ export default function UserProfilePage() {
                               }}
                             />
                           ) : hasVideo ? (
-                            <Link href={`/post/${post.id}`}>
-                              <div className="relative w-full h-full bg-black overflow-hidden">
-                                {(() => {
-                                  // Get thumbnail URL - either from backend or generate from Cloudinary
-                                  let thumbnailUrl = post.videoThumbnails?.[0];
-                                  
-                                  // If no thumbnail but video is from Cloudinary, generate thumbnail URL
-                                  if (!thumbnailUrl && post.videos![0].includes('cloudinary')) {
-                                    // Cloudinary video URL transformation to get thumbnail
-                                    // Replace /video/upload/ with /video/upload/so_1/ to get frame at 1 second
-                                    thumbnailUrl = post.videos![0].replace(
-                                      '/video/upload/',
-                                      '/video/upload/so_1,w_720,h_720,c_fill/'
-                                    ).replace(/\.(mp4|mov|avi|3gp)$/, '.jpg');
-                                  }
-                                  
-                                  return thumbnailUrl ? (
-                                    <img 
-                                      src={thumbnailUrl}
-                                      alt="Video thumbnail"
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
-                                      <IoNewspaperOutline className="w-10 h-10 text-gray-700" />
-                                    </div>
-                                  );
-                                })()}
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                  <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
-                                    <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M8 5v14l11-7z"/>
-                                    </svg>
-                                  </div>
-                                </div>
+                            <div className="relative w-full h-full bg-gradient-to-br from-purple-900 to-blue-900 overflow-hidden flex flex-col items-center justify-center">
+                              {/* VERSION MARKER - If you see this, new code loaded */}
+                              <div className="absolute top-1 right-1 bg-green-500 text-white text-[8px] px-1 rounded">v2</div>
+                              
+                              {/* Play icon */}
+                              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
+                                <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z"/>
+                                </svg>
                               </div>
-                            </Link>
+                              <span className="text-white text-xs font-medium">VIDEO</span>
+                            </div>
                           ) : hasText ? (
                             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] p-3 relative border border-[#2f3336]">
                               {/* Decorative corner accents */}
