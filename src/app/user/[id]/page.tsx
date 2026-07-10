@@ -582,14 +582,16 @@ export default function UserProfilePage() {
                             ) : post.videos?.[0] ? (
                               <div className="relative w-full h-full bg-black">
                                 <video 
-                                  src={`${post.videos[0]}#t=0.1`}
+                                  src={post.videos[0]}
                                   className="w-full h-full object-cover"
                                   muted
                                   playsInline
                                   preload="metadata"
-                                  onLoadedMetadata={(e) => {
+                                  onLoadedData={(e) => {
                                     const video = e.target as HTMLVideoElement;
-                                    video.currentTime = 0.1;
+                                    if (video.readyState >= 2) {
+                                      video.currentTime = 0.1;
+                                    }
                                   }}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
@@ -666,14 +668,16 @@ export default function UserProfilePage() {
                           ) : hasVideo ? (
                             <div className="relative w-full h-full bg-black">
                               <video 
-                                src={`${post.videos![0]}#t=0.1`}
+                                src={post.videos![0]}
                                 className="w-full h-full object-cover"
                                 muted
                                 playsInline
                                 preload="metadata"
-                                onLoadedMetadata={(e) => {
+                                onLoadedData={(e) => {
                                   const video = e.target as HTMLVideoElement;
-                                  video.currentTime = 0.1;
+                                  if (video.readyState >= 2) {
+                                    video.currentTime = 0.1;
+                                  }
                                 }}
                               />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
