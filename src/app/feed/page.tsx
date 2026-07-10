@@ -67,23 +67,25 @@ export default function FeedPage() {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
-    // Try to restore cached posts FIRST
+    // Check for cached posts FIRST - don't fetch if we have them
     const cachedPosts = sessionStorage.getItem('feedPostsCache');
+    const savedScrollPos = sessionStorage.getItem('feedScrollPosition');
     
     if (cachedPosts) {
-      // Restore from cache immediately
+      // We have cached posts - restore them immediately, don't fetch
       try {
         const parsedPosts = JSON.parse(cachedPosts);
         setPosts(parsedPosts);
         setLoading(false);
-        // Don't fetch - we have cached data
-        return;
+        console.log('✅ Restored', parsedPosts.length, 'posts from cache');
+        return; // STOP HERE - don't fetch
       } catch (e) {
-        console.error('Cache parse error:', e);
+        console.error('❌ Cache parse error:', e);
       }
     }
     
-    // No cache or cache failed - fetch fresh
+    // No cache - fetch fresh
+    console.log('📡 No cache found, fetching fresh posts');
     fetchPosts();
   }, []);
 
