@@ -106,6 +106,20 @@ export default function UserProfilePage() {
         const data = await postsRes.json();
         const postsList = Array.isArray(data.data) ? data.data : [];
         
+        console.log('📹 Posts received:', postsList.length);
+        postsList.forEach((p: Post, idx: number) => {
+          if (p.videos && p.videos.length > 0) {
+            console.log(`  Post ${idx + 1}:`, {
+              id: p.id,
+              title: p.title,
+              hasVideo: true,
+              videoUrl: p.videos[0],
+              hasThumbnail: !!p.videoThumbnails?.[0],
+              thumbnailUrl: p.videoThumbnails?.[0] || 'NONE'
+            });
+          }
+        });
+        
         // Separate market listings and social posts
         const market = postsList.filter((p: Post) => p.type !== 'SOCIAL_POST');
         const social = postsList.filter((p: Post) => p.type === 'SOCIAL_POST');
