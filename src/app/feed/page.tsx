@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoCloseOutline, IoTrashOutline } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,7 +58,7 @@ export default function FeedPage() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [videoRefs, setVideoRefs] = useState<Map<string, HTMLVideoElement>>(new Map());
+  const videoRefsMap = useRef<Map<string, HTMLVideoElement>>(new Map());
 
   // Scroll position restoration
   useEffect(() => {
@@ -166,16 +166,16 @@ export default function FeedPage() {
     );
 
     // Observe all videos
-    videoRefs.forEach((video) => {
+    videoRefsMap.current.forEach((video) => {
       if (video) observer.observe(video);
     });
 
     return () => {
-      videoRefs.forEach((video) => {
+      videoRefsMap.current.forEach((video) => {
         if (video) observer.unobserve(video);
       });
     };
-  }, [videoRefs, posts]);
+  }, [posts]);
 
   // Listen for install button click from sidebar
   useEffect(() => {
@@ -769,11 +769,9 @@ export default function FeedPage() {
                                 <video
                                   ref={(el) => {
                                     if (el) {
-                                      setVideoRefs(prev => {
-                                        const newMap = new Map(prev);
-                                        newMap.set(post.id, el);
-                                        return newMap;
-                                      });
+                                      videoRefsMap.current.set(post.id, el);
+                                    } else {
+                                      videoRefsMap.current.delete(post.id);
                                     }
                                   }}
                                   src={post.videos[0]}
