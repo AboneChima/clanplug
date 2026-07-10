@@ -580,20 +580,31 @@ export default function UserProfilePage() {
                                 }}
                               />
                             ) : post.videos?.[0] ? (
-                              <div className="relative w-full h-full bg-black">
+                              <div className="relative w-full h-full bg-black flex items-center justify-center">
+                                {/* Loading placeholder */}
+                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a]">
+                                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                  </div>
+                                </div>
+                                {/* Video element */}
                                 <video 
+                                  key={post.videos[0]}
                                   src={post.videos[0]}
-                                  className="w-full h-full object-cover"
+                                  style={{ opacity: 0 }}
+                                  className="w-full h-full object-cover transition-opacity duration-300"
                                   muted
                                   playsInline
                                   preload="metadata"
-                                  onLoadedData={(e) => {
+                                  onLoadedMetadata={(e) => {
                                     const video = e.target as HTMLVideoElement;
-                                    if (video.readyState >= 2) {
-                                      video.currentTime = 0.1;
-                                    }
+                                    video.currentTime = 0.1;
+                                    video.style.opacity = '1';
                                   }}
                                 />
+                                {/* Play button overlay */}
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                   <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
@@ -666,20 +677,31 @@ export default function UserProfilePage() {
                               }}
                             />
                           ) : hasVideo ? (
-                            <div className="relative w-full h-full bg-black">
+                            <div className="relative w-full h-full bg-black flex items-center justify-center">
+                              {/* Loading placeholder */}
+                              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a]">
+                                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
+                                  <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                </div>
+                              </div>
+                              {/* Video element */}
                               <video 
+                                key={post.videos![0]}
                                 src={post.videos![0]}
-                                className="w-full h-full object-cover"
+                                style={{ opacity: 0 }}
+                                className="w-full h-full object-cover transition-opacity duration-300"
                                 muted
                                 playsInline
                                 preload="metadata"
-                                onLoadedData={(e) => {
+                                onLoadedMetadata={(e) => {
                                   const video = e.target as HTMLVideoElement;
-                                  if (video.readyState >= 2) {
-                                    video.currentTime = 0.1;
-                                  }
+                                  video.currentTime = 0.1;
+                                  video.style.opacity = '1';
                                 }}
                               />
+                              {/* Play button overlay */}
                               <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                 <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                   <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
