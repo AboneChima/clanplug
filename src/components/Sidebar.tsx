@@ -9,7 +9,7 @@ import {
   IoChatbubbleEllipsesOutline, 
   IoStorefrontOutline, 
   IoSettingsOutline, 
-  IoLogOutline,
+  IoLogOutOutline,
   IoPersonOutline,
   IoShieldCheckmarkOutline,
   IoNotificationsOutline,

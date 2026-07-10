@@ -54,8 +54,9 @@ export async function addWatermarkToImage(
 
         // Configure watermark style
         ctx.font = `bold ${opts.fontSize}px system-ui, -apple-system, sans-serif`;
-        ctx.fillStyle = `rgba(255, 255, 255, ${opts.opacity})`;
-        ctx.strokeStyle = `rgba(0, 0, 0, ${opts.opacity * 0.5})`;
+        const opacity = opts.opacity ?? 0.6;
+        ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+        ctx.strokeStyle = `rgba(0, 0, 0, ${opacity * 0.5})`;
         ctx.lineWidth = 2;
 
         // Calculate position
