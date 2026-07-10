@@ -706,7 +706,12 @@ export default function FeedPage() {
                       </div>
 
                       {/* Post content - clickable to go to full post */}
-                      <Link href={`/post/${post.id}`}>
+                      <Link 
+                        href={`/post/${post.id}`}
+                        onClick={() => {
+                          sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
+                        }}
+                      >
                         <div className="cursor-pointer">
                           {(() => {
                             // Check if content is emoji-only
@@ -720,15 +725,15 @@ export default function FeedPage() {
                             }
                           })()}
 
-                          {/* Images with fallback */}
+                          {/* Images with fallback - Limited height for portraits */}
                           {post.images && post.images[0] && (
-                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-[#1a1a1a]">
+                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-[#1a1a1a] max-h-[600px] flex items-center justify-center">
                               <Image 
                                 src={post.images[0]} 
                                 alt="Post" 
                                 width={600} 
                                 height={400} 
-                                className="w-full" 
+                                className="w-full max-h-[600px] object-contain" 
                                 unoptimized 
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;

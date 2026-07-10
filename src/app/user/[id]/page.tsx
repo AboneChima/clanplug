@@ -677,39 +677,29 @@ export default function UserProfilePage() {
                               }}
                             />
                           ) : hasVideo ? (
-                            <div className="relative w-full h-full bg-black flex items-center justify-center">
-                              {/* Loading placeholder */}
-                              <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a]">
-                                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-                                  <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z"/>
+                            <Link href={`/post/${post.id}`}>
+                              <div className="relative w-full h-full bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
+                                {/* Video icon */}
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <svg className="w-16 h-16 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M4 6h16v12H4z M8 9v6l5-3z"/>
+                                    <path d="M21 3H3c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h5v2H7v2h10v-2h-1v-2h5c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 14H3V5h18v12z"/>
                                   </svg>
                                 </div>
-                              </div>
-                              {/* Video element */}
-                              <video 
-                                key={post.videos![0]}
-                                src={post.videos![0]}
-                                style={{ opacity: 0 }}
-                                className="w-full h-full object-cover transition-opacity duration-300"
-                                muted
-                                playsInline
-                                preload="metadata"
-                                onLoadedMetadata={(e) => {
-                                  const video = e.target as HTMLVideoElement;
-                                  video.currentTime = 0.1;
-                                  video.style.opacity = '1';
-                                }}
-                              />
-                              {/* Play button overlay */}
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
-                                <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
-                                  <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M8 5v14l11-7z"/>
-                                  </svg>
+                                {/* Play button */}
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                  <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+                                    <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                  </div>
+                                </div>
+                                {/* Video badge */}
+                                <div className="absolute top-2 right-2 px-2 py-1 bg-black/80 backdrop-blur-sm rounded-md">
+                                  <span className="text-xs text-white font-semibold">VIDEO</span>
                                 </div>
                               </div>
-                            </div>
+                            </Link>
                           ) : hasText ? (
                             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] p-3 relative border border-[#2f3336]">
                               {/* Decorative corner accents */}
