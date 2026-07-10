@@ -582,17 +582,31 @@ export default function UserProfilePage() {
                               />
                             ) : post.videos?.[0] ? (
                               <div className="relative w-full h-full bg-black">
-                                {post.videoThumbnails?.[0] ? (
-                                  <img 
-                                    src={post.videoThumbnails[0]}
-                                    alt="Video thumbnail"
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
-                                    <IoStorefrontOutline className="w-8 h-8 text-gray-700" />
-                                  </div>
-                                )}
+                                {(() => {
+                                  // Get thumbnail URL - either from backend or generate from Cloudinary
+                                  let thumbnailUrl = post.videoThumbnails?.[0];
+                                  
+                                  // If no thumbnail but video is from Cloudinary, generate thumbnail URL
+                                  if (!thumbnailUrl && post.videos[0].includes('cloudinary')) {
+                                    // Cloudinary video URL transformation to get thumbnail
+                                    thumbnailUrl = post.videos[0].replace(
+                                      '/video/upload/',
+                                      '/video/upload/so_1,w_720,h_720,c_fill/'
+                                    ).replace(/\.(mp4|mov|avi|3gp)$/, '.jpg');
+                                  }
+                                  
+                                  return thumbnailUrl ? (
+                                    <img 
+                                      src={thumbnailUrl}
+                                      alt="Video thumbnail"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+                                      <IoStorefrontOutline className="w-8 h-8 text-gray-700" />
+                                    </div>
+                                  );
+                                })()}
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                   <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
@@ -667,17 +681,32 @@ export default function UserProfilePage() {
                           ) : hasVideo ? (
                             <Link href={`/post/${post.id}`}>
                               <div className="relative w-full h-full bg-black overflow-hidden">
-                                {post.videoThumbnails?.[0] ? (
-                                  <img 
-                                    src={post.videoThumbnails[0]}
-                                    alt="Video thumbnail"
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
-                                    <IoNewspaperOutline className="w-10 h-10 text-gray-700" />
-                                  </div>
-                                )}
+                                {(() => {
+                                  // Get thumbnail URL - either from backend or generate from Cloudinary
+                                  let thumbnailUrl = post.videoThumbnails?.[0];
+                                  
+                                  // If no thumbnail but video is from Cloudinary, generate thumbnail URL
+                                  if (!thumbnailUrl && post.videos![0].includes('cloudinary')) {
+                                    // Cloudinary video URL transformation to get thumbnail
+                                    // Replace /video/upload/ with /video/upload/so_1/ to get frame at 1 second
+                                    thumbnailUrl = post.videos![0].replace(
+                                      '/video/upload/',
+                                      '/video/upload/so_1,w_720,h_720,c_fill/'
+                                    ).replace(/\.(mp4|mov|avi|3gp)$/, '.jpg');
+                                  }
+                                  
+                                  return thumbnailUrl ? (
+                                    <img 
+                                      src={thumbnailUrl}
+                                      alt="Video thumbnail"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+                                      <IoNewspaperOutline className="w-10 h-10 text-gray-700" />
+                                    </div>
+                                  );
+                                })()}
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                   <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
