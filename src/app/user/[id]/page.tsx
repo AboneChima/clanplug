@@ -587,9 +587,12 @@ export default function UserProfilePage() {
                                   muted
                                   playsInline
                                   preload="metadata"
-                                  poster={post.videos[0]}
+                                  onLoadedMetadata={(e) => {
+                                    const video = e.target as HTMLVideoElement;
+                                    video.currentTime = 0.1;
+                                  }}
                                 />
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                   <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                                       <path d="M8 5v14l11-7z"/>
@@ -664,13 +667,16 @@ export default function UserProfilePage() {
                             <div className="relative w-full h-full bg-black">
                               <video 
                                 src={`${post.videos![0]}#t=0.1`}
-                                poster={post.videos![0]}
                                 className="w-full h-full object-cover"
                                 muted
                                 playsInline
                                 preload="metadata"
+                                onLoadedMetadata={(e) => {
+                                  const video = e.target as HTMLVideoElement;
+                                  video.currentTime = 0.1;
+                                }}
                               />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                 <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                   <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M8 5v14l11-7z"/>
