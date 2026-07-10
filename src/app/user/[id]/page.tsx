@@ -582,6 +582,7 @@ export default function UserProfilePage() {
                             ) : post.videos?.[0] ? (
                               <div className="relative w-full h-full bg-black">
                                 <video 
+                                  key={`market-video-${post.id}-v2`}
                                   className="w-full h-full object-cover"
                                   src={post.videos[0]}
                                   muted
@@ -665,8 +666,9 @@ export default function UserProfilePage() {
                             />
                           ) : hasVideo ? (
                             <Link href={`/post/${post.id}`}>
-                              <div className="relative w-full h-full bg-black">
+                              <div className="relative w-full h-full bg-black overflow-hidden">
                                 <video 
+                                  key={`social-video-${post.id}-v2`}
                                   className="w-full h-full object-cover"
                                   src={post.videos![0]}
                                   muted
