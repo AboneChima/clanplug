@@ -5,6 +5,7 @@ import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoB
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -45,6 +46,7 @@ export default function FeedPage() {
   
   const { user } = useAuth();
   const { showToast } = useToast();
+  const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [showKYCBanner, setShowKYCBanner] = useState(true);
@@ -759,7 +761,8 @@ export default function FeedPage() {
                                 e.stopPropagation();
                                 // Save scroll position before navigating
                                 sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
-                                window.location.href = `/post/${post.id}`;
+                                // Use Next.js router for navigation
+                                router.push(`/post/${post.id}`);
                               }}
                             >
                               <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
