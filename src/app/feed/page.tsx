@@ -59,38 +59,65 @@ export default function FeedPage() {
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const videoRefsMap = useRef<Map<string, HTMLVideoElement>>(new Map());
+  const scrollRestored = useRef(false);
+  const hasInitialized = useRef(false);
 
-  // Scroll position restoration
+  // Initialize posts from cache or fetch
   useEffect(() => {
-    // Restore scroll position if returning from a post
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    // Try to restore cached posts
+    const cachedPosts = sessionStorage.getItem('feedPostsCache');
     const savedScrollPos = sessionStorage.getItem('feedScrollPosition');
-    if (savedScrollPos) {
-      setTimeout(() => {
-        window.scrollTo(0, parseInt(savedScrollPos));
-        sessionStorage.removeItem('feedScrollPosition');
-      }, 100);
+    
+    if (cachedPosts && savedScrollPos) {
+      // Restore from cache
+      try {
+        const parsedPosts = JSON.parse(cachedPosts);
+        setPosts(parsedPosts);
+        setLoading(false);
+      } catch (e) {
+        // If cache is corrupt, fetch fresh
+        fetchPosts();
+      }
+    } else {
+      // No cache, fetch fresh
+      fetchPosts();
     }
   }, []);
 
-  // Listen for browser back/forward navigation
+  // Scroll position restoration - wait for posts to load
   useEffect(() => {
-    const handlePopState = () => {
+    if (posts.length > 0 && !scrollRestored.current) {
       const savedScrollPos = sessionStorage.getItem('feedScrollPosition');
       if (savedScrollPos) {
+        // Wait for images/videos to render
         setTimeout(() => {
           window.scrollTo(0, parseInt(savedScrollPos));
+          scrollRestored.current = true;
           sessionStorage.removeItem('feedScrollPosition');
-        }, 100);
+          sessionStorage.removeItem('feedPostsCache');
+        }, 300);
       }
-    };
+    }
+  }, [posts]);
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+  // Cache posts when they change
+  useEffect(() => {
+    if (posts.length > 0) {
+      sessionStorage.setItem('feedPostsCache', JSON.stringify(posts));
+    }
+  }, [posts]);
+
+  // Reset scroll restored flag when component unmounts
+  useEffect(() => {
+    return () => {
+      scrollRestored.current = false;
+    };
   }, []);
 
   useEffect(() => {
-    fetchPosts();
-    
     // TEMPORARY DEBUG: Clear dismissal for testing
     // localStorage.removeItem('installBannerDismissed'); // Uncomment to reset
     

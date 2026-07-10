@@ -58,6 +58,7 @@ export default function UserProfilePage() {
   const [isFollowingMe, setIsFollowingMe] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'market' | 'social'>('market');
+  const [videoThumbs, setVideoThumbs] = useState<Record<string, string>>({});
 
   // Debug: Log state changes
   useEffect(() => {
@@ -581,19 +582,41 @@ export default function UserProfilePage() {
                               />
                             ) : post.videos?.[0] ? (
                               <div className="relative w-full h-full bg-black">
-                                <video 
-                                  className="w-full h-full object-cover"
-                                  src={post.videos[0]}
-                                  muted
-                                  playsInline
-                                  preload="metadata"
-                                  onLoadedMetadata={(e) => {
-                                    const video = e.target as HTMLVideoElement;
-                                    if (video.duration > 0.5) {
-                                      video.currentTime = 0.5;
-                                    }
-                                  }}
-                                />
+                                {!videoThumbs[post.id] && (
+                                  <video 
+                                    key={`market-vid-${post.id}`}
+                                    className="w-full h-full object-cover"
+                                    src={post.videos[0]}
+                                    muted
+                                    playsInline
+                                    preload="auto"
+                                    onLoadedData={(e) => {
+                                      const video = e.target as HTMLVideoElement;
+                                      setTimeout(() => {
+                                        video.currentTime = 0.5;
+                                      }, 100);
+                                    }}
+                                    onSeeked={(e) => {
+                                      const video = e.target as HTMLVideoElement;
+                                      const canvas = document.createElement('canvas');
+                                      canvas.width = video.videoWidth;
+                                      canvas.height = video.videoHeight;
+                                      const ctx = canvas.getContext('2d');
+                                      if (ctx && canvas.width > 0) {
+                                        ctx.drawImage(video, 0, 0);
+                                        setVideoThumbs(prev => ({...prev, [post.id]: canvas.toDataURL('image/jpeg', 0.7)}));
+                                      }
+                                    }}
+                                    style={{ display: videoThumbs[post.id] ? 'none' : 'block' }}
+                                  />
+                                )}
+                                {videoThumbs[post.id] && (
+                                  <img 
+                                    src={videoThumbs[post.id]} 
+                                    alt="Video"
+                                    className="w-full h-full object-cover"
+                                  />
+                                )}
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                   <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
@@ -668,19 +691,41 @@ export default function UserProfilePage() {
                           ) : hasVideo ? (
                             <Link href={`/post/${post.id}`}>
                               <div className="relative w-full h-full bg-black overflow-hidden">
-                                <video 
-                                  className="w-full h-full object-cover"
-                                  src={post.videos![0]}
-                                  muted
-                                  playsInline
-                                  preload="metadata"
-                                  onLoadedMetadata={(e) => {
-                                    const video = e.target as HTMLVideoElement;
-                                    if (video.duration > 0.5) {
-                                      video.currentTime = 0.5;
-                                    }
-                                  }}
-                                />
+                                {!videoThumbs[post.id] && (
+                                  <video 
+                                    key={`social-vid-${post.id}`}
+                                    className="w-full h-full object-cover"
+                                    src={post.videos![0]}
+                                    muted
+                                    playsInline
+                                    preload="auto"
+                                    onLoadedData={(e) => {
+                                      const video = e.target as HTMLVideoElement;
+                                      setTimeout(() => {
+                                        video.currentTime = 0.5;
+                                      }, 100);
+                                    }}
+                                    onSeeked={(e) => {
+                                      const video = e.target as HTMLVideoElement;
+                                      const canvas = document.createElement('canvas');
+                                      canvas.width = video.videoWidth;
+                                      canvas.height = video.videoHeight;
+                                      const ctx = canvas.getContext('2d');
+                                      if (ctx && canvas.width > 0) {
+                                        ctx.drawImage(video, 0, 0);
+                                        setVideoThumbs(prev => ({...prev, [post.id]: canvas.toDataURL('image/jpeg', 0.7)}));
+                                      }
+                                    }}
+                                    style={{ display: videoThumbs[post.id] ? 'none' : 'block' }}
+                                  />
+                                )}
+                                {videoThumbs[post.id] && (
+                                  <img 
+                                    src={videoThumbs[post.id]} 
+                                    alt="Video"
+                                    className="w-full h-full object-cover"
+                                  />
+                                )}
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                   <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
