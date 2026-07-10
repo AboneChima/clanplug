@@ -67,24 +67,24 @@ export default function FeedPage() {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
-    // Try to restore cached posts
+    // Try to restore cached posts FIRST
     const cachedPosts = sessionStorage.getItem('feedPostsCache');
-    const savedScrollPos = sessionStorage.getItem('feedScrollPosition');
     
-    if (cachedPosts && savedScrollPos) {
-      // Restore from cache
+    if (cachedPosts) {
+      // Restore from cache immediately
       try {
         const parsedPosts = JSON.parse(cachedPosts);
         setPosts(parsedPosts);
         setLoading(false);
+        // Don't fetch - we have cached data
+        return;
       } catch (e) {
-        // If cache is corrupt, fetch fresh
-        fetchPosts();
+        console.error('Cache parse error:', e);
       }
-    } else {
-      // No cache, fetch fresh
-      fetchPosts();
     }
+    
+    // No cache or cache failed - fetch fresh
+    fetchPosts();
   }, []);
 
   // Scroll position restoration - wait for posts to load
@@ -438,7 +438,7 @@ export default function FeedPage() {
     console.log('🎯 Install button clicked, deferredPrompt:', !!deferredPrompt);
     
     if (deferredPrompt) {
-      // Android/Chrome - Show native prompt directly
+      // Android/Chrome - Show native prompt directly (NO INSTRUCTIONS)
       try {
         console.log('📲 Showing native install prompt...');
         await deferredPrompt.prompt();
@@ -447,17 +447,16 @@ export default function FeedPage() {
         
         if (outcome === 'accepted') {
           setShowInstallBanner(false);
-          showToast('App added to home screen!', 'success');
+          showToast('App installed!', 'success');
           localStorage.setItem('installBannerDismissed', 'true');
         }
         setDeferredPrompt(null);
       } catch (error) {
         console.error('❌ Install prompt error:', error);
-        // Fallback to instructions modal
-        setShowInstallModal(true);
+        showToast('Install failed. Try from browser menu.', 'error');
       }
     } else {
-      // No native prompt available - Show instructions modal
+      // iOS or browser without native install - Show instructions
       console.log('📖 No native prompt, showing instructions modal');
       setShowInstallModal(true);
     }
