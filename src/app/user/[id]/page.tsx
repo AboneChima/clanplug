@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { IoArrowBack, IoStorefrontOutline, IoNewspaperOutline, IoLocationOutline, IoBriefcaseOutline, IoCalendarOutline, IoEllipsisHorizontal, IoEyeOutline, IoHeartOutline, IoTimeOutline, IoCheckmarkCircleOutline } from 'react-icons/io5';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -58,6 +58,35 @@ export default function UserProfilePage() {
   const [isFollowingMe, setIsFollowingMe] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'market' | 'social'>('market');
+  const [videoThumbnails, setVideoThumbnails] = useState<Record<string, string>>({});
+
+  // Generate thumbnail from video
+  const generateThumbnail = (videoUrl: string, postId: string) => {
+    const video = document.createElement('video');
+    video.crossOrigin = 'anonymous';
+    video.src = videoUrl;
+    video.muted = true;
+    video.playsInline = true;
+    
+    video.addEventListener('loadeddata', () => {
+      video.currentTime = 1;
+    });
+    
+    video.addEventListener('seeked', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.8);
+        setVideoThumbnails(prev => ({ ...prev, [postId]: thumbnailUrl }));
+      }
+    });
+    
+    video.load();
+  };
 
   // Debug: Log state changes
   useEffect(() => {
@@ -112,6 +141,13 @@ export default function UserProfilePage() {
         setMarketListings(market);
         setPosts(social);
         setStats(prev => ({ ...prev, posts: postsList.length }));
+        
+        // Generate thumbnails for all videos
+        postsList.forEach((post: Post) => {
+          if (post.videos?.[0]) {
+            generateThumbnail(post.videos[0], post.id);
+          }
+        });
       }
 
       if (followRes.ok) {
@@ -581,18 +617,17 @@ export default function UserProfilePage() {
                               />
                             ) : post.videos?.[0] ? (
                               <div className="relative w-full h-full bg-black">
-                                <video 
-                                  key={`market-video-${post.id}-v2`}
-                                  className="w-full h-full object-cover"
-                                  src={post.videos[0]}
-                                  muted
-                                  playsInline
-                                  preload="metadata"
-                                  onLoadedData={(e) => {
-                                    const video = e.target as HTMLVideoElement;
-                                    video.currentTime = 1;
-                                  }}
-                                />
+                                {videoThumbnails[post.id] ? (
+                                  <img 
+                                    src={videoThumbnails[post.id]}
+                                    alt="Video thumbnail"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                                  </div>
+                                )}
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                   <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
@@ -667,18 +702,17 @@ export default function UserProfilePage() {
                           ) : hasVideo ? (
                             <Link href={`/post/${post.id}`}>
                               <div className="relative w-full h-full bg-black overflow-hidden">
-                                <video 
-                                  key={`social-video-${post.id}-v2`}
-                                  className="w-full h-full object-cover"
-                                  src={post.videos![0]}
-                                  muted
-                                  playsInline
-                                  preload="metadata"
-                                  onLoadedData={(e) => {
-                                    const video = e.target as HTMLVideoElement;
-                                    video.currentTime = 1;
-                                  }}
-                                />
+                                {videoThumbnails[post.id] ? (
+                                  <img 
+                                    src={videoThumbnails[post.id]}
+                                    alt="Video thumbnail"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                                  </div>
+                                )}
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                   <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
