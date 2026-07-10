@@ -78,6 +78,15 @@ export default function UserProfilePage() {
     }
   }, [params.id]);
 
+  // Force cache bust on mount
+  useEffect(() => {
+    const currentUrl = window.location.href;
+    if (!currentUrl.includes('?') && !currentUrl.includes('#')) {
+      const cacheBustUrl = `${currentUrl}?_=${Date.now()}`;
+      window.history.replaceState({}, '', cacheBustUrl);
+    }
+  }, []);
+
   const loadUserProfile = async () => {
     try {
       const token = localStorage.getItem('accessToken');
