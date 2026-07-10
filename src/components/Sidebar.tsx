@@ -197,6 +197,22 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
               <IoHelpCircleOutline className="w-5 h-5" />
               <span className="text-sm font-medium">Help</span>
             </Link>
+
+            {/* Install App Button - Only show if not installed */}
+            {!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) && (
+              <button
+                onClick={() => {
+                  const event = new CustomEvent('openInstallModal');
+                  window.dispatchEvent(event);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 text-blue-400 hover:from-blue-600/30 hover:to-purple-600/30 transition-all group"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span className="text-sm font-semibold">Install App</span>
+              </button>
+            )}
           </div>
         </div>
       </nav>

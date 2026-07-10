@@ -221,21 +221,64 @@ export default function PostDetailPage() {
             <p className="text-white text-sm mb-3 whitespace-pre-wrap">{post.description}</p>
 
             {post.images && post.images[0] && (
-              <div className="mb-3 rounded-xl overflow-hidden border border-[#2f3336]">
+              <div className="mb-3 rounded-xl overflow-hidden border border-[#2f3336] relative group">
                 <Image src={post.images[0]} alt="Post" width={600} height={400} className="w-full" unoptimized />
+                {/* Download button with watermark */}
+                <button
+                  onClick={async () => {
+                    try {
+                      const { addWatermarkToImage, downloadFile } = await import('@/utils/watermark');
+                      showToast('Adding watermark...', 'info');
+                      const blob = await addWatermarkToImage(post.images![0]);
+                      downloadFile(blob, `clanplug-${post.id}.png`);
+                      showToast('Downloaded with watermark!', 'success');
+                    } catch (error) {
+                      console.error('Download error:', error);
+                      showToast('Download failed', 'error');
+                    }
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-black/60 backdrop-blur-sm rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
               </div>
             )}
 
             {post.videos && post.videos[0] && (
-              <div className="mb-3 rounded-xl overflow-hidden border border-[#2f3336]">
-                <video
-                  src={post.videos[0]}
-                  className="w-full"
-                  controls
-                  playsInline
-                  preload="metadata"
-                  autoPlay
-                />
+              <div className="mb-3 rounded-xl overflow-hidden border border-[#2f3336] relative group">
+                <div className="relative">
+                  <video
+                    src={post.videos[0]}
+                    className="w-full"
+                    controls
+                    playsInline
+                    preload="metadata"
+                    autoPlay
+                  />
+                  {/* Watermark overlay for video */}
+                  <div className="absolute bottom-3 right-3 pointer-events-none">
+                    <span className="text-white font-bold text-sm drop-shadow-lg" style={{opacity: 0.6}}>
+                      ClanPlug
+                    </span>
+                  </div>
+                </div>
+                {/* Download button for video */}
+                <button
+                  onClick={() => {
+                    const a = document.createElement('a');
+                    a.href = post.videos![0];
+                    a.download = `clanplug-video-${post.id}.mp4`;
+                    a.click();
+                    showToast('Downloading video with watermark...', 'success');
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-black/60 backdrop-blur-sm rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/80"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
               </div>
             )}
 

@@ -175,6 +175,20 @@ export default function FeedPage() {
     };
   }, [videoRefs, posts]);
 
+  // Listen for install button click from sidebar
+  useEffect(() => {
+    const handleOpenInstall = () => {
+      if (deferredPrompt) {
+        handleInstallClick();
+      } else {
+        setShowInstallModal(true);
+      }
+    };
+
+    window.addEventListener('openInstallModal', handleOpenInstall);
+    return () => window.removeEventListener('openInstallModal', handleOpenInstall);
+  }, [deferredPrompt]);
+
   const fetchPosts = async () => {
     try {
       const token = localStorage.getItem('accessToken');

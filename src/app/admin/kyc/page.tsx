@@ -455,11 +455,30 @@ export default function AdminKYCPage() {
                           rel="noopener noreferrer"
                           className="block group"
                         >
-                          <img
-                            src={url}
-                            alt={`Document ${index + 1}`}
-                            className="w-full h-32 sm:h-40 object-cover rounded-lg border border-slate-600 group-hover:border-blue-500 transition-colors"
-                          />
+                          <div className="relative">
+                            <img
+                              src={url}
+                              alt={`Document ${index + 1}`}
+                              className="w-full h-32 sm:h-40 object-cover rounded-lg border border-slate-600 group-hover:border-blue-500 transition-colors"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent && !parent.querySelector('.fallback-placeholder')) {
+                                  const fallback = document.createElement('div');
+                                  fallback.className = 'fallback-placeholder w-full h-32 sm:h-40 rounded-lg border border-red-600 bg-red-900/20 flex flex-col items-center justify-center';
+                                  fallback.innerHTML = `
+                                    <svg class="w-12 h-12 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <p class="text-red-400 text-xs">Image unavailable</p>
+                                    <p class="text-gray-500 text-[10px] mt-1">Click to try viewing</p>
+                                  `;
+                                  parent.appendChild(fallback);
+                                }
+                              }}
+                            />
+                          </div>
                           <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1 text-center">Tap to enlarge</p>
                         </a>
                       ))}
