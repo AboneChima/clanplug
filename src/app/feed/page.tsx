@@ -70,14 +70,22 @@ export default function FeedPage() {
         sessionStorage.removeItem('feedScrollPosition');
       }, 100);
     }
+  }, []);
 
-    // Save scroll position before navigation
-    const handleBeforeUnload = () => {
-      sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
+  // Listen for browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const savedScrollPos = sessionStorage.getItem('feedScrollPosition');
+      if (savedScrollPos) {
+        setTimeout(() => {
+          window.scrollTo(0, parseInt(savedScrollPos));
+          sessionStorage.removeItem('feedScrollPosition');
+        }, 100);
+      }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   useEffect(() => {
