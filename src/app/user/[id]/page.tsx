@@ -580,31 +580,18 @@ export default function UserProfilePage() {
                                 }}
                               />
                             ) : post.videos?.[0] ? (
-                              <div className="relative w-full h-full bg-black flex items-center justify-center">
-                                {/* Loading placeholder */}
-                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a]">
-                                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M8 5v14l11-7z"/>
-                                    </svg>
-                                  </div>
-                                </div>
-                                {/* Video element */}
+                              <div className="relative w-full h-full bg-black">
                                 <video 
-                                  key={post.videos[0]}
+                                  className="w-full h-full object-cover"
                                   src={post.videos[0]}
-                                  style={{ opacity: 0 }}
-                                  className="w-full h-full object-cover transition-opacity duration-300"
                                   muted
                                   playsInline
                                   preload="metadata"
-                                  onLoadedMetadata={(e) => {
+                                  onLoadedData={(e) => {
                                     const video = e.target as HTMLVideoElement;
-                                    video.currentTime = 0.1;
-                                    video.style.opacity = '1';
+                                    video.currentTime = 1;
                                   }}
                                 />
-                                {/* Play button overlay */}
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                                   <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
@@ -679,7 +666,6 @@ export default function UserProfilePage() {
                           ) : hasVideo ? (
                             <Link href={`/post/${post.id}`}>
                               <div className="relative w-full h-full bg-black">
-                                {/* Hidden video for thumbnail generation */}
                                 <video 
                                   className="w-full h-full object-cover"
                                   src={post.videos![0]}
@@ -688,20 +674,15 @@ export default function UserProfilePage() {
                                   preload="metadata"
                                   onLoadedData={(e) => {
                                     const video = e.target as HTMLVideoElement;
-                                    video.currentTime = 1; // Seek to 1 second
+                                    video.currentTime = 1;
                                   }}
                                 />
-                                {/* Play button overlay */}
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                   <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                                       <path d="M8 5v14l11-7z"/>
                                     </svg>
                                   </div>
-                                </div>
-                                {/* Video badge */}
-                                <div className="absolute top-2 right-2 px-2 py-1 bg-black/80 backdrop-blur-sm rounded-md">
-                                  <span className="text-xs text-white font-semibold">VIDEO</span>
                                 </div>
                               </div>
                             </Link>
