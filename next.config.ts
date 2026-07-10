@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://clanplug-brieltm9y-oracles-projects-0d30db20.vercel.app',
   },
-  // Add cache control headers
+  // Add aggressive cache control headers to prevent stale content
   async headers() {
     return [
       {
@@ -21,7 +21,15 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=0, must-revalidate',
+            value: 'no-cache, no-store, must-revalidate, max-age=0',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
           },
         ],
       },

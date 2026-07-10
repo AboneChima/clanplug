@@ -372,11 +372,6 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* VERSION BANNER - REMOVE AFTER CONFIRMING DEPLOYMENT */}
-      <div className="bg-green-500 text-white text-center py-1 text-xs font-bold">
-        🟢 VERSION 2.0 LOADED - Video Thumbnails Fixed
-      </div>
-      
       {/* Header */}
       <div className="sticky top-0 z-30 bg-black border-b border-[#262626]">
         <div className="flex items-center justify-between px-4 py-3">
