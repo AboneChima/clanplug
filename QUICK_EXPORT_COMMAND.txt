@@ -1,0 +1,24 @@
+==============================================
+QUICK USER EXPORT - COPY & PASTE THIS
+==============================================
+
+Step 1: SSH into your VPS
+ssh root@176.57.189.248
+
+Step 2: Navigate to backend
+cd /var/www/clanplug/backend
+
+Step 3: Run this single command (copy everything):
+
+node -e "const {PrismaClient}=require('@prisma/client');const fs=require('fs');(async()=>{const p=new PrismaClient();const u=await p.user.findMany({include:{wallet:true,verificationBadge:true,_count:{select:{posts:true,followers:true,following:true}}}});const d=u.map(x=>({id:x.id,username:x.username,email:x.email,name:\`\${x.firstName||''} \${x.lastName||''}\`.trim(),phone:x.phone||'',city:x.city||'',isKYC:x.isKYCVerified,banned:x.isBanned,balance:x.wallet?.balance||0,badge:x.verificationBadge?.status||'none',posts:x._count.posts,followers:x._count.followers,following:x._count.following,created:x.createdAt}));fs.writeFileSync('users.json',JSON.stringify(d,null,2));const h='ID,Username,Email,Name,Phone,City,KYC,Banned,Balance,Badge,Posts,Followers,Following,Created';const r=d.map(x=>[x.id,x.username,x.email,x.name,x.phone,x.city,x.isKYC,x.banned,x.balance,x.badge,x.posts,x.followers,x.following,x.created].join(','));fs.writeFileSync('users.csv',[h,...r].join('\n'));console.log('✅ Exported',u.length,'users');console.log('📄 users.json');console.log('📄 users.csv');await p.\$disconnect();})();"
+
+Step 4: Download the files to your computer
+(Open a NEW terminal on your Windows machine, don't close SSH)
+
+scp root@176.57.189.248:/var/www/clanplug/backend/users.json ./
+scp root@176.57.189.248:/var/www/clanplug/backend/users.csv ./
+
+==============================================
+FILES WILL BE DOWNLOADED TO YOUR CURRENT FOLDER
+Open users.csv in Excel to view the data
+==============================================

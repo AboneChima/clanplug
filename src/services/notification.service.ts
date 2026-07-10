@@ -1,4 +1,5 @@
 import { PrismaClient, NotificationType, Notification } from '@prisma/client';
+import { pushService } from './push.service';
 
 const prisma = new PrismaClient();
 
@@ -48,6 +49,12 @@ class NotificationService {
 
   // Create a new notification
   async createNotification(payload: CreateNotificationPayload): Promise<Notification> {
+    console.log('📝 Creating notification:', {
+      userId: payload.userId,
+      type: payload.type,
+      title: payload.title
+    });
+
     const notification = await prisma.notification.create({
       data: {
         userId: payload.userId,
@@ -58,10 +65,98 @@ class NotificationService {
       },
     });
 
+    console.log('✅ Notification created:', notification.id);
+
     // Send real-time notification to connected clients
     this.sendRealTimeNotification(payload.userId, 'new_notification', notification);
 
+    // Send push notification to user's devices
+    try {
+      const url = this.getNotificationUrl(payload.type, payload.data);
+      
+      // Get avatar for notification (if available from data)
+      let icon = '/favicon.ico';
+      if (payload.data?.followerId || payload.data?.senderId || payload.data?.userId) {
+        const actorId = payload.data.followerId || payload.data.senderId || payload.data.userId;
+        try {
+          const actor = await prisma.user.findUnique({
+            where: { id: actorId },
+            select: { avatar: true }
+          });
+          if (actor?.avatar) {
+            icon = actor.avatar;
+          }
+        } catch (err) {
+          console.log('Could not fetch actor avatar:', err);
+        }
+      }
+
+      console.log('📤 Sending push notification:', {
+        userId: payload.userId,
+        title: payload.title,
+        url,
+        icon,
+        tag: payload.type.toLowerCase()
+      });
+
+      const result = await pushService.sendNotificationToUser(payload.userId, {
+        title: payload.title,
+        message: payload.message,
+        url,
+        tag: payload.type.toLowerCase(),
+        icon
+      });
+
+      console.log('📊 Push notification result:', result);
+    } catch (error) {
+      console.error('❌ Failed to send push notification:', error);
+      // Don't fail the whole operation if push fails
+    }
+
     return notification;
+  }
+
+  // Get URL for notification based on type and data
+  private getNotificationUrl(type: NotificationType, data: any): string {
+    try {
+      // Check data for specific notification types first
+      if (data) {
+        // Follow notifications (type: SYSTEM with followerId)
+        if (data.followerId) {
+          return `/user/${data.followerId}`;
+        }
+        
+        // Post-related notifications (likes, comments)
+        if (data.postId) {
+          return `/post/${data.postId}`;
+        }
+        
+        // Chat/message notifications
+        if (data.chatId) {
+          return `/chat?id=${data.chatId}`;
+        }
+      }
+
+      // Fallback to type-based routing
+      switch (type) {
+        case 'CHAT':
+          return '/chat';
+        case 'POST':
+          return '/feed';
+        case 'TRANSACTION':
+        case 'ESCROW':
+        case 'PURCHASE_REQUEST':
+          return '/wallet';
+        case 'KYC':
+          return '/kyc';
+        case 'SYSTEM':
+        default:
+          return '/notifications';
+      }
+    } catch (error) {
+      console.error('Error generating notification URL:', error);
+      return '/notifications';
+    }
   }
 
   // Get user notifications with pagination

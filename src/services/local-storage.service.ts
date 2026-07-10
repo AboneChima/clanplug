@@ -3,6 +3,10 @@ import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 /**
  * Local File Storage Service
@@ -154,6 +158,28 @@ export const createThumbnail = async (filePath: string, width: number = 300): Pr
   } catch (error) {
     console.error('Thumbnail creation error:', error);
     throw error;
+  }
+};
+
+/**
+ * Create thumbnail from video using ffmpeg
+ */
+export const createVideoThumbnail = async (videoPath: string): Promise<string> => {
+  try {
+    const ext = path.extname(videoPath);
+    const thumbnailPath = videoPath.replace(ext, '_thumb.jpg');
+    
+    // Use ffmpeg to extract frame at 0.5 seconds
+    const command = `ffmpeg -i "${videoPath}" -ss 00:00:00.5 -vframes 1 -q:v 2 "${thumbnailPath}"`;
+    
+    await execAsync(command);
+    
+    console.log(`✅ Video thumbnail created: ${thumbnailPath}`);
+    return thumbnailPath;
+  } catch (error) {
+    console.error('❌ Video thumbnail creation error:', error);
+    // Return empty string if thumbnail generation fails
+    return '';
   }
 };
 

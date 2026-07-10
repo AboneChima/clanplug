@@ -43,6 +43,7 @@ import debugRoutes from './routes/debug.routes';
 import ipRoutes from './routes/ip.routes';
 import searchRoutes from './routes/search.routes';
 import uploadRoutes from './routes/upload.routes';
+import pushRoutes from './routes/push.routes';
 
 const app = express();
 
@@ -173,6 +174,7 @@ app.use('/api/debug', debugRoutes);
 app.use('/api/ip', ipRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/push', pushRoutes);
 app.use('/api/purchase-requests', require('./routes/purchaseRequest.routes').default);
 app.use('/api/admin-verify-badge', require('./routes/admin-verify-badge.routes').default);
 

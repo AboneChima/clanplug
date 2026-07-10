@@ -1,0 +1,44 @@
+🔧 MANUAL STEPS TO FIX PUSH NOTIFICATIONS
+==========================================
+
+1. Connect to VPS using PuTTY:
+   - Host: 176.57.189.248
+   - Username: root
+   - Password: ClanPlugDB2024
+
+2. Run these commands ONE BY ONE:
+
+cd /root/clanplug
+
+npm install web-push
+
+# Check if VAPID keys exist
+grep VAPID_PUBLIC_KEY .env
+
+# If not found, add them:
+echo "" >> .env
+echo "# Push Notifications - VAPID Keys" >> .env
+echo "VAPID_PUBLIC_KEY=BHpd9-yFkjQy2i-uxeFvATb2dmf_ZOJp0FrrgeVGHPbPx528FprwkqtC6dXLfHKREdGS2Ad9uj5U28rNDoLfmJo" >> .env
+echo "VAPID_PRIVATE_KEY=Gg9tmkOv9NpXFQMI6Q7sKc9GmtRBWyzuVvPVZ8PHCKE" >> .env
+echo "VAPID_SUBJECT=mailto:support@clanplug.site" >> .env
+
+# Rebuild backend
+npm run build
+
+# Restart backend
+pm2 restart clanplug-backend
+
+# Check status
+pm2 status
+
+# View logs to confirm it's working
+pm2 logs clanplug-backend --lines 50
+
+3. After completing these steps, test push notifications:
+   - Go to www.clanplug.site/settings
+   - Click "Enable" on Push Notifications
+   - Allow notifications when browser asks
+   - Click "Test" button
+   - You should receive a push notification!
+
+✅ Done!

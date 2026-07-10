@@ -1,0 +1,91 @@
+==========================================================
+PUSH NOTIFICATIONS SETUP - VPS COMMANDS
+==========================================================
+
+Copy and paste these commands ONE BY ONE into your VPS terminal.
+
+Step 1: SSH into your VPS
+--------------------------
+ssh root@176.57.189.248
+Password: ClanPlugDB2024
+
+
+Step 2: Navigate to backend
+----------------------------
+cd /var/www/clanplug/backend
+
+
+Step 3: Add VAPID keys to .en
+-------------------------------
+cat >> .env << 'EOF'
+
+# Push Notifications - VAPID Keys
+VAPID_PUBLIC_KEY=BHpd9-yFkjQy2i-uxeFvATb2dmf_ZOJp0FrrgeVGHPbPx528FprwkqtC6dXLfHKREdGS2Ad9uj5U28rNDoLfmJo
+VAPID_PRIVATE_KEY=Gg9tmkOv9NpXFQMI6Q7sKc9GmtRBWyzuVvPVZ8PHCKE
+VAPID_SUBJECT=mailto:support@clanplug.site
+EOF
+
+
+Step 4: Create database migration file
+---------------------------------------
+cat > add-push-subscriptions.sql << 'EOF'
+-- Add push subscriptions table for web push notifications
+CREATE TABLE IF NOT EXISTS "PushSubscription" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "endpoint" TEXT NOT NULL,
+    "p256dh" TEXT NOT NULL,
+    "auth" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "PushSubscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- Create index for faster lookups
+CREATE INDEX IF NOT EXISTS "PushSubscription_userId_idx" ON "PushSubscription"("userId");
+CREATE INDEX IF NOT EXISTS "PushSubscription_endpoint_idx" ON "PushSubscription"("endpoint");
+
+-- Add unique constraint to prevent duplicate subscriptions
+CREATE UNIQUE INDEX IF NOT EXISTS "PushSubscription_userId_endpoint_key" ON "PushSubscription"("userId", "endpoint");
+EOF
+
+
+Step 5: Install web-push package
+---------------------------------
+npm install web-push
+
+
+Step 6: Run database migration
+-------------------------------
+psql $DATABASE_URL -f add-push-subscriptions.sql
+
+
+Step 7: Restart backend
+------------------------
+pm2 restart clanplug-backend
+pm2 save
+
+
+Step 8: Verify it's running
+----------------------------
+pm2 status
+pm2 logs clanplug-backend --lines 20
+
+
+==========================================================
+DONE! 🎉
+==========================================================
+
+Push notifications are now enabled!
+
+Users can enable notifications by:
+1. Going to their profile settings
+2. Toggling "Push Notifications" on
+3. Allowing notifications when prompted by browser
+
+Test it by:
+- Having someone like/comment on a post
+- Sending a message
+- Following someone
+
+The notification will appear on their phone/desktop!

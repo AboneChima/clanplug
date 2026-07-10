@@ -69,13 +69,16 @@
     "redis": "^4.6.11",
     "serverless-http": "^3.2.0",
     "socket.io": "^4.7.4",
+    "ssh2": "^1.17.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.3.3",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/supertest": "^6.0.3",
+    "@types/web-push": "^3.6.4",
     "@vercel/node": "^5.5.5",
     "jest": "^30.2.0",
     "nodemon": "^3.0.2",

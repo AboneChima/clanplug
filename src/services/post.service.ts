@@ -108,6 +108,32 @@ export const postService = {
         }
       }
 
+      // Generate video thumbnails if videos are present
+      const videoThumbnails: string[] = [];
+      if (payload.videos && payload.videos.length > 0) {
+        const { createVideoThumbnail, getFileUrl } = await import('./local-storage.service');
+        const UPLOAD_BASE_DIR = process.env.UPLOAD_DIR || '/var/www/clanplug/uploads';
+        
+        for (const videoUrl of payload.videos) {
+          try {
+            // Convert URL to file path
+            const videoPath = videoUrl.replace('https://api.clanplug.site/uploads', UPLOAD_BASE_DIR);
+            const thumbnailPath = await createVideoThumbnail(videoPath);
+            
+            if (thumbnailPath) {
+              const thumbnailUrl = getFileUrl(thumbnailPath);
+              videoThumbnails.push(thumbnailUrl);
+            } else {
+              // If thumbnail generation fails, use empty string as placeholder
+              videoThumbnails.push('');
+            }
+          } catch (error) {
+            console.error('Error generating thumbnail for video:', videoUrl, error);
+            videoThumbnails.push('');
+          }
+        }
+      }
+
       const post = await prisma.post.create({
         data: {
           userId: authorId,
@@ -118,6 +144,7 @@ export const postService = {
           tags: payload.tags || [],
           images: payload.images || [],
           videos: payload.videos || [],
+          videoThumbnails: videoThumbnails,
           price: payload.price,
           currency: payload.currency as Currency || null,
           gameTitle: payload.gameTitle,
