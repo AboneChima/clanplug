@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
@@ -8,7 +9,7 @@ import {
   IoChatbubbleEllipsesOutline, 
   IoStorefrontOutline, 
   IoSettingsOutline, 
-  IoLogOutOutline,
+  IoLogOutline,
   IoPersonOutline,
   IoShieldCheckmarkOutline,
   IoNotificationsOutline,
@@ -89,8 +90,15 @@ const navItems = [
   },
 ];
 
-export default function Sidebar({ user, onLogout }: SidebarProps) {
+const Sidebar = ({ user, onLogout }: SidebarProps) => {
   const pathname = usePathname();
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    // Check if app is installed
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+    setShowInstallButton(!isInstalled);
+  }, []);
 
   const getUserDisplayName = () => {
     if (user.firstName && user.lastName) {
@@ -199,7 +207,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
             </Link>
 
             {/* Install App Button - Only show if not installed */}
-            {(typeof window !== 'undefined' && !(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) && (
+            {showInstallButton && (
               <button
                 onClick={() => {
                   const event = new CustomEvent('openInstallModal');
@@ -230,3 +238,5 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
     </aside>
   );
 }
+
+export default Sidebar;
