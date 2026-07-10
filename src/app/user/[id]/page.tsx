@@ -678,16 +678,21 @@ export default function UserProfilePage() {
                             />
                           ) : hasVideo ? (
                             <Link href={`/post/${post.id}`}>
-                              <div className="relative w-full h-full bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
-                                {/* Video icon */}
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <svg className="w-16 h-16 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M4 6h16v12H4z M8 9v6l5-3z"/>
-                                    <path d="M21 3H3c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h5v2H7v2h10v-2h-1v-2h5c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 14H3V5h18v12z"/>
-                                  </svg>
-                                </div>
-                                {/* Play button */}
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <div className="relative w-full h-full bg-black">
+                                {/* Hidden video for thumbnail generation */}
+                                <video 
+                                  className="w-full h-full object-cover"
+                                  src={post.videos![0]}
+                                  muted
+                                  playsInline
+                                  preload="metadata"
+                                  onLoadedData={(e) => {
+                                    const video = e.target as HTMLVideoElement;
+                                    video.currentTime = 1; // Seek to 1 second
+                                  }}
+                                />
+                                {/* Play button overlay */}
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                   <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
                                     <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                                       <path d="M8 5v14l11-7z"/>
