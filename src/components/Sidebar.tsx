@@ -199,7 +199,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
             </Link>
 
             {/* Install App Button - Only show if not installed */}
-            {!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) && (
+            {(typeof window !== 'undefined' && !(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) && (
               <button
                 onClick={() => {
                   const event = new CustomEvent('openInstallModal');
