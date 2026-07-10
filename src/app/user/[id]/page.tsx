@@ -664,6 +664,7 @@ export default function UserProfilePage() {
                             <div className="relative w-full h-full bg-black">
                               <video 
                                 src={`${post.videos![0]}#t=0.1`}
+                                poster={post.videos![0]}
                                 className="w-full h-full object-cover"
                                 muted
                                 playsInline

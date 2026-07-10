@@ -56,6 +56,27 @@ export default function FeedPage() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [videoRefs, setVideoRefs] = useState<Map<string, HTMLVideoElement>>(new Map());
+
+  // Scroll position restoration
+  useEffect(() => {
+    // Restore scroll position if returning from a post
+    const savedScrollPos = sessionStorage.getItem('feedScrollPosition');
+    if (savedScrollPos) {
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedScrollPos));
+        sessionStorage.removeItem('feedScrollPosition');
+      }, 100);
+    }
+
+    // Save scroll position before navigation
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   useEffect(() => {
     fetchPosts();
@@ -118,6 +139,41 @@ export default function FeedPage() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
+
+  // Auto-play videos when in viewport (Instagram-style)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target as HTMLVideoElement;
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            // Video is 50%+ visible, play it
+            video.play().catch((err) => {
+              console.log('Auto-play prevented:', err);
+            });
+          } else {
+            // Video scrolled away, pause it
+            video.pause();
+          }
+        });
+      },
+      {
+        threshold: [0.5], // Trigger when 50% visible
+        rootMargin: '0px',
+      }
+    );
+
+    // Observe all videos
+    videoRefs.forEach((video) => {
+      if (video) observer.observe(video);
+    });
+
+    return () => {
+      videoRefs.forEach((video) => {
+        if (video) observer.unobserve(video);
+      });
+    };
+  }, [videoRefs, posts]);
 
   const fetchPosts = async () => {
     try {
@@ -680,19 +736,54 @@ export default function FeedPage() {
                             </div>
                           )}
 
-                          {/* Videos */}
+                          {/* Videos - Auto-play when in view */}
                           {post.videos && post.videos[0] && (
-                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-black">
+                            <div 
+                              className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-black relative cursor-pointer group"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                // Save scroll position before navigating
+                                sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
+                                window.location.href = `/post/${post.id}`;
+                              }}
+                            >
                               <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
                                 <video
+                                  ref={(el) => {
+                                    if (el) {
+                                      setVideoRefs(prev => {
+                                        const newMap = new Map(prev);
+                                        newMap.set(post.id, el);
+                                        return newMap;
+                                      });
+                                    }
+                                  }}
                                   src={post.videos[0]}
+                                  poster={`${post.videos[0]}#t=0.1`}
                                   className="absolute inset-0 w-full h-full object-contain"
-                                  controls
+                                  loop
+                                  muted
                                   playsInline
                                   preload="metadata"
-                                  onClick={(e) => e.stopPropagation()}
                                   style={{ backgroundColor: '#000' }}
                                 />
+                                
+                                {/* Play indicator overlay */}
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                  <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                                    <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                  </div>
+                                </div>
+
+                                {/* Muted indicator */}
+                                <div className="absolute bottom-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm rounded-full">
+                                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                                  </svg>
+                                </div>
                               </div>
                             </div>
                           )}
