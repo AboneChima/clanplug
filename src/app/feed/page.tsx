@@ -810,18 +810,10 @@ export default function FeedPage() {
                             </div>
                           )}
 
-                          {/* Videos - Auto-play when in view */}
+                          {/* Videos - Click to go to full post, controls work inline */}
                           {post.videos && post.videos[0] && (
                             <div 
-                              className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-black relative cursor-pointer group"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                // Save scroll position before navigating
-                                sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
-                                // Use Next.js router for navigation
-                                router.push(`/post/${post.id}`);
-                              }}
+                              className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-black relative group"
                             >
                               <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
                                 <video
@@ -834,11 +826,29 @@ export default function FeedPage() {
                                   }}
                                   src={post.videos[0]}
                                   poster={`${post.videos[0]}#t=0.1`}
-                                  className="absolute inset-0 w-full h-full object-contain"
+                                  className="absolute inset-0 w-full h-full object-contain cursor-pointer"
                                   controls
                                   playsInline
                                   preload="metadata"
                                   style={{ backgroundColor: '#000' }}
+                                  onClick={(e) => {
+                                    // Only navigate if clicking on video itself, not controls
+                                    const target = e.target as HTMLVideoElement;
+                                    const rect = target.getBoundingClientRect();
+                                    const clickY = e.clientY - rect.top;
+                                    const videoHeight = rect.height;
+                                    
+                                    // If click is in bottom 15% (where controls are), don't navigate
+                                    if (clickY > videoHeight * 0.85) {
+                                      e.stopPropagation();
+                                      return;
+                                    }
+                                    
+                                    // Otherwise navigate to full post
+                                    e.preventDefault();
+                                    sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
+                                    router.push(`/post/${post.id}`);
+                                  }}
                                 />
                               </div>
                             </div>

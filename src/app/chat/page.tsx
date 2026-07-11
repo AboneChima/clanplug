@@ -866,7 +866,9 @@ function ChatContent() {
                           isListingShare ? '' : 'rounded-2xl'
                         } ${
                           isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-[#2a2a2a] text-white rounded-bl-md'
-                        } ${hasImage && !isListingShare ? '' : isListingShare ? '' : 'px-3 py-2'}`}>
+                        } ${hasImage && !isListingShare ? 'overflow-hidden' : isListingShare ? '' : 'px-3 py-2'}`}>
+                        
+                        {/* Listing Share - Compact YouTube-style Thumbnail */}
                         
                         {/* Listing Share - Compact YouTube-style Thumbnail */}
                         {isListingShare && (msg as any).metadata && (
@@ -943,7 +945,6 @@ function ChatContent() {
                               onLoad={() => console.log('✅ Image loaded:', msg.attachments![0])}
                               onError={(e) => {
                                 console.error('❌ Image failed to load:', msg.attachments![0]);
-                                // Hide broken image by replacing with placeholder
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
                                 const parent = target.parentElement;
@@ -960,15 +961,17 @@ function ChatContent() {
                                 }
                               }}
                             />
-                            {/* Timestamp overlay on image - bottom right corner like WhatsApp/Telegram */}
-                            <div className="absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 bg-black/60 rounded backdrop-blur-sm">
-                              <span className="text-[10px] text-white/90">
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                              {isOwn && (
-                                <IoCheckmarkDoneOutline className="w-3 h-3 text-white/90" />
-                              )}
-                            </div>
+                            {/* Timestamp overlay on image - only if there's no text below */}
+                            {(!msg.content || msg.content === 'Image') && (
+                              <div className="absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 bg-black/60 rounded backdrop-blur-sm">
+                                <span className="text-[10px] text-white/90">
+                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                {isOwn && (
+                                  <IoCheckmarkDoneOutline className="w-3 h-3 text-white/90" />
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                         
@@ -978,20 +981,9 @@ function ChatContent() {
                             {msg.content && msg.content !== 'Image' && (
                               <p className={`text-xs break-words whitespace-pre-wrap ${hasImage ? 'px-3 pt-2' : ''}`}>{msg.content}</p>
                             )}
-                            {/* Only show timestamp below text if there's no image (image has overlay timestamp) */}
-                            {!hasImage && (
-                              <div className="flex items-center justify-end gap-1 mt-1">
-                                <span className="text-[10px] opacity-70">
-                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                                {isOwn && (
-                                  <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
-                                )}
-                              </div>
-                            )}
-                            {/* If there's both image and text, show timestamp after text with spacing */}
-                            {hasImage && msg.content && msg.content !== 'Image' && (
-                              <div className="flex items-center justify-end gap-1 px-3 pb-2">
+                            {/* Show timestamp after text - both image+text or text-only */}
+                            {msg.content && msg.content !== 'Image' && (
+                              <div className={`flex items-center justify-end gap-1 ${hasImage ? 'px-3 pb-2' : 'mt-1'}`}>
                                 <span className="text-[10px] opacity-70">
                                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>

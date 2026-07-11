@@ -23,6 +23,11 @@ export default function CreatePostPage() {
   const isVerified = (user as any)?.verificationBadge?.status === 'verified' || (user as any)?.verificationBadge?.status === 'active';
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isVerified) {
+      showToast('Purchase verification badge to post images', 'error');
+      return;
+    }
+
     const files = Array.from(e.target.files || []);
     if (images.length + files.length > 4) {
       showToast('Maximum 4 images allowed', 'error');
@@ -79,9 +84,9 @@ export default function CreatePostPage() {
       return;
     }
 
-    // Video check - only verified badge users can post videos
-    if (video && !isVerified) {
-      showToast('Only verified badge users can post videos', 'error');
+    // Media check - only verified badge users can post images/videos
+    if ((images.length > 0 || video) && !isVerified) {
+      showToast('Only verified badge users can post images/videos', 'error');
       return;
     }
 
@@ -266,16 +271,22 @@ export default function CreatePostPage() {
           {/* Add Media Buttons */}
           <div className="flex gap-2 mb-4">
             {images.length < 4 && !video && (
-              <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#2f3336] text-blue-400 rounded-lg cursor-pointer transition-all">
+              <label className={`inline-flex items-center gap-2 px-4 py-2 border rounded-lg transition-all ${
+                isVerified 
+                  ? 'bg-[#1a1a1a] hover:bg-[#2a2a2a] border-[#2f3336] text-blue-400 cursor-pointer'
+                  : 'bg-[#1a1a1a]/50 border-[#2f3336]/50 text-gray-600 cursor-not-allowed'
+              }`}>
                 <IoImageOutline className="w-5 h-5" />
                 <span className="text-sm font-medium">Photos</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
+                {isVerified && (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                )}
               </label>
             )}
             
@@ -299,14 +310,14 @@ export default function CreatePostPage() {
             )}
           </div>
 
-          {/* Verification Message for Video */}
+          {/* Verification Message for Media */}
           {!isVerified && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4">
               <div className="flex items-start gap-2">
                 <IoShieldCheckmarkOutline className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-blue-400 text-sm font-medium mb-1">Video posting requires verification badge</p>
-                  <p className="text-gray-400 text-xs mb-2">Purchase a verification badge to unlock video posting (max 45 seconds). Images are unlimited for all users!</p>
+                  <p className="text-blue-400 text-sm font-medium mb-1">Media posting requires verification badge</p>
+                  <p className="text-gray-400 text-xs mb-2">Purchase a verification badge to unlock image and video posting. Only text posts are available without a badge.</p>
                   <Link href="/verification-badge">
                     <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-all">
                       Get Verified Badge - ₦2,000/month
