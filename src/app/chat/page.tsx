@@ -979,15 +979,13 @@ function ChatContent() {
                         {!isListingShare && (
                           <>
                             {msg.content && msg.content !== 'Image' && (
-                              <div className="px-2 py-1">
-                                {/* Text with inline space for timestamp on last line */}
-                                <p className="text-xs break-words whitespace-pre-wrap inline">
+                              <div className="px-2 py-1 flex flex-wrap items-end gap-1">
+                                {/* Text content */}
+                                <span className="text-xs break-words whitespace-pre-wrap flex-1 min-w-0">
                                   {msg.content}
-                                  {/* Add invisible placeholder space for timestamp to sit inline */}
-                                  <span className="inline-block w-16 h-3"></span>
-                                </p>
-                                {/* Timestamp floats to the right on the last line of text */}
-                                <span className="float-right flex items-center gap-1 ml-1">
+                                </span>
+                                {/* Timestamp - stays on same line if space, drops below if needed */}
+                                <span className="flex items-center gap-0.5 flex-shrink-0 self-end ml-1">
                                   <span className="text-[10px] opacity-70 whitespace-nowrap">
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
