@@ -627,31 +627,32 @@ function ChatContent() {
             {/* Game Communities Section */}
             <div className="bg-black px-4 py-3 border-b border-[#2f3336]">
               <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Game Communities</h2>
-              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
                 {[
-                  { name: 'Free Fire', image: '/free fire.jpeg', members: '1.2K' },
-                  { name: 'Call of Duty', image: '/codm.jpeg', members: '980' },
-                  { name: 'PUBG Mobile', image: '/pubg.jpeg', members: '856' },
-                  { name: 'FIFA Mobile', image: '/fifa.jpeg', members: '645' }
+                  { name: 'Free Fire', image: '/free fire.jpeg', members: 0 },
+                  { name: 'Call of Duty', image: '/codm.jpeg', members: 0 },
+                  { name: 'PUBG Mobile', image: '/pubg.jpeg', members: 0 },
+                  { name: 'FIFA Mobile', image: '/fifa.jpeg', members: 0 },
+                  { name: 'eFootball', image: '/e football.jpeg', members: 0 }
                 ].map((group) => (
                   <button
                     key={group.name}
-                    className="flex-shrink-0 flex flex-col items-center gap-1.5 group"
+                    className="flex-shrink-0 flex flex-col items-center gap-2 group"
                     onClick={() => showToast('Coming soon!', 'info')}
                   >
                     <div className="relative">
-                      <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-blue-500/50 group-hover:ring-blue-500 transition-all">
+                      <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-blue-500/50 group-hover:ring-blue-500 transition-all">
                         <img 
                           src={group.image} 
                           alt={group.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 w-3 h-3 rounded-full border-2 border-black"></div>
+                      <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 w-3.5 h-3.5 rounded-full border-2 border-black"></div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-white text-[10px] font-medium leading-tight">{group.name}</p>
-                      <p className="text-gray-500 text-[9px]">{group.members} members</p>
+                    <div className="text-center max-w-[70px]">
+                      <p className="text-white text-[11px] font-medium leading-tight truncate">{group.name}</p>
+                      <p className="text-gray-400 text-[10px]">{group.members} members</p>
                     </div>
                   </button>
                 ))}
@@ -1013,13 +1014,13 @@ function ChatContent() {
                         {!isListingShare && (
                           <>
                             {msg.content && msg.content !== 'Image' && (
-                              <div className={`flex flex-wrap items-end leading-[1.3] ${hasImage ? 'px-2.5 pt-1.5 pb-1 gap-0.5' : 'gap-1.5 pb-1.5'}`}>
+                              <div className={`flex flex-wrap leading-[1.3] ${hasImage ? 'px-2.5 pt-1.5 pb-1 gap-0.5' : 'gap-1.5 pb-0.5'}`}>
                                 {/* Text content */}
                                 <span className="text-[13px] break-words whitespace-pre-wrap flex-1 min-w-0">
                                   {msg.content}
                                 </span>
                                 {/* Timestamp - stays on same line if space, drops below if needed */}
-                                <span className={`flex items-center gap-0.5 flex-shrink-0 self-end ${isOwn && !hasImage ? 'mr-1' : ''}`}>
+                                <span className={`flex items-center gap-0.5 flex-shrink-0 self-end translate-y-1 ${isOwn && !hasImage ? 'mr-1' : ''}`}>
                                   <span className="text-[10px] opacity-50 whitespace-nowrap">
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
