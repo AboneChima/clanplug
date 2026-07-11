@@ -866,7 +866,7 @@ function ChatContent() {
                           isListingShare ? '' : 'rounded-2xl'
                         } ${
                           isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-[#2a2a2a] text-white rounded-bl-md'
-                        } ${hasImage && !isListingShare ? 'p-1' : isListingShare ? '' : 'px-3 py-2'}`}>
+                        } ${hasImage && !isListingShare ? '' : isListingShare ? '' : 'px-3 py-2'}`}>
                         
                         {/* Listing Share - Compact YouTube-style Thumbnail */}
                         {isListingShare && (msg as any).metadata && (
@@ -933,9 +933,9 @@ function ChatContent() {
                           </a>
                         )}
                         
-                        {/* Regular Image Message */}
+                        {/* Regular Image Message - WhatsApp/Telegram style with timestamp overlay */}
                         {!isListingShare && hasImage && (
-                          <div className="mb-1">
+                          <div className="relative">
                             <img 
                               src={msg.attachments![0]} 
                               alt="Image" 
@@ -960,6 +960,15 @@ function ChatContent() {
                                 }
                               }}
                             />
+                            {/* Timestamp overlay on image - bottom right corner like WhatsApp/Telegram */}
+                            <div className="absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 bg-black/60 rounded backdrop-blur-sm">
+                              <span className="text-[10px] text-white/90">
+                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              {isOwn && (
+                                <IoCheckmarkDoneOutline className="w-3 h-3 text-white/90" />
+                              )}
+                            </div>
                           </div>
                         )}
                         
@@ -967,16 +976,30 @@ function ChatContent() {
                         {!isListingShare && (
                           <>
                             {msg.content && msg.content !== 'Image' && (
-                              <p className={`text-xs break-words whitespace-pre-wrap ${hasImage ? 'px-2 pb-1' : ''}`}>{msg.content}</p>
+                              <p className={`text-xs break-words whitespace-pre-wrap ${hasImage ? 'px-3 pt-2' : ''}`}>{msg.content}</p>
                             )}
-                            <div className={`flex items-center justify-end gap-1 ${hasImage ? 'px-2 pb-1' : 'mt-1'}`}>
-                              <span className="text-[10px] opacity-70">
-                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                              {isOwn && (
-                                <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
-                              )}
-                            </div>
+                            {/* Only show timestamp below text if there's no image (image has overlay timestamp) */}
+                            {!hasImage && (
+                              <div className="flex items-center justify-end gap-1 mt-1">
+                                <span className="text-[10px] opacity-70">
+                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                {isOwn && (
+                                  <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
+                                )}
+                              </div>
+                            )}
+                            {/* If there's both image and text, show timestamp after text with spacing */}
+                            {hasImage && msg.content && msg.content !== 'Image' && (
+                              <div className="flex items-center justify-end gap-1 px-3 pb-2">
+                                <span className="text-[10px] opacity-70">
+                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                                {isOwn && (
+                                  <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
+                                )}
+                              </div>
+                            )}
                           </>
                         )}
                         </div>
@@ -1285,7 +1308,7 @@ function ChatContent() {
                   </div>
                 </div>
 
-                {/* Action Menu */}
+                {/* Action Menu - Reduced width like WhatsApp */}
                 <div 
                   className="absolute left-4 right-4 top-[48%] z-20"
                   onClick={(e) => e.stopPropagation()}
@@ -1295,14 +1318,14 @@ function ChatContent() {
                     transform: 'translateY(30px)'
                   }}
                 >
-                  <div className="bg-[#233138] rounded-2xl overflow-hidden shadow-2xl max-w-md mx-auto">
+                  <div className="bg-[#233138] rounded-2xl overflow-hidden shadow-2xl max-w-xs mx-auto">
                     {/* Reply */}
                     <button
                       onClick={handleReplyToMessage}
-                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                      className="w-full px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
-                      <span className="text-white text-[15px]">Reply</span>
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="text-white text-sm">Reply</span>
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                       </svg>
                     </button>
@@ -1310,19 +1333,19 @@ function ChatContent() {
                     {/* Forward */}
                     <button
                       onClick={handleShowForwardModal}
-                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                      className="w-full px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
-                      <span className="text-white text-[15px]">Forward</span>
-                      <IoArrowForwardOutline className="w-5 h-5 text-gray-400" />
+                      <span className="text-white text-sm">Forward</span>
+                      <IoArrowForwardOutline className="w-4 h-4 text-gray-400" />
                     </button>
 
                     {/* Info */}
                     <button
                       onClick={handleShowMessageInfo}
-                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                      className="w-full px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
-                      <span className="text-white text-[15px]">Info</span>
-                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="text-white text-sm">Info</span>
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </button>
@@ -1330,12 +1353,12 @@ function ChatContent() {
                     {/* Star */}
                     <button
                       onClick={handleStarMessage}
-                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                      className="w-full px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
-                      <span className="text-white text-[15px]">
+                      <span className="text-white text-sm">
                         {selectedMessage && starredMessages.has(selectedMessage.id) ? 'Unstar' : 'Star'}
                       </span>
-                      <svg className="w-5 h-5 text-gray-400" fill={selectedMessage && starredMessages.has(selectedMessage.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-gray-400" fill={selectedMessage && starredMessages.has(selectedMessage.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                       </svg>
                     </button>
@@ -1343,12 +1366,12 @@ function ChatContent() {
                     {/* Pin */}
                     <button
                       onClick={handlePinMessage}
-                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
+                      className="w-full px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between border-b border-white/5"
                     >
-                      <span className="text-white text-[15px]">
+                      <span className="text-white text-sm">
                         {selectedMessage && pinnedMessages.has(selectedMessage.id) ? 'Unpin' : 'Pin'}
                       </span>
-                      <svg className="w-5 h-5 text-gray-400" fill={selectedMessage && pinnedMessages.has(selectedMessage.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-gray-400" fill={selectedMessage && pinnedMessages.has(selectedMessage.id) ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                       </svg>
                     </button>
@@ -1358,10 +1381,10 @@ function ChatContent() {
                       onClick={() => {
                         handleDeleteForMe();
                       }}
-                      className="w-full px-5 py-3.5 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between"
+                      className="w-full px-4 py-3 text-left hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between"
                     >
-                      <span className="text-[#ff3b30] text-[15px]">Delete</span>
-                      <IoTrashOutline className="w-5 h-5 text-[#ff3b30]" />
+                      <span className="text-[#ff3b30] text-sm">Delete</span>
+                      <IoTrashOutline className="w-4 h-4 text-[#ff3b30]" />
                     </button>
                   </div>
                 </div>

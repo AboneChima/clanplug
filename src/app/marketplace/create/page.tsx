@@ -430,7 +430,7 @@ function CreateListingForm() {
             {/* Game/Social Media Selection */}
             <div>
               <label className="block text-white text-[11px] xs:text-xs sm:text-sm font-medium mb-1 xs:mb-1.5">
-                {formData.type === 'MARKETPLACE_LISTING' ? 'Social Media Platform' : 'Game'} <span className="text-red-500">*</span>
+                {gadgetNames[formData.gameTitle] ? 'Item' : (formData.type === 'MARKETPLACE_LISTING' ? 'Social Account' : 'Game')} <span className="text-red-500">*</span>
               </label>
               <div className="w-full px-2 py-1.5 xs:px-3 xs:py-2 sm:px-4 sm:py-2.5 bg-slate-800/80 border border-slate-700 rounded-md xs:rounded-lg text-white text-xs xs:text-sm">
                 {formData.gameTitle ? (

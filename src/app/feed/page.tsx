@@ -62,6 +62,23 @@ export default function FeedPage() {
   const scrollRestored = useRef(false);
   const hasInitialized = useRef(false);
 
+  // AGGRESSIVE cache bust - use timestamp in URL to force Vercel CDN bypass
+  useEffect(() => {
+    // Force page reload with timestamp parameter on FIRST load only
+    const hasReloaded = sessionStorage.getItem('feed_cache_forced');
+    
+    if (!hasReloaded) {
+      const currentUrl = new URL(window.location.href);
+      const timestamp = Date.now();
+      
+      // Add timestamp to force new CDN request
+      currentUrl.searchParams.set('v', timestamp.toString());
+      
+      sessionStorage.setItem('feed_cache_forced', '1');
+      window.location.replace(currentUrl.toString());
+    }
+  }, []);
+
   // Initialize posts from cache or fetch
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -818,28 +835,11 @@ export default function FeedPage() {
                                   src={post.videos[0]}
                                   poster={`${post.videos[0]}#t=0.1`}
                                   className="absolute inset-0 w-full h-full object-contain"
-                                  loop
-                                  muted
+                                  controls
                                   playsInline
                                   preload="metadata"
                                   style={{ backgroundColor: '#000' }}
                                 />
-                                
-                                {/* Play indicator overlay */}
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                  <div className="w-16 h-16 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-                                    <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M8 5v14l11-7z"/>
-                                    </svg>
-                                  </div>
-                                </div>
-
-                                {/* Muted indicator */}
-                                <div className="absolute bottom-2 right-2 p-1.5 bg-black/60 backdrop-blur-sm rounded-full">
-                                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-                                  </svg>
-                                </div>
                               </div>
                             </div>
                           )}

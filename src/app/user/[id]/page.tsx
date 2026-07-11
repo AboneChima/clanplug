@@ -74,18 +74,10 @@ export default function UserProfilePage() {
       // Reset states when user changes
       setIsFollowing(false);
       setIsFollowingMe(false);
+      
       loadUserProfile();
     }
   }, [params.id]);
-
-  // Force cache bust on mount
-  useEffect(() => {
-    const currentUrl = window.location.href;
-    if (!currentUrl.includes('?') && !currentUrl.includes('#')) {
-      const cacheBustUrl = `${currentUrl}?_=${Date.now()}`;
-      window.history.replaceState({}, '', cacheBustUrl);
-    }
-  }, []);
 
   const loadUserProfile = async () => {
     try {
@@ -639,20 +631,48 @@ export default function UserProfilePage() {
               ) : (
                 <div className="grid grid-cols-3 gap-px bg-black">
                   {currentPosts.map((post) => {
-                    const hasImage = post.images?.[0];
-                    const hasVideo = post.videos?.[0];
+                    // ROBUST VIDEO DETECTION: Check both arrays AND file extensions
+                    const videoFromVideosArray = post.videos?.[0];
+                    const videoFromImagesArray = post.images?.find(img => img.match(/\.(mp4|mov|avi|webm)$/i));
+                    const hasVideo = videoFromVideosArray || videoFromImagesArray;
+                    
+                    // Only treat as image if it's NOT a video file extension
+                    const actualImages = post.images?.filter(img => !img.match(/\.(mp4|mov|avi|webm)$/i)) || [];
+                    const hasImage = !hasVideo && actualImages[0];
                     
                     // Check if text is emoji-only or very short
                     const text = post.title || post.description || '';
                     const isEmojiOnly = /^[\p{Emoji}\s]+$/u.test(text) && text.trim().length > 0;
                     const hasText = text.trim().length > 0;
                     
+                    console.log('Post debug:', {
+                      id: post.id,
+                      hasVideo,
+                      videoFromVideosArray,
+                      videoFromImagesArray,
+                      images: post.images,
+                      videos: post.videos
+                    });
+                    
                     return (
                       <Link key={post.id} href={`/post/${post.id}`}>
                         <div className="aspect-square bg-[#1a1a1a] relative overflow-hidden">
-                          {hasImage ? (
+                          {hasVideo ? (
+                            <div className="relative w-full h-full bg-gradient-to-br from-purple-900 to-blue-900 overflow-hidden flex flex-col items-center justify-center">
+                              {/* VERSION MARKER - If you see this, new code loaded */}
+                              <div className="absolute top-1 right-1 bg-green-500 text-white text-[8px] px-1 rounded">v4</div>
+                              
+                              {/* Play icon */}
+                              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
+                                <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z"/>
+                                </svg>
+                              </div>
+                              <span className="text-white text-xs font-medium">VIDEO</span>
+                            </div>
+                          ) : hasImage ? (
                             <Image 
-                              src={post.images![0]} 
+                              src={actualImages[0]} 
                               alt="Post" 
                               fill 
                               className="object-cover" 
@@ -676,19 +696,6 @@ export default function UserProfilePage() {
                                 }
                               }}
                             />
-                          ) : hasVideo ? (
-                            <div className="relative w-full h-full bg-gradient-to-br from-purple-900 to-blue-900 overflow-hidden flex flex-col items-center justify-center">
-                              {/* VERSION MARKER - If you see this, new code loaded */}
-                              <div className="absolute top-1 right-1 bg-green-500 text-white text-[8px] px-1 rounded">v2</div>
-                              
-                              {/* Play icon */}
-                              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-2">
-                                <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M8 5v14l11-7z"/>
-                                </svg>
-                              </div>
-                              <span className="text-white text-xs font-medium">VIDEO</span>
-                            </div>
                           ) : hasText ? (
                             <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] p-3 relative border border-[#2f3336]">
                               {/* Decorative corner accents */}

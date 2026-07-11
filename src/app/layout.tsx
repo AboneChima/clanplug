@@ -35,6 +35,7 @@ export const metadata: Metadata = {
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import BannedUserModal from '@/components/BannedUserModal';
+import RegisterSW from './register-sw';
 
 export default function RootLayout({
   children,
@@ -58,6 +59,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900`}
       >
+        <RegisterSW />
         <ToastProvider>
           <AuthProvider>
             <BannedUserModal />
