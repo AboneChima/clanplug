@@ -963,7 +963,7 @@ function ChatContent() {
                             />
                             {/* Timestamp overlay on image - only if there's no text below */}
                             {(!msg.content || msg.content === 'Image') && (
-                              <div className={`absolute bottom-2 ${isOwn ? 'right-2' : 'left-2'} flex items-center gap-0.5 px-1.5 py-0.5 bg-black/60 rounded backdrop-blur-sm`}>
+                              <div className="absolute bottom-2 right-2 flex items-center gap-0.5 px-1.5 py-0.5 bg-black/60 rounded backdrop-blur-sm">
                                 <span className="text-[10px] text-white/90">
                                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
@@ -979,13 +979,13 @@ function ChatContent() {
                         {!isListingShare && (
                           <>
                             {msg.content && msg.content !== 'Image' && (
-                              <div className="flex flex-wrap items-end gap-1 leading-[1.3] pb-0.5">
+                              <div className={`flex flex-wrap items-end leading-[1.3] ${hasImage ? 'px-2.5 pt-1.5 pb-1 gap-0.5' : 'gap-1.5 pb-1'}`}>
                                 {/* Text content */}
                                 <span className="text-[13px] break-words whitespace-pre-wrap flex-1 min-w-0">
                                   {msg.content}
                                 </span>
                                 {/* Timestamp - stays on same line if space, drops below if needed */}
-                                <span className={`flex items-center gap-0.5 flex-shrink-0 self-end ${isOwn ? 'mr-1' : 'ml-0.5'}`}>
+                                <span className={`flex items-center gap-0.5 flex-shrink-0 self-end ${isOwn && !hasImage ? 'mr-1' : ''}`}>
                                   <span className="text-[10px] opacity-50 whitespace-nowrap">
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
