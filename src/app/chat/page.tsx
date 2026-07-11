@@ -866,7 +866,7 @@ function ChatContent() {
                           isListingShare ? '' : 'rounded-2xl'
                         } ${
                           isOwn ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-[#2a2a2a] text-white rounded-bl-sm'
-                        } ${hasImage && !isListingShare ? 'p-0 overflow-hidden' : isListingShare ? '' : 'px-2 py-1.5'}`}>
+                        } ${hasImage && !isListingShare ? 'p-0 overflow-hidden' : isListingShare ? '' : isOwn ? 'px-2 py-1.5' : 'pl-2.5 pr-2 py-1.5'}`}>
                         
                         {/* Listing Share - Compact YouTube-style Thumbnail */}
                         
@@ -963,7 +963,7 @@ function ChatContent() {
                             />
                             {/* Timestamp overlay on image - only if there's no text below */}
                             {(!msg.content || msg.content === 'Image') && (
-                              <div className="absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 bg-black/60 rounded backdrop-blur-sm">
+                              <div className={`absolute bottom-2 ${isOwn ? 'right-2' : 'left-2'} flex items-center gap-0.5 px-1.5 py-0.5 bg-black/60 rounded backdrop-blur-sm`}>
                                 <span className="text-[10px] text-white/90">
                                   {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
@@ -979,18 +979,18 @@ function ChatContent() {
                         {!isListingShare && (
                           <>
                             {msg.content && msg.content !== 'Image' && (
-                              <div className="flex flex-wrap items-end gap-1 leading-[1.3]">
+                              <div className="flex flex-wrap items-end gap-1 leading-[1.3] pb-0.5">
                                 {/* Text content */}
                                 <span className="text-[13px] break-words whitespace-pre-wrap flex-1 min-w-0">
                                   {msg.content}
                                 </span>
                                 {/* Timestamp - stays on same line if space, drops below if needed */}
-                                <span className="flex items-center gap-0.5 flex-shrink-0 self-end pb-[1px]">
-                                  <span className="text-[11px] opacity-60 whitespace-nowrap">
+                                <span className={`flex items-center gap-0.5 flex-shrink-0 self-end ${isOwn ? 'mr-1' : 'ml-0.5'}`}>
+                                  <span className="text-[10px] opacity-50 whitespace-nowrap">
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                   {isOwn && (
-                                    <IoCheckmarkDoneOutline className="w-3.5 h-3.5 opacity-60" />
+                                    <IoCheckmarkDoneOutline className="w-3 h-3 opacity-50" />
                                   )}
                                 </span>
                               </div>
