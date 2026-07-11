@@ -866,7 +866,7 @@ function ChatContent() {
                           isListingShare ? '' : 'rounded-2xl'
                         } ${
                           isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-[#2a2a2a] text-white rounded-bl-md'
-                        } ${hasImage && !isListingShare ? 'overflow-hidden' : isListingShare ? '' : 'px-3 py-2'}`}>
+                        } ${hasImage && !isListingShare ? 'p-0 overflow-hidden' : isListingShare ? '' : 'px-3 py-2'}`}>
                         
                         {/* Listing Share - Compact YouTube-style Thumbnail */}
                         
@@ -937,11 +937,11 @@ function ChatContent() {
                         
                         {/* Regular Image Message - WhatsApp/Telegram style with timestamp overlay */}
                         {!isListingShare && hasImage && (
-                          <div className="relative">
+                          <div className="relative w-full">
                             <img 
                               src={msg.attachments![0]} 
                               alt="Image" 
-                              className="rounded-xl max-w-full w-full max-h-[300px] object-cover" 
+                              className="w-full max-h-[300px] object-cover block" 
                               onLoad={() => console.log('✅ Image loaded:', msg.attachments![0])}
                               onError={(e) => {
                                 console.error('❌ Image failed to load:', msg.attachments![0]);
@@ -975,21 +975,26 @@ function ChatContent() {
                           </div>
                         )}
                         
-                        {/* Regular Text Message */}
+                        {/* Regular Text Message - WhatsApp style with inline or below timestamp */}
                         {!isListingShare && (
                           <>
                             {msg.content && msg.content !== 'Image' && (
-                              <p className={`text-xs break-words whitespace-pre-wrap ${hasImage ? 'px-3 pt-2' : ''}`}>{msg.content}</p>
-                            )}
-                            {/* Show timestamp after text - both image+text or text-only */}
-                            {msg.content && msg.content !== 'Image' && (
-                              <div className={`flex items-center justify-end gap-1 ${hasImage ? 'px-3 pb-2' : 'mt-1'}`}>
-                                <span className="text-[10px] opacity-70">
-                                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              <div className="px-2 py-1">
+                                {/* Text with inline space for timestamp on last line */}
+                                <p className="text-xs break-words whitespace-pre-wrap inline">
+                                  {msg.content}
+                                  {/* Add invisible placeholder space for timestamp to sit inline */}
+                                  <span className="inline-block w-16 h-3"></span>
+                                </p>
+                                {/* Timestamp floats to the right on the last line of text */}
+                                <span className="float-right flex items-center gap-1 ml-1">
+                                  <span className="text-[10px] opacity-70 whitespace-nowrap">
+                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                  {isOwn && (
+                                    <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
+                                  )}
                                 </span>
-                                {isOwn && (
-                                  <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
-                                )}
                               </div>
                             )}
                           </>
