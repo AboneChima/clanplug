@@ -865,8 +865,8 @@ function ChatContent() {
                         <div className={`${
                           isListingShare ? '' : 'rounded-2xl'
                         } ${
-                          isOwn ? 'bg-blue-600 text-white rounded-br-md' : 'bg-[#2a2a2a] text-white rounded-bl-md'
-                        } ${hasImage && !isListingShare ? 'p-0 overflow-hidden' : isListingShare ? '' : 'px-3 py-2'}`}>
+                          isOwn ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-[#2a2a2a] text-white rounded-bl-sm'
+                        } ${hasImage && !isListingShare ? 'p-0 overflow-hidden' : isListingShare ? '' : 'px-2 py-1.5'}`}>
                         
                         {/* Listing Share - Compact YouTube-style Thumbnail */}
                         
@@ -979,18 +979,18 @@ function ChatContent() {
                         {!isListingShare && (
                           <>
                             {msg.content && msg.content !== 'Image' && (
-                              <div className="px-2 py-1 flex flex-wrap items-end gap-1">
+                              <div className="flex flex-wrap items-end gap-1 leading-[1.3]">
                                 {/* Text content */}
-                                <span className="text-xs break-words whitespace-pre-wrap flex-1 min-w-0">
+                                <span className="text-[13px] break-words whitespace-pre-wrap flex-1 min-w-0">
                                   {msg.content}
                                 </span>
                                 {/* Timestamp - stays on same line if space, drops below if needed */}
-                                <span className="flex items-center gap-0.5 flex-shrink-0 self-end ml-1">
-                                  <span className="text-[10px] opacity-70 whitespace-nowrap">
+                                <span className="flex items-center gap-0.5 flex-shrink-0 self-end pb-[1px]">
+                                  <span className="text-[11px] opacity-60 whitespace-nowrap">
                                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                   {isOwn && (
-                                    <IoCheckmarkDoneOutline className="w-3 h-3 opacity-70" />
+                                    <IoCheckmarkDoneOutline className="w-3.5 h-3.5 opacity-60" />
                                   )}
                                 </span>
                               </div>

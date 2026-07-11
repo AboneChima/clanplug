@@ -363,13 +363,21 @@ export default function MarketplaceDetailPage() {
                     : 'aspect-video'
                 }`}>
                   {post.videos && post.videos.length > 0 ? (
-                    <video
-                      src={post.videos[0]}
-                      className="w-full h-full object-contain"
-                      controls
-                      playsInline
-                      preload="metadata"
-                    />
+                    <div className="relative w-full h-full">
+                      <video
+                        src={post.videos[0]}
+                        className="w-full h-full object-contain"
+                        controls
+                        playsInline
+                        preload="metadata"
+                      />
+                      {/* Watermark overlay - bottom right corner */}
+                      <div className="absolute bottom-14 right-2 pointer-events-none">
+                        <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md">
+                          <p className="text-white text-xs font-semibold tracking-wide">www.clanplug.site</p>
+                        </div>
+                      </div>
+                    </div>
                   ) : post.images && post.images.length > 0 ? (
                     <div 
                       className="relative w-full h-full cursor-pointer group"
