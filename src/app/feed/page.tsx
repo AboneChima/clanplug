@@ -227,14 +227,14 @@ export default function FeedPage() {
   return (
     <AppShell>
       <div className="relative bg-black">
-        {/* Fixed Header - For You, Bookmarks, Search, Create Post */}
-        <div className="fixed top-14 lg:top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-gray-800">
+        {/* Fixed Header - Transparent so portraits show through */}
+        <div className="fixed top-14 lg:top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/70 via-black/40 to-transparent">
           <div className="max-w-2xl mx-auto flex items-center gap-2 px-4 py-3">
-            <button className="px-3 py-1.5 text-sm font-semibold rounded-full bg-blue-600 text-white">
+            <button className="px-3 py-1.5 text-sm font-semibold rounded-full bg-blue-600/90 backdrop-blur-sm text-white shadow-lg">
               For You
             </button>
             <Link href="/bookmarks">
-              <button className="px-3 py-1.5 text-sm font-semibold rounded-full bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white transition-all">
+              <button className="px-3 py-1.5 text-sm font-semibold rounded-full bg-black/40 backdrop-blur-sm text-gray-300 hover:bg-black/60 hover:text-white transition-all shadow-lg">
                 Bookmarks
               </button>
             </Link>
@@ -242,15 +242,15 @@ export default function FeedPage() {
             <div className="flex-1"></div>
             
             <Link href="/search">
-              <button className="px-3 py-1.5 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-gray-400 hover:text-white rounded-full transition-all flex items-center gap-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <button className="p-2 bg-black/40 backdrop-blur-sm hover:bg-black/60 text-gray-300 hover:text-white rounded-full transition-all shadow-lg">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
             </Link>
             
             <Link href="/create-post">
-              <button className="w-9 h-9 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all">
+              <button className="p-2 bg-blue-600/90 backdrop-blur-sm hover:bg-blue-700/90 text-white rounded-full transition-all shadow-lg">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                 </svg>
@@ -284,8 +284,10 @@ export default function FeedPage() {
                 key={post.id}
                 className="relative h-screen w-full snap-start snap-always flex items-center justify-center"
               >
-                {/* Fullscreen Media Content */}
-                <div className="absolute inset-0 flex items-center justify-center">
+                {/* Fullscreen Media Content - Adjusts when comments open */}
+                <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+                  showComments === post.id ? 'scale-90 -translate-y-[10%]' : ''
+                }`}>
                   {/* Video Post */}
                   {hasVideo && (
                     <video
@@ -323,8 +325,10 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                {/* Bottom-Left Overlay - User Info & Description */}
-                <div className="absolute bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none z-10">
+                {/* Bottom-Left Overlay - User Info & Description - Higher for text posts */}
+                <div className={`absolute left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none z-10 ${
+                  isTextOnly ? 'bottom-32' : 'bottom-20'
+                }`}>
                   <div className="pointer-events-auto max-w-xl">
                     {/* User Info */}
                     <Link href={`/user/${post.user.id}`} className="flex items-center gap-2 mb-2">
@@ -374,28 +378,28 @@ export default function FeedPage() {
                   </div>
                 </div>
 
-                {/* Right Side - Action Buttons */}
-                <div className="absolute right-3 bottom-32 flex flex-col gap-4 z-10">
+                {/* Right Side - Action Buttons - No background, higher position */}
+                <div className="absolute right-3 bottom-40 flex flex-col gap-6 z-10">
                   {/* Like */}
                   <button
                     onClick={() => handleLike(post.id)}
-                    className="flex flex-col items-center gap-1 p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+                    className="flex flex-col items-center gap-1 transition-transform hover:scale-110 active:scale-95"
                   >
                     {post.isLiked ? (
-                      <IoHeart className="w-7 h-7 text-red-500" />
+                      <IoHeart className="w-8 h-8 text-red-500 drop-shadow-lg" />
                     ) : (
-                      <IoHeartOutline className="w-7 h-7 text-white" />
+                      <IoHeartOutline className="w-8 h-8 text-white drop-shadow-lg" />
                     )}
-                    <span className="text-white text-xs font-semibold">{post._count.likes}</span>
+                    <span className="text-white text-xs font-bold drop-shadow-lg">{post._count.likes}</span>
                   </button>
 
                   {/* Comment */}
                   <button
                     onClick={() => toggleComments(post.id)}
-                    className="flex flex-col items-center gap-1 p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+                    className="flex flex-col items-center gap-1 transition-transform hover:scale-110 active:scale-95"
                   >
-                    <IoChatbubbleOutline className="w-7 h-7 text-white" />
-                    <span className="text-white text-xs font-semibold">{post._count.comments}</span>
+                    <IoChatbubbleOutline className="w-8 h-8 text-white drop-shadow-lg" />
+                    <span className="text-white text-xs font-bold drop-shadow-lg">{post._count.comments}</span>
                   </button>
 
                   {/* Share */}
@@ -409,27 +413,27 @@ export default function FeedPage() {
                         showToast('Link copied!', 'success');
                       });
                     }}
-                    className="p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+                    className="transition-transform hover:scale-110 active:scale-95"
                   >
-                    <IoShareSocialOutline className="w-7 h-7 text-white" />
+                    <IoShareSocialOutline className="w-8 h-8 text-white drop-shadow-lg" />
                   </button>
 
                   {/* Bookmark */}
                   <button
                     onClick={() => handleBookmark(post.id)}
-                    className="p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+                    className="transition-transform hover:scale-110 active:scale-95"
                   >
                     {post.isBookmarked ? (
-                      <IoBookmark className="w-7 h-7 text-yellow-500" />
+                      <IoBookmark className="w-8 h-8 text-yellow-400 drop-shadow-lg" />
                     ) : (
-                      <IoBookmarkOutline className="w-7 h-7 text-white" />
+                      <IoBookmarkOutline className="w-8 h-8 text-white drop-shadow-lg" />
                     )}
                   </button>
                 </div>
 
-                {/* Comments Slide-up Panel */}
+                {/* Comments Slide-up Panel - Exactly half screen */}
                 {showComments === post.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-black border-t border-gray-800 z-20 animate-slide-up">
+                  <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-black/95 backdrop-blur-xl border-t border-gray-800 z-20 animate-slide-up">
                     {/* Comments Header */}
                     <div className="flex items-center justify-between p-4 border-b border-gray-800">
                       <h2 className="text-white font-semibold text-lg">
