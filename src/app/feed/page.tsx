@@ -1,13 +1,30 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoCloseOutline, IoTrashOutline } from 'react-icons/io5';
-import AppShell from '@/components/AppShell';
+import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoChevronDown, IoChevronUp, IoSendOutline } from 'react-icons/io5';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+
+interface User {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  avatar?: string;
+  verificationBadge?: {
+    status: string;
+  };
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  user: User;
+}
 
 interface Post {
   id: string;
@@ -15,235 +32,32 @@ interface Post {
   images?: string[];
   videos?: string[];
   type?: string;
-  user: {
-    id: string;
-    username: string;
-    firstName: string;
-    lastName: string;
-    avatar?: string;
-  };
+  user: User;
   _count: { likes: number; comments: number };
   isLiked: boolean;
   isBookmarked?: boolean;
   createdAt: string;
-  comments?: Array<{
-    id: string;
-    content: string;
-    createdAt: string;
-    user: {
-      id: string;
-      username: string;
-      firstName: string;
-      lastName: string;
-      avatar?: string;
-    };
-  }>;
+  comments?: Comment[];
 }
 
 export default function FeedPage() {
-  // DEBUG: Version check - if you see this, you're on the latest version
-  console.log('🚀 Feed Page Version: 2.1.0 - Likes & Comments ACTIVE');
-  
   const { user } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showKYCBanner, setShowKYCBanner] = useState(true);
-  const [activeTab, setActiveTab] = useState<'forYou' | 'bookmarks'>('forYou');
-  const [showCommentBox, setShowCommentBox] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
-  const [loadingComments, setLoadingComments] = useState<string | null>(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
-  const [showInstallModal, setShowInstallModal] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const videoRefsMap = useRef<Map<string, HTMLVideoElement>>(new Map());
-  const scrollRestored = useRef(false);
-  const hasInitialized = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
 
-  // AGGRESSIVE cache bust - use timestamp in URL to force Vercel CDN bypass
   useEffect(() => {
-    // Force page reload with timestamp parameter on FIRST load only
-    const hasReloaded = sessionStorage.getItem('feed_cache_forced');
-    
-    if (!hasReloaded) {
-      const currentUrl = new URL(window.location.href);
-      const timestamp = Date.now();
-      
-      // Add timestamp to force new CDN request
-      currentUrl.searchParams.set('v', timestamp.toString());
-      
-      sessionStorage.setItem('feed_cache_forced', '1');
-      window.location.replace(currentUrl.toString());
-    }
-  }, []);
-
-  // Initialize posts from cache or fetch
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-
-    // Check for cached posts FIRST - don't fetch if we have them
-    const cachedPosts = sessionStorage.getItem('feedPostsCache');
-    const savedScrollPos = sessionStorage.getItem('feedScrollPosition');
-    
-    if (cachedPosts) {
-      // We have cached posts - restore them immediately, don't fetch
-      try {
-        const parsedPosts = JSON.parse(cachedPosts);
-        setPosts(parsedPosts);
-        setLoading(false);
-        console.log('✅ Restored', parsedPosts.length, 'posts from cache');
-        return; // STOP HERE - don't fetch
-      } catch (e) {
-        console.error('❌ Cache parse error:', e);
-      }
-    }
-    
-    // No cache - fetch fresh
-    console.log('📡 No cache found, fetching fresh posts');
     fetchPosts();
   }, []);
-
-  // Scroll position restoration - wait for posts to load
-  useEffect(() => {
-    if (posts.length > 0 && !scrollRestored.current) {
-      const savedScrollPos = sessionStorage.getItem('feedScrollPosition');
-      if (savedScrollPos) {
-        // Wait for images/videos to render
-        setTimeout(() => {
-          window.scrollTo(0, parseInt(savedScrollPos));
-          scrollRestored.current = true;
-          sessionStorage.removeItem('feedScrollPosition');
-          sessionStorage.removeItem('feedPostsCache');
-        }, 300);
-      }
-    }
-  }, [posts]);
-
-  // Cache posts when they change
-  useEffect(() => {
-    if (posts.length > 0) {
-      sessionStorage.setItem('feedPostsCache', JSON.stringify(posts));
-    }
-  }, [posts]);
-
-  // Reset scroll restored flag when component unmounts
-  useEffect(() => {
-    return () => {
-      scrollRestored.current = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    // TEMPORARY DEBUG: Clear dismissal for testing
-    // localStorage.removeItem('installBannerDismissed'); // Uncomment to reset
-    
-    // Check if app is already installed or user dismissed banner
-    const isInstalled = window.matchMedia('(display-mode: standalone)').matches || 
-                       (window.navigator as any).standalone === true;
-    const bannerDismissed = localStorage.getItem('installBannerDismissed');
-    
-    console.log('📱 PWA Status Check:', {
-      isInstalled,
-      bannerDismissed,
-      isSecureContext: window.isSecureContext,
-      hasServiceWorker: 'serviceWorker' in navigator,
-      manifestUrl: '/manifest.json',
-      userAgent: navigator.userAgent
-    });
-    
-    // Check if manifest is valid
-    if (document.querySelector('link[rel="manifest"]')) {
-      console.log('✅ Manifest link found in HTML');
-    } else {
-      console.warn('⚠️ Manifest link NOT found in HTML');
-    }
-    
-    if (!isInstalled && !bannerDismissed) {
-      // Show banner after 3 seconds
-      setTimeout(() => {
-        console.log('📱 Showing install banner');
-        setShowInstallBanner(true);
-      }, 3000);
-    }
-
-    // Listen for beforeinstallprompt event (for Android/Chrome)
-    const handleBeforeInstallPrompt = (e: any) => {
-      console.log('✅✅✅ beforeinstallprompt event fired! Native install available!', e);
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallBanner(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    
-    // Check after 5 seconds if event fired
-    setTimeout(() => {
-      if (!deferredPrompt) {
-        console.warn('⚠️ beforeinstallprompt did NOT fire after 5 seconds');
-        console.warn('Possible reasons:');
-        console.warn('1. App is already installed');
-        console.warn('2. User previously dismissed install prompt');
-        console.warn('3. PWA requirements not met (check manifest, icons, service worker)');
-        console.warn('4. Not using Chrome/Edge on Android');
-      }
-    }, 5000);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
-
-  // Auto-play videos when in viewport (Instagram-style)
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const video = entry.target as HTMLVideoElement;
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            // Video is 50%+ visible, play it
-            video.play().catch((err) => {
-              console.log('Auto-play prevented:', err);
-            });
-          } else {
-            // Video scrolled away, pause it
-            video.pause();
-          }
-        });
-      },
-      {
-        threshold: [0.5], // Trigger when 50% visible
-        rootMargin: '0px',
-      }
-    );
-
-    // Observe all videos
-    videoRefsMap.current.forEach((video) => {
-      if (video) observer.observe(video);
-    });
-
-    return () => {
-      videoRefsMap.current.forEach((video) => {
-        if (video) observer.unobserve(video);
-      });
-    };
-  }, [posts]);
-
-  // Listen for install button click from sidebar
-  useEffect(() => {
-    const handleOpenInstall = () => {
-      if (deferredPrompt) {
-        handleInstallClick();
-      } else {
-        setShowInstallModal(true);
-      }
-    };
-
-    window.addEventListener('openInstallModal', handleOpenInstall);
-    return () => window.removeEventListener('openInstallModal', handleOpenInstall);
-  }, [deferredPrompt]);
 
   const fetchPosts = async () => {
     try {
@@ -255,10 +69,6 @@ export default function FeedPage() {
       if (response.ok) {
         const data = await response.json();
         const postsData = Array.isArray(data.data) ? data.data : [];
-        console.log('📊 FEED API RESPONSE - First Post:', postsData[0]);
-        console.log('📊 _count field:', postsData[0]?._count);
-        console.log('📊 Likes count:', postsData[0]?._count?.likes);
-        console.log('📊 Comments count:', postsData[0]?._count?.comments);
         const socialPosts = postsData.filter((p: Post) => !p.type || p.type === 'SOCIAL_POST');
         setPosts(socialPosts);
       }
@@ -269,729 +79,467 @@ export default function FeedPage() {
     }
   };
 
-  const handleLike = async (postId: string) => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/like`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      setPosts(posts.map(post => 
-        post.id === postId 
-          ? { ...post, isLiked: !post.isLiked, _count: { ...post._count, likes: post.isLiked ? post._count.likes - 1 : post._count.likes + 1 }}
-          : post
-      ));
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const handleBookmark = async (postId: string) => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/bookmark`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      setPosts(posts.map(post => 
-        post.id === postId ? { ...post, isBookmarked: !post.isBookmarked } : post
-      ));
-      showToast(posts.find(p => p.id === postId)?.isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks', 'success');
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
-
-  const handleDelete = async (postId: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
-    
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        setPosts(posts.filter(p => p.id !== postId));
-        showToast('Post deleted successfully', 'success');
-      } else {
-        showToast('Failed to delete post', 'error');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      showToast('Failed to delete post', 'error');
-    }
-  };
-
-  const handleShare = async (post: Post) => {
-    const shareUrl = `https://www.clanplug.site/post/${post.id}`;
-    const shareText = `Check out this post by ${post.user.firstName} ${post.user.lastName} on Clanplug!\n\n${post.description.slice(0, 100)}${post.description.length > 100 ? '...' : ''}`;
-
-    // Try native share API first (works on mobile and some desktop browsers)
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Post by ${post.user.firstName} ${post.user.lastName}`,
-          text: shareText,
-          url: shareUrl,
-        });
-        // Only show success toast after successful share
-        showToast('Shared successfully!', 'success');
-        return;
-      } catch (error) {
-        // User cancelled the share dialog - don't show error
-        if ((error as Error).name === 'AbortError') {
-          return;
-        }
-        console.error('Share error:', error);
-        // Fall through to clipboard method
-      }
-    }
-    
-    // Fallback to clipboard - only show toast on successful copy
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      showToast('Link copied! Share it anywhere you like 🚀', 'success');
-    } catch (error) {
-      console.error('Clipboard error:', error);
-      // Last resort: create a temporary input element
-      try {
-        const tempInput = document.createElement('input');
-        tempInput.value = shareUrl;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand('copy');
-        document.body.removeChild(tempInput);
-        showToast('Link copied to clipboard!', 'success');
-      } catch (fallbackError) {
-        console.error('Fallback copy error:', fallbackError);
-        showToast('Could not copy link. Please try again.', 'error');
-      }
-    }
-  };
-
-  const handleSubmitComment = async (postId: string) => {
-    if (!commentText.trim()) return;
-
-    setSubmittingComment(true);
+  const fetchComments = async (postId: string) => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/comments`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setComments(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleLike = async () => {
+    const post = posts[currentIndex];
+    if (!post) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${post.id}/like`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      setPosts(posts.map((p, i) => 
+        i === currentIndex 
+          ? { ...p, isLiked: !p.isLiked, _count: { ...p._count, likes: p.isLiked ? p._count.likes - 1 : p._count.likes + 1 }}
+          : p
+      ));
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleBookmark = async () => {
+    const post = posts[currentIndex];
+    if (!post) return;
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${post.id}/bookmark`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      setPosts(posts.map((p, i) => 
+        i === currentIndex ? { ...p, isBookmarked: !p.isBookmarked } : p
+      ));
+      showToast(post.isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks', 'success');
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleComment = async () => {
+    const post = posts[currentIndex];
+    if (!commentText.trim() || submitting || !post) return;
+    
+    setSubmitting(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${post.id}/comments`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content: commentText }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const newComment = data.data;
-        
-        setCommentText('');
-        // Update posts with new comment and increment count
-        setPosts(posts.map(post => {
-          if (post.id === postId) {
-            return {
-              ...post,
-              _count: { ...post._count, comments: post._count.comments + 1 },
-              comments: [newComment, ...(post.comments || [])]
-            };
-          }
-          return post;
-        }));
-        showToast('Comment added!', 'success');
-      } else {
-        showToast('Failed to add comment', 'error');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      showToast('Failed to add comment', 'error');
-    } finally {
-      setSubmittingComment(false);
-    }
-  };
-
-  const loadComments = async (postId: string) => {
-    setLoadingComments(postId);
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/comments`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        body: JSON.stringify({ content: commentText })
       });
       
       if (response.ok) {
         const data = await response.json();
-        const comments = data.data || [];
-        setPosts(posts.map(post => 
-          post.id === postId ? { ...post, comments } : post
+        setComments([data.data, ...comments]);
+        setCommentText('');
+        setPosts(posts.map((p, i) => 
+          i === currentIndex ? { ...p, _count: { ...p._count, comments: p._count.comments + 1 }} : p
         ));
       }
     } catch (error) {
-      console.error('Error loading comments:', error);
+      showToast('Failed to post comment', 'error');
     } finally {
-      setLoadingComments(null);
+      setSubmitting(false);
     }
   };
 
-  const toggleCommentBox = (postId: string) => {
-    const isOpening = showCommentBox !== postId;
-    setShowCommentBox(isOpening ? postId : null);
-    
-    // Load comments when opening
-    if (isOpening) {
-      const post = posts.find(p => p.id === postId);
-      if (!post?.comments) {
-        loadComments(postId);
+  const toggleComments = () => {
+    if (!showComments) {
+      fetchComments(posts[currentIndex]?.id);
+    }
+    setShowComments(!showComments);
+  };
+
+  const handleScroll = (direction: 'up' | 'down') => {
+    if (direction === 'down' && currentIndex < posts.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setShowComments(false);
+      setDescriptionExpanded(false);
+    } else if (direction === 'up' && currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+      setShowComments(false);
+      setDescriptionExpanded(false);
+    }
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') handleScroll('down');
+      if (e.key === 'ArrowUp') handleScroll('up');
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentIndex, posts.length]);
+
+  // Touch swipe for mobile
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    const swipeDistance = touchStartY.current - touchEndY.current;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(swipeDistance) > minSwipeDistance) {
+      if (swipeDistance > 0) {
+        handleScroll('down');
+      } else {
+        handleScroll('up');
       }
-    } else {
-      setCommentText('');
     }
   };
 
-  const handleInstallClick = async () => {
-    console.log('🎯 Install button clicked, deferredPrompt:', !!deferredPrompt);
-    
-    if (deferredPrompt) {
-      // Android/Chrome - Show native prompt directly (NO INSTRUCTIONS)
-      try {
-        console.log('📲 Showing native install prompt...');
-        await deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`✅ User response to install prompt: ${outcome}`);
-        
-        if (outcome === 'accepted') {
-          setShowInstallBanner(false);
-          showToast('App installed!', 'success');
-          localStorage.setItem('installBannerDismissed', 'true');
-        }
-        setDeferredPrompt(null);
-      } catch (error) {
-        console.error('❌ Install prompt error:', error);
-        showToast('Install failed. Try from browser menu.', 'error');
-      }
-    } else {
-      // iOS or browser without native install - Show instructions
-      console.log('📖 No native prompt, showing instructions modal');
-      setShowInstallModal(true);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    );
+  }
 
-  const handleDismissInstallBanner = () => {
-    setShowInstallBanner(false);
-    localStorage.setItem('installBannerDismissed', 'true');
-  };
+  if (posts.length === 0) {
+    return (
+      <div className="h-screen bg-black flex flex-col items-center justify-center p-8">
+        <p className="text-gray-500 text-lg mb-4">No posts yet</p>
+        <Link href="/create-post">
+          <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors">
+            Create your first post
+          </button>
+        </Link>
+      </div>
+    );
+  }
 
-  const handleConfirmInstall = () => {
-    setShowInstallModal(false);
-    // Don't dismiss banner permanently - user might want to try again
-  };
+  const currentPost = posts[currentIndex];
+  if (!currentPost) return null;
+
+  const hasVideo = currentPost.videos && currentPost.videos.length > 0;
+  const hasImage = currentPost.images && currentPost.images.length > 0;
+  const isTextOnly = !hasVideo && !hasImage;
+  const needsTruncation = currentPost.description && currentPost.description.length > 100;
+  const displayDescription = needsTruncation && !descriptionExpanded 
+    ? currentPost.description.substring(0, 100) + '...' 
+    : currentPost.description;
 
   return (
-    <AppShell>
-      <div className="min-h-screen bg-black pb-24">
-        {/* KYC Banner */}
-        {!user?.isKYCVerified && showKYCBanner && (
-          <div className="bg-[#1a1a1a] border-b border-[#333] p-2">
-            <div className="max-w-2xl mx-auto flex items-center justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-xs font-medium">Complete your KYC</p>
-                <p className="text-gray-400 text-[10px]">Verify to unlock all features</p>
-              </div>
-              <Link href="/kyc">
-                <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap">
-                  Verify
-                </button>
-              </Link>
-              <button onClick={() => setShowKYCBanner(false)} className="p-1 text-gray-500 hover:text-white flex-shrink-0">
-                <IoCloseOutline className="w-4 h-4" />
-              </button>
+    <div 
+      ref={containerRef}
+      className="h-screen bg-black relative overflow-hidden snap-y snap-mandatory"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Navigation Arrows */}
+      {currentIndex > 0 && (
+        <button
+          onClick={() => handleScroll('up')}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60vh] z-40 p-2 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+        >
+          <IoChevronUp className="w-6 h-6 text-white" />
+        </button>
+      )}
+      {currentIndex < posts.length - 1 && (
+        <button
+          onClick={() => handleScroll('down')}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-[50vh] z-40 p-2 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+        >
+          <IoChevronDown className="w-6 h-6 text-white" />
+        </button>
+      )}
+
+      {/* Post Counter */}
+      <div className="absolute top-4 right-4 z-50 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full">
+        <span className="text-white text-sm font-medium">
+          {currentIndex + 1} / {posts.length}
+        </span>
+      </div>
+
+      {/* Main Content - Fullscreen */}
+      <div className={`h-full w-full flex items-center justify-center transition-all duration-300 ${showComments ? 'h-1/2' : 'h-full'}`}>
+        {/* Video Post */}
+        {hasVideo && (
+          <video
+            key={currentPost.id}
+            src={currentPost.videos![0]}
+            className="w-full h-full object-contain bg-black"
+            controls
+            playsInline
+            autoPlay
+            loop
+          />
+        )}
+
+        {/* Image Post */}
+        {hasImage && !hasVideo && (
+          <div className="relative w-full h-full">
+            <Image
+              src={currentPost.images![0]}
+              alt="Post"
+              fill
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+        )}
+
+        {/* Text-only Post - Story Style */}
+        {isTextOnly && (
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 p-8">
+            <div className="max-w-2xl text-center">
+              <p className="text-white text-2xl md:text-3xl font-medium leading-relaxed">
+                {currentPost.description}
+              </p>
             </div>
           </div>
         )}
 
-        {/* Feed */}
-        <div className="max-w-2xl mx-auto border-x border-[#2f3336]">
-          {/* Install App Banner - Modern iOS/Web3 Style - Above Fixed Header */}
-          {showInstallBanner && (
-            <div className="px-4 py-2 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-pink-600/10 border-b border-blue-500/20 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                {/* App Icon - Simple "C" Logo */}
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-[1px] shadow-lg shadow-blue-500/20 flex-shrink-0">
-                  <div className="w-full h-full rounded-[11px] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
-                    <span className="text-2xl font-black bg-gradient-to-br from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                      C
-                    </span>
-                  </div>
+        {/* Bottom-Left Overlay - User Info & Description */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none">
+          <div className="pointer-events-auto max-w-xl">
+            {/* User Info */}
+            <Link href={`/user/${currentPost.user.id}`} className="flex items-center gap-2 mb-2">
+              {currentPost.user.avatar ? (
+                <Image 
+                  src={currentPost.user.avatar} 
+                  alt={currentPost.user.username} 
+                  width={36} 
+                  height={36} 
+                  className="w-9 h-9 rounded-full border-2 border-white" 
+                  unoptimized 
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center border-2 border-white">
+                  <span className="text-white text-sm font-bold">{currentPost.user.firstName[0]}</span>
                 </div>
-                
-                {/* Text */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-semibold leading-tight">Add ClanPlug to Home</p>
-                  <p className="text-gray-400 text-[10px] leading-tight">Quick access, native feel</p>
-                </div>
-                
-                {/* Actions */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleInstallClick}
-                    className="px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white text-xs font-bold rounded-lg shadow-lg shadow-blue-500/25 transition-all active:scale-95 whitespace-nowrap"
-                  >
-                    Add to Home
-                  </button>
-                  <button
-                    onClick={handleDismissInstallBanner}
-                    className="p-1 text-gray-400 hover:text-white transition-colors"
-                  >
-                    <IoCloseOutline className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Install Instructions Modal - iOS Style */}
-          {showInstallModal && (
-            <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowInstallModal(false)}>
-              <div className="w-full max-w-md bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] rounded-3xl shadow-2xl shadow-blue-500/20 border border-blue-500/20 overflow-hidden animate-slide-up" onClick={(e) => e.stopPropagation()}>
-                {/* Header with Icon */}
-                <div className="pt-6 pb-4 px-6 border-b border-[#2f3336]">
-                  <div className="flex flex-col items-center gap-3">
-                    {/* Large App Icon */}
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-[2px] shadow-xl shadow-blue-500/30">
-                      <div className="w-full h-full rounded-[14px] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
-                        <span className="text-4xl font-black bg-gradient-to-br from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                          C
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <h3 className="text-white text-lg font-bold mb-1">Add to Home Screen</h3>
-                      <p className="text-gray-400 text-sm">Install ClanPlug for quick access</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Instructions */}
-                <div className="p-6 space-y-4">
-                  {/iPad|iPhone|iPod/.test(navigator.userAgent) ? (
-                    <>
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
-                          <span className="text-blue-400 font-bold text-sm">1</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white text-sm font-medium mb-1">Tap the Share button</p>
-                          <div className="flex items-center gap-2 text-gray-400 text-xs">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
-                            </svg>
-                            <span>(at the bottom or top of Safari)</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
-                          <span className="text-blue-400 font-bold text-sm">2</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white text-sm font-medium mb-1">Select "Add to Home Screen"</p>
-                          <p className="text-gray-400 text-xs">Scroll down if you don't see it</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
-                          <span className="text-blue-400 font-bold text-sm">3</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white text-sm font-medium mb-1">Tap "Add"</p>
-                          <p className="text-gray-400 text-xs">The app will appear on your home screen</p>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
-                          <span className="text-blue-400 font-bold text-sm">1</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white text-sm font-medium mb-1">Open browser menu</p>
-                          <p className="text-gray-400 text-xs">Tap the three dots (⋮) in the top right</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
-                          <span className="text-blue-400 font-bold text-sm">2</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white text-sm font-medium mb-1">Select "Add to Home screen"</p>
-                          <p className="text-gray-400 text-xs">Or "Install app" option</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center flex-shrink-0 mt-1">
-                          <span className="text-blue-400 font-bold text-sm">3</span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white text-sm font-medium mb-1">Confirm installation</p>
-                          <p className="text-gray-400 text-xs">The app will be added to your home screen</p>
-                        </div>
-                      </div>
-                    </>
+              )}
+              <div>
+                <div className="flex items-center gap-1">
+                  <span className="text-white font-semibold text-sm">
+                    {currentPost.user.firstName} {currentPost.user.lastName}
+                  </span>
+                  {(currentPost.user.verificationBadge?.status === 'verified' || currentPost.user.verificationBadge?.status === 'active') && (
+                    <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
                   )}
                 </div>
-
-                {/* Action Button */}
-                <div className="p-6 pt-2">
-                  <button
-                    onClick={handleConfirmInstall}
-                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 transition-all active:scale-95"
-                  >
-                    Got it!
-                  </button>
-                </div>
+                <span className="text-gray-300 text-xs">@{currentPost.user.username}</span>
               </div>
-            </div>
-          )}
+            </Link>
 
-          {/* Fixed Header - Stays on scroll */}
-          <div className="sticky top-14 lg:top-0 z-50 bg-black/95 backdrop-blur-md border-b border-[#2f3336]">
-            <div className="flex items-center gap-2 px-4 py-3">
+            {/* Description - Only show for media posts */}
+            {!isTextOnly && (
+              <div className="text-white text-sm">
+                <p className="mb-1">{displayDescription}</p>
+                {needsTruncation && (
+                  <button
+                    onClick={() => setDescriptionExpanded(!descriptionExpanded)}
+                    className="text-blue-400 text-xs font-medium hover:text-blue-300 transition-colors"
+                  >
+                    {descriptionExpanded ? 'Show less' : 'more...'}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Action Buttons */}
+      <div className="absolute right-3 bottom-20 flex flex-col gap-5 z-20">
+        {/* Like */}
+        <button
+          onClick={handleLike}
+          className="flex flex-col items-center gap-1 p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+        >
+          {currentPost.isLiked ? (
+            <IoHeart className="w-7 h-7 text-red-500" />
+          ) : (
+            <IoHeartOutline className="w-7 h-7 text-white" />
+          )}
+          <span className="text-white text-xs font-semibold">{currentPost._count.likes}</span>
+        </button>
+
+        {/* Comment */}
+        <button
+          onClick={toggleComments}
+          className="flex flex-col items-center gap-1 p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+        >
+          <IoChatbubbleOutline className="w-7 h-7 text-white" />
+          <span className="text-white text-xs font-semibold">{currentPost._count.comments}</span>
+        </button>
+
+        {/* Share */}
+        <button
+          onClick={() => {
+            navigator.share?.({ 
+              title: `Post by ${currentPost.user.firstName}`, 
+              url: `${window.location.origin}/post/${currentPost.id}`
+            }).catch(() => {
+              navigator.clipboard.writeText(`${window.location.origin}/post/${currentPost.id}`);
+              showToast('Link copied!', 'success');
+            });
+          }}
+          className="p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+        >
+          <IoShareSocialOutline className="w-7 h-7 text-white" />
+        </button>
+
+        {/* Bookmark */}
+        <button
+          onClick={handleBookmark}
+          className="p-3 bg-black/40 backdrop-blur-md rounded-full hover:bg-black/60 transition-all"
+        >
+          {currentPost.isBookmarked ? (
+            <IoBookmark className="w-7 h-7 text-yellow-500" />
+          ) : (
+            <IoBookmarkOutline className="w-7 h-7 text-white" />
+          )}
+        </button>
+      </div>
+
+      {/* Comments Slide-up Panel */}
+      <div 
+        className={`absolute bottom-0 left-0 right-0 bg-black border-t border-gray-800 transition-all duration-300 ease-in-out ${
+          showComments ? 'h-1/2' : 'h-0'
+        } overflow-hidden z-30`}
+      >
+        {/* Comments Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-800">
+          <h2 className="text-white font-semibold text-lg">
+            Comments ({currentPost._count.comments})
+          </h2>
+          <button
+            onClick={toggleComments}
+            className="p-2 hover:bg-gray-900 rounded-full transition-colors"
+          >
+            <IoChevronDown className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        {/* Comment Input */}
+        <div className="p-3 border-b border-gray-800 bg-gray-950">
+          <div className="flex gap-2">
+            {user?.avatar ? (
+              <Image 
+                src={user.avatar} 
+                alt={user.username} 
+                width={32} 
+                height={32} 
+                className="w-8 h-8 rounded-full" 
+                unoptimized 
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs font-bold">{user?.firstName?.[0] || 'U'}</span>
+              </div>
+            )}
+            <div className="flex-1 flex gap-2">
+              <input
+                ref={commentInputRef}
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleComment()}
+                placeholder="Add a comment..."
+                className="flex-1 px-3 py-2 bg-gray-900 border border-gray-800 rounded-full text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500"
+              />
               <button
-                onClick={() => setActiveTab('forYou')}
-                className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-all whitespace-nowrap ${
-                  activeTab === 'forYou' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
-                }`}
+                onClick={handleComment}
+                disabled={!commentText.trim() || submitting}
+                className="p-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-full transition-colors"
               >
-                For You
+                <IoSendOutline className="w-5 h-5" />
               </button>
-              <button
-                onClick={() => setActiveTab('bookmarks')}
-                className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-all whitespace-nowrap ${
-                  activeTab === 'bookmarks' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#2a2a2a] hover:text-white'
-                }`}
-              >
-                Bookmarks
-              </button>
-              
-              <div className="flex-1"></div>
-              
-              <Link href="/search">
-                <button className="px-3 py-1.5 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-gray-400 hover:text-white rounded-full transition-all flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span className="text-sm">Search</span>
-                </button>
-              </Link>
-              
-              <Link href="/create-post">
-                <button className="w-9 h-9 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                  </svg>
-                </button>
-              </Link>
             </div>
           </div>
+        </div>
 
-          {/* Content */}
-
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        {/* Comments List - Scrollable */}
+        <div className="overflow-y-auto h-[calc(100%-140px)]">
+          {comments.length === 0 ? (
+            <div className="p-8 text-center">
+              <IoChatbubbleOutline className="w-12 h-12 text-gray-700 mx-auto mb-2" />
+              <p className="text-gray-500 text-sm">No comments yet</p>
+              <p className="text-gray-600 text-xs">Be the first to comment!</p>
             </div>
           ) : (
-            <div className="divide-y divide-[#2f3336]">
-              {posts
-                .filter(post => activeTab === 'forYou' || post.isBookmarked)
-                .map((post) => (
-                <div key={post.id} className="p-3 hover:bg-[#080808] transition-colors">
-                  <div className="flex gap-2">
-                    {/* Avatar */}
-                    <div onClick={(e) => { e.stopPropagation(); }} className="flex-shrink-0">
-                      <Link href={`/user/${post.user.id}`}>
-                        {post.user.avatar ? (
-                          <Image src={post.user.avatar} alt={post.user.username} width={36} height={36} className="w-9 h-9 rounded-full" unoptimized />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-[#1a1a1a] flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">{post.user.firstName[0]}</span>
-                          </div>
-                        )}
-                      </Link>
-                    </div>
-
-                    {/* Content - Full width */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <div className="flex items-center gap-1">
-                          <span className="font-bold text-white text-xs">{post.user.firstName} {post.user.lastName}</span>
-                        {((post.user as any).verificationBadge?.status === 'verified' || (post.user as any).verificationBadge?.status === 'active') && (
-                          <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                          <span className="text-gray-500 text-[10px]">@{post.user.username}</span>
-                        </div>
-                        
-                        {/* Delete button - only show for own posts */}
-                        {post.user.id === user?.id && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(post.id);
-                            }}
-                            className="p-1 hover:bg-red-500/10 rounded-full transition-colors"
-                            title="Delete post"
-                          >
-                            <IoTrashOutline className="w-3.5 h-3.5 text-red-500" />
-                          </button>
-                        )}
+            comments.map((comment) => (
+              <div key={comment.id} className="p-4 border-b border-gray-900 hover:bg-gray-950 transition-colors">
+                <div className="flex gap-3">
+                  <Link href={`/user/${comment.user.id}`}>
+                    {comment.user.avatar ? (
+                      <Image 
+                        src={comment.user.avatar} 
+                        alt={comment.user.username} 
+                        width={32} 
+                        height={32} 
+                        className="w-8 h-8 rounded-full" 
+                        unoptimized 
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">{comment.user.firstName[0]}</span>
                       </div>
+                    )}
+                  </Link>
 
-                      {/* Post content - clickable to go to full post */}
-                      <Link 
-                        href={`/post/${post.id}`}
-                        onClick={() => {
-                          sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
-                        }}
-                      >
-                        <div className="cursor-pointer">
-                          {(() => {
-                            // Check if content is emoji-only
-                            const text = post.description || '';
-                            const isEmojiOnly = /^[\p{Emoji}\s]+$/u.test(text) && text.trim().length > 0 && text.trim().length <= 20;
-                            
-                            if (isEmojiOnly) {
-                              return <p className="text-5xl mb-2 leading-tight">{text.trim()}</p>;
-                            } else {
-                              return <p className="text-white text-xs mb-2 whitespace-pre-wrap line-clamp-3">{post.description}</p>;
-                            }
-                          })()}
-
-                          {/* Images with fallback - Limited height for portraits */}
-                          {post.images && post.images[0] && (
-                            <div className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-[#1a1a1a] max-h-[600px] flex items-center justify-center">
-                              <Image 
-                                src={post.images[0]} 
-                                alt="Post" 
-                                width={600} 
-                                height={400} 
-                                className="w-full max-h-[600px] object-contain" 
-                                unoptimized 
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  const parent = target.parentElement;
-                                  if (parent && !parent.querySelector('.fallback-placeholder')) {
-                                    const fallback = document.createElement('div');
-                                    fallback.className = 'fallback-placeholder flex items-center justify-center h-64 bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f]';
-                                    fallback.innerHTML = `
-                                      <div class="text-center">
-                                        <svg class="w-16 h-16 mx-auto mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        <p class="text-gray-500 text-sm">Image unavailable</p>
-                                      </div>
-                                    `;
-                                    parent.appendChild(fallback);
-                                  }
-                                }}
-                              />
-                            </div>
-                          )}
-
-                          {/* Videos - Click to go to full post, controls work inline */}
-                          {post.videos && post.videos[0] && (
-                            <div 
-                              className="mb-2 rounded-xl overflow-hidden border border-[#2f3336] bg-black relative group"
-                            >
-                              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                                <video
-                                  ref={(el) => {
-                                    if (el) {
-                                      videoRefsMap.current.set(post.id, el);
-                                    } else {
-                                      videoRefsMap.current.delete(post.id);
-                                    }
-                                  }}
-                                  src={post.videos[0]}
-                                  poster={`${post.videos[0]}#t=0.1`}
-                                  className="absolute inset-0 w-full h-full object-contain cursor-pointer"
-                                  controls
-                                  playsInline
-                                  preload="metadata"
-                                  style={{ backgroundColor: '#000' }}
-                                  onClick={(e) => {
-                                    // Only navigate if clicking on video itself, not controls
-                                    const target = e.target as HTMLVideoElement;
-                                    const rect = target.getBoundingClientRect();
-                                    const clickY = e.clientY - rect.top;
-                                    const videoHeight = rect.height;
-                                    
-                                    // If click is in bottom 15% (where controls are), don't navigate
-                                    if (clickY > videoHeight * 0.85) {
-                                      e.stopPropagation();
-                                      return;
-                                    }
-                                    
-                                    // Otherwise navigate to full post
-                                    e.preventDefault();
-                                    sessionStorage.setItem('feedScrollPosition', window.scrollY.toString());
-                                    router.push(`/post/${post.id}`);
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Link href={`/user/${comment.user.id}`} className="font-semibold text-white text-sm hover:underline">
+                        {comment.user.firstName} {comment.user.lastName}
                       </Link>
-
-                      {/* Actions */}
-                      <div className="flex items-center justify-between max-w-xs">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleCommentBox(post.id);
-                          }}
-                          className="flex items-center gap-1.5 text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full"
-                        >
-                          <IoChatbubbleOutline className="w-[18px] h-[18px]" />
-                          <span className="text-xs font-medium">{post._count.comments}</span>
-                        </button>
-
-                        <button onClick={(e) => { e.stopPropagation(); handleLike(post.id); }} className="flex items-center gap-1.5 text-gray-300 hover:text-pink-500 transition-colors p-1.5 hover:bg-pink-500/10 rounded-full">
-                          {post.isLiked ? <IoHeart className="w-[18px] h-[18px] text-pink-500" /> : <IoHeartOutline className="w-[18px] h-[18px]" />}
-                          <span className="text-xs font-medium">{post._count.likes}</span>
-                        </button>
-
-                        <button 
-                          onClick={(e) => { 
-                            e.stopPropagation(); 
-                            handleShare(post); 
-                          }} 
-                          className="text-gray-300 hover:text-green-500 transition-colors p-1.5 hover:bg-green-500/10 rounded-full"
-                        >
-                          <IoShareSocialOutline className="w-[18px] h-[18px]" />
-                        </button>
-
-                        <button onClick={(e) => { e.stopPropagation(); handleBookmark(post.id); }} className="text-gray-300 hover:text-blue-500 transition-colors p-1.5 hover:bg-blue-500/10 rounded-full">
-                          {post.isBookmarked ? <IoBookmark className="w-[18px] h-[18px] text-blue-500" /> : <IoBookmarkOutline className="w-[18px] h-[18px]" />}
-                        </button>
-                      </div>
-
-                      {/* Inline Comment Box - Full Width */}
-                      {showCommentBox === post.id && (
-                        <div className="mt-3 pt-3 border-t border-[#2f3336]">
-                          {/* Previous Comments - Show latest 3 with better visibility */}
-                          {loadingComments === post.id ? (
-                            <div className="flex items-center justify-center py-2">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                            </div>
-                          ) : post.comments && post.comments.length > 0 ? (
-                            <div className="mb-3 space-y-2.5 max-h-48 overflow-y-auto">
-                              {post.comments.slice(0, 3).map((comment) => (
-                                <div key={comment.id} className="flex gap-2">
-                                  <Link href={`/user/${comment.user.id}`} onClick={(e) => e.stopPropagation()}>
-                                    {comment.user.avatar ? (
-                                      <Image src={comment.user.avatar} alt={comment.user.username} width={28} height={28} className="w-7 h-7 rounded-full flex-shrink-0 hover:opacity-80 transition-opacity" unoptimized />
-                                    ) : (
-                                      <div className="w-7 h-7 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0 hover:bg-[#2a2a2a] transition-colors">
-                                        <span className="text-white text-[10px] font-bold">{comment.user.firstName[0]}</span>
-                                      </div>
-                                    )}
-                                  </Link>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-1.5">
-                                      <Link href={`/user/${comment.user.id}`} onClick={(e) => e.stopPropagation()}>
-                                        <span className="text-white text-xs font-medium hover:underline cursor-pointer">{comment.user.firstName}</span>
-                                      </Link>
-                                      <Link href={`/user/${comment.user.id}`} onClick={(e) => e.stopPropagation()}>
-                                        <span className="text-gray-500 text-[10px] hover:text-gray-400 cursor-pointer">@{comment.user.username}</span>
-                                      </Link>
-                                    </div>
-                                    <p className="text-gray-300 text-xs break-words leading-relaxed">{comment.content}</p>
-                                  </div>
-                                </div>
-                              ))}
-                              {post.comments.length > 3 && (
-                                <Link href={`/post/${post.id}`}>
-                                  <button className="text-blue-400 text-xs hover:underline">
-                                    View all {post.comments.length} comments
-                                  </button>
-                                </Link>
-                              )}
-                            </div>
-                          ) : null}
-
-                          {/* Add Comment - Small Input - Full Width */}
-                          <div className="flex gap-2">
-                            {user?.avatar ? (
-                              <Image src={user.avatar} alt="You" width={24} height={24} className="w-6 h-6 rounded-full flex-shrink-0" unoptimized />
-                            ) : (
-                              <div className="w-6 h-6 rounded-full bg-[#1a1a1a] flex items-center justify-center flex-shrink-0">
-                                <span className="text-white text-[10px] font-bold">{user?.firstName?.[0]}</span>
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <textarea
-                                value={commentText}
-                                onChange={(e) => {
-                                  setCommentText(e.target.value);
-                                  // Auto-resize textarea
-                                  e.target.style.height = 'auto';
-                                  e.target.style.height = e.target.scrollHeight + 'px';
-                                }}
-                                placeholder="Write a comment..."
-                                className="w-full bg-[#1a1a1a] border border-[#2f3336] rounded-lg px-2.5 py-1.5 text-white text-xs placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none overflow-hidden"
-                                rows={1}
-                                style={{ maxHeight: '120px' }}
-                                onInput={(e) => {
-                                  const target = e.target as HTMLTextAreaElement;
-                                  target.style.height = 'auto';
-                                  target.style.height = Math.min(target.scrollHeight, 120) + 'px';
-                                }}
-                                autoFocus
-                              />
-                              <div className="flex justify-end gap-2 mt-1.5">
-                                <button
-                                  onClick={() => {
-                                    setShowCommentBox(null);
-                                    setCommentText('');
-                                  }}
-                                  className="px-3 py-1 text-xs text-gray-400 hover:text-white transition-colors"
-                                >
-                                  Cancel
-                                </button>
-                                <button
-                                  onClick={() => handleSubmitComment(post.id)}
-                                  disabled={!commentText.trim() || submittingComment}
-                                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs rounded-full transition-colors"
-                                >
-                                  {submittingComment ? 'Posting...' : 'Comment'}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                      {(comment.user.verificationBadge?.status === 'verified' || comment.user.verificationBadge?.status === 'active') && (
+                        <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
                       )}
+                      <span className="text-gray-500 text-xs">@{comment.user.username}</span>
+                      <span className="text-gray-600 text-xs">·</span>
+                      <span className="text-gray-600 text-xs">
+                        {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
                     </div>
+                    <p className="text-white text-sm whitespace-pre-wrap">{comment.content}</p>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           )}
         </div>
       </div>
-    </AppShell>
+    </div>
   );
 }
