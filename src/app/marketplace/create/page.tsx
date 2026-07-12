@@ -106,19 +106,30 @@ function CreateListingForm() {
     fetchListingCount();
   }, [user?.id]);
 
-  // Pre-fill game from URL parameter and determine if it's social media
+  // Pre-fill game from URL parameter and determine if it's social media or gadget
   useEffect(() => {
     const gameFromUrl = searchParams.get('game');
     if (gameFromUrl) {
       // Check if it's a social media account
-      const socialMediaTypes = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter', 'google', 'vpn'];
+      const socialMediaTypes = ['tiktok', 'instagram', 'youtube', 'facebook', 'twitter', 'google', 'vpn', 'snapchat', 'discord', 'twitch', 'pinterest', 'linkedin', 'quora', 'reddit', 'kick', 'likee'];
       const isSocialMedia = socialMediaTypes.includes(gameFromUrl);
+      
+      // Check if it's a gadget/physical item
+      const gadgetTypes = ['ipad-tablets', 'ps-xbox', 'gaming-phones', 'headphones', 'tv-monitor', 'internet-wifi', 'game-accessories', 'pc-laptops'];
+      const isGadget = gadgetTypes.includes(gameFromUrl);
+      
+      // Determine type based on category
+      let listingType = 'GAME_ACCOUNT'; // Default for games
+      if (isSocialMedia) {
+        listingType = 'MARKETPLACE_LISTING';
+      } else if (isGadget) {
+        listingType = 'MARKETPLACE_LISTING'; // Gadgets also use MARKETPLACE_LISTING
+      }
       
       setFormData(prev => ({ 
         ...prev, 
         gameTitle: gameFromUrl,
-        // All marketplace listings use MARKETPLACE_LISTING type (not SOCIAL_ACCOUNT)
-        type: isSocialMedia ? 'MARKETPLACE_LISTING' : 'GAME_ACCOUNT'
+        type: listingType
       }));
     }
   }, [searchParams]);

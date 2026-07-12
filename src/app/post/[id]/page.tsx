@@ -259,11 +259,9 @@ export default function PostDetailPage() {
                     preload="metadata"
                     autoPlay
                   />
-                  {/* Watermark overlay for video */}
-                  <div className="absolute bottom-3 right-3 pointer-events-none">
-                    <span className="text-white font-bold text-sm drop-shadow-lg" style={{opacity: 0.6}}>
-                      ClanPlug
-                    </span>
+                  {/* Watermark overlay for video - centered bottom */}
+                  <div className="absolute bottom-14 left-1/2 transform -translate-x-1/2 pointer-events-none">
+                    <p className="text-white/80 text-sm font-semibold tracking-wider drop-shadow-lg">clanplug</p>
                   </div>
                 </div>
                 {/* Download button for video */}

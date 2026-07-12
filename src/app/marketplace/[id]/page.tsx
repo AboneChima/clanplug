@@ -371,11 +371,9 @@ export default function MarketplaceDetailPage() {
                         playsInline
                         preload="metadata"
                       />
-                      {/* Watermark overlay - bottom right corner */}
-                      <div className="absolute bottom-14 right-2 pointer-events-none">
-                        <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded-md">
-                          <p className="text-white text-xs font-semibold tracking-wide">www.clanplug.site</p>
-                        </div>
+                      {/* Watermark overlay - centered bottom like FYP */}
+                      <div className="absolute bottom-14 left-1/2 transform -translate-x-1/2 pointer-events-none">
+                        <p className="text-white/80 text-sm font-semibold tracking-wider drop-shadow-lg">clanplug</p>
                       </div>
                     </div>
                   ) : post.images && post.images.length > 0 ? (
