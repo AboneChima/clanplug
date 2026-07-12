@@ -382,9 +382,26 @@ export const postController = {
       }
 
       // Use local storage - files are already on disk from multer
-      const { getFileUrl } = await import('../services/local-storage.service');
+      const { getFileUrl, addVideoWatermark } = await import('../services/local-storage.service');
       
-      const urls = files.map((file) => getFileUrl(file.path));
+      // Add watermark to videos
+      const processedFiles = await Promise.all(
+        files.map(async (file) => {
+          // If it's a video, add watermark
+          if (file.mimetype.startsWith('video/')) {
+            try {
+              await addVideoWatermark(file.path);
+              console.log(`✅ Watermark added to: ${file.filename}`);
+            } catch (err) {
+              console.error(`⚠️ Failed to add watermark to ${file.filename}:`, err);
+              // Continue even if watermark fails
+            }
+          }
+          return file;
+        })
+      );
+      
+      const urls = processedFiles.map((file) => getFileUrl(file.path));
       
       console.log('✅ Upload successful:', { urls });
 
@@ -392,7 +409,7 @@ export const postController = {
         success: true,
         data: {
           urls: urls,
-          files: files.map((file, idx) => ({
+          files: processedFiles.map((file, idx) => ({
             url: urls[idx],
             type: file.mimetype.startsWith('video/') ? 'video' : 'image',
             filename: file.filename,

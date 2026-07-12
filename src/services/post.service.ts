@@ -195,113 +195,118 @@ export const postService = {
       maxPrice?: number;
     }
   ): Promise<{ posts: PostWithAuthor[]; pagination: any }> {
-    const skip = (page - 1) * limit;
-    
-    const where: any = {
-      status: PostStatus.ACTIVE,
-    };
+    try {
+      const skip = (page - 1) * limit;
+      
+      const where: any = {
+        status: PostStatus.ACTIVE,
+      };
 
-    if (filters?.category) {
-      where.category = filters.category;
-    }
-
-    if (filters?.userId) {
-        where.userId = filters.userId;
+      if (filters?.category) {
+        where.category = filters.category;
       }
 
-    if (filters?.search) {
-      where.OR = [
-        { title: { contains: filters.search, mode: 'insensitive' } },
-        { description: { contains: filters.search, mode: 'insensitive' } },
-        { category: { contains: filters.search, mode: 'insensitive' } },
-      ];
-    }
+      if (filters?.userId) {
+          where.userId = filters.userId;
+        }
 
-    if (filters?.type) {
-      where.type = filters.type;
-    }
-
-    if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
-      where.price = {};
-      if (filters.minPrice !== undefined) {
-        where.price.gte = filters.minPrice;
+      if (filters?.search) {
+        where.OR = [
+          { title: { contains: filters.search, mode: 'insensitive' } },
+          { description: { contains: filters.search, mode: 'insensitive' } },
+          { category: { contains: filters.search, mode: 'insensitive' } },
+        ];
       }
-      if (filters.maxPrice !== undefined) {
-        where.price.lte = filters.maxPrice;
-      }
-    }
 
-    // Get user's bookmarks (if table exists)
-    let bookmarkedPostIds: string[] = [];
-    if (userId) {
-      try {
-        const bookmarks = await prisma.bookmark.findMany({
-          where: { userId },
-          select: { postId: true },
-        });
-        bookmarkedPostIds = bookmarks.map(b => b.postId);
-      } catch (err) {
-        // Bookmarks table doesn't exist yet, continue without bookmarks
-        console.log('Bookmarks table not ready, skipping bookmark check');
+      if (filters?.type) {
+        where.type = filters.type;
       }
-    }
 
-    const [posts, total] = await Promise.all([
-      prisma.post.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              isKYCVerified: true,
-              verificationBadge: {
-                select: {
-                  status: true,
-                  expiresAt: true,
+      if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+        where.price = {};
+        if (filters.minPrice !== undefined) {
+          where.price.gte = filters.minPrice;
+        }
+        if (filters.maxPrice !== undefined) {
+          where.price.lte = filters.maxPrice;
+        }
+      }
+
+      // Get user's bookmarks (if table exists)
+      let bookmarkedPostIds: string[] = [];
+      if (userId) {
+        try {
+          const bookmarks = await prisma.bookmark.findMany({
+            where: { userId },
+            select: { postId: true },
+          });
+          bookmarkedPostIds = bookmarks.map(b => b.postId);
+        } catch (err) {
+          // Bookmarks table doesn't exist yet, continue without bookmarks
+          console.log('Bookmarks table not ready, skipping bookmark check');
+        }
+      }
+
+      const [posts, total] = await Promise.all([
+        prisma.post.findMany({
+          where,
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                isKYCVerified: true,
+                verificationBadge: {
+                  select: {
+                    status: true,
+                    expiresAt: true,
+                  },
                 },
               },
             },
-          },
-          _count: {
-            select: {
-              likes: true,
-              comments: true,
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+              },
             },
+            likes: userId ? {
+              where: { userId },
+              select: { id: true },
+            } : false,
           },
-          likes: userId ? {
-            where: { userId },
-            select: { id: true },
-          } : false,
+        }),
+        prisma.post.count({ where }),
+      ]);
+
+      const postsWithLikeStatus = posts.map(post => ({
+        ...post,
+        isLiked: userId ? post.likes && post.likes.length > 0 : false,
+        isBookmarked: userId ? bookmarkedPostIds.includes(post.id) : false,
+        likes: undefined, // Remove the likes array from response
+      })) as PostWithAuthor[];
+
+      return {
+        posts: postsWithLikeStatus,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasNext: page * limit < total,
+          hasPrev: page > 1,
         },
-      }),
-      prisma.post.count({ where }),
-    ]);
-
-    const postsWithLikeStatus = posts.map(post => ({
-      ...post,
-      isLiked: userId ? post.likes && post.likes.length > 0 : false,
-      isBookmarked: userId ? bookmarkedPostIds.includes(post.id) : false,
-      likes: undefined, // Remove the likes array from response
-    })) as PostWithAuthor[];
-
-    return {
-      posts: postsWithLikeStatus,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page * limit < total,
-        hasPrev: page > 1,
-      },
-    };
+      };
+    } catch (error: any) {
+      console.error('❌ Error in getPosts:', error);
+      throw error; // Re-throw to let controller handle it
+    }
   },
 
   // Get post by ID

@@ -166,20 +166,70 @@ export const createThumbnail = async (filePath: string, width: number = 300): Pr
  */
 export const createVideoThumbnail = async (videoPath: string): Promise<string> => {
   try {
-    const ext = path.extname(videoPath);
-    const thumbnailPath = videoPath.replace(ext, '_thumb.jpg');
+    // Create thumbnails directory if it doesn't exist
+    const thumbnailsDir = path.join(UPLOAD_BASE_DIR, 'thumbnails');
+    if (!fs.existsSync(thumbnailsDir)) {
+      fs.mkdirSync(thumbnailsDir, { recursive: true });
+      console.log(`✅ Created thumbnails directory: ${thumbnailsDir}`);
+    }
     
-    // Use ffmpeg to extract frame at 0.5 seconds
-    const command = `ffmpeg -i "${videoPath}" -ss 00:00:00.5 -vframes 1 -q:v 2 "${thumbnailPath}"`;
+    // Generate thumbnail filename
+    const videoFilename = path.basename(videoPath);
+    const thumbnailFilename = `thumb_${Date.now()}_${videoFilename.replace(/\.[^.]+$/, '.jpg')}`;
+    const thumbnailPath = path.join(thumbnailsDir, thumbnailFilename);
     
+    // Use ffmpeg to extract frame at 1 second with scaling
+    const command = `ffmpeg -i "${videoPath}" -ss 00:00:01 -vframes 1 -vf "scale=720:-2" "${thumbnailPath}" -y`;
+    
+    console.log(`🎬 Generating thumbnail for: ${videoPath}`);
     await execAsync(command);
     
     console.log(`✅ Video thumbnail created: ${thumbnailPath}`);
     return thumbnailPath;
   } catch (error) {
     console.error('❌ Video thumbnail creation error:', error);
+    console.error('   Video path:', videoPath);
     // Return empty string if thumbnail generation fails
     return '';
+  }
+};
+
+/**
+ * Add watermark to video using ffmpeg
+ */
+export const addVideoWatermark = async (videoPath: string): Promise<string> => {
+  try {
+    // Generate watermarked video filename
+    const ext = path.extname(videoPath);
+    const dir = path.dirname(videoPath);
+    const basename = path.basename(videoPath, ext);
+    const watermarkedPath = path.join(dir, `${basename}_watermarked${ext}`);
+    
+    // FFmpeg command to add centered watermark at bottom
+    // drawtext filter adds text overlay with:
+    // - text='clanplug': The watermark text
+    // - fontsize=24: Text size
+    // - fontcolor=white@0.8: White color with 80% opacity
+    // - x=(w-text_w)/2: Center horizontally
+    // - y=h-th-50: Position 50px from bottom
+    // - shadowcolor=black@0.5: Add shadow for better visibility
+    // - shadowx=2:shadowy=2: Shadow offset
+    const command = `ffmpeg -i "${videoPath}" -vf "drawtext=text='clanplug':fontsize=24:fontcolor=white@0.8:x=(w-text_w)/2:y=h-th-50:shadowcolor=black@0.5:shadowx=2:shadowy=2" -codec:a copy "${watermarkedPath}" -y`;
+    
+    console.log(`💧 Adding watermark to video: ${videoPath}`);
+    await execAsync(command);
+    
+    // Delete original video and rename watermarked version
+    fs.unlinkSync(videoPath);
+    fs.renameSync(watermarkedPath, videoPath);
+    
+    console.log(`✅ Video watermark added: ${videoPath}`);
+    return videoPath;
+  } catch (error) {
+    console.error('❌ Video watermark error:', error);
+    console.error('   Video path:', videoPath);
+    // Return original path if watermark fails
+    return videoPath;
   }
 };
 
