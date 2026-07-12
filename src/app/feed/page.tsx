@@ -53,8 +53,12 @@ export default function FeedPage() {
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [descriptionExpanded, setDescriptionExpanded] = useState<Record<string, boolean>>({});
+  const [videoPlaying, setVideoPlaying] = useState<Record<string, boolean>>({});
+  const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
+  const [videoDuration, setVideoDuration] = useState<Record<string, number>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
+  const videoRefs = useRef<Record<string, HTMLVideoElement>>({});
 
   useEffect(() => {
     fetchPosts();
@@ -199,6 +203,36 @@ export default function FeedPage() {
     }
   };
 
+  // Video control handlers
+  const toggleVideoPlay = (postId: string) => {
+    const video = videoRefs.current[postId];
+    if (!video) return;
+
+    if (video.paused) {
+      video.play();
+      setVideoPlaying(prev => ({ ...prev, [postId]: true }));
+    } else {
+      video.pause();
+      setVideoPlaying(prev => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleVideoProgress = (postId: string) => {
+    const video = videoRefs.current[postId];
+    if (!video) return;
+
+    const progress = (video.currentTime / video.duration) * 100;
+    setVideoProgress(prev => ({ ...prev, [postId]: progress }));
+  };
+
+  const handleVideoSeek = (postId: string, seekPercentage: number) => {
+    const video = videoRefs.current[postId];
+    if (!video) return;
+
+    video.currentTime = (seekPercentage / 100) * video.duration;
+    setVideoProgress(prev => ({ ...prev, [postId]: seekPercentage }));
+  };
+
   if (loading) {
     return (
       <AppShell>
@@ -262,14 +296,16 @@ export default function FeedPage() {
         {/* Fullscreen Snap Scroll Container */}
         <div 
           ref={scrollContainerRef}
-          className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth"
+          className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth relative"
           style={{ 
             scrollSnapType: 'y mandatory',
             scrollBehavior: 'smooth',
             paddingTop: 'calc(3.5rem + 56px)', // Account for AppShell header + our header
-            paddingBottom: '4rem' // Account for bottom nav
+            paddingBottom: '5rem' // Account for bottom nav
           }}
         >
+          {/* Bottom fade to hide next content */}
+          <div className="fixed bottom-16 left-0 right-0 h-20 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-30" />
           {posts.map((post, index) => {
             const hasVideo = post.videos && post.videos.length > 0;
             const hasImage = post.images && post.images.length > 0;
@@ -286,18 +322,47 @@ export default function FeedPage() {
               >
                 {/* Fullscreen Media Content - Adjusts when comments open */}
                 <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-                  showComments === post.id ? 'scale-90 -translate-y-[10%]' : ''
+                  showComments === post.id ? 'scale-85 -translate-y-[15%]' : ''
                 }`}>
-                  {/* Video Post */}
+                  {/* Video Post - Custom Controls */}
                   {hasVideo && (
-                    <video
-                      src={post.videos![0]}
-                      className="w-full h-full object-contain bg-black"
-                      controls
-                      playsInline
-                      autoPlay={index === currentIndex}
-                      loop
-                    />
+                    <div className="relative w-full h-full" onClick={() => toggleVideoPlay(post.id)}>
+                      <video
+                        ref={(el) => {
+                          if (el) videoRefs.current[post.id] = el;
+                        }}
+                        src={post.videos![0]}
+                        className="w-full h-full object-contain bg-black cursor-pointer"
+                        playsInline
+                        autoPlay={index === currentIndex}
+                        loop
+                        muted={false}
+                        onTimeUpdate={() => handleVideoProgress(post.id)}
+                        onLoadedMetadata={(e) => {
+                          const video = e.target as HTMLVideoElement;
+                          setVideoDuration(prev => ({ ...prev, [post.id]: video.duration }));
+                        }}
+                      />
+                      
+                      {/* Custom Progress Bar - Sleek and above bottom menu */}
+                      <div className="absolute bottom-24 left-0 right-0 px-4 z-20">
+                        <div 
+                          className="relative h-0.5 bg-white/20 rounded-full cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const clickX = e.clientX - rect.left;
+                            const percentage = (clickX / rect.width) * 100;
+                            handleVideoSeek(post.id, percentage);
+                          }}
+                        >
+                          <div 
+                            className="absolute left-0 top-0 h-full bg-white rounded-full transition-all"
+                            style={{ width: `${videoProgress[post.id] || 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {/* Image Post */}
@@ -325,9 +390,9 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                {/* Bottom-Left Overlay - User Info & Description - Higher for text posts */}
+                {/* Bottom-Left Overlay - User Info & Description - Higher for all posts to avoid bottom menu */}
                 <div className={`absolute left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none z-10 ${
-                  isTextOnly ? 'bottom-32' : 'bottom-20'
+                  isTextOnly ? 'bottom-32' : 'bottom-28'
                 }`}>
                   <div className="pointer-events-auto max-w-xl">
                     {/* User Info */}
@@ -431,9 +496,9 @@ export default function FeedPage() {
                   </button>
                 </div>
 
-                {/* Comments Slide-up Panel - Exactly half screen */}
+                {/* Comments Slide-up Panel - 60% height for better visibility */}
                 {showComments === post.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-black/95 backdrop-blur-xl border-t border-gray-800 z-20 animate-slide-up">
+                  <div className="absolute bottom-0 left-0 right-0 h-[60%] bg-black/95 backdrop-blur-xl border-t border-gray-800 z-20 animate-slide-up">
                     {/* Comments Header */}
                     <div className="flex items-center justify-between p-4 border-b border-gray-800">
                       <h2 className="text-white font-semibold text-lg">
