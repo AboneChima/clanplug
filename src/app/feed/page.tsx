@@ -56,6 +56,7 @@ export default function FeedPage() {
   const [videoPlaying, setVideoPlaying] = useState<Record<string, boolean>>({});
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
   const [videoDuration, setVideoDuration] = useState<Record<string, number>>({});
+  const [showPlayIcon, setShowPlayIcon] = useState<Record<string, boolean>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({});
@@ -211,10 +212,17 @@ export default function FeedPage() {
     if (video.paused) {
       video.play();
       setVideoPlaying(prev => ({ ...prev, [postId]: true }));
+      setShowPlayIcon(prev => ({ ...prev, [postId]: true }));
     } else {
       video.pause();
       setVideoPlaying(prev => ({ ...prev, [postId]: false }));
+      setShowPlayIcon(prev => ({ ...prev, [postId]: false }));
     }
+
+    // Hide icon after 500ms
+    setTimeout(() => {
+      setShowPlayIcon(prev => ({ ...prev, [postId]: false }));
+    }, 500);
   };
 
   const handleVideoProgress = (postId: string) => {
@@ -301,11 +309,8 @@ export default function FeedPage() {
             scrollSnapType: 'y mandatory',
             scrollBehavior: 'smooth',
             paddingTop: 'calc(3.5rem + 56px)', // Account for AppShell header + our header
-            paddingBottom: '5rem' // Account for bottom nav
           }}
         >
-          {/* Bottom fade to hide next content */}
-          <div className="fixed bottom-16 left-0 right-0 h-20 bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none z-30" />
           {posts.map((post, index) => {
             const hasVideo = post.videos && post.videos.length > 0;
             const hasImage = post.images && post.images.length > 0;
@@ -344,8 +349,25 @@ export default function FeedPage() {
                         }}
                       />
                       
+                      {/* Play/Pause Icon Overlay */}
+                      {showPlayIcon[post.id] && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                          <div className="w-20 h-20 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center" style={{ animation: 'fadeInOut 0.5s ease-in-out' }}>
+                            {videoPlaying[post.id] ? (
+                              <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                              </svg>
+                            ) : (
+                              <svg className="w-12 h-12 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
                       {/* Custom Progress Bar - Sleek and above bottom menu */}
-                      <div className="absolute bottom-24 left-0 right-0 px-4 z-20">
+                      <div className="absolute bottom-28 left-0 right-0 px-4 z-20">
                         <div 
                           className="relative h-0.5 bg-white/20 rounded-full cursor-pointer"
                           onClick={(e) => {
@@ -390,61 +412,59 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                {/* Bottom-Left Overlay - User Info & Description - Higher for all posts to avoid bottom menu */}
-                <div className={`absolute left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none z-10 ${
-                  isTextOnly ? 'bottom-32' : 'bottom-28'
-                }`}>
+                {/* Bottom Overlay - User Info & Description - WAY ABOVE bottom menu */}
+                <div className="absolute bottom-20 left-0 right-0 px-4 pb-2 pointer-events-none z-10">
                   <div className="pointer-events-auto max-w-xl">
-                    {/* User Info */}
-                    <Link href={`/user/${post.user.id}`} className="flex items-center gap-2 mb-2">
-                      {post.user.avatar ? (
-                        <Image 
-                          src={post.user.avatar} 
-                          alt={post.user.username} 
-                          width={36} 
-                          height={36} 
-                          className="w-9 h-9 rounded-full border-2 border-white" 
-                          unoptimized 
-                        />
-                      ) : (
-                        <div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center border-2 border-white">
-                          <span className="text-white text-sm font-bold">{post.user.firstName[0]}</span>
-                        </div>
-                      )}
-                      <div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-white font-semibold text-sm">
-                            {post.user.firstName} {post.user.lastName}
-                          </span>
-                          {(post.user.verificationBadge?.status === 'verified' || post.user.verificationBadge?.status === 'active') && (
-                            <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className="text-gray-300 text-xs">@{post.user.username}</span>
-                      </div>
-                    </Link>
-
                     {/* Description - Only show for media posts */}
-                    {!isTextOnly && (
-                      <div className="text-white text-sm">
-                        <p className="mb-1">{displayDescription}</p>
+                    {!isTextOnly && post.description && (
+                      <div className="text-white text-sm mb-3 bg-gradient-to-r from-black/60 to-transparent pr-20 py-1 rounded">
+                        <p className="mb-1 drop-shadow-lg">{displayDescription}</p>
                         {needsTruncation && (
                           <button
                             onClick={() => setDescriptionExpanded(prev => ({ ...prev, [post.id]: !prev[post.id] }))}
-                            className="text-blue-400 text-xs font-medium hover:text-blue-300 transition-colors"
+                            className="text-blue-400 text-xs font-medium hover:text-blue-300 transition-colors drop-shadow-lg"
                           >
                             {descriptionExpanded[post.id] ? 'Show less' : 'more...'}
                           </button>
                         )}
                       </div>
                     )}
+
+                    {/* User Info */}
+                    <Link href={`/user/${post.user.id}`} className="flex items-center gap-2">
+                      {post.user.avatar ? (
+                        <Image 
+                          src={post.user.avatar} 
+                          alt={post.user.username} 
+                          width={32} 
+                          height={32} 
+                          className="w-8 h-8 rounded-full border-2 border-white shadow-lg" 
+                          unoptimized 
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center border-2 border-white shadow-lg">
+                          <span className="text-white text-xs font-bold">{post.user.firstName[0]}</span>
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-white font-semibold text-sm drop-shadow-lg">
+                            {post.user.firstName} {post.user.lastName}
+                          </span>
+                          {(post.user.verificationBadge?.status === 'verified' || post.user.verificationBadge?.status === 'active') && (
+                            <svg className="w-4 h-4 text-blue-500 drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-gray-300 text-xs drop-shadow-lg">@{post.user.username}</span>
+                      </div>
+                    </Link>
                   </div>
                 </div>
 
-                {/* Right Side - Action Buttons - No background, higher position */}
-                <div className="absolute right-3 bottom-40 flex flex-col gap-6 z-10">
+                {/* Right Side - Action Buttons - MUCH HIGHER, clean design */}
+                <div className="absolute right-3 bottom-[180px] flex flex-col gap-6 z-10">
                   {/* Like */}
                   <button
                     onClick={() => handleLike(post.id)}
