@@ -408,8 +408,8 @@ export default function FeedPage() {
                         </div>
                       )}
                       
-                      {/* Custom Progress Bar - Very visible, above bottom menu */}
-                      <div className="absolute bottom-[72px] left-0 right-0 px-2 z-50 pointer-events-auto">
+                      {/* Custom Progress Bar - Higher above bottom menu */}
+                      <div className="absolute bottom-[85px] left-0 right-0 px-2 z-50 pointer-events-auto">
                         <div 
                           className="relative h-1 bg-gray-600/60 rounded-full cursor-pointer"
                           onClick={(e) => {
@@ -457,8 +457,8 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                {/* Bottom Overlay - User Info & Description - 50-100px lower */}
-                <div className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10" style={{ bottom: 'calc(30vh - 80px)' }}>
+                {/* Bottom Overlay - User Info & Description - Lower */}
+                <div className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10" style={{ bottom: 'calc(30vh - 120px)' }}>
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
                     {!isTextOnly && post.description && (
@@ -544,24 +544,24 @@ export default function FeedPage() {
                     )}
                   </button>
 
-                  {/* More Menu Button (3 dots) */}
+                  {/* More Menu Button (horizontal 3 dots) */}
                   <button
                     onClick={() => setShowMoreMenu(showMoreMenu === post.id ? null : post.id)}
                     className="transition-transform hover:scale-110 active:scale-95"
                   >
                     <svg className="w-8 h-8 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
-                      <circle cx="12" cy="5" r="2"/>
+                      <circle cx="5" cy="12" r="2"/>
                       <circle cx="12" cy="12" r="2"/>
-                      <circle cx="12" cy="19" r="2"/>
+                      <circle cx="19" cy="12" r="2"/>
                     </svg>
                   </button>
                 </div>
 
-                {/* More Menu - Horizontal slide-up sheet like comments */}
+                {/* More Menu - Horizontal slide-up sheet 40vh height */}
                 {showMoreMenu === post.id && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800 z-30 animate-slide-up">
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-4">
+                  <div className="absolute bottom-0 left-0 right-0 h-[40vh] bg-black/95 backdrop-blur-xl border-t border-gray-800 z-50 animate-slide-up flex flex-col">
+                    <div className="flex-1 p-6 overflow-y-auto">
+                      <div className="flex items-center justify-between mb-6">
                         <h3 className="text-white font-semibold text-lg">More Options</h3>
                         <button
                           onClick={() => setShowMoreMenu(null)}
@@ -571,13 +571,13 @@ export default function FeedPage() {
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-3 gap-4 mb-4">
                         {/* Copy Link */}
                         <button
                           onClick={() => handleCopyLink(post.id)}
-                          className="flex flex-col items-center gap-2 p-4 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
+                          className="flex flex-col items-center gap-3 p-6 bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors"
                         >
-                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
                           <span className="text-white text-sm font-medium">Copy Link</span>
@@ -586,9 +586,9 @@ export default function FeedPage() {
                         {/* Share */}
                         <button
                           onClick={() => handleShare(post)}
-                          className="flex flex-col items-center gap-2 p-4 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
+                          className="flex flex-col items-center gap-3 p-6 bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors"
                         >
-                          <IoShareSocialOutline className="w-8 h-8 text-white" />
+                          <IoShareSocialOutline className="w-10 h-10 text-white" />
                           <span className="text-white text-sm font-medium">Share</span>
                         </button>
 
@@ -596,9 +596,9 @@ export default function FeedPage() {
                         {hasVideo && (
                           <button
                             onClick={() => handleDownloadVideo(post.videos![0], post.id)}
-                            className="flex flex-col items-center gap-2 p-4 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
+                            className="flex flex-col items-center gap-3 p-6 bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors"
                           >
-                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             <span className="text-white text-sm font-medium">Download</span>
