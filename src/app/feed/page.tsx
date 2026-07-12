@@ -57,6 +57,7 @@ export default function FeedPage() {
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
   const [videoDuration, setVideoDuration] = useState<Record<string, number>>({});
   const [showPlayIcon, setShowPlayIcon] = useState<Record<string, boolean>>({});
+  const [showMoreMenu, setShowMoreMenu] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({});
@@ -241,6 +242,44 @@ export default function FeedPage() {
     setVideoProgress(prev => ({ ...prev, [postId]: seekPercentage }));
   };
 
+  const handleDownloadVideo = async (videoUrl: string, postId: string) => {
+    try {
+      showToast('Downloading video with watermark...', 'info');
+      const a = document.createElement('a');
+      a.href = videoUrl;
+      a.download = `clanplug-video-${postId}.mp4`;
+      a.click();
+      showToast('Download started!', 'success');
+      setShowMoreMenu(null);
+    } catch (error) {
+      showToast('Download failed', 'error');
+    }
+  };
+
+  const handleCopyLink = (postId: string) => {
+    const url = `${window.location.origin}/post/${postId}`;
+    navigator.clipboard.writeText(url);
+    showToast('Link copied!', 'success');
+    setShowMoreMenu(null);
+  };
+
+  const handleShare = async (post: Post) => {
+    const url = `${window.location.origin}/post/${post.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ 
+          title: `Post by ${post.user.firstName}`, 
+          url 
+        });
+        setShowMoreMenu(null);
+      } catch (error) {
+        // User cancelled
+      }
+    } else {
+      handleCopyLink(post.id);
+    }
+  };
+
   if (loading) {
     return (
       <AppShell>
@@ -366,8 +405,8 @@ export default function FeedPage() {
                         </div>
                       )}
                       
-                      {/* Custom Progress Bar - Sleek and above bottom menu */}
-                      <div className="absolute bottom-28 left-0 right-0 px-4 z-20">
+                      {/* Custom Progress Bar - Above bottom menu */}
+                      <div className="absolute bottom-[88px] left-0 right-0 px-4 z-20">
                         <div 
                           className="relative h-0.5 bg-white/20 rounded-full cursor-pointer"
                           onClick={(e) => {
@@ -412,8 +451,8 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                {/* Bottom Overlay - User Info & Description - WAY ABOVE bottom menu */}
-                <div className="absolute bottom-20 left-0 right-0 px-4 pb-2 pointer-events-none z-10">
+                {/* Bottom Overlay - User Info & Description - At 70vh from bottom (30% from top) */}
+                <div className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10" style={{ bottom: '30vh' }}>
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
                     {!isTextOnly && post.description && (
@@ -463,8 +502,8 @@ export default function FeedPage() {
                   </div>
                 </div>
 
-                {/* Right Side - Action Buttons - MUCH HIGHER, clean design */}
-                <div className="absolute right-3 bottom-[180px] flex flex-col gap-6 z-10">
+                {/* Right Side - Action Buttons - Way higher, middle-right area */}
+                <div className="absolute right-3 flex flex-col gap-6 z-10" style={{ bottom: 'calc(30vh + 80px)' }}>
                   {/* Like */}
                   <button
                     onClick={() => handleLike(post.id)}
@@ -487,22 +526,6 @@ export default function FeedPage() {
                     <span className="text-white text-xs font-bold drop-shadow-lg">{post._count.comments}</span>
                   </button>
 
-                  {/* Share */}
-                  <button
-                    onClick={() => {
-                      navigator.share?.({ 
-                        title: `Post by ${post.user.firstName}`, 
-                        url: `${window.location.origin}/post/${post.id}`
-                      }).catch(() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/post/${post.id}`);
-                        showToast('Link copied!', 'success');
-                      });
-                    }}
-                    className="transition-transform hover:scale-110 active:scale-95"
-                  >
-                    <IoShareSocialOutline className="w-8 h-8 text-white drop-shadow-lg" />
-                  </button>
-
                   {/* Bookmark */}
                   <button
                     onClick={() => handleBookmark(post.id)}
@@ -514,6 +537,53 @@ export default function FeedPage() {
                       <IoBookmarkOutline className="w-8 h-8 text-white drop-shadow-lg" />
                     )}
                   </button>
+
+                  {/* More Menu Button (3 dots) */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowMoreMenu(showMoreMenu === post.id ? null : post.id)}
+                      className="transition-transform hover:scale-110 active:scale-95"
+                    >
+                      <svg className="w-8 h-8 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="5" r="2"/>
+                        <circle cx="12" cy="12" r="2"/>
+                        <circle cx="12" cy="19" r="2"/>
+                      </svg>
+                    </button>
+
+                    {/* More Menu Dropdown */}
+                    {showMoreMenu === post.id && (
+                      <div className="absolute right-12 bottom-0 bg-black/95 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-800 py-2 min-w-[160px] z-50">
+                        <button
+                          onClick={() => handleCopyLink(post.id)}
+                          className="w-full px-4 py-3 text-left text-white text-sm hover:bg-gray-800 transition-colors flex items-center gap-3"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                          Copy Link
+                        </button>
+                        <button
+                          onClick={() => handleShare(post)}
+                          className="w-full px-4 py-3 text-left text-white text-sm hover:bg-gray-800 transition-colors flex items-center gap-3"
+                        >
+                          <IoShareSocialOutline className="w-5 h-5" />
+                          Share
+                        </button>
+                        {hasVideo && (
+                          <button
+                            onClick={() => handleDownloadVideo(post.videos![0], post.id)}
+                            className="w-full px-4 py-3 text-left text-white text-sm hover:bg-gray-800 transition-colors flex items-center gap-3"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Comments Slide-up Panel - 60% height for better visibility */}
