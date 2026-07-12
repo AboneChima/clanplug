@@ -250,20 +250,14 @@ export default function PostDetailPage() {
 
             {post.videos && post.videos[0] && (
               <div className="mb-3 rounded-xl overflow-hidden border border-[#2f3336] relative group">
-                <div className="relative">
-                  <video
-                    src={post.videos[0]}
-                    className="w-full"
-                    controls
-                    playsInline
-                    preload="metadata"
-                    autoPlay
-                  />
-                  {/* Watermark overlay for video - centered bottom */}
-                  <div className="absolute bottom-14 left-1/2 transform -translate-x-1/2 pointer-events-none">
-                    <p className="text-white/80 text-sm font-semibold tracking-wider drop-shadow-lg">clanplug</p>
-                  </div>
-                </div>
+                <video
+                  src={post.videos[0]}
+                  className="w-full"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  autoPlay
+                />
                 {/* Download button for video */}
                 <button
                   onClick={() => {

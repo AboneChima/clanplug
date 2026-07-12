@@ -363,19 +363,13 @@ export default function MarketplaceDetailPage() {
                     : 'aspect-video'
                 }`}>
                   {post.videos && post.videos.length > 0 ? (
-                    <div className="relative w-full h-full">
-                      <video
-                        src={post.videos[0]}
-                        className="w-full h-full object-contain"
-                        controls
-                        playsInline
-                        preload="metadata"
-                      />
-                      {/* Watermark overlay - centered bottom like FYP */}
-                      <div className="absolute bottom-14 left-1/2 transform -translate-x-1/2 pointer-events-none">
-                        <p className="text-white/80 text-sm font-semibold tracking-wider drop-shadow-lg">clanplug</p>
-                      </div>
-                    </div>
+                    <video
+                      src={post.videos[0]}
+                      className="w-full h-full object-contain"
+                      controls
+                      playsInline
+                      preload="metadata"
+                    />
                   ) : post.images && post.images.length > 0 ? (
                     <div 
                       className="relative w-full h-full cursor-pointer group"
