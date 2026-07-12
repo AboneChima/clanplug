@@ -210,20 +210,19 @@ export default function FeedPage() {
     const video = videoRefs.current[postId];
     if (!video) return;
 
-    if (video.paused) {
-      video.play();
-      setVideoPlaying(prev => ({ ...prev, [postId]: true }));
-      setShowPlayIcon(prev => ({ ...prev, [postId]: true }));
-    } else {
+    const isPlaying = !video.paused;
+    
+    if (isPlaying) {
       video.pause();
       setVideoPlaying(prev => ({ ...prev, [postId]: false }));
+      // Show play icon when paused (TikTok style - only show play, not pause)
+      setShowPlayIcon(prev => ({ ...prev, [postId]: true }));
+    } else {
+      video.play();
+      setVideoPlaying(prev => ({ ...prev, [postId]: true }));
+      // Hide icon when playing
       setShowPlayIcon(prev => ({ ...prev, [postId]: false }));
     }
-
-    // Hide icon after 500ms
-    setTimeout(() => {
-      setShowPlayIcon(prev => ({ ...prev, [postId]: false }));
-    }, 500);
   };
 
   const handleVideoProgress = (postId: string) => {
@@ -385,30 +384,34 @@ export default function FeedPage() {
                         onLoadedMetadata={(e) => {
                           const video = e.target as HTMLVideoElement;
                           setVideoDuration(prev => ({ ...prev, [post.id]: video.duration }));
+                          // Initially show play icon until video starts
+                          setShowPlayIcon(prev => ({ ...prev, [post.id]: false }));
+                        }}
+                        onPlay={() => {
+                          setVideoPlaying(prev => ({ ...prev, [post.id]: true }));
+                          setShowPlayIcon(prev => ({ ...prev, [post.id]: false }));
+                        }}
+                        onPause={() => {
+                          setVideoPlaying(prev => ({ ...prev, [post.id]: false }));
+                          setShowPlayIcon(prev => ({ ...prev, [post.id]: true }));
                         }}
                       />
                       
-                      {/* Play/Pause Icon Overlay */}
-                      {showPlayIcon[post.id] && (
+                      {/* Play Icon Overlay - Only show when paused (TikTok style) */}
+                      {showPlayIcon[post.id] && !videoPlaying[post.id] && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                          <div className="w-20 h-20 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center" style={{ animation: 'fadeInOut 0.5s ease-in-out' }}>
-                            {videoPlaying[post.id] ? (
-                              <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-                              </svg>
-                            ) : (
-                              <svg className="w-12 h-12 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z"/>
-                              </svg>
-                            )}
+                          <div className="w-24 h-24 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                            <svg className="w-14 h-14 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z"/>
+                            </svg>
                           </div>
                         </div>
                       )}
                       
-                      {/* Custom Progress Bar - Above bottom menu */}
-                      <div className="absolute bottom-[88px] left-0 right-0 px-4 z-20">
+                      {/* Custom Progress Bar - Very visible, above bottom menu */}
+                      <div className="absolute bottom-[72px] left-0 right-0 px-2 z-50 pointer-events-auto">
                         <div 
-                          className="relative h-0.5 bg-white/20 rounded-full cursor-pointer"
+                          className="relative h-1 bg-gray-600/60 rounded-full cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             const rect = e.currentTarget.getBoundingClientRect();
@@ -420,7 +423,10 @@ export default function FeedPage() {
                           <div 
                             className="absolute left-0 top-0 h-full bg-white rounded-full transition-all"
                             style={{ width: `${videoProgress[post.id] || 0}%` }}
-                          />
+                          >
+                            {/* Progress indicator dot */}
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full" />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -451,8 +457,8 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                {/* Bottom Overlay - User Info & Description - At 70vh from bottom (30% from top) */}
-                <div className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10" style={{ bottom: '30vh' }}>
+                {/* Bottom Overlay - User Info & Description - 50-100px lower */}
+                <div className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10" style={{ bottom: 'calc(30vh - 80px)' }}>
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
                     {!isTextOnly && post.description && (
@@ -502,8 +508,8 @@ export default function FeedPage() {
                   </div>
                 </div>
 
-                {/* Right Side - Action Buttons - Way higher, middle-right area */}
-                <div className="absolute right-3 flex flex-col gap-6 z-10" style={{ bottom: 'calc(30vh + 80px)' }}>
+                {/* Right Side - Action Buttons - Adjusted with username */}
+                <div className="absolute right-3 flex flex-col gap-6 z-10" style={{ bottom: 'calc(30vh - 0px)' }}>
                   {/* Like */}
                   <button
                     onClick={() => handleLike(post.id)}
@@ -539,52 +545,69 @@ export default function FeedPage() {
                   </button>
 
                   {/* More Menu Button (3 dots) */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowMoreMenu(showMoreMenu === post.id ? null : post.id)}
-                      className="transition-transform hover:scale-110 active:scale-95"
-                    >
-                      <svg className="w-8 h-8 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
-                        <circle cx="12" cy="5" r="2"/>
-                        <circle cx="12" cy="12" r="2"/>
-                        <circle cx="12" cy="19" r="2"/>
-                      </svg>
-                    </button>
+                  <button
+                    onClick={() => setShowMoreMenu(showMoreMenu === post.id ? null : post.id)}
+                    className="transition-transform hover:scale-110 active:scale-95"
+                  >
+                    <svg className="w-8 h-8 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="5" r="2"/>
+                      <circle cx="12" cy="12" r="2"/>
+                      <circle cx="12" cy="19" r="2"/>
+                    </svg>
+                  </button>
+                </div>
 
-                    {/* More Menu Dropdown */}
-                    {showMoreMenu === post.id && (
-                      <div className="absolute right-12 bottom-0 bg-black/95 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-800 py-2 min-w-[160px] z-50">
+                {/* More Menu - Horizontal slide-up sheet like comments */}
+                {showMoreMenu === post.id && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-gray-800 z-30 animate-slide-up">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-white font-semibold text-lg">More Options</h3>
+                        <button
+                          onClick={() => setShowMoreMenu(null)}
+                          className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+                        >
+                          <IoChevronDown className="w-5 h-5 text-gray-400" />
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4">
+                        {/* Copy Link */}
                         <button
                           onClick={() => handleCopyLink(post.id)}
-                          className="w-full px-4 py-3 text-left text-white text-sm hover:bg-gray-800 transition-colors flex items-center gap-3"
+                          className="flex flex-col items-center gap-2 p-4 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                           </svg>
-                          Copy Link
+                          <span className="text-white text-sm font-medium">Copy Link</span>
                         </button>
+
+                        {/* Share */}
                         <button
                           onClick={() => handleShare(post)}
-                          className="w-full px-4 py-3 text-left text-white text-sm hover:bg-gray-800 transition-colors flex items-center gap-3"
+                          className="flex flex-col items-center gap-2 p-4 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
                         >
-                          <IoShareSocialOutline className="w-5 h-5" />
-                          Share
+                          <IoShareSocialOutline className="w-8 h-8 text-white" />
+                          <span className="text-white text-sm font-medium">Share</span>
                         </button>
+
+                        {/* Download (only for videos) */}
                         {hasVideo && (
                           <button
                             onClick={() => handleDownloadVideo(post.videos![0], post.id)}
-                            className="w-full px-4 py-3 text-left text-white text-sm hover:bg-gray-800 transition-colors flex items-center gap-3"
+                            className="flex flex-col items-center gap-2 p-4 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
                           >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
-                            Download
+                            <span className="text-white text-sm font-medium">Download</span>
                           </button>
                         )}
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Comments Slide-up Panel - 60% height for better visibility */}
                 {showComments === post.id && (
