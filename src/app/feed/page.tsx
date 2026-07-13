@@ -374,8 +374,8 @@ export default function FeedPage() {
                 key={post.id}
                 className="relative h-screen w-full snap-start snap-always flex items-center justify-center"
               >
-                {/* Fullscreen Media Content - Positioned WAY UP, text and landscape moved up more */}
-                <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
+                {/* Fullscreen Media Content - Positioned WAY UP, with black background to keep fullscreen */}
+                <div className={`absolute inset-0 bg-black flex items-center justify-center transition-all duration-300 ${
                   showComments === post.id ? 'scale-85 -translate-y-[20%]' : (isTextOnly || hasVideo || hasImage) ? '-translate-y-[15%]' : ''
                 }`}>
                   {/* Video Post - Custom Controls */}
@@ -419,8 +419,8 @@ export default function FeedPage() {
                         </div>
                       )}
                       
-                      {/* Custom Progress Bar - 70px below username */}
-                      <div className="absolute left-0 right-0 px-2 z-50 pointer-events-auto" style={{ bottom: 'calc(30vh - 190px)' }}>
+                      {/* Custom Progress Bar - Much lower */}
+                      <div className="absolute left-0 right-0 px-2 z-50 pointer-events-auto" style={{ bottom: 'calc(30vh - 250px)' }}>
                         <div 
                           className="relative h-1 bg-gray-600/60 rounded-full cursor-pointer"
                           onClick={(e) => {
@@ -620,9 +620,9 @@ export default function FeedPage() {
                   </div>
                 )}
 
-                {/* Comments Slide-up Panel - Covers bottom menu with higher z-index */}
+                {/* Comments Slide-up Panel - Solid black, covers bottom menu */}
                 {showComments === post.id && (
-                  <div className="fixed bottom-0 left-0 right-0 h-[60%] bg-black/98 backdrop-blur-xl border-t border-gray-800 z-[60] animate-slide-up flex flex-col">
+                  <div className="fixed bottom-0 left-0 right-0 h-[60%] bg-black border-t border-gray-800 z-[60] animate-slide-up flex flex-col">
                     {/* Comments Header */}
                     <div className="flex items-center justify-between p-4 border-b border-gray-800">
                       <h2 className="text-white font-semibold text-lg">

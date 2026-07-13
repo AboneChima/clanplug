@@ -80,8 +80,8 @@ export default function MobileBottomNav() {
   }, []);
 
   return (
-    <nav className="lg:hidden fixed bottom-2 left-2 right-2 z-[50] bg-black/95 backdrop-blur-xl border border-[#2f3336] rounded-2xl shadow-2xl">
-      <div className="flex items-center justify-around px-2 py-2">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[50] bg-black border-t border-[#2f3336]">
+      <div className="flex items-center justify-around px-2 py-3">
         {navItems.map(({ href, label, Icon, ActiveIcon }) => {
           const active = pathname === href || (href !== '/feed' && href !== '/more' && pathname?.startsWith(href));
           const IconComponent = active ? ActiveIcon : Icon;
