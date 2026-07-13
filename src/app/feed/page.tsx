@@ -363,9 +363,9 @@ export default function FeedPage() {
                 key={post.id}
                 className="relative h-screen w-full snap-start snap-always flex items-center justify-center"
               >
-                {/* Fullscreen Media Content - Adjusts when comments open */}
+                {/* Fullscreen Media Content - Positioned higher, adjusts when comments open */}
                 <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-                  showComments === post.id ? 'scale-85 -translate-y-[15%]' : ''
+                  showComments === post.id ? 'scale-85 -translate-y-[20%]' : '-translate-y-[5%]'
                 }`}>
                   {/* Video Post - Custom Controls */}
                   {hasVideo && (
@@ -408,8 +408,8 @@ export default function FeedPage() {
                         </div>
                       )}
                       
-                      {/* Custom Progress Bar - Higher above bottom menu */}
-                      <div className="absolute bottom-[85px] left-0 right-0 px-2 z-50 pointer-events-auto">
+                      {/* Custom Progress Bar - Near username area */}
+                      <div className="absolute left-0 right-0 px-2 z-50 pointer-events-auto" style={{ bottom: 'calc(30vh - 90px)' }}>
                         <div 
                           className="relative h-1 bg-gray-600/60 rounded-full cursor-pointer"
                           onClick={(e) => {
@@ -445,11 +445,11 @@ export default function FeedPage() {
                     </div>
                   )}
 
-                  {/* Text-only Post - Story Style */}
+                  {/* Text-only Post - Clean design with blue/black gradient */}
                   {isTextOnly && (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 via-purple-700 to-purple-900 p-8">
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-900 via-gray-900 to-black p-8">
                       <div className="max-w-2xl text-center">
-                        <p className="text-white text-2xl md:text-3xl font-medium leading-relaxed">
+                        <p className="text-white text-xl md:text-2xl font-normal leading-relaxed">
                           {post.description}
                         </p>
                       </div>
@@ -609,9 +609,13 @@ export default function FeedPage() {
                   </div>
                 )}
 
-                {/* Comments Slide-up Panel - 60% height for better visibility */}
+                {/* Comments Slide-up Panel - Above bottom menu, pushes it down */}
                 {showComments === post.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-[60%] bg-black/95 backdrop-blur-xl border-t border-gray-800 z-20 animate-slide-up">
+                  <>
+                    {/* Backdrop to hide bottom menu */}
+                    <div className="fixed inset-0 bg-black/80 z-40" onClick={() => setShowComments(null)} />
+                    
+                    <div className="fixed bottom-0 left-0 right-0 h-[60%] bg-black/98 backdrop-blur-xl border-t border-gray-800 z-50 animate-slide-up flex flex-col">
                     {/* Comments Header */}
                     <div className="flex items-center justify-between p-4 border-b border-gray-800">
                       <h2 className="text-white font-semibold text-lg">
@@ -716,6 +720,7 @@ export default function FeedPage() {
                       )}
                     </div>
                   </div>
+                  </>
                 )}
               </div>
             );
