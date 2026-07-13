@@ -78,6 +78,17 @@ export default function FeedPage() {
         const scrollTop = container.scrollTop;
         const windowHeight = window.innerHeight;
         const newIndex = Math.round(scrollTop / windowHeight);
+        
+        // Pause previous video when scrolling away
+        if (newIndex !== currentIndex) {
+          const prevPost = posts[currentIndex];
+          if (prevPost?.videos && videoRefs.current[prevPost.id]) {
+            videoRefs.current[prevPost.id].pause();
+            setVideoPlaying(prev => ({ ...prev, [prevPost.id]: false }));
+            setShowPlayIcon(prev => ({ ...prev, [prevPost.id]: true }));
+          }
+        }
+        
         setCurrentIndex(newIndex);
       }, 150);
     };
@@ -87,7 +98,7 @@ export default function FeedPage() {
       container.removeEventListener('scroll', handleScroll);
       clearTimeout(scrollTimeout);
     };
-  }, []);
+  }, [currentIndex, posts]);
 
   const fetchPosts = async () => {
     try {
@@ -363,9 +374,9 @@ export default function FeedPage() {
                 key={post.id}
                 className="relative h-screen w-full snap-start snap-always flex items-center justify-center"
               >
-                {/* Fullscreen Media Content - Positioned higher, adjusts when comments open */}
+                {/* Fullscreen Media Content - Positioned WAY UP, text and landscape moved up more */}
                 <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ${
-                  showComments === post.id ? 'scale-85 -translate-y-[20%]' : '-translate-y-[5%]'
+                  showComments === post.id ? 'scale-85 -translate-y-[20%]' : (isTextOnly || hasVideo || hasImage) ? '-translate-y-[15%]' : ''
                 }`}>
                   {/* Video Post - Custom Controls */}
                   {hasVideo && (
@@ -408,8 +419,8 @@ export default function FeedPage() {
                         </div>
                       )}
                       
-                      {/* Custom Progress Bar - Near username area */}
-                      <div className="absolute left-0 right-0 px-2 z-50 pointer-events-auto" style={{ bottom: 'calc(30vh - 90px)' }}>
+                      {/* Custom Progress Bar - 70px below username */}
+                      <div className="absolute left-0 right-0 px-2 z-50 pointer-events-auto" style={{ bottom: 'calc(30vh - 190px)' }}>
                         <div 
                           className="relative h-1 bg-gray-600/60 rounded-full cursor-pointer"
                           onClick={(e) => {
@@ -609,13 +620,9 @@ export default function FeedPage() {
                   </div>
                 )}
 
-                {/* Comments Slide-up Panel - Above bottom menu, pushes it down */}
+                {/* Comments Slide-up Panel - Covers bottom menu with higher z-index */}
                 {showComments === post.id && (
-                  <>
-                    {/* Backdrop to hide bottom menu */}
-                    <div className="fixed inset-0 bg-black/80 z-40" onClick={() => setShowComments(null)} />
-                    
-                    <div className="fixed bottom-0 left-0 right-0 h-[60%] bg-black/98 backdrop-blur-xl border-t border-gray-800 z-50 animate-slide-up flex flex-col">
+                  <div className="fixed bottom-0 left-0 right-0 h-[60%] bg-black/98 backdrop-blur-xl border-t border-gray-800 z-[60] animate-slide-up flex flex-col">
                     {/* Comments Header */}
                     <div className="flex items-center justify-between p-4 border-b border-gray-800">
                       <h2 className="text-white font-semibold text-lg">
@@ -720,7 +727,6 @@ export default function FeedPage() {
                       )}
                     </div>
                   </div>
-                  </>
                 )}
               </div>
             );
