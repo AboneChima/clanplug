@@ -58,6 +58,9 @@ function ChatContent() {
   const [showForwardModal, setShowForwardModal] = useState(false);
   const [showGroupDiscovery, setShowGroupDiscovery] = useState(false);
   const [isGroupChat, setIsGroupChat] = useState(false);
+  const [groupMemberCounts, setGroupMemberCounts] = useState<{[key: string]: number}>({});
+  const [showGroupMembers, setShowGroupMembers] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -362,8 +365,42 @@ function ChatContent() {
   useEffect(() => {
     if (accessToken) {
       loadChats();
+      loadGroupMemberCounts(); // Load member counts for game communities
     }
   }, [accessToken]);
+
+  // Function to load group member counts
+  const loadGroupMemberCounts = async () => {
+    if (!accessToken) return;
+    try {
+      const groups = await groupService.getGroups(accessToken);
+      const counts: {[key: string]: number} = {};
+      groups.forEach((group: any) => {
+        // Match by group name
+        if (group.name?.includes('Free Fire')) counts['Free Fire'] = group.memberCount || 0;
+        if (group.name?.includes('Call of Duty')) counts['Call of Duty'] = group.memberCount || 0;
+        if (group.name?.includes('PUBG')) counts['PUBG Mobile'] = group.memberCount || 0;
+        if (group.name?.includes('FIFA')) counts['FIFA Mobile'] = group.memberCount || 0;
+        if (group.name?.includes('eFootball')) counts['eFootball'] = group.memberCount || 0;
+      });
+      setGroupMemberCounts(counts);
+    } catch (error) {
+      console.error('Failed to load group member counts:', error);
+    }
+  };
+
+  // Function to load group members
+  const loadGroupMembers = async () => {
+    if (!accessToken || !currentChat) return;
+    try {
+      const details = await groupService.getGroupDetails(currentChat.id, accessToken);
+      setGroupMembers(details.members || []);
+      setShowGroupMembers(true);
+    } catch (error: any) {
+      console.error('Failed to load group members:', error);
+      showToast(error.message || 'Failed to load members', 'error');
+    }
+  };
 
   // Open specific chat from URL
   useEffect(() => {
@@ -387,8 +424,17 @@ function ChatContent() {
     try {
       const data = await chatService.getChats(accessToken);
       const sortedChats = data.sort((a: Chat, b: Chat) => {
-        const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
-        const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+        // Priority 1: Groups without messages go to top (newly joined)
+        const aHasMessage = a.lastMessageAt ? 1 : 0;
+        const bHasMessage = b.lastMessageAt ? 1 : 0;
+        
+        if (aHasMessage !== bHasMessage) {
+          return aHasMessage - bHasMessage; // Groups without messages first
+        }
+        
+        // Priority 2: Sort by last message date
+        const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : new Date(a.createdAt).getTime();
+        const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : new Date(b.createdAt).getTime();
         return dateB - dateA;
       });
       setChats(sortedChats);
@@ -693,11 +739,11 @@ function ChatContent() {
               <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Game Communities</h2>
               <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
                 {[
-                  { name: 'Free Fire', image: '/free fire.jpeg', members: 0 },
-                  { name: 'Call of Duty', image: '/codm.jpeg', members: 0 },
-                  { name: 'PUBG Mobile', image: '/pubg.jpeg', members: 0 },
-                  { name: 'FIFA Mobile', image: '/fifa.jpeg', members: 0 },
-                  { name: 'eFootball', image: '/e football.jpeg', members: 0 }
+                  { name: 'Free Fire', image: '/free fire.jpeg' },
+                  { name: 'Call of Duty', image: '/codm.jpeg' },
+                  { name: 'PUBG Mobile', image: '/pubg.jpeg' },
+                  { name: 'FIFA Mobile', image: '/fifa.jpeg' },
+                  { name: 'eFootball', image: '/e football.jpeg' }
                 ].map((group) => (
                   <button
                     key={group.name}
@@ -716,7 +762,7 @@ function ChatContent() {
                     </div>
                     <div className="text-center max-w-[70px]">
                       <p className="text-white text-[11px] font-medium leading-tight truncate">{group.name}</p>
-                      <p className="text-gray-400 text-[10px]">{group.members} members</p>
+                      <p className="text-gray-400 text-[10px]">{groupMemberCounts[group.name] || 0} members</p>
                     </div>
                   </button>
                 ))}
@@ -816,12 +862,14 @@ function ChatContent() {
               <button
                 onClick={() => {
                   if (isGroupChat) {
-                    // For groups, just close chat (no profile to visit)
-                    return;
-                  }
-                  const otherUser = getOtherUser(currentChat);
-                  if (otherUser?.user?.id) {
-                    window.location.href = `/user/${otherUser.user.id}`;
+                    // For groups, show members list
+                    loadGroupMembers();
+                  } else {
+                    // For 1-on-1, go to user profile
+                    const otherUser = getOtherUser(currentChat);
+                    if (otherUser?.user?.id) {
+                      window.location.href = `/user/${otherUser.user.id}`;
+                    }
                   }
                 }}
                 className="flex items-center gap-3 flex-1 min-w-0"
@@ -1705,6 +1753,81 @@ function ChatContent() {
         }}
         accessToken={accessToken}
       />
+
+      {/* Group Members Modal */}
+      {showGroupMembers && (
+        <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowGroupMembers(false)}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-[#0a0a0a] w-full sm:max-w-lg sm:rounded-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[80vh] rounded-t-3xl sm:rounded-b-3xl border border-[#2f3336]">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#2f3336]">
+              <h2 className="text-xl font-bold text-white">Group Members ({groupMembers.length})</h2>
+              <button
+                onClick={() => setShowGroupMembers(false)}
+                className="p-2 hover:bg-[#2a2a2a] rounded-full transition-colors"
+              >
+                <IoCloseOutline className="w-6 h-6 text-white" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {groupMembers.length === 0 ? (
+                <div className="text-center py-12">
+                  <IoPeople className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                  <p className="text-gray-400">No members found</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {groupMembers.map((member: any) => (
+                    <button
+                      key={member.id}
+                      onClick={() => {
+                        window.location.href = `/user/${member.id}`;
+                      }}
+                      className="w-full bg-[#1a1a1a] rounded-xl p-3 border border-[#2f3336] hover:bg-[#2a2a2a] transition-colors flex items-center gap-3"
+                    >
+                      {member.avatar ? (
+                        <img src={member.avatar} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center flex-shrink-0">
+                          <span className="text-white font-semibold">{member.username?.charAt(0) || 'U'}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-white truncate">{member.username}</p>
+                          {member.verificationBadge?.status === 'verified' && (
+                            <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                        {member.firstName || member.lastName ? (
+                          <p className="text-sm text-gray-400 truncate">
+                            {[member.firstName, member.lastName].filter(Boolean).join(' ')}
+                          </p>
+                        ) : null}
+                        <p className="text-xs text-gray-500">Joined {new Date(member.joinedAt).toLocaleDateString()}</p>
+                      </div>
+                      <div 
+                        className="w-8 h-8 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: member.color }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
