@@ -678,15 +678,28 @@ function ChatContent() {
   };
 
   const getDisplayName = (chat: Chat) => {
+    // For GROUP chats, always show the group name
+    if (chat.type === 'GROUP' || (chat as any).type === 'GROUP') {
+      return chat.name || 'Group Chat';
+    }
+    
+    // For DIRECT chats, show the other user's name
     const other = getOtherUser(chat);
     if (other?.user) {
       const name = `${other.user.firstName || ''} ${other.user.lastName || ''}`.trim();
       return name || other.user.username;
     }
+    
     return chat.name || 'Chat';
   };
 
   const getAvatar = (chat: Chat) => {
+    // For GROUP chats, return null (will show group icon/initials)
+    if (chat.type === 'GROUP' || (chat as any).type === 'GROUP') {
+      return chat.avatar || null;
+    }
+    
+    // For DIRECT chats, show the other user's avatar
     const other = getOtherUser(chat);
     return other?.user?.avatar;
   };
