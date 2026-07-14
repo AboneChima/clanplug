@@ -423,7 +423,11 @@ function ChatContent() {
     if (!accessToken) return;
     try {
       const data = await chatService.getChats(accessToken);
-      const sortedChats = data.sort((a: Chat, b: Chat) => {
+      
+      // CRITICAL: Only show DIRECT chats - filter out ALL GROUP chats
+      const directChatsOnly = data.filter(chat => chat.type === 'DIRECT');
+      
+      const sortedChats = directChatsOnly.sort((a: Chat, b: Chat) => {
         // Priority 1: Newly joined groups (no lastMessageAt) go to TOP
         const aHasMessage = a.lastMessageAt ? true : false;
         const bHasMessage = b.lastMessageAt ? true : false;
@@ -747,46 +751,12 @@ function ChatContent() {
               </button>
             </div>
 
-            {/* Game Communities Section */}
-            <div className="bg-black px-4 py-3 border-b border-[#2f3336]">
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Game Communities</h2>
-              <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-1">
-                {[
-                  { name: 'Free Fire', image: '/free fire.jpeg' },
-                  { name: 'Call of Duty', image: '/codm.jpeg' },
-                  { name: 'PUBG Mobile', image: '/pubg.jpeg' },
-                  { name: 'FIFA Mobile', image: '/fifa.jpeg' },
-                  { name: 'eFootball', image: '/e football.jpeg' }
-                ].map((group) => (
-                  <button
-                    key={group.name}
-                    className="flex-shrink-0 flex flex-col items-center gap-2 group"
-                    onClick={() => setShowGroupDiscovery(true)}
-                  >
-                    <div className="relative">
-                      <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-blue-500/50 group-hover:ring-blue-500 transition-all">
-                        <img 
-                          src={group.image} 
-                          alt={group.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 w-3.5 h-3.5 rounded-full border-2 border-black"></div>
-                    </div>
-                    <div className="text-center max-w-[70px]">
-                      <p className="text-white text-[11px] font-medium leading-tight truncate">{group.name}</p>
-                      <p className="text-gray-400 text-[10px]">{groupMemberCounts[group.name] || 0} members</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Chat List */}
             <div className="flex-1 overflow-y-auto">
               {filteredChats.length === 0 ? (
                 <div className="text-center py-16 px-4">
-                  <p className="text-gray-500 text-sm">No conversations yet</p>
+                  <p className="text-gray-500 text-sm">No direct conversations yet</p>
+                  <p className="text-gray-600 text-xs mt-2">Send someone a message to start chatting</p>
                 </div>
               ) : (
                 filteredChats.map((chat) => (
