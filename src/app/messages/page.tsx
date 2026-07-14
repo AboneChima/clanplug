@@ -29,7 +29,7 @@ export default function MessagesPage() {
       // Load communities and direct chats in parallel
       const [myCommunities, allChats, discover] = await Promise.all([
         communityService.getMyCommunities(),
-        chatService.getChats(accessToken),
+        chatService.getChats(accessToken!),
         communityService.getDiscoverCommunities(),
       ]);
       
