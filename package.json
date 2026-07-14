@@ -5,13 +5,20 @@
   "scripts": {
     "dev": "next dev -p 3005",
     "build": "next build",
+    "build:android": "next build && npx cap sync android && npx cap open android",
+    "export": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android"
   },
   "engines": {
     "node": "22.x"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
     "@prisma/client": "^6.18.0",
     "@tanstack/react-query": "^5.90.5",
     "@types/bcryptjs": "^2.4.6",

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ClanPlug</string>
+    <string name="title_activity_main">ClanPlug</string>
+    <string name="package_name">com.clanplug.app</string>
+    <string name="custom_url_scheme">com.clanplug.app</string>
+</resources>
