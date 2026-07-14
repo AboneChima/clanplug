@@ -13,12 +13,17 @@ import {
   IoHappyOutline,
   IoShareOutline,
   IoArrowForwardOutline,
-  IoTrashOutline
+  IoTrashOutline,
+  IoPeople,
+  IoAddCircleOutline
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useSocket } from '@/contexts/SocketContext';
 import { chatService, Chat, ChatMessage } from '@/services/chat.service';
+import { groupService, GroupMessage } from '@/services/group.service';
+import GroupDiscoveryModal from '@/components/GroupDiscoveryModal';
 
 function ChatContent() {
   const searchParams = useSearchParams();
@@ -26,6 +31,7 @@ function ChatContent() {
   
   const { accessToken, user } = useAuth();
   const { showToast } = useToast();
+  const { socket, isConnected: socketConnected, joinChat, leaveChat } = useSocket();
   
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
@@ -50,49 +56,77 @@ function ChatContent() {
   const [messageReactions, setMessageReactions] = useState<{[key: string]: string}>({});
   const [showMessageInfo, setShowMessageInfo] = useState(false);
   const [showForwardModal, setShowForwardModal] = useState(false);
+  const [showGroupDiscovery, setShowGroupDiscovery] = useState(false);
+  const [isGroupChat, setIsGroupChat] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   const emojis = ['😊', '😂', '❤️', '👍', '🎉', '🔥', '😍', '🤔', '😭', '💯', '🙏', '👏', '✨', '💪', '🎮', '🎯', '🚀', '⭐', '💰', '🎁'];
 
-  // Setup real-time chat connection
+  // Setup real-time connection (Socket.IO for groups, SSE for 1-on-1)
   useEffect(() => {
     if (currentChat && accessToken) {
-      console.log('🔌 Connecting to real-time chat for chat:', currentChat.id);
-      chatService.connectRealtime(accessToken);
+      const isGroup = (currentChat as any).type === 'GROUP';
+      setIsGroupChat(isGroup);
       
-      const unsubscribeMessage = chatService.onMessage((newMessage) => {
-        console.log('📨 New message received via SSE:', newMessage);
-        if (newMessage.chatId === currentChat.id) {
-          setMessages(prev => {
-            // Avoid duplicates
-            if (prev.some(m => m.id === newMessage.id)) {
-              console.log('⚠️ Duplicate message, skipping:', newMessage.id);
-              return prev;
-            }
-            console.log('✅ Adding new message to chat');
-            return [...prev, newMessage];
-          });
-          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-        } else {
-          console.log('⚠️ Message for different chat, ignoring');
-        }
-      });
+      if (isGroup && socket && socketConnected) {
+        // Socket.IO for group chats
+        console.log('📥 Joining group chat room:', currentChat.id);
+        joinChat(currentChat.id);
+        
+        const handleNewMessage = (newMessage: any) => {
+          console.log('📨 New group message received:', newMessage);
+          if (newMessage.chatId === currentChat.id) {
+            setMessages(prev => {
+              if (prev.some(m => m.id === newMessage.id)) return prev;
+              return [...prev, newMessage];
+            });
+            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+          }
+        };
 
-      const unsubscribeConnection = chatService.onConnectionChange((connected) => {
-        console.log('🔌 Chat connection status:', connected ? 'CONNECTED' : 'DISCONNECTED');
-        setIsConnected(connected);
-      });
+        socket.on('message:new', handleNewMessage);
 
-      return () => {
-        console.log('🔌 Cleaning up chat connection');
-        unsubscribeMessage();
-        unsubscribeConnection();
-        chatService.disconnectRealtime();
-      };
+        return () => {
+          console.log('📤 Leaving group chat room:', currentChat.id);
+          socket.off('message:new', handleNewMessage);
+          leaveChat(currentChat.id);
+        };
+      } else if (!isGroup) {
+        // SSE for 1-on-1 chats
+        console.log('🔌 Connecting to real-time chat for chat:', currentChat.id);
+        chatService.connectRealtime(accessToken);
+        
+        const unsubscribeMessage = chatService.onMessage((newMessage) => {
+          console.log('📨 New message received via SSE:', newMessage);
+          if (newMessage.chatId === currentChat.id) {
+            setMessages(prev => {
+              if (prev.some(m => m.id === newMessage.id)) {
+                console.log('⚠️ Duplicate message, skipping:', newMessage.id);
+                return prev;
+              }
+              console.log('✅ Adding new message to chat');
+              return [...prev, newMessage];
+            });
+            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+          }
+        });
+
+        const unsubscribeConnection = chatService.onConnectionChange((connected) => {
+          console.log('🔌 Chat connection status:', connected ? 'CONNECTED' : 'DISCONNECTED');
+          setIsConnected(connected);
+        });
+
+        return () => {
+          console.log('🔌 Cleaning up chat connection');
+          unsubscribeMessage();
+          unsubscribeConnection();
+          chatService.disconnectRealtime();
+        };
+      }
     }
-  }, [currentChat?.id, accessToken]);
+  }, [currentChat?.id, socket, socketConnected, accessToken, joinChat, leaveChat]);
 
   const handleLongPressStart = (e: React.TouchEvent | React.MouseEvent, msg: ChatMessage) => {
     // Prevent default context menu on long press
@@ -367,13 +401,21 @@ function ChatContent() {
     if (!accessToken) return;
     try {
       setLoading(true);
-      const msgs = await chatService.getMessages(chatId, accessToken);
       
-      // Filter out messages that are deleted or hidden locally
-      const hiddenMessages = JSON.parse(localStorage.getItem('hiddenMessages') || '{}');
-      const filteredMsgs = msgs.filter(m => !m.isDeleted && !hiddenMessages[m.id]);
+      // Check if it's a group chat
+      const chat = chats.find(c => c.id === chatId);
+      if (chat && (chat as any).type === 'GROUP') {
+        // Load group messages
+        const msgs = await groupService.getGroupMessages(chatId, accessToken);
+        setMessages(msgs as any);
+      } else {
+        // Load 1-on-1 messages
+        const msgs = await chatService.getMessages(chatId, accessToken);
+        const hiddenMessages = JSON.parse(localStorage.getItem('hiddenMessages') || '{}');
+        const filteredMsgs = msgs.filter(m => !m.isDeleted && !hiddenMessages[m.id]);
+        setMessages(filteredMsgs);
+      }
       
-      setMessages(filteredMsgs);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
       markChatAsRead(chatId);
     } catch (error) {
@@ -484,10 +526,25 @@ function ChatContent() {
       setReplyToMessage(null); // Clear reply after sending
       
       console.log('📤 Final message payload:', JSON.stringify(messageData, null, 2));
-      const newMsg = await chatService.sendMessage(currentChat.id, messageData, accessToken);
-      console.log('✅ Message sent successfully:', newMsg);
       
-      setMessages(prev => [...prev, newMsg]);
+      // Use group service for groups, chat service for 1-on-1
+      let newMsg: any;
+      if ((currentChat as any).type === 'GROUP') {
+        newMsg = await groupService.sendMessage(
+          currentChat.id,
+          content,
+          messageData.type,
+          messageData.attachments,
+          accessToken
+        );
+        // Don't add to messages array immediately for groups (Socket.IO will handle it)
+      } else {
+        newMsg = await chatService.sendMessage(currentChat.id, messageData, accessToken);
+        // Add immediately for 1-on-1 chats
+        setMessages(prev => [...prev, newMsg]);
+      }
+      
+      console.log('✅ Message sent successfully:', newMsg);
       
       setChats(prevChats => {
         const updatedChat = { ...currentChat, lastMessageAt: newMsg.createdAt };
@@ -620,8 +677,15 @@ function ChatContent() {
         {!currentChat && (
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="bg-black px-4 py-3 flex-shrink-0 border-b border-[#2f3336]">
+            <div className="bg-black px-4 py-3 flex-shrink-0 border-b border-[#2f3336] flex items-center justify-between">
               <h1 className="text-xl font-bold text-white">Messages</h1>
+              <button
+                onClick={() => setShowGroupDiscovery(true)}
+                className="p-2 hover:bg-[#2a2a2a] rounded-full transition-colors"
+                title="Join a group"
+              >
+                <IoAddCircleOutline className="w-6 h-6 text-blue-500" />
+              </button>
             </div>
 
             {/* Game Communities Section */}
@@ -638,7 +702,7 @@ function ChatContent() {
                   <button
                     key={group.name}
                     className="flex-shrink-0 flex flex-col items-center gap-2 group"
-                    onClick={() => showToast('Coming soon!', 'info')}
+                    onClick={() => setShowGroupDiscovery(true)}
                   >
                     <div className="relative">
                       <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-blue-500/50 group-hover:ring-blue-500 transition-all">
@@ -751,6 +815,10 @@ function ChatContent() {
               </button>
               <button
                 onClick={() => {
+                  if (isGroupChat) {
+                    // For groups, just close chat (no profile to visit)
+                    return;
+                  }
                   const otherUser = getOtherUser(currentChat);
                   if (otherUser?.user?.id) {
                     window.location.href = `/user/${otherUser.user.id}`;
@@ -758,38 +826,52 @@ function ChatContent() {
                 }}
                 className="flex items-center gap-3 flex-1 min-w-0"
               >
-                {getAvatar(currentChat) ? (
-                  <img src={getAvatar(currentChat)!} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                {isGroupChat ? (
+                  <>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                      <IoPeople className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <h2 className="font-semibold text-white truncate">{currentChat.name || 'Group Chat'}</h2>
+                      <p className="text-xs text-gray-400">Group • Tap to see members</p>
+                    </div>
+                  </>
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-semibold">{getDisplayName(currentChat).charAt(0)}</span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center gap-1">
-                    <h2 className="font-semibold text-white truncate">{getDisplayName(currentChat)}</h2>
-                    {((getOtherUser(currentChat)?.user as any)?.verificationBadge?.status === 'verified' || (getOtherUser(currentChat)?.user as any)?.verificationBadge?.status === 'active') && (
-                      <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
+                  <>
+                    {getAvatar(currentChat) ? (
+                      <img src={getAvatar(currentChat)!} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center flex-shrink-0">
+                        <span className="text-white font-semibold">{getDisplayName(currentChat).charAt(0)}</span>
+                      </div>
                     )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs text-gray-500">
-                      {isConnected ? (
-                        <span className="flex items-center gap-1">
-                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                          Online
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1">
-                          <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
-                          Offline
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="flex items-center gap-1">
+                        <h2 className="font-semibold text-white truncate">{getDisplayName(currentChat)}</h2>
+                        {((getOtherUser(currentChat)?.user as any)?.verificationBadge?.status === 'verified' || (getOtherUser(currentChat)?.user as any)?.verificationBadge?.status === 'active') && (
+                          <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-gray-500">
+                          {isConnected ? (
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              Online
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                              Offline
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
               </button>
               
               {/* Menu Button */}
@@ -871,6 +953,11 @@ function ChatContent() {
                   const isOwn = msg.userId === user?.id;
                   const hasImage = msg.type === 'IMAGE' && msg.attachments && msg.attachments.length > 0;
                   const isListingShare = (msg as any).metadata?.type === 'LISTING_SHARE';
+                  const messageData = msg as any;
+                  const userColor = messageData.userColor;
+                  const userName = messageData.user 
+                    ? `${messageData.user.firstName || ''} ${messageData.user.lastName || ''}`.trim() || messageData.user.username
+                    : 'User';
                   
                   console.log('🔍 Rendering message:', { 
                     id: msg.id, 
@@ -881,7 +968,9 @@ function ChatContent() {
                     attachments: msg.attachments,
                     firstAttachment: msg.attachments?.[0],
                     content: msg.content?.substring(0, 30),
-                    isListingShare
+                    isListingShare,
+                    isGroupChat,
+                    userColor
                   });
                   
                   return (
@@ -896,12 +985,29 @@ function ChatContent() {
                       onMouseLeave={handleTouchMove}
                       onContextMenu={(e) => e.preventDefault()} 
                     >
-                      <div className="relative max-w-[75%]">
-                        <div className={`${
-                          isListingShare ? '' : 'rounded-2xl'
-                        } ${
+                      <div className={`relative max-w-[75%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
+                        {/* Show user name and color for group chats */}
+                        {isGroupChat && !isOwn && (
+                          <div className="flex items-center gap-2 mb-1 px-2">
+                            <span 
+                              className="text-sm font-semibold"
+                              style={{ color: userColor }}
+                            >
+                              {userName}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div 
+                          className={`${
+                            isListingShare ? '' : 'rounded-2xl'
+                          } ${
                           isOwn ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-[#2a2a2a] text-white rounded-bl-sm'
-                        } ${hasImage && !isListingShare ? 'p-0 overflow-hidden' : isListingShare ? '' : isOwn ? 'px-2 py-1.5' : 'pl-2.5 pr-2 py-1.5'}`}>
+                        } ${hasImage && !isListingShare ? 'p-0 overflow-hidden' : isListingShare ? '' : isOwn ? 'px-2 py-1.5' : 'pl-2.5 pr-2 py-1.5'}`}
+                          style={!isOwn && isGroupChat && userColor ? {
+                            borderLeft: `3px solid ${userColor}`
+                          } : {}}
+                        >
                         
                         {/* Listing Share - Compact YouTube-style Thumbnail */}
                         
@@ -1589,6 +1695,16 @@ function ChatContent() {
           </div>
         )}
       </div>
+      
+      {/* Group Discovery Modal */}
+      <GroupDiscoveryModal
+        isOpen={showGroupDiscovery}
+        onClose={() => setShowGroupDiscovery(false)}
+        onGroupJoined={() => {
+          loadChats(); // Reload chats to show newly joined groups
+        }}
+        accessToken={accessToken}
+      />
     </AppShell>
   );
 }

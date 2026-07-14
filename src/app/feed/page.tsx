@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoSendOutline, IoCloseOutline, IoChevronDown } from 'react-icons/io5';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { IoHeartOutline, IoHeart, IoChatbubbleOutline, IoShareSocialOutline, IoBookmarkOutline, IoBookmark, IoSendOutline, IoChevronDown } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -41,10 +41,11 @@ interface Post {
   comments?: Comment[];
 }
 
-export default function FeedPage() {
+function FeedContent() {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams?.get('tab') || 'foryou';
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -55,16 +56,44 @@ export default function FeedPage() {
   const [descriptionExpanded, setDescriptionExpanded] = useState<Record<string, boolean>>({});
   const [videoPlaying, setVideoPlaying] = useState<Record<string, boolean>>({});
   const [videoProgress, setVideoProgress] = useState<Record<string, number>>({});
-  const [videoDuration, setVideoDuration] = useState<Record<string, number>>({});
   const [showPlayIcon, setShowPlayIcon] = useState<Record<string, boolean>>({});
   const [showMoreMenu, setShowMoreMenu] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({});
+  const progressBarRef = useRef<Record<string, HTMLDivElement>>({});
+
+  // Hide/show bottom menu when modals are open
+  useEffect(() => {
+    const bottomMenu = document.querySelector('nav.lg\\:hidden.fixed') as HTMLElement;
+    if (bottomMenu) {
+      if (showComments || showMoreMenu) {
+        bottomMenu.style.display = 'none';
+      } else {
+        bottomMenu.style.display = 'block';
+      }
+    }
+  }, [showComments, showMoreMenu]);
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+    
+    // iOS viewport height fix
+    const setAppHeight = () => {
+      const doc = document.documentElement;
+      doc.style.setProperty('--app-height', `${window.innerHeight}px`);
+    };
+    
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', setAppHeight);
+    
+    return () => {
+      window.removeEventListener('resize', setAppHeight);
+      window.removeEventListener('orientationchange', setAppHeight);
+    };
+  }, [activeTab]); // Refetch when tab changes
 
   // Snap scrolling handler
   useEffect(() => {
@@ -103,13 +132,29 @@ export default function FeedPage() {
   const fetchPosts = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/feed`, {
+      
+      // Fetch bookmarks or feed based on active tab
+      const endpoint = activeTab === 'bookmarks' 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/posts/bookmarks`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/posts/feed`;
+      
+      const response = await fetch(endpoint, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       if (response.ok) {
-        const data = await response.json();
-        const postsData = Array.isArray(data.data) ? data.data : [];
+        const result = await response.json();
+        
+        // Handle different response formats
+        let postsData: Post[] = [];
+        if (activeTab === 'bookmarks') {
+          // Bookmarks returns { success, posts, pagination }
+          postsData = Array.isArray(result.posts) ? result.posts : [];
+        } else {
+          // Feed returns { success, data, ... }
+          postsData = Array.isArray(result.data) ? result.data : [];
+        }
+        
         const socialPosts = postsData.filter((p: Post) => !p.type || p.type === 'SOCIAL_POST');
         setPosts(socialPosts);
       }
@@ -252,17 +297,56 @@ export default function FeedPage() {
     setVideoProgress(prev => ({ ...prev, [postId]: seekPercentage }));
   };
 
+  const handleProgressBarInteraction = (e: React.MouseEvent | React.TouchEvent, postId: string) => {
+    e.stopPropagation();
+    const progressBar = progressBarRef.current[postId];
+    if (!progressBar) return;
+
+    const rect = progressBar.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clickX = clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+    handleVideoSeek(postId, percentage);
+  };
+
+  const handleProgressBarDragStart = (postId: string) => {
+    setIsDragging(true);
+  };
+
+  const handleProgressBarDragMove = (e: React.MouseEvent | React.TouchEvent, postId: string) => {
+    if (!isDragging && !('touches' in e)) return;
+    handleProgressBarInteraction(e, postId);
+  };
+
+  const handleProgressBarDragEnd = () => {
+    setIsDragging(false);
+  };
+
   const handleDownloadVideo = async (videoUrl: string, postId: string) => {
     try {
-      showToast('Downloading video with watermark...', 'info');
-      const a = document.createElement('a');
-      a.href = videoUrl;
-      a.download = `clanplug-video-${postId}.mp4`;
-      a.click();
-      showToast('Download started!', 'success');
+      showToast('Preparing download...', 'info');
       setShowMoreMenu(null);
+      
+      // Fetch the video as a blob
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      
+      // Create a blob URL and trigger download
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `clanplug-video-${postId}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(blobUrl);
+      
+      showToast('Video downloaded successfully!', 'success');
     } catch (error) {
-      showToast('Download failed', 'error');
+      console.error('Download error:', error);
+      showToast('Download failed. Please try again.', 'error');
     }
   };
 
@@ -304,12 +388,16 @@ export default function FeedPage() {
     return (
       <AppShell>
         <div className="h-screen bg-black flex flex-col items-center justify-center p-8">
-          <p className="text-gray-500 text-lg mb-4">No posts yet</p>
-          <Link href="/create-post">
-            <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors">
-              Create your first post
-            </button>
-          </Link>
+          <p className="text-gray-500 text-lg mb-4">
+            {activeTab === 'bookmarks' ? 'No bookmarked posts yet' : 'No posts yet'}
+          </p>
+          {activeTab !== 'bookmarks' && (
+            <Link href="/create-post">
+              <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors">
+                Create your first post
+              </button>
+            </Link>
+          )}
         </div>
       </AppShell>
     );
@@ -317,15 +405,25 @@ export default function FeedPage() {
 
   return (
     <AppShell>
-      <div className="relative bg-black">
-        {/* Fixed Header - Transparent so portraits show through */}
-        <div className="fixed top-14 lg:top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/70 via-black/40 to-transparent">
+      <div className="relative bg-black min-h-screen">
+        {/* Fixed Header - Solid black with gradient */}
+        <div className="fixed top-14 lg:top-0 left-0 right-0 z-50 bg-gradient-to-b from-black via-black/95 to-black/70">
           <div className="max-w-2xl mx-auto flex items-center gap-2 px-4 py-3">
-            <button className="px-3 py-1.5 text-sm font-semibold rounded-full bg-blue-600/90 backdrop-blur-sm text-white shadow-lg">
-              For You
-            </button>
-            <Link href="/bookmarks">
-              <button className="px-3 py-1.5 text-sm font-semibold rounded-full bg-black/40 backdrop-blur-sm text-gray-300 hover:bg-black/60 hover:text-white transition-all shadow-lg">
+            <Link href="/feed">
+              <button className={`px-3 py-1.5 text-sm font-semibold rounded-full shadow-lg transition-all ${
+                activeTab === 'foryou' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white'
+              }`}>
+                For You
+              </button>
+            </Link>
+            <Link href="/feed?tab=bookmarks">
+              <button className={`px-3 py-1.5 text-sm font-semibold rounded-full shadow-lg transition-all ${
+                activeTab === 'bookmarks' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white'
+              }`}>
                 Bookmarks
               </button>
             </Link>
@@ -333,7 +431,7 @@ export default function FeedPage() {
             <div className="flex-1"></div>
             
             <Link href="/search">
-              <button className="p-2 bg-black/40 backdrop-blur-sm hover:bg-black/60 text-gray-300 hover:text-white rounded-full transition-all shadow-lg">
+              <button className="p-2 bg-gray-900 hover:bg-gray-800 text-gray-300 hover:text-white rounded-full transition-all shadow-lg">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -341,7 +439,7 @@ export default function FeedPage() {
             </Link>
             
             <Link href="/create-post">
-              <button className="p-2 bg-blue-600/90 backdrop-blur-sm hover:bg-blue-700/90 text-white rounded-full transition-all shadow-lg">
+              <button className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                 </svg>
@@ -350,14 +448,14 @@ export default function FeedPage() {
           </div>
         </div>
 
-        {/* Fullscreen Snap Scroll Container */}
+        {/* Fullscreen Snap Scroll Container - Full viewport */}
         <div 
           ref={scrollContainerRef}
-          className="h-screen overflow-y-scroll snap-y snap-mandatory scroll-smooth relative"
+          className="feed-scroll-container overflow-y-scroll snap-y snap-mandatory scroll-smooth relative bg-black"
           style={{ 
+            height: '100vh',
             scrollSnapType: 'y mandatory',
             scrollBehavior: 'smooth',
-            paddingTop: 'calc(3.5rem + 56px)', // Account for AppShell header + our header
           }}
         >
           {posts.map((post, index) => {
@@ -372,11 +470,17 @@ export default function FeedPage() {
             return (
               <div 
                 key={post.id}
-                className="relative h-screen w-full snap-start snap-always flex items-center justify-center"
+                className="feed-post-item relative snap-start snap-always flex items-center justify-center bg-black"
+                style={{ 
+                  height: '100vh',
+                  minHeight: '100vh',
+                  width: '100%',
+                  overflow: 'hidden'
+                }}
               >
-                {/* Fullscreen Media Content - Positioned WAY UP, with black background to keep fullscreen */}
+                {/* Fullscreen Media Content - Fill entire viewport, content positioned up */}
                 <div className={`absolute inset-0 bg-black flex items-center justify-center transition-all duration-300 ${
-                  showComments === post.id ? 'scale-85 -translate-y-[20%]' : (isTextOnly || hasVideo || hasImage) ? '-translate-y-[15%]' : ''
+                  showComments === post.id ? 'scale-85 -translate-y-[20%]' : (isTextOnly || hasVideo || hasImage) ? '-translate-y-[10%]' : ''
                 }`}>
                   {/* Video Post - Custom Controls */}
                   {hasVideo && (
@@ -393,8 +497,6 @@ export default function FeedPage() {
                         muted={false}
                         onTimeUpdate={() => handleVideoProgress(post.id)}
                         onLoadedMetadata={(e) => {
-                          const video = e.target as HTMLVideoElement;
-                          setVideoDuration(prev => ({ ...prev, [post.id]: video.duration }));
                           // Initially show play icon until video starts
                           setShowPlayIcon(prev => ({ ...prev, [post.id]: false }));
                         }}
@@ -419,24 +521,34 @@ export default function FeedPage() {
                         </div>
                       )}
                       
-                      {/* Custom Progress Bar - Much lower */}
-                      <div className="absolute left-0 right-0 px-2 z-50 pointer-events-auto" style={{ bottom: 'calc(30vh - 250px)' }}>
+                      {/* Custom Progress Bar - Lower */}
+                      <div 
+                        className="absolute left-0 right-0 px-4 z-50 pointer-events-auto" 
+                        style={{ bottom: '70px' }} // Lower position
+                      >
                         <div 
-                          className="relative h-1 bg-gray-600/60 rounded-full cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const clickX = e.clientX - rect.left;
-                            const percentage = (clickX / rect.width) * 100;
-                            handleVideoSeek(post.id, percentage);
+                          ref={(el) => {
+                            if (el) progressBarRef.current[post.id] = el;
                           }}
+                          className="relative h-1 bg-gray-700/80 rounded-full cursor-pointer touch-none"
+                          onClick={(e) => handleProgressBarInteraction(e, post.id)}
+                          onMouseDown={() => handleProgressBarDragStart(post.id)}
+                          onMouseMove={(e) => handleProgressBarDragMove(e, post.id)}
+                          onMouseUp={handleProgressBarDragEnd}
+                          onMouseLeave={handleProgressBarDragEnd}
+                          onTouchStart={(e) => {
+                            handleProgressBarDragStart(post.id);
+                            handleProgressBarInteraction(e, post.id);
+                          }}
+                          onTouchMove={(e) => handleProgressBarInteraction(e, post.id)}
+                          onTouchEnd={handleProgressBarDragEnd}
                         >
                           <div 
-                            className="absolute left-0 top-0 h-full bg-white rounded-full transition-all"
+                            className="absolute left-0 top-0 h-full bg-white rounded-full transition-all pointer-events-none"
                             style={{ width: `${videoProgress[post.id] || 0}%` }}
                           >
                             {/* Progress indicator dot */}
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full" />
+                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg" />
                           </div>
                         </div>
                       </div>
@@ -456,11 +568,11 @@ export default function FeedPage() {
                     </div>
                   )}
 
-                  {/* Text-only Post - Clean design with blue/black gradient */}
+                  {/* Text-only Post - Solid dark blue with elegant styling */}
                   {isTextOnly && (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-900 via-gray-900 to-black p-8">
+                    <div className="w-full h-full flex items-center justify-center bg-[#0f1729] p-8">
                       <div className="max-w-2xl text-center">
-                        <p className="text-white text-xl md:text-2xl font-normal leading-relaxed">
+                        <p className="text-white text-xl md:text-2xl font-light italic leading-relaxed tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
                           {post.description}
                         </p>
                       </div>
@@ -468,8 +580,11 @@ export default function FeedPage() {
                   )}
                 </div>
 
-                {/* Bottom Overlay - User Info & Description - Lower */}
-                <div className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10" style={{ bottom: 'calc(30vh - 120px)' }}>
+                {/* Bottom Overlay - User Info & Description - Much higher */}
+                <div 
+                  className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10" 
+                  style={{ bottom: '180px' }} // Much higher up
+                >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
                     {!isTextOnly && post.description && (
@@ -519,8 +634,11 @@ export default function FeedPage() {
                   </div>
                 </div>
 
-                {/* Right Side - Action Buttons - Adjusted with username */}
-                <div className="absolute right-3 flex flex-col gap-6 z-10" style={{ bottom: 'calc(30vh - 0px)' }}>
+                {/* Right Side - Action Buttons - Higher */}
+                <div 
+                  className="absolute right-3 flex flex-col gap-6 z-10" 
+                  style={{ bottom: '270px' }} // Higher to match name
+                >
                   {/* Like */}
                   <button
                     onClick={() => handleLike(post.id)}
@@ -568,114 +686,124 @@ export default function FeedPage() {
                   </button>
                 </div>
 
-                {/* More Menu - Horizontal slide-up sheet 40vh height */}
+                {/* More Menu - Half page, smaller icons */}
                 {showMoreMenu === post.id && (
-                  <div className="absolute bottom-0 left-0 right-0 h-[40vh] bg-black/95 backdrop-blur-xl border-t border-gray-800 z-50 animate-slide-up flex flex-col">
-                    <div className="flex-1 p-6 overflow-y-auto">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-white font-semibold text-lg">More Options</h3>
-                        <button
-                          onClick={() => setShowMoreMenu(null)}
-                          className="p-2 hover:bg-gray-800 rounded-full transition-colors"
-                        >
-                          <IoChevronDown className="w-5 h-5 text-gray-400" />
-                        </button>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        {/* Copy Link */}
-                        <button
-                          onClick={() => handleCopyLink(post.id)}
-                          className="flex flex-col items-center gap-3 p-6 bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors"
-                        >
-                          <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-white text-sm font-medium">Copy Link</span>
-                        </button>
-
-                        {/* Share */}
-                        <button
-                          onClick={() => handleShare(post)}
-                          className="flex flex-col items-center gap-3 p-6 bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors"
-                        >
-                          <IoShareSocialOutline className="w-10 h-10 text-white" />
-                          <span className="text-white text-sm font-medium">Share</span>
-                        </button>
-
-                        {/* Download (only for videos) */}
-                        {hasVideo && (
+                  <div className="fixed inset-0 z-[150] flex flex-col justify-end bg-black/50" onClick={() => setShowMoreMenu(null)}>
+                    <div className="w-full h-[50vh] bg-black border-t border-gray-800 animate-slide-up flex flex-col z-[200]" onClick={(e) => e.stopPropagation()}>
+                      <div className="p-6 bg-black">
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-white font-semibold text-base">Options</h3>
                           <button
-                            onClick={() => handleDownloadVideo(post.videos![0], post.id)}
-                            className="flex flex-col items-center gap-3 p-6 bg-gray-900 hover:bg-gray-800 rounded-2xl transition-colors"
+                            onClick={() => setShowMoreMenu(null)}
+                            className="p-2 hover:bg-gray-800 rounded-full transition-colors"
                           >
-                            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            <span className="text-white text-sm font-medium">Download</span>
+                            <IoChevronDown className="w-5 h-5 text-gray-400" />
                           </button>
-                        )}
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-3">
+                          {/* Copy Link */}
+                          <button
+                            onClick={() => handleCopyLink(post.id)}
+                            className="flex flex-col items-center gap-2 p-4 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
+                          >
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span className="text-white text-xs font-medium">Copy Link</span>
+                          </button>
+
+                          {/* Share */}
+                          <button
+                            onClick={() => handleShare(post)}
+                            className="flex flex-col items-center gap-2 p-4 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
+                          >
+                            <IoShareSocialOutline className="w-6 h-6 text-white" />
+                            <span className="text-white text-xs font-medium">Share</span>
+                          </button>
+
+                          {/* Download (only for videos) */}
+                          {hasVideo && (
+                            <button
+                              onClick={() => handleDownloadVideo(post.videos![0], post.id)}
+                              className="flex flex-col items-center gap-2 p-4 bg-gray-900 hover:bg-gray-800 rounded-xl transition-colors"
+                            >
+                              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                              <span className="text-white text-xs font-medium">Download</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Comments Slide-up Panel - Solid black, covers bottom menu */}
+                {/* Comments Slide-up Panel - Larger (70vh) */}
                 {showComments === post.id && (
-                  <div className="fixed bottom-0 left-0 right-0 h-[60%] bg-black border-t border-gray-800 z-[60] animate-slide-up flex flex-col">
-                    {/* Comments Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-gray-800">
-                      <h2 className="text-white font-semibold text-lg">
-                        Comments ({post._count.comments})
-                      </h2>
-                      <button
-                        onClick={() => setShowComments(null)}
-                        className="p-2 hover:bg-gray-900 rounded-full transition-colors"
-                      >
-                        <IoChevronDown className="w-5 h-5 text-gray-400" />
-                      </button>
-                    </div>
+                  <>
+                    {/* Dark overlay behind comments */}
+                    <div 
+                      className="fixed inset-0 bg-black/60 z-[150]" 
+                      onClick={() => setShowComments(null)}
+                    />
+                    
+                    {/* Comments panel - 70vh sliding from bottom */}
+                    <div className="fixed left-0 right-0 bottom-0 h-[70vh] bg-black border-t border-gray-800 z-[200] animate-slide-up flex flex-col pb-20">
+                      {/* Comments Header */}
+                      <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-black flex-shrink-0">
+                        <h2 className="text-white font-semibold text-lg">
+                          Comments ({post._count.comments})
+                        </h2>
+                        <button
+                          onClick={() => setShowComments(null)}
+                          className="p-2 hover:bg-gray-900 rounded-full transition-colors"
+                        >
+                          <IoChevronDown className="w-5 h-5 text-gray-400" />
+                        </button>
+                      </div>
 
-                    {/* Comment Input */}
-                    <div className="p-3 border-b border-gray-800 bg-gray-950">
-                      <div className="flex gap-2">
-                        {user?.avatar ? (
-                          <Image 
-                            src={user.avatar} 
-                            alt={user.username} 
-                            width={32} 
-                            height={32} 
-                            className="w-8 h-8 rounded-full" 
-                            unoptimized 
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
-                            <span className="text-white text-xs font-bold">{user?.firstName?.[0] || 'U'}</span>
+                      {/* Comment Input */}
+                      <div className="p-3 border-b border-gray-800 bg-black flex-shrink-0">
+                        <div className="flex gap-2">
+                          {user?.avatar ? (
+                            <Image 
+                              src={user.avatar} 
+                              alt={user.username} 
+                              width={32} 
+                              height={32} 
+                              className="w-8 h-8 rounded-full" 
+                              unoptimized 
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                              <span className="text-white text-xs font-bold">{user?.firstName?.[0] || 'U'}</span>
+                            </div>
+                          )}
+                          <div className="flex-1 flex gap-2">
+                            <input
+                              ref={commentInputRef}
+                              type="text"
+                              value={commentText}
+                              onChange={(e) => setCommentText(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleComment(post.id)}
+                              placeholder="Add a comment..."
+                              className="flex-1 px-3 py-2 bg-gray-900 border border-gray-800 rounded-full text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                            />
+                            <button
+                              onClick={() => handleComment(post.id)}
+                              disabled={!commentText.trim() || submitting}
+                              className="p-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-full transition-colors"
+                            >
+                              <IoSendOutline className="w-5 h-5" />
+                            </button>
                           </div>
-                        )}
-                        <div className="flex-1 flex gap-2">
-                          <input
-                            ref={commentInputRef}
-                            type="text"
-                            value={commentText}
-                            onChange={(e) => setCommentText(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleComment(post.id)}
-                            placeholder="Add a comment..."
-                            className="flex-1 px-3 py-2 bg-gray-900 border border-gray-800 rounded-full text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500"
-                          />
-                          <button
-                            onClick={() => handleComment(post.id)}
-                            disabled={!commentText.trim() || submitting}
-                            className="p-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-full transition-colors"
-                          >
-                            <IoSendOutline className="w-5 h-5" />
-                          </button>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Comments List - Scrollable */}
-                    <div className="overflow-y-auto h-[calc(100%-140px)]">
+                      {/* Comments List - Scrollable with large bottom padding */}
+                      <div className="overflow-y-auto flex-1 bg-black pb-32">
                       {!comments[post.id] || comments[post.id].length === 0 ? (
                         <div className="p-8 text-center">
                           <IoChatbubbleOutline className="w-12 h-12 text-gray-700 mx-auto mb-2" />
@@ -727,6 +855,7 @@ export default function FeedPage() {
                       )}
                     </div>
                   </div>
+                </>
                 )}
               </div>
             );
@@ -734,5 +863,19 @@ export default function FeedPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+export default function FeedPage() {
+  return (
+    <Suspense fallback={
+      <AppShell>
+        <div className="h-screen bg-black flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
+      </AppShell>
+    }>
+      <FeedContent />
+    </Suspense>
   );
 }

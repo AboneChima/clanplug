@@ -34,6 +34,7 @@ export const metadata: Metadata = {
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { SocketProvider } from '@/contexts/SocketContext';
 import BannedUserModal from '@/components/BannedUserModal';
 import RegisterSW from './register-sw';
 
@@ -62,8 +63,10 @@ export default function RootLayout({
         <RegisterSW />
         <ToastProvider>
           <AuthProvider>
-            <BannedUserModal />
-            {children}
+            <SocketProvider>
+              <BannedUserModal />
+              {children}
+            </SocketProvider>
           </AuthProvider>
         </ToastProvider>
       </body>

@@ -12,7 +12,8 @@ import {
   IoStorefront,
   IoPersonOutline,
   IoPerson,
-  IoEllipsisHorizontal
+  IoSettingsOutline,
+  IoSettings
 } from 'react-icons/io5';
 
 const navItems = [
@@ -41,10 +42,10 @@ const navItems = [
     ActiveIcon: IoPerson
   },
   { 
-    href: '/more', 
-    label: 'More', 
-    Icon: IoEllipsisHorizontal,
-    ActiveIcon: IoEllipsisHorizontal
+    href: '/settings', 
+    label: 'Settings', 
+    Icon: IoSettingsOutline,
+    ActiveIcon: IoSettings
   },
 ];
 
@@ -80,7 +81,7 @@ export default function MobileBottomNav() {
   }, []);
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[50] bg-black border-t border-[#2f3336]">
+    <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-[50] bg-black/90 backdrop-blur-md border border-gray-800 rounded-2xl shadow-xl">
       <div className="flex items-center justify-around px-2 py-3">
         {navItems.map(({ href, label, Icon, ActiveIcon }) => {
           const active = pathname === href || (href !== '/feed' && href !== '/more' && pathname?.startsWith(href));

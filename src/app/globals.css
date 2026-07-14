@@ -288,3 +288,45 @@ button, a {
 .animate-slide-up {
   animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* iOS Safe Area and Viewport Fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari viewport height fix */
+  :root {
+    --app-height: 100vh;
+  }
+  
+  body {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  /* Fix for feed page full-screen items on iOS */
+  .feed-item-container {
+    height: 100vh;
+    height: -webkit-fill-available;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Feed Page Scroll Container - iOS optimizations */
+.feed-scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+/* Prevent content from showing through on iOS */
+.feed-post-item {
+  isolation: isolate;
+  contain: layout style paint;
+}
+
+/* Better touch handling for progress bar */
+.progress-bar-touchable {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}

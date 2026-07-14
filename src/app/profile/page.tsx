@@ -37,6 +37,7 @@ interface Post {
   gameTitle?: string;
   images?: string[];
   videos?: string[];
+  videoThumbnails?: string[];
   createdAt: string;
   views?: number;
   likes?: number;
@@ -486,15 +487,15 @@ export default function ProfilePage() {
                               className="w-full h-full object-cover"
                               unoptimized
                             />
-                          ) : post.videos?.[0] ? (
+                          ) : (post.videoThumbnails?.[0] || post.videos?.[0]) ? (
                             <div className="relative w-full h-full bg-black">
-                              <video 
-                                src={`${post.videos[0]}#t=0.1`}
+                              <Image 
+                                src={post.videoThumbnails?.[0] || post.videos?.[0] || ''}
+                                alt={post.title}
+                                width={64}
+                                height={64}
                                 className="w-full h-full object-cover"
-                                muted
-                                playsInline
-                                preload="metadata"
-                                poster={post.videos[0]}
+                                unoptimized
                               />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                                 <div className="w-6 h-6 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
@@ -548,7 +549,7 @@ export default function ProfilePage() {
             ) : (
               <div className="grid grid-cols-3 gap-px bg-black">
                 {currentPosts.map((post) => {
-                  const media = post.images?.[0] || post.videos?.[0];
+                  const media = post.images?.[0] || (post as any).videoThumbnails?.[0] || post.videos?.[0];
                   
                   // Check if text is emoji-only or very short
                   const text = post.title || post.description || '';
