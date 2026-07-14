@@ -173,20 +173,34 @@ function VerificationBadgeContent() {
           <h3 className="text-sm font-semibold text-white mb-3">What&apos;s included:</h3>
           <div className="space-y-2">
             {[
-              'Verified blue checkmark badge',
-              'Username protection & priority',
-              'Unlimited social media posting',
-              'Upload videos to social feed',
-              'Priority listing visibility',
-              'Enhanced profile credibility',
-              'Build buyer trust instantly',
-              'Stand out in marketplace',
+              { text: 'Verified blue checkmark badge', bold: [] },
+              { text: 'Username protection & priority', bold: [] },
+              { text: 'Unlimited posting in shop & social media', bold: [] },
+              { text: 'Upload media to for you page', bold: ['for you'] },
+              { text: 'Priority listing visibility', bold: [] },
+              { text: 'Enhanced profile credibility', bold: [] },
+              { text: 'Build buyer trust instantly', bold: [] },
+              { text: 'Stand out in marketplace', bold: [] },
             ].map((benefit, i) => (
               <div key={i} className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
                   <IoCheckmarkCircleOutline className="w-3 h-3 text-blue-400" />
                 </div>
-                <span className="text-gray-300 text-xs">{benefit}</span>
+                <span className="text-gray-300 text-xs">
+                  {benefit.bold.length > 0 ? (
+                    <>
+                      {benefit.text.split(new RegExp(`(${benefit.bold.join('|')})`, 'gi')).map((part, idx) => 
+                        benefit.bold.some(b => b.toLowerCase() === part.toLowerCase()) ? (
+                          <strong key={idx} className="font-bold">{part}</strong>
+                        ) : (
+                          <span key={idx}>{part}</span>
+                        )
+                      )}
+                    </>
+                  ) : (
+                    benefit.text
+                  )}
+                </span>
               </div>
             ))}
           </div>
