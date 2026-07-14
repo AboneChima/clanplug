@@ -424,18 +424,18 @@ function ChatContent() {
     try {
       const data = await chatService.getChats(accessToken);
       const sortedChats = data.sort((a: Chat, b: Chat) => {
-        // Priority 1: Groups without messages go to top (newly joined)
-        const aHasMessage = a.lastMessageAt ? 1 : 0;
-        const bHasMessage = b.lastMessageAt ? 1 : 0;
+        // Priority 1: Newly joined groups (no lastMessageAt) go to TOP
+        const aHasMessage = a.lastMessageAt ? true : false;
+        const bHasMessage = b.lastMessageAt ? true : false;
         
-        if (aHasMessage !== bHasMessage) {
-          return aHasMessage - bHasMessage; // Groups without messages first
-        }
+        // If one has messages and one doesn't, put the one WITHOUT messages first (top)
+        if (aHasMessage && !bHasMessage) return 1;  // b goes first (top)
+        if (!aHasMessage && bHasMessage) return -1; // a goes first (top)
         
-        // Priority 2: Sort by last message date
+        // Priority 2: Both have messages or both don't - sort by most recent activity
         const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : new Date(a.createdAt).getTime();
         const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : new Date(b.createdAt).getTime();
-        return dateB - dateA;
+        return dateB - dateA; // Most recent first
       });
       setChats(sortedChats);
     } catch (error) {
