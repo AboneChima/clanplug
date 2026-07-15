@@ -1080,11 +1080,6 @@ export const postService = {
       return { success: false, message: 'Failed to fetch feed' };
     }
   },
-};
-
-
-
-export default postService;
 
   // Admin: Get all posts
   async getAllPostsForAdmin() {
@@ -1135,3 +1130,6 @@ export default postService;
       where: { id: postId },
     });
   },
+};
+
+export default postService;
