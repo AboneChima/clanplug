@@ -596,12 +596,6 @@ export const postController = {
       });
     }
   },
-};
-
-// Export multer upload middleware for use in routes
-export const uploadMiddleware = upload.array('media', 5); // Allow up to 5 files
-
-export default postController;
 
   // ADMIN: Get all posts
   async getAllPostsAdmin(req: Request, res: Response): Promise<void> {
@@ -640,3 +634,9 @@ export default postController;
       });
     }
   },
+};
+
+// Export multer upload middleware for use in routes
+export const uploadMiddleware = upload.array('media', 5); // Allow up to 5 files
+
+export default postController;

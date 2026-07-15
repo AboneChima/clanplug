@@ -192,9 +192,27 @@ export async function listKYCSubmissions(req: Request, res: Response) {
       orderBy: { createdAt: 'desc' }
     });
 
+    // Transform image URLs to ensure they're absolute
+    const baseUrl = process.env.API_URL || 'https://api.clanplug.site';
+    const transformedSubmissions = submissions.map(submission => ({
+      ...submission,
+      documentImages: submission.documentImages.map(img => {
+        // If image is already a full URL, return as is
+        if (img.startsWith('http://') || img.startsWith('https://')) {
+          return img;
+        }
+        // If it's a relative path starting with /, prepend base URL
+        if (img.startsWith('/')) {
+          return `${baseUrl}${img}`;
+        }
+        // Otherwise, prepend base URL with /
+        return `${baseUrl}/${img}`;
+      })
+    }));
+
     return res.status(200).json({
       success: true,
-      data: submissions
+      data: transformedSubmissions
     });
   } catch (error) {
     console.error('List KYC submissions error:', error);
