@@ -57,46 +57,16 @@ export class FollowService {
         },
       });
 
-      console.log(`🔍 Checking mutual follow: ${followerId} -> ${followingId}`, mutualFollow ? 'YES' : 'NO');
+      console.log(`Checking mutual follow: ${followerId} -> ${followingId}`, mutualFollow ? 'YES' : 'NO');
 
-      // If mutual followers, auto-create a chat if it doesn't exist
+      // NOTE: We do NOT auto-create chats anymore.
+      // Users must explicitly start a conversation by sending a message.
+      // This prevents unwanted chat creation and keeps the Messages list clean.
+
       if (mutualFollow) {
-        console.log(`👥 Mutual followers detected! Creating chat...`);
-        try {
-          // Check if chat already exists
-          const existingChat = await prisma.chat.findFirst({
-            where: {
-              type: 'DIRECT',
-              AND: [
-                { participants: { some: { userId: followerId } } },
-                { participants: { some: { userId: followingId } } },
-              ],
-            },
-          });
-
-          if (existingChat) {
-            console.log(`ℹ️ Chat already exists for these users`);
-          } else {
-            // Create chat for mutual followers
-            const newChat = await prisma.chat.create({
-              data: {
-                type: 'DIRECT',
-                participants: {
-                  create: [
-                    { userId: followerId },
-                    { userId: followingId },
-                  ],
-                },
-              },
-            });
-            console.log(`✅ Auto-created chat ${newChat.id} for mutual followers: ${followerId} & ${followingId}`);
-          }
-        } catch (chatError) {
-          console.error('⚠️ Failed to auto-create chat for mutual followers:', chatError);
-          // Don't fail the follow operation if chat creation fails
-        }
+        console.log(`Mutual followers detected! They can now message each other.`);
       } else {
-        console.log(`ℹ️ Not mutual followers yet`);
+        console.log(`Not mutual followers yet`);
       }
 
       return { success: true, message: 'Successfully followed user' };

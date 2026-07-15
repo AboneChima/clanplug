@@ -1,4 +1,5 @@
 import express from 'express';
+import http from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -7,6 +8,7 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import config from './config/config';
 import { connectDatabase } from './config/database';
 import { connectRedis } from './config/redis';
+import { initializeSocketIO } from './socket/socket';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { startTransactionCleanupJob, stopTransactionCleanupJob } from './jobs/transaction-cleanup.job';
@@ -16,6 +18,7 @@ import userRoutes from './routes/user.routes';
 import walletRoutes from './routes/wallet.routes';
 import postRoutes from './routes/post.routes';
 import chatRoutes from './routes/chat.routes';
+import groupRoutes from './routes/group.routes';
 import adminRoutes from './routes/admin.routes';
 import activityRoutes from './routes/activity.routes';
 import vtuRoutes from './routes/vtu.routes';
@@ -46,6 +49,7 @@ import uploadRoutes from './routes/upload.routes';
 import pushRoutes from './routes/push.routes';
 
 const app = express();
+const server = http.createServer(app);
 
 // Force redeploy - Nov 26, 2025
 
@@ -148,6 +152,8 @@ app.use('/api/user', userDashboardRoutes);
 app.use('/api/wallets', walletRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/chats', chatRoutes);
+app.use('/api/communities', require('./routes/community.routes').default);
+app.use('/api/groups', groupRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/vtu', vtuRoutes);
@@ -225,10 +231,18 @@ const startServer = async () => {
     }
 
     // Start HTTP server regardless, so health and static routes are available
-    const server = app.listen(config.PORT, '0.0.0.0', () => {
+    server.listen(config.PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${config.PORT}`);
       console.log(`🌍 Environment: ${config.NODE_ENV}`);
       console.log(`📱 Frontend URL: ${config.FRONTEND_URL || 'Not set'}`);
+      
+      // Initialize Socket.IO
+      try {
+        initializeSocketIO(server);
+        console.log('✅ Socket.IO initialized');
+      } catch (error) {
+        console.warn('⚠️ Failed to initialize Socket.IO:', error);
+      }
       
       // Start transaction cleanup job
       try {

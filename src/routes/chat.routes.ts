@@ -44,6 +44,16 @@ router.get('/stream',
   })
 );
 
+// POST /api/chats/direct/:userId - Get or create direct chat with a user
+router.post('/direct/:userId',
+  authenticate,
+  [
+    param('userId').notEmpty().withMessage('User ID is required'),
+  ],
+  handleValidationErrors,
+  asyncHandler(chatController.getOrCreateDirectChat.bind(chatController))
+);
+
 // POST /api/chats - Create new chat (NO KYC REQUIRED - Everyone can chat)
 router.post('/', 
   authenticate, 

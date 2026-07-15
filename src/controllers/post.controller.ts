@@ -602,3 +602,41 @@ export const postController = {
 export const uploadMiddleware = upload.array('media', 5); // Allow up to 5 files
 
 export default postController;
+
+  // ADMIN: Get all posts
+  async getAllPostsAdmin(req: Request, res: Response): Promise<void> {
+    try {
+      const posts = await postService.getAllPostsForAdmin();
+      
+      res.json({
+        success: true,
+        data: posts,
+      });
+    } catch (error: any) {
+      console.error('Error fetching all posts for admin:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to fetch posts',
+      });
+    }
+  },
+
+  // ADMIN: Delete a post
+  async deletePostAdmin(req: Request, res: Response): Promise<void> {
+    try {
+      const { postId } = req.params;
+      
+      await postService.deletePostByAdmin(postId);
+      
+      res.json({
+        success: true,
+        message: 'Post deleted successfully',
+      });
+    } catch (error: any) {
+      console.error('Error deleting post:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to delete post',
+      });
+    }
+  },

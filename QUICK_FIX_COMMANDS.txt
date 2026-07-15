@@ -1,0 +1,45 @@
+🔧 QUICK FIX - Run these on VPS:
+================================
+
+# Step 1: Check what PM2 processes exist
+pm2 list
+
+# Step 2: Start the backend (use the correct name based on what you see)
+cd /var/www/clanplug/backend
+pm2 start dist/server.js --name clanplug-backend
+
+# Step 3: Check it's running
+pm2 list
+sleep 3
+pm2 logs --lines 50 --nostream
+
+# Step 4: Test Socket.IO
+curl http://localhost:4000/socket.io/ | head -n 10
+
+# Step 5: Test groups API
+curl -i http://localhost:4000/api/groups
+
+
+IF PROCESS ALREADY EXISTS WITH DIFFERENT NAME:
+-----------------------------------------------
+# If pm2 list shows something like "clanplug-backend" or "backend":
+pm2 restart <process-name>
+
+# Examples:
+pm2 restart clanplug-backend
+# OR
+pm2 restart backend
+# OR
+pm2 restart 0  (use the ID number from pm2 list)
+
+
+TO SEE FULL LOGS:
+-----------------
+pm2 logs
+
+TO STOP OLD PROCESS AND START NEW:
+-----------------------------------
+pm2 delete all
+cd /var/www/clanplug/backend
+pm2 start dist/server.js --name clanplug-backend --watch
+pm2 save

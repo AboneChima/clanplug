@@ -79,6 +79,35 @@ class ChatController {
     }
   }
 
+  // POST /api/chats/direct/:userId - Get or create direct chat with a user
+  async getOrCreateDirectChat(req: Request, res: Response): Promise<Response> {
+    try {
+      const currentUserId = (req as any).user.id;
+      const { userId } = req.params;
+
+      if (currentUserId === userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot create chat with yourself',
+        });
+      }
+
+      const chat = await chatService.getOrCreateDirectChat(currentUserId, userId);
+
+      return res.json({
+        success: true,
+        data: chat,
+      });
+    } catch (error) {
+      console.error('Get or create direct chat error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to get or create direct chat',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
   // POST /api/chats - Create new chat
   async createChat(req: Request, res: Response): Promise<Response> {
     try {
@@ -187,7 +216,15 @@ class ChatController {
         metadata,
       });
 
-      // Broadcast message to all chat participants via SSE
+      // Broadcast message to all chat participants via Socket.IO
+      try {
+        const { emitToChat } = require('../socket/socket');
+        emitToChat(chatId, 'message:new', message);
+      } catch (error) {
+        console.warn('Socket.IO not available, message not broadcasted:', error);
+      }
+
+      // Also broadcast via SSE for backward compatibility
       const chat = await chatService.getChatById(chatId, userId);
       if (chat && chat.participants) {
         chat.participants.forEach((participant: any) => {

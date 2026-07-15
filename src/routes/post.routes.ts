@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticate, requireKYC, optionalAuthenticate } from '../middleware/auth.middleware';
+import { authenticate, requireKYC, optionalAuthenticate, requireAdmin } from '../middleware/auth.middleware';
 import { asyncHandler } from '../middleware/errorHandler';
 import { postController } from '../controllers/post.controller';
 import { upload } from '../services/local-storage.service';
@@ -61,5 +61,9 @@ router.delete('/:postId/comments/:commentId', authenticate, asyncHandler(comment
 
 // POST /api/posts/:postId/report - Report post
 router.post('/:postId/report', authenticate, asyncHandler(reportController.reportPost));
+
+// ADMIN ROUTES
+router.get('/admin/all', authenticate, requireAdmin, asyncHandler(postController.getAllPostsAdmin));
+router.delete('/admin/:postId', authenticate, requireAdmin, asyncHandler(postController.deletePostAdmin));
 
 export default router;

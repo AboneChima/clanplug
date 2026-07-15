@@ -1,0 +1,111 @@
+🚀 SOCKET.IO DEPLOYMENT COMMANDS
+================================
+
+STEP 1: Upload backend.tar.gz to VPS
+-------------------------------------
+Use WinSCP, FileZilla, or scp command:
+
+Option A - Using PowerShell SCP:
+scp backend.tar.gz root@176.57.189.248:/var/www/clanplug/
+
+Option B - Manual upload with WinSCP/FileZilla:
+Host: 176.57.189.248
+User: root
+Password: [your password]
+Upload to: /var/www/clanplug/
+
+
+STEP 2: SSH into VPS
+---------------------
+ssh root@176.57.189.248
+
+
+STEP 3: Run these commands on VPS
+----------------------------------
+# Backup existing backend
+cd /var/www/clanplug
+[ -d backend ] && mv backend backend_backup_$(date +%Y%m%d_%H%M%S)
+
+# Create new backend directory
+mkdir -p backend && cd backend
+
+# Extract uploaded files
+tar -xzf /var/www/clanplug/backend.tar.gz -C /var/www/clanplug/backend/
+
+# Remove tarball
+rm /var/www/clanplug/backend.tar.gz
+
+# Copy or check .env
+if [ ! -f .env ]; then
+  echo "⚠️  WARNING: No .env file found!"
+  echo "Copy from backup or create new one"
+  # If backup exists, copy from there:
+  # cp ../backend_backup*/.env . 2>/dev/null
+fi
+
+# Install dependencies (including socket.io)
+npm install --production
+
+# Check if socket.io is installed
+ls node_modules/ | grep socket.io
+
+# Restart PM2
+pm2 restart clanplug-api || pm2 start dist/server.js --name clanplug-api
+
+# Wait 5 seconds
+sleep 5
+
+# Check logs
+pm2 logs clanplug-api --lines 50 --nostream
+
+
+STEP 4: Verify Socket.IO
+-------------------------
+# Should return Socket.IO handshake page (NOT 404)
+curl http://localhost:4000/socket.io/
+
+# Check if it has Socket.IO content
+curl -s http://localhost:4000/socket.io/ | head -n 10
+
+
+STEP 5: Test Groups API
+------------------------
+# Should return 401 (auth required) not 404
+curl http://localhost:4000/api/groups
+
+
+STEP 6: Check from outside
+---------------------------
+# From your local machine or browser:
+curl https://api.clanplug.site/socket.io/
+
+# Should see Socket.IO response, not 404
+
+
+✅ SUCCESS INDICATORS:
+----------------------
+1. PM2 logs show: "✅ Socket.IO initialized"
+2. curl socket.io/ returns Socket.IO handshake (not 404)
+3. Groups API returns 401 auth error (not 404)
+4. Frontend console shows Socket.IO connection (not 404)
+
+
+❌ IF SOMETHING FAILS:
+---------------------
+# Check if socket.io is installed:
+cd /var/www/clanplug/backend
+npm list socket.io
+
+# Manually install if missing:
+npm install socket.io@^4.7.4
+
+# Check dist/socket folder exists:
+ls -la dist/socket/
+
+# View full logs:
+pm2 logs clanplug-api
+
+# Restart with fresh logs:
+pm2 restart clanplug-api
+pm2 flush clanplug-api
+pm2 logs clanplug-api

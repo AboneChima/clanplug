@@ -1,25 +1,40 @@
 #!/bin/bash
 
-# Deploy Backend to Render
-echo "🚀 Deploying Backend to Render..."
+# Group Chat Feature - Backend Deployment Script
+# Run this on your VPS after uploading the code
 
-# Set production database URL
-export DATABASE_URL="postgresql://lordmoon:LzJr3MUNrSoX4eb7k2D9eKviJpQTMXOm@dpg-d4b12124d50c73cv58bg-a.oregon-postgres.render.com/lordmoon"
+echo "🚀 Deploying Group Chat Feature - Backend"
+echo "=========================================="
 
-# Apply database migrations
-echo "📦 Applying database migrations..."
-npx prisma db push --skip-generate
+# Step 1: Install dependencies
+echo ""
+echo "📦 Step 1: Installing dependencies..."
+npm install
 
-# Build the backend
-echo "🔨 Building backend..."
-npm run build
+# Step 2: Generate Prisma Client
+echo ""
+echo "⚙️  Step 2: Generating Prisma Client..."
+npx prisma generate
 
-# Commit and push changes
-echo "📤 Pushing to Git..."
-git add .
-git commit -m "feat: auto-create social posts for marketplace listings"
-git push origin main
+# Step 3: Build TypeScript
+echo ""
+echo "🔨 Step 3: Building TypeScript..."
+npx tsc
 
-echo "✅ Backend deployment initiated!"
-echo "🔗 Backend URL: https://clanplug-o7rp.onrender.com"
-echo "⏳ Render will automatically deploy the changes..."
+# Step 4: Create sample groups (only if they don't exist)
+echo ""
+echo "👥 Step 4: Creating sample groups..."
+node create-sample-groups.js
+
+# Step 5: Restart the server
+echo ""
+echo "🔄 Step 5: Restarting server..."
+pm2 restart all || npm run start
+
+echo ""
+echo "✅ Deployment complete!"
+echo ""
+echo "📋 Next steps:"
+echo "1. Check server logs: pm2 logs"
+echo "2. Test groups endpoint: curl https://api.clanplug.site/api/groups -H 'Authorization: Bearer TOKEN'"
+echo "3. Deploy frontend: cd web && vercel --prod"

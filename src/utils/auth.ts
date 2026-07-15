@@ -87,10 +87,17 @@ export const jwtUtils = {
   // Verify access token
   verifyAccessToken(token: string): JWTPayload {
     try {
-      return jwt.verify(token, config.JWT_SECRET, {
-        issuer: config.APP_NAME,
-        audience: config.APP_URL,
-      }) as JWTPayload;
+      // Try with strict validation first (for new tokens)
+      try {
+        return jwt.verify(token, config.JWT_SECRET, {
+          issuer: config.APP_NAME,
+          audience: config.APP_URL,
+        }) as JWTPayload;
+      } catch (err) {
+        // If strict validation fails, try lenient validation (for old tokens)
+        // This allows tokens without issuer/audience to still work
+        return jwt.verify(token, config.JWT_SECRET) as JWTPayload;
+      }
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
         throw new Error('Access token expired');
@@ -104,10 +111,16 @@ export const jwtUtils = {
   // Verify refresh token
   verifyRefreshToken(token: string): JWTPayload {
     try {
-      return jwt.verify(token, config.JWT_REFRESH_SECRET, {
-        issuer: config.APP_NAME,
-        audience: config.APP_URL,
-      }) as JWTPayload;
+      // Try with strict validation first (for new tokens)
+      try {
+        return jwt.verify(token, config.JWT_REFRESH_SECRET, {
+          issuer: config.APP_NAME,
+          audience: config.APP_URL,
+        }) as JWTPayload;
+      } catch (err) {
+        // If strict validation fails, try lenient validation (for old tokens)
+        return jwt.verify(token, config.JWT_REFRESH_SECRET) as JWTPayload;
+      }
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
         throw new Error('Refresh token expired');

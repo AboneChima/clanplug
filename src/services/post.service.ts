@@ -1085,3 +1085,53 @@ export const postService = {
 
 
 export default postService;
+
+  // Admin: Get all posts
+  async getAllPostsForAdmin() {
+    return prisma.post.findMany({
+      where: {
+        type: 'SOCIAL_POST', // Only social posts
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+            avatar: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  },
+
+  // Admin: Delete a post
+  async deletePostByAdmin(postId: string) {
+    // First delete all related data
+    await prisma.comment.deleteMany({
+      where: { postId },
+    });
+    
+    await prisma.like.deleteMany({
+      where: { postId },
+    });
+    
+    await prisma.bookmark.deleteMany({
+      where: { postId },
+    });
+    
+    // Then delete the post
+    return prisma.post.delete({
+      where: { id: postId },
+    });
+  },

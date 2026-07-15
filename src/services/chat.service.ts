@@ -201,7 +201,90 @@ class ChatService {
     return chatsWithUnread;
   }
 
-  // Create new chat
+  // Create or get direct chat with a user
+  async getOrCreateDirectChat(userId1: string, userId2: string): Promise<ChatWithDetails> {
+    // Sort user IDs to ensure consistent lookup
+    const userIds = [userId1, userId2].sort();
+    
+    // Check if direct chat already exists
+    const possibleChats = await prisma.chat.findMany({
+      where: {
+        type: ChatType.DIRECT,
+        isActive: true,
+        participants: {
+          some: {
+            userId: { in: userIds },
+            isActive: true
+          },
+        },
+      },
+      include: {
+        participants: {
+          where: { isActive: true },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                verificationBadge: {
+                  select: { status: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Find exact match (both users are participants)
+    for (const chat of possibleChats) {
+      if (chat.participants.length === 2) {
+        const chatUserIds = chat.participants.map(p => p.userId).sort();
+        if (chatUserIds[0] === userIds[0] && chatUserIds[1] === userIds[1]) {
+          console.log('✅ Found existing DIRECT chat between users');
+          return chat as ChatWithDetails;
+        }
+      }
+    }
+
+    // No existing chat, create new one
+    console.log('📝 Creating new DIRECT chat between users');
+    const newChat = await prisma.chat.create({
+      data: {
+        type: ChatType.DIRECT,
+        isActive: true,
+        participants: {
+          create: [
+            { userId: userId1, role: 'member' },
+            { userId: userId2, role: 'member' },
+          ],
+        },
+      },
+      include: {
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                verificationBadge: {
+                  select: { status: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return newChat as ChatWithDetails;
+  }
   async createChat(request: CreateChatRequest): Promise<ChatWithDetails> {
     const { type = ChatType.DIRECT, name, description, participants, creatorId } = request;
 
@@ -213,19 +296,23 @@ class ChatService {
       throw new Error('Direct chats must have exactly 2 participants');
     }
 
-    // Check if direct chat already exists
+    // Check if direct chat already exists between these two users
     if (type === ChatType.DIRECT) {
-      const existingChat = await prisma.chat.findFirst({
+      // Get all DIRECT chats that have at least one of the participants
+      const possibleChats = await prisma.chat.findMany({
         where: {
           type: ChatType.DIRECT,
+          isActive: true,
           participants: {
-            every: {
+            some: {
               userId: { in: allParticipants },
+              isActive: true
             },
           },
         },
         include: {
           participants: {
+            where: { isActive: true },
             include: {
               user: {
                 select: {
@@ -241,8 +328,17 @@ class ChatService {
         },
       });
 
-      if (existingChat && existingChat.participants.length === 2) {
-        return existingChat as ChatWithDetails;
+      // Check if any of these chats has exactly these two participants
+      for (const chat of possibleChats) {
+        if (chat.participants.length === 2) {
+          const chatUserIds = chat.participants.map(p => p.userId).sort();
+          const requestUserIds = allParticipants.sort();
+          
+          if (chatUserIds[0] === requestUserIds[0] && chatUserIds[1] === requestUserIds[1]) {
+            console.log('✅ Found existing DIRECT chat, returning it instead of creating duplicate');
+            return chat as ChatWithDetails;
+          }
+        }
       }
     }
 
