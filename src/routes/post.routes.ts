@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { authenticate, requireKYC, optionalAuthenticate, requireAdmin } from '../middleware/auth.middleware';
+import { authenticate, requireKYC, optionalAuthenticate, adminOnly } from '../middleware/auth.middleware';
 import { asyncHandler } from '../middleware/errorHandler';
 import { postController } from '../controllers/post.controller';
 import { upload } from '../services/local-storage.service';
@@ -9,8 +9,8 @@ import { reportController } from '../controllers/report.controller';
 const router = Router();
 
 // ADMIN ROUTES - Must be before /:postId to avoid conflict
-router.get('/admin/all', authenticate, requireAdmin, asyncHandler(postController.getAllPostsAdmin));
-router.delete('/admin/:postId', authenticate, requireAdmin, asyncHandler(postController.deletePostAdmin));
+router.get('/admin/all', authenticate, adminOnly, asyncHandler(postController.getAllPostsAdmin));
+router.delete('/admin/:postId', authenticate, adminOnly, asyncHandler(postController.deletePostAdmin));
 
 // GET /api/posts - Get posts (with filters)
 router.get('/', optionalAuthenticate, asyncHandler(postController.getPosts));
