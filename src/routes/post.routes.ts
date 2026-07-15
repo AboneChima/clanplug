@@ -8,6 +8,10 @@ import { reportController } from '../controllers/report.controller';
 
 const router = Router();
 
+// ADMIN ROUTES - Must be before /:postId to avoid conflict
+router.get('/admin/all', authenticate, requireAdmin, asyncHandler(postController.getAllPostsAdmin));
+router.delete('/admin/:postId', authenticate, requireAdmin, asyncHandler(postController.deletePostAdmin));
+
 // GET /api/posts - Get posts (with filters)
 router.get('/', optionalAuthenticate, asyncHandler(postController.getPosts));
 
@@ -61,9 +65,5 @@ router.delete('/:postId/comments/:commentId', authenticate, asyncHandler(comment
 
 // POST /api/posts/:postId/report - Report post
 router.post('/:postId/report', authenticate, asyncHandler(reportController.reportPost));
-
-// ADMIN ROUTES
-router.get('/admin/all', authenticate, requireAdmin, asyncHandler(postController.getAllPostsAdmin));
-router.delete('/admin/:postId', authenticate, requireAdmin, asyncHandler(postController.deletePostAdmin));
 
 export default router;
