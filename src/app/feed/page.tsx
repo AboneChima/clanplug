@@ -634,10 +634,10 @@ function FeedContent() {
                   </div>
                 </div>
 
-                {/* Right Side - Action Buttons - Moved down more */}
+                {/* Right Side - Action Buttons - Moved down even more */}
                 <div 
                   className="absolute right-3 flex flex-col gap-6 z-10" 
-                  style={{ bottom: '160px' }} // Moved down more for better spacing
+                  style={{ bottom: '120px' }} // Moved down even more
                 >
                   {/* Like */}
                   <button
