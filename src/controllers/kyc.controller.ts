@@ -83,7 +83,8 @@ export async function submitKYC(req: Request, res: Response) {
       });
     }
 
-    // Check if document number is already used by another account
+    // Check if document number is already used by ANOTHER account (not this user)
+    // Only block if another user has an APPROVED KYC with this document number
     const duplicateDocument = await prisma.kYCVerification.findFirst({
       where: {
         documentNumber: idNumber,
@@ -98,6 +99,14 @@ export async function submitKYC(req: Request, res: Response) {
         message: 'This document number is already registered to another account'
       });
     }
+
+    // Delete any previous REJECTED submissions from this user to allow resubmission
+    await prisma.kYCVerification.deleteMany({
+      where: {
+        userId,
+        status: 'REJECTED'
+      }
+    });
 
     // Create KYC submission
     const kyc = await prisma.kYCVerification.create({
