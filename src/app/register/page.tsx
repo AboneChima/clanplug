@@ -74,24 +74,24 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-black relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
       {/* Animated Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-purple-600/5 to-pink-600/5"></div>
-      <div className="absolute inset-0 opacity-30">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+      <div className="absolute inset-0 opacity-40">
         <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           backgroundRepeat: 'repeat'
         }}></div>
       </div>
       
       <div className="relative max-w-md w-full z-10">
         {/* Main Card - iOS Bevel Style */}
-        <div className="bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] backdrop-blur-xl border border-blue-500/20 rounded-3xl shadow-2xl shadow-blue-500/10 p-8 space-y-6">
+        <div className="bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] backdrop-blur-xl border border-blue-400/30 rounded-3xl shadow-2xl shadow-blue-400/20 p-8 space-y-6">
           {/* Header */}
           <div className="text-center">
             {/* App Icon - iOS Style */}
             <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 p-[2px] shadow-xl shadow-blue-500/30">
-              <div className="w-full h-full rounded-[15px] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] flex items-center justify-center">
+              <div className="w-full h-full rounded-[15px] bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] flex items-center justify-center">
                 <span className="text-4xl font-black bg-gradient-to-br from-blue-400 to-purple-400 bg-clip-text text-transparent">
                   C
                 </span>
@@ -119,7 +119,7 @@ export default function RegisterPage() {
                     name="firstName"
                     type="text"
                     required
-                    className="block w-full px-3 py-3 border border-[#333] rounded-xl bg-[#0a0a0a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
+                    className="block w-full px-3 py-3 border border-gray-600 rounded-xl bg-[#1a1a1a] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-200 text-sm"
                     placeholder="First"
                     value={formData.firstName}
                     onChange={handleChange}
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                     name="lastName"
                     type="text"
                     required
-                    className="block w-full px-3 py-3 border border-[#333] rounded-xl bg-[#0a0a0a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
+                    className="block w-full px-3 py-3 border border-gray-600 rounded-xl bg-[#1a1a1a] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-200 text-sm"
                     placeholder="Last"
                     value={formData.lastName}
                     onChange={handleChange}
@@ -156,14 +156,14 @@ export default function RegisterPage() {
                     name="username"
                     type="text"
                     required
-                    className="block w-full pl-12 pr-4 py-3 border border-[#333] rounded-xl bg-[#0a0a0a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
+                    className="block w-full pl-12 pr-4 py-3 border border-gray-600 rounded-xl bg-[#1a1a1a] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-200 text-sm"
                     placeholder="username"
                     value={formData.username}
                     onChange={handleChange}
                   />
                 </div>
               </div>
-
+              
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block text-xs font-semibold text-gray-300 mb-2">
@@ -179,7 +179,7 @@ export default function RegisterPage() {
                     type="email"
                     autoComplete="email"
                     required
-                    className="block w-full pl-12 pr-4 py-3 border border-[#333] rounded-xl bg-[#0a0a0a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
+                    className="block w-full pl-12 pr-4 py-3 border border-gray-600 rounded-xl bg-[#1a1a1a] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-200 text-sm"
                     placeholder="you@example.com"
                     value={formData.email}
                     onChange={handleChange}
@@ -202,7 +202,7 @@ export default function RegisterPage() {
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     required
-                    className="block w-full pl-12 pr-12 py-3 border border-[#333] rounded-xl bg-[#0a0a0a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
+                    className="block w-full pl-12 pr-12 py-3 border border-gray-600 rounded-xl bg-[#1a1a1a] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-200 text-sm"
                     placeholder="Create password"
                     value={formData.password}
                     onChange={handleChange}
@@ -232,7 +232,7 @@ export default function RegisterPage() {
                     type={showConfirmPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     required
-                    className="block w-full pl-12 pr-12 py-3 border border-[#333] rounded-xl bg-[#0a0a0a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 text-sm"
+                    className="block w-full pl-12 pr-12 py-3 border border-gray-600 rounded-xl bg-[#1a1a1a] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 transition-all duration-200 text-sm"
                     placeholder="Confirm password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
