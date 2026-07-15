@@ -44,6 +44,14 @@ export async function submitKYC(req: Request, res: Response) {
       });
     }
 
+    // Delete any previous REJECTED submissions from this user to allow resubmission
+    await prisma.kYCVerification.deleteMany({
+      where: {
+        userId,
+        status: 'REJECTED'
+      }
+    });
+
     // Handle liveness verification
     if (verificationType === 'liveness') {
       if (!livenessFrontUrl || !livenessSmileUrl || !livenessLeftUrl || !livenessRightUrl) {
@@ -100,10 +108,11 @@ export async function submitKYC(req: Request, res: Response) {
       });
     }
 
-    // Delete any previous REJECTED submissions from this user to allow resubmission
+    // Delete any previous REJECTED submissions from this user with the same document to allow resubmission
     await prisma.kYCVerification.deleteMany({
       where: {
         userId,
+        documentNumber: idNumber,
         status: 'REJECTED'
       }
     });
