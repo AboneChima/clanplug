@@ -768,7 +768,7 @@ function FeedContent() {
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
                   style={{ 
                     bottom: typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches 
-                      ? '145px'  // PWA app mode - lower position to match browser
+                      ? '105px'  // PWA app mode - much lower position
                       : '165px'  // Browser mode - keep current position
                   }}
                 >
