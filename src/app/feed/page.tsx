@@ -595,9 +595,7 @@ function FeedContent() {
                     <div 
                       className="relative w-full h-full flex items-center justify-center"
                       style={{
-                        transform: mediaAspectRatio[post.id] === 'portrait'
-                          ? 'translateY(-35%)'
-                          : 'translateY(-35%)'
+                        transform: 'translateY(0%)'
                       }}
                       onClick={(e) => {
                         handleDoubleTap(post.id, e);
@@ -671,7 +669,7 @@ function FeedContent() {
                   {hasImage && !hasVideo && (
                     <div className="relative w-full h-full bg-black">
                       <div 
-                        className="absolute inset-0 flex items-center justify-center -translate-y-[35%]"
+                        className="absolute inset-0 flex items-center justify-center"
                         onClick={(e) => handleDoubleTap(post.id, e)}
                       >
                         <Image
@@ -762,7 +760,7 @@ function FeedContent() {
                 {/* Bottom Overlay - User Info & Description */}
                 <div 
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
-                  style={{ bottom: '20px' }}
+                  style={{ bottom: '120px' }}
                 >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
@@ -827,7 +825,7 @@ function FeedContent() {
                 {/* Right Side - Action Buttons - Positioned higher */}
 <div 
                   className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
-                  style={{ bottom: '70px' }}
+                  style={{ bottom: '150px' }}
                 >
                   {/* Like */}
                   <button
