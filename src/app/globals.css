@@ -330,3 +330,55 @@ button, a {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* Double-tap Like Animation - Quick pop and fade */
+@keyframes likePopFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+}
+
+/* iOS-SPECIFIC POSITIONING FIXES FOR FEED PAGE */
+/* Target iOS devices only to prevent affecting other platforms */
+.is-ios .feed-bottom-overlay {
+  bottom: 260px !important; /* Move username/description WAY UP on iOS */
+}
+
+.is-ios .feed-action-buttons {
+  bottom: 295px !important; /* Move action buttons WAY UP on iOS */
+}
+
+/* iOS text-only posts positioning fix */
+.is-ios .feed-post-item .bg-\[\#0f1729\] {
+  padding-top: 28vh !important; /* Adjust text-only post vertical position for iOS */
+}
+
+/* iOS Safari bottom padding to account for home indicator */
+@supports (-webkit-touch-callout: none) {
+  .is-ios .feed-scroll-container {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+}
+
+/* ANDROID-SPECIFIC POSITIONING - Move name DOWN */
+.is-android .feed-bottom-overlay {
+  bottom: 195px !important; /* Move name/description DOWN more on Android */
+}
+
+.is-android .feed-action-buttons {
+  bottom: 230px !important; /* Move buttons accordingly */
+}
+
+/* Android text-only posts */
+.is-android .feed-post-item .bg-\[\#0f1729\] {
+  padding-top: 36vh !important; /* More padding for Android */
+}

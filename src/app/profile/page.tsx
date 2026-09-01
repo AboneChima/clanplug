@@ -59,9 +59,22 @@ export default function ProfilePage() {
   const [followUsers, setFollowUsers] = useState<FollowUser[]>([]);
   const [loadingFollows, setLoadingFollows] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
 
   useEffect(() => {
-    if (user?.avatar) setAvatarPreview(user.avatar);
+    if (user?.avatar) {
+      // Check if avatar URL is Supabase (broken)
+      if (user.avatar.includes('supabase')) {
+        setAvatarPreview('');
+        setAvatarLoadError(true);
+      } else {
+        setAvatarPreview(user.avatar);
+        setAvatarLoadError(false);
+      }
+    } else {
+      setAvatarPreview('');
+      setAvatarLoadError(false);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -309,8 +322,19 @@ export default function ProfilePage() {
               <div className="relative">
                 <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-blue-600 via-blue-500 to-slate-700">
                   <div className="w-full h-full rounded-full overflow-hidden bg-[#1a1a1a] p-0.5">
-                    {avatarPreview ? (
-                      <Image src={avatarPreview} alt={user?.username || 'User'} width={80} height={80} className="w-full h-full rounded-full object-cover" unoptimized />
+                    {avatarPreview && !avatarLoadError ? (
+                      <Image 
+                        src={avatarPreview} 
+                        alt={user?.username || 'User'} 
+                        width={80} 
+                        height={80} 
+                        className="w-full h-full rounded-full object-cover" 
+                        unoptimized 
+                        onError={() => {
+                          setAvatarLoadError(true);
+                          setAvatarPreview('');
+                        }}
+                      />
                     ) : (
                       <div className="w-full h-full rounded-full flex items-center justify-center text-white text-xl font-bold bg-[#2a2a2a]">
                         {getUserInitials()}

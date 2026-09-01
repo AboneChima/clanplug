@@ -305,10 +305,10 @@ export default function SettingsPage() {
                   <IoChevronForwardOutline className="w-5 h-5 text-gray-600" />
                 </button>
 
-                {/* Push Notifications Toggle */}
-                <div className="w-full px-4 py-4 border-b border-[#3a3a3a]">
+                {/* Push Notifications Toggle - HIDDEN */}
+                {/* <div className="w-full px-4 py-4 border-b border-[#3a3a3a]">
                   <PushNotificationToggle />
-                </div>
+                </div> */}
 
                 <div className="w-full px-4 py-4 flex items-center gap-3 border-b border-[#3a3a3a]">
                   <div className="w-10 h-10 rounded-full bg-[#3a3a3a] flex items-center justify-center">

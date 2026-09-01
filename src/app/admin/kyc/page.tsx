@@ -396,10 +396,10 @@ export default function AdminKYCPage() {
 
               {/* Modal Content */}
               <div className="p-3 sm:p-4 space-y-3 overflow-y-auto flex-1">
-                {/* User Info */}
+                {/* User Info - Simplified */}
                 <div className="bg-slate-700/30 rounded-lg p-3">
                   <h3 className="text-white font-semibold mb-2 text-xs sm:text-sm">User Information</h3>
-                  <div className="grid grid-cols-2 gap-2 text-[10px] sm:text-xs">
+                  <div className="grid grid-cols-2 gap-3 text-[10px] sm:text-xs">
                     <div>
                       <p className="text-gray-400 mb-0.5">Full Name</p>
                       <p className="text-white font-medium">{selectedSubmission.user.firstName} {selectedSubmission.user.lastName}</p>
@@ -408,45 +408,33 @@ export default function AdminKYCPage() {
                       <p className="text-gray-400 mb-0.5">Username</p>
                       <p className="text-white font-medium">@{selectedSubmission.user.username}</p>
                     </div>
-                    <div>
+                    <div className="col-span-2">
                       <p className="text-gray-400 mb-0.5">Email</p>
                       <p className="text-white font-medium break-all">{selectedSubmission.user.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 mb-0.5">Phone</p>
-                      <p className="text-white font-medium">{selectedSubmission.phoneNumber}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 mb-0.5">Date of Birth</p>
-                      <p className="text-white font-medium">{new Date(selectedSubmission.dateOfBirth).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400 mb-0.5">Address</p>
-                      <p className="text-white font-medium text-[9px] sm:text-[10px]">{selectedSubmission.address}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Document Info */}
+                {/* Document Info - Simplified */}
                 <div className="bg-slate-700/30 rounded-lg p-3">
                   <h3 className="text-white font-semibold mb-2 text-xs sm:text-sm">Document Details</h3>
-                  <div className="grid grid-cols-2 gap-2 text-[10px] sm:text-xs">
+                  <div className="grid grid-cols-2 gap-3 text-[10px] sm:text-xs">
                     <div>
                       <p className="text-gray-400 mb-0.5">Document Type</p>
                       <p className="text-white font-medium">{selectedSubmission.documentType}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400 mb-0.5">Document Number</p>
-                      <p className="text-white font-medium">{selectedSubmission.documentNumber}</p>
+                      <p className="text-gray-400 mb-0.5">Submitted Date</p>
+                      <p className="text-white font-medium">{new Date(selectedSubmission.createdAt).toLocaleDateString()}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Uploaded Documents */}
+                {/* Uploaded Documents - Bigger and More Prominent */}
                 {selectedSubmission.documentImages.length > 0 && (
                   <div className="bg-slate-700/30 rounded-lg p-3">
-                    <h3 className="text-white font-semibold mb-2 text-xs sm:text-sm">Uploaded Documents</h3>
-                    <div className="grid grid-cols-2 gap-2">
+                    <h3 className="text-white font-semibold mb-3 text-sm sm:text-base">📷 Verification Images</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {selectedSubmission.documentImages.map((url, index) => (
                         <a
                           key={index}
@@ -458,28 +446,34 @@ export default function AdminKYCPage() {
                           <div className="relative">
                             <img
                               src={url}
-                              alt={`Document ${index + 1}`}
-                              className="w-full h-32 sm:h-40 object-cover rounded-lg border border-slate-600 group-hover:border-blue-500 transition-colors"
+                              alt={`${selectedSubmission.documentType === 'LIVENESS' ? 'Face' : 'Document'} ${index + 1}`}
+                              className="w-full h-48 sm:h-56 object-cover rounded-lg border-2 border-slate-600 group-hover:border-blue-500 transition-all shadow-lg"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
                                 const parent = target.parentElement;
                                 if (parent && !parent.querySelector('.fallback-placeholder')) {
                                   const fallback = document.createElement('div');
-                                  fallback.className = 'fallback-placeholder w-full h-32 sm:h-40 rounded-lg border border-red-600 bg-red-900/20 flex flex-col items-center justify-center';
+                                  fallback.className = 'fallback-placeholder w-full h-48 sm:h-56 rounded-lg border-2 border-red-600 bg-red-900/20 flex flex-col items-center justify-center';
                                   fallback.innerHTML = `
-                                    <svg class="w-12 h-12 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-16 h-16 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
-                                    <p class="text-red-400 text-xs">Image unavailable</p>
-                                    <p class="text-gray-500 text-[10px] mt-1">Click to try viewing</p>
+                                    <p class="text-red-400 text-sm font-medium">Image Failed to Load</p>
+                                    <p class="text-gray-400 text-xs mt-1">Click to view URL</p>
                                   `;
                                   parent.appendChild(fallback);
                                 }
                               }}
                             />
                           </div>
-                          <p className="text-[9px] sm:text-[10px] text-gray-400 mt-1 text-center">Tap to enlarge</p>
+                          <p className="text-xs text-gray-300 mt-2 text-center font-medium">
+                            {selectedSubmission.documentType === 'LIVENESS' 
+                              ? ['Front View', 'Smiling', 'Left Side', 'Right Side'][index] || `Photo ${index + 1}`
+                              : index === 0 ? 'ID Front' : index === 1 ? 'ID Back' : 'Selfie'
+                            }
+                          </p>
+                          <p className="text-[10px] text-blue-400 mt-0.5 text-center">Click to open full size</p>
                         </a>
                       ))}
                     </div>

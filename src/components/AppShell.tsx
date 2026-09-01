@@ -9,6 +9,7 @@ import VTUServices from '@/components/VTUServices';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import BroadcastOverlay from '@/components/BroadcastOverlay';
+import InstallPWAModal from '@/components/InstallPWAModal';
 import { useToast } from '@/contexts/ToastContext';
 import { 
   IoMenuOutline, 
@@ -256,6 +257,8 @@ export default function AppShell({ children, hideNavOnMobile = false, hideBottom
 
         {!hideBottomNavOnMobile && <MobileBottomNav />}
         
+        {/* Install PWA Modal - HIDDEN */}
+        {/* <InstallPWAModal /> */}
         <BroadcastOverlay />
       </div>
     </VTUContext.Provider>

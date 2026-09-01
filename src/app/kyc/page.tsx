@@ -159,7 +159,9 @@ export default function KYCPage() {
 
     if (!response.ok) throw new Error('Failed to upload file');
     const data = await response.json();
-    return data.data.url;
+    console.log('Upload response:', data);
+    // Handle both response formats: data.data.url or data.data.urls[0]
+    return data.data.url || data.data.urls?.[0];
   };
 
   const handleSubmit = async () => {
@@ -185,12 +187,10 @@ export default function KYCPage() {
         body: JSON.stringify({
           firstName: user?.firstName || '',
           lastName: user?.lastName || '',
-          idType: 'nin',
+          idType: 'NIN',
           idNumber: 'NIN_IMAGE_UPLOAD',
-          documentImages: [ninUrl],
-          selfieUrl: selfieUrls[0],
-          selfieUrl2: selfieUrls[1],
-          selfieUrl3: selfieUrls[2],
+          // Send all 4 images in documentImages array: NIN + 3 selfies
+          documentImages: [ninUrl, ...selfieUrls],
           phoneNumber: user?.phoneNumber || '',
           address: user?.address || 'N/A',
           dateOfBirth: user?.dateOfBirth || '2000-01-01',

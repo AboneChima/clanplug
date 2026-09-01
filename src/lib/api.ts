@@ -332,52 +332,92 @@ class ApiClient {
   async get<T = any>(endpoint: string, options: { headers?: Record<string, string>; params?: Record<string, any> } = {}): Promise<ApiResponse<T>> {
     const { headers = {}, params = {} } = options;
     const queryString = Object.keys(params).length > 0 ? '?' + new URLSearchParams(params).toString() : '';
+    
+    // Auto-include Authorization header from localStorage if available
+    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const mergedHeaders: Record<string, string> = { ...headers };
+    if (accessToken) {
+      mergedHeaders['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
     return this.request<ApiResponse<T>>(`${endpoint}${queryString}`, {
       method: 'GET',
-      headers,
+      headers: mergedHeaders,
     });
   }
 
   async post<T = any>(endpoint: string, data?: any, options: { headers?: Record<string, string> } = {}): Promise<ApiResponse<T>> {
     const { headers = {} } = options;
+    
+    // Auto-include Authorization header from localStorage if available
+    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const mergedHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...headers,
+    };
+    if (accessToken) {
+      mergedHeaders['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
     return this.request<ApiResponse<T>>(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
+      headers: mergedHeaders,
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async put<T = any>(endpoint: string, data?: any, options: { headers?: Record<string, string> } = {}): Promise<ApiResponse<T>> {
     const { headers = {} } = options;
+    
+    // Auto-include Authorization header from localStorage if available
+    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const mergedHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...headers,
+    };
+    if (accessToken) {
+      mergedHeaders['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
     return this.request<ApiResponse<T>>(endpoint, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
+      headers: mergedHeaders,
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
   async delete<T = any>(endpoint: string, options: { headers?: Record<string, string> } = {}): Promise<ApiResponse<T>> {
     const { headers = {} } = options;
+    
+    // Auto-include Authorization header from localStorage if available
+    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const mergedHeaders: Record<string, string> = { ...headers };
+    if (accessToken) {
+      mergedHeaders['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
     return this.request<ApiResponse<T>>(endpoint, {
       method: 'DELETE',
-      headers,
+      headers: mergedHeaders,
     });
   }
 
   async patch<T = any>(endpoint: string, data?: any, options: { headers?: Record<string, string> } = {}): Promise<ApiResponse<T>> {
     const { headers = {} } = options;
+    
+    // Auto-include Authorization header from localStorage if available
+    const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const mergedHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...headers,
+    };
+    if (accessToken) {
+      mergedHeaders['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
     return this.request<ApiResponse<T>>(endpoint, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers,
-      },
+      headers: mergedHeaders,
       body: data ? JSON.stringify(data) : undefined,
     });
   }

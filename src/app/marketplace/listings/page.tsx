@@ -151,7 +151,8 @@ function ListingsContent() {
         const filtered = postsData
           .filter((p: Post) => 
             p.gameTitle?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-            p.type !== 'SOCIAL_POST'
+            p.type !== 'SOCIAL_POST' &&
+            p.status === 'ACTIVE' // Only show ACTIVE posts, exclude SUSPENDED/DELETED/SOLD
           )
           .map((p: Post) => ({
             ...p,
@@ -324,7 +325,8 @@ function ListingsContent() {
                 return (
                 <div
                   key={post.id}
-                  className={`bg-[#1a1a1a] border border-[#2f3336] rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all group relative ${
+                  onClick={() => router.push(`/marketplace/${post.id}`)}
+                  className={`bg-[#1a1a1a] border border-[#2f3336] rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all group relative cursor-pointer ${
                     post.status === 'SOLD' ? 'opacity-60' : ''
                   }`}
                 >

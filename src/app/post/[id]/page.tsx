@@ -57,6 +57,9 @@ export default function PostDetailPage() {
   const [showPlayIcon, setShowPlayIcon] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showLikeAnimation, setShowLikeAnimation] = useState(false);
+  const [likeAnimationPosition, setLikeAnimationPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastTapTime = useRef<number>(0);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -262,12 +265,64 @@ export default function PostDetailPage() {
     setIsDragging(false);
   };
 
+  // Double-tap to like handler
+  const handleDoubleTap = (e: React.MouseEvent | React.TouchEvent) => {
+    const now = Date.now();
+    const lastTap = lastTapTime.current;
+    const timeSinceLastTap = now - lastTap;
+    
+    if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+      // Double tap detected
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Get tap position relative to the container
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const clientX = 'touches' in e ? e.changedTouches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.changedTouches[0].clientY : e.clientY;
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      
+      // Store tap position
+      setLikeAnimationPosition({ x, y });
+      
+      // Like the post if not already liked
+      if (post && !post.isLiked) {
+        handleLike();
+      }
+      
+      // Show heart animation
+      setShowLikeAnimation(true);
+      
+      // Hide animation after 600ms (quick fade)
+      setTimeout(() => {
+        setShowLikeAnimation(false);
+      }, 600);
+      
+      // Reset tap time
+      lastTapTime.current = 0;
+    } else {
+      // Single tap - record time
+      lastTapTime.current = now;
+    }
+  };
+
   const handleDownloadVideo = async (videoUrl: string, postId: string) => {
     try {
-      showToast('Preparing download...', 'info');
+      showToast('Preparing download with watermark...', 'info');
       setShowMoreMenu(false);
       
-      const response = await fetch(videoUrl);
+      const token = localStorage.getItem('accessToken');
+      
+      // Fetch the watermarked video from the download endpoint
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/download`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
       const blob = await response.blob();
       
       const blobUrl = window.URL.createObjectURL(blob);
@@ -360,11 +415,22 @@ export default function PostDetailPage() {
       >
         {/* Fullscreen Media Content */}
         <div className={`absolute inset-0 bg-black flex items-center justify-center transition-all duration-300 ${
-          showComments ? 'scale-85 -translate-y-[20%]' : (isTextOnly || hasVideo || hasImage) ? '-translate-y-[10%]' : ''
+          showComments ? 'scale-85 -translate-y-[20%]' : ''
         }`}>
           {/* Video Post - Custom Controls */}
           {hasVideo && (
-            <div className="relative w-full h-full" onClick={toggleVideoPlay}>
+            <div 
+              className="relative w-full h-full flex items-center justify-center translate-y-[0%]" 
+              onClick={(e) => {
+                handleDoubleTap(e);
+                // Delay video toggle slightly to detect double tap
+                setTimeout(() => {
+                  if (Date.now() - lastTapTime.current > 300) {
+                    toggleVideoPlay();
+                  }
+                }, 300);
+              }}
+            >
               <video
                 ref={videoRef}
                 src={post.videos![0]}
@@ -398,14 +464,29 @@ export default function PostDetailPage() {
                 </div>
               )}
               
-              {/* Custom Progress Bar */}
+              {/* Double-tap Like Animation */}
+              {showLikeAnimation && (
+                <div 
+                  className="absolute pointer-events-none z-20"
+                  style={{
+                    left: `${likeAnimationPosition.x}px`,
+                    top: `${likeAnimationPosition.y}px`,
+                    transform: 'translate(-50%, -50%)',
+                    animation: 'likePopFade 0.6s ease-out forwards'
+                  }}
+                >
+                  <IoHeart className="w-24 h-24 text-red-500" style={{ filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.8))' }} />
+                </div>
+              )}
+              
+              {/* Custom Progress Bar - At bottom of viewport, sleek iOS style */}
               <div 
-                className="absolute left-0 right-0 px-4 z-50 pointer-events-auto" 
-                style={{ bottom: '70px' }}
+                className="fixed left-1/2 -translate-x-1/2 z-50 pointer-events-auto" 
+                style={{ bottom: '8px', width: '95%', maxWidth: '600px' }}
               >
                 <div 
                   ref={progressBarRef}
-                  className="relative h-1 bg-gray-700/80 rounded-full cursor-pointer touch-none"
+                  className="relative h-0.5 bg-gray-600/50 cursor-pointer touch-none rounded-full backdrop-blur-sm"
                   onClick={handleProgressBarInteraction}
                   onMouseDown={handleProgressBarDragStart}
                   onMouseMove={handleProgressBarDragMove}
@@ -419,11 +500,9 @@ export default function PostDetailPage() {
                   onTouchEnd={handleProgressBarDragEnd}
                 >
                   <div 
-                    className="absolute left-0 top-0 h-full bg-white rounded-full transition-all pointer-events-none"
+                    className="absolute left-0 top-0 h-full bg-white rounded-full transition-all duration-150 ease-out pointer-events-none"
                     style={{ width: `${videoProgress || 0}%` }}
-                  >
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg" />
-                  </div>
+                  />
                 </div>
               </div>
             </div>
@@ -431,25 +510,71 @@ export default function PostDetailPage() {
 
           {/* Image Post */}
           {hasImage && !hasVideo && (
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full" onClick={(e) => handleDoubleTap(e)}>
               <Image
                 src={post.images![0]}
                 alt="Post"
                 fill
                 className="object-contain"
                 unoptimized
+                onError={(e) => {
+                  // Handle broken image - show placeholder
+                  const target = e.currentTarget as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `
+                      <div class="w-full h-full flex flex-col items-center justify-center bg-gray-900">
+                        <svg class="w-20 h-20 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p class="text-gray-400 text-sm">Image not available</p>
+                      </div>
+                    `;
+                  }
+                }}
               />
+              
+              {/* Double-tap Like Animation for Images */}
+              {showLikeAnimation && (
+                <div 
+                  className="absolute pointer-events-none z-20"
+                  style={{
+                    left: `${likeAnimationPosition.x}px`,
+                    top: `${likeAnimationPosition.y}px`,
+                    transform: 'translate(-50%, -50%)',
+                    animation: 'likePopFade 0.6s ease-out forwards'
+                  }}
+                >
+                  <IoHeart className="w-24 h-24 text-red-500" style={{ filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.8))' }} />
+                </div>
+              )}
             </div>
           )}
 
           {/* Text-only Post - Solid dark blue with elegant styling */}
           {isTextOnly && (
-            <div className="w-full h-full flex items-center justify-center bg-[#0f1729] p-8">
+            <div className="w-full h-full flex items-center justify-center bg-[#0f1729] p-8 relative" onClick={(e) => handleDoubleTap(e)}>
               <div className="max-w-2xl text-center">
                 <p className="text-white text-xl md:text-2xl font-light italic leading-relaxed tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
                   {post.description}
                 </p>
               </div>
+              
+              {/* Double-tap Like Animation for Text Posts */}
+              {showLikeAnimation && (
+                <div 
+                  className="absolute pointer-events-none z-20"
+                  style={{
+                    left: `${likeAnimationPosition.x}px`,
+                    top: `${likeAnimationPosition.y}px`,
+                    transform: 'translate(-50%, -50%)',
+                    animation: 'likePopFade 0.6s ease-out forwards'
+                  }}
+                >
+                  <IoHeart className="w-24 h-24 text-red-500" style={{ filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.8))' }} />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -457,7 +582,7 @@ export default function PostDetailPage() {
         {/* Bottom Overlay - User Info & Description */}
         <div 
           className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10" 
-          style={{ bottom: '180px' }}
+          style={{ bottom: '165px' }}
         >
           <div className="pointer-events-auto max-w-xl">
             {/* Description - Only show for media posts */}
@@ -511,7 +636,7 @@ export default function PostDetailPage() {
         {/* Right Side - Action Buttons */}
         <div 
           className="absolute right-3 flex flex-col gap-6 z-10" 
-          style={{ bottom: '270px' }}
+          style={{ bottom: '200px' }} // Moved down from 270px
         >
           {/* Like */}
           <button

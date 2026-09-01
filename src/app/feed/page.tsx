@@ -32,6 +32,7 @@ interface Post {
   description: string;
   images?: string[];
   videos?: string[];
+  videoThumbnails?: string[];
   type?: string;
   user: User;
   _count: { likes: number; comments: number };
@@ -59,6 +60,12 @@ function FeedContent() {
   const [showPlayIcon, setShowPlayIcon] = useState<Record<string, boolean>>({});
   const [showMoreMenu, setShowMoreMenu] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [mediaAspectRatio, setMediaAspectRatio] = useState<Record<string, 'portrait' | 'landscape'>>({});
+  const [showLikeAnimation, setShowLikeAnimation] = useState<Record<string, boolean>>({});
+  const [likeAnimationPosition, setLikeAnimationPosition] = useState<Record<string, { x: number; y: number }>>({});
+  const [isIOS, setIsIOS] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const lastTapTime = useRef<Record<string, number>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({});
@@ -77,13 +84,32 @@ function FeedContent() {
   }, [showComments, showMoreMenu]);
 
   useEffect(() => {
-    fetchPosts();
+    // Only fetch posts if we have a user (auth is ready)
+    if (user) {
+      fetchPosts();
+    }
     
     // iOS viewport height fix
     const setAppHeight = () => {
       const doc = document.documentElement;
       doc.style.setProperty('--app-height', `${window.innerHeight}px`);
     };
+    
+    // Detect iOS devices
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    if (isIOSDevice) {
+      document.documentElement.classList.add('is-ios');
+      setIsIOS(true);
+    } else {
+      // Detect Android
+      const isAndroidDevice = /Android/.test(navigator.userAgent);
+      if (isAndroidDevice) {
+        document.documentElement.classList.add('is-android');
+        setIsAndroid(true);
+      }
+    }
     
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
@@ -93,9 +119,9 @@ function FeedContent() {
       window.removeEventListener('resize', setAppHeight);
       window.removeEventListener('orientationchange', setAppHeight);
     };
-  }, [activeTab]); // Refetch when tab changes
+  }, [activeTab, user]); // Refetch when tab changes or user auth changes
 
-  // Snap scrolling handler
+  // Snap scrolling handler with Intersection Observer for better iOS support
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -108,21 +134,33 @@ function FeedContent() {
         const windowHeight = window.innerHeight;
         const newIndex = Math.round(scrollTop / windowHeight);
         
-        // Pause previous video when scrolling away
-        if (newIndex !== currentIndex) {
-          const prevPost = posts[currentIndex];
-          if (prevPost?.videos && videoRefs.current[prevPost.id]) {
-            videoRefs.current[prevPost.id].pause();
-            setVideoPlaying(prev => ({ ...prev, [prevPost.id]: false }));
-            setShowPlayIcon(prev => ({ ...prev, [prevPost.id]: true }));
+        // Pause ALL videos first
+        Object.values(videoRefs.current).forEach(video => {
+          if (video && !video.paused) {
+            video.pause();
           }
+        });
+        
+        // Update playing states
+        setVideoPlaying({});
+        setShowPlayIcon({});
+        
+        // Auto-play new video if it's a video post
+        const newPost = posts[newIndex];
+        if (newPost?.videos && videoRefs.current[newPost.id]) {
+          const video = videoRefs.current[newPost.id];
+          video.play().catch(() => {
+            // Play failed, show play icon
+            setShowPlayIcon(prev => ({ ...prev, [newPost.id]: true }));
+          });
+          setVideoPlaying(prev => ({ ...prev, [newPost.id]: true }));
         }
         
         setCurrentIndex(newIndex);
       }, 150);
     };
 
-    container.addEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       container.removeEventListener('scroll', handleScroll);
       clearTimeout(scrollTimeout);
@@ -133,6 +171,12 @@ function FeedContent() {
     try {
       const token = localStorage.getItem('accessToken');
       
+      if (!token) {
+        console.warn('⚠️ No access token found - user may need to login');
+        setLoading(false);
+        return;
+      }
+      
       // Fetch bookmarks or feed based on active tab
       const endpoint = activeTab === 'bookmarks' 
         ? `${process.env.NEXT_PUBLIC_API_URL}/api/posts/bookmarks`
@@ -141,6 +185,17 @@ function FeedContent() {
       const response = await fetch(endpoint, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      
+      if (!response.ok) {
+        console.error('❌ Failed to fetch posts:', response.status, response.statusText);
+        if (response.status === 401) {
+          console.warn('⚠️ Unauthorized - token may be invalid or expired');
+          // Clear invalid token
+          localStorage.removeItem('accessToken');
+          window.location.href = '/login';
+          return;
+        }
+      }
       
       if (response.ok) {
         const result = await response.json();
@@ -157,9 +212,10 @@ function FeedContent() {
         
         const socialPosts = postsData.filter((p: Post) => !p.type || p.type === 'SOCIAL_POST');
         setPosts(socialPosts);
+        console.log('✅ Loaded', socialPosts.length, 'posts');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error fetching posts:', error);
     } finally {
       setLoading(false);
     }
@@ -261,6 +317,49 @@ function FeedContent() {
     }
   };
 
+  // Double-tap to like handler
+  const handleDoubleTap = (postId: string, e: React.MouseEvent | React.TouchEvent) => {
+    const now = Date.now();
+    const lastTap = lastTapTime.current[postId] || 0;
+    const timeSinceLastTap = now - lastTap;
+    
+    if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+      // Double tap detected
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Get tap position relative to the container
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const clientX = 'touches' in e ? e.changedTouches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.changedTouches[0].clientY : e.clientY;
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      
+      // Store tap position
+      setLikeAnimationPosition(prev => ({ ...prev, [postId]: { x, y } }));
+      
+      // Like the post if not already liked
+      const post = posts.find(p => p.id === postId);
+      if (post && !post.isLiked) {
+        handleLike(postId);
+      }
+      
+      // Show heart animation
+      setShowLikeAnimation(prev => ({ ...prev, [postId]: true }));
+      
+      // Hide animation after 600ms (quick fade)
+      setTimeout(() => {
+        setShowLikeAnimation(prev => ({ ...prev, [postId]: false }));
+      }, 600);
+      
+      // Reset tap time
+      lastTapTime.current[postId] = 0;
+    } else {
+      // Single tap - record time
+      lastTapTime.current[postId] = now;
+    }
+  };
+
   // Video control handlers
   const toggleVideoPlay = (postId: string) => {
     const video = videoRefs.current[postId];
@@ -324,11 +423,20 @@ function FeedContent() {
 
   const handleDownloadVideo = async (videoUrl: string, postId: string) => {
     try {
-      showToast('Preparing download...', 'info');
+      showToast('Preparing download with watermark...', 'info');
       setShowMoreMenu(null);
       
-      // Fetch the video as a blob
-      const response = await fetch(videoUrl);
+      const token = localStorage.getItem('accessToken');
+      
+      // Fetch the watermarked video from the download endpoint
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${postId}/download`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      
       const blob = await response.blob();
       
       // Create a blob URL and trigger download
@@ -478,26 +586,47 @@ function FeedContent() {
                   overflow: 'hidden'
                 }}
               >
-                {/* Fullscreen Media Content - Fill entire viewport, content positioned up */}
+                {/* Fullscreen Media Content - Fill entire viewport, centered */}
                 <div className={`absolute inset-0 bg-black flex items-center justify-center transition-all duration-300 ${
-                  showComments === post.id ? 'scale-85 -translate-y-[20%]' : (isTextOnly || hasVideo || hasImage) ? '-translate-y-[10%]' : ''
+                  showComments === post.id ? 'scale-85 -translate-y-[20%]' : ''
                 }`}>
                   {/* Video Post - Custom Controls */}
                   {hasVideo && (
-                    <div className="relative w-full h-full" onClick={() => toggleVideoPlay(post.id)}>
+                    <div 
+                      className="relative w-full h-full flex items-center justify-center"
+                      style={{
+                        transform: mediaAspectRatio[post.id] === 'portrait'
+                          ? isIOS ? 'translateY(-20%)' : isAndroid ? 'translateY(-12%)' : 'translateY(0%)'
+                          : isIOS ? 'translateY(-25%)' : isAndroid ? 'translateY(-15%)' : 'translateY(-6%)'
+                      }}
+                      onClick={(e) => {
+                        handleDoubleTap(post.id, e);
+                        // Delay video toggle slightly to detect double tap
+                        setTimeout(() => {
+                          if (Date.now() - (lastTapTime.current[post.id] || 0) > 300) {
+                            toggleVideoPlay(post.id);
+                          }
+                        }, 300);
+                      }}
+                    >
                       <video
                         ref={(el) => {
                           if (el) videoRefs.current[post.id] = el;
                         }}
                         src={post.videos![0]}
+                        poster={post.videoThumbnails?.[0] || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23000" width="400" height="400"/%3E%3Cg fill="%23fff" opacity="0.3"%3E%3Ccircle cx="200" cy="200" r="60"/%3E%3Cpath d="M170 170 L170 230 L230 200 Z"/%3E%3C/g%3E%3C/svg%3E'}
                         className="w-full h-full object-contain bg-black cursor-pointer"
                         playsInline
                         autoPlay={index === currentIndex}
                         loop
                         muted={false}
+                        preload="metadata"
                         onTimeUpdate={() => handleVideoProgress(post.id)}
                         onLoadedMetadata={(e) => {
-                          // Initially show play icon until video starts
+                          const video = e.currentTarget;
+                          // Detect aspect ratio (portrait vs landscape)
+                          const aspectRatio = video.videoHeight > video.videoWidth ? 'portrait' : 'landscape';
+                          setMediaAspectRatio(prev => ({ ...prev, [post.id]: aspectRatio }));
                           setShowPlayIcon(prev => ({ ...prev, [post.id]: false }));
                         }}
                         onPlay={() => {
@@ -521,69 +650,127 @@ function FeedContent() {
                         </div>
                       )}
                       
-                      {/* Custom Progress Bar - Lower */}
-                      <div 
-                        className="absolute left-0 right-0 px-4 z-50 pointer-events-auto" 
-                        style={{ bottom: '70px' }} // Lower position
-                      >
+                      {/* Double-tap Like Animation */}
+                      {showLikeAnimation[post.id] && (
                         <div 
-                          ref={(el) => {
-                            if (el) progressBarRef.current[post.id] = el;
+                          className="absolute pointer-events-none z-20 animate-ping"
+                          style={{
+                            left: `${likeAnimationPosition[post.id]?.x || 0}px`,
+                            top: `${likeAnimationPosition[post.id]?.y || 0}px`,
+                            transform: 'translate(-50%, -50%)',
+                            animation: 'likePopFade 0.6s ease-out forwards'
                           }}
-                          className="relative h-1 bg-gray-700/80 rounded-full cursor-pointer touch-none"
-                          onClick={(e) => handleProgressBarInteraction(e, post.id)}
-                          onMouseDown={() => handleProgressBarDragStart(post.id)}
-                          onMouseMove={(e) => handleProgressBarDragMove(e, post.id)}
-                          onMouseUp={handleProgressBarDragEnd}
-                          onMouseLeave={handleProgressBarDragEnd}
-                          onTouchStart={(e) => {
-                            handleProgressBarDragStart(post.id);
-                            handleProgressBarInteraction(e, post.id);
-                          }}
-                          onTouchMove={(e) => handleProgressBarInteraction(e, post.id)}
-                          onTouchEnd={handleProgressBarDragEnd}
                         >
-                          <div 
-                            className="absolute left-0 top-0 h-full bg-white rounded-full transition-all pointer-events-none"
-                            style={{ width: `${videoProgress[post.id] || 0}%` }}
-                          >
-                            {/* Progress indicator dot */}
-                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-lg" />
-                          </div>
+                          <IoHeart className="w-24 h-24 text-red-500" style={{ filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.8))' }} />
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
 
                   {/* Image Post */}
                   {hasImage && !hasVideo && (
-                    <div className="relative w-full h-full">
-                      <Image
+                    <div className="relative w-full h-full bg-black">
+                      <div 
+                        className={`absolute inset-0 flex items-center justify-center ${
+                          mediaAspectRatio[post.id] === 'portrait' 
+                            ? 'translate-y-[0%] is-android:-translate-y-[12%]' 
+                            : '-translate-y-[4%] is-android:-translate-y-[13%]'
+                        }`}
+                        onClick={(e) => handleDoubleTap(post.id, e)}
+                      >
+                        <Image
                         src={post.images![0]}
                         alt="Post"
                         fill
                         className="object-contain"
                         unoptimized
+                        onLoad={(e) => {
+                          const img = e.currentTarget;
+                          // Detect aspect ratio after image loads
+                          const aspectRatio = img.naturalHeight > img.naturalWidth ? 'portrait' : 'landscape';
+                          setMediaAspectRatio(prev => ({ ...prev, [post.id]: aspectRatio }));
+                        }}
+                        onError={(e) => {
+                          // Handle broken image - show compact placeholder banner
+                          const target = e.currentTarget as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent && parent.parentElement) {
+                            // Add black background that stays full height
+                            const bgLayer = document.createElement('div');
+                            bgLayer.className = 'absolute inset-0 bg-black';
+                            parent.parentElement.appendChild(bgLayer);
+                            
+                            // Add compact banner in center
+                            const placeholder = document.createElement('div');
+                            placeholder.className = 'absolute inset-0 flex items-center justify-center';
+                            placeholder.innerHTML = `
+                              <div class="bg-gray-900 rounded-lg p-8 flex flex-col items-center justify-center shadow-xl">
+                                <svg class="w-16 h-16 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-gray-400 text-sm font-medium">Image not available</p>
+                              </div>
+                            `;
+                            parent.parentElement.appendChild(placeholder);
+                            parent.remove();
+                          }
+                        }}
                       />
+                      
+                      {/* Double-tap Like Animation for Images */}
+                      {showLikeAnimation[post.id] && (
+                        <div 
+                          className="absolute pointer-events-none z-20"
+                          style={{
+                            left: `${likeAnimationPosition[post.id]?.x || 0}px`,
+                            top: `${likeAnimationPosition[post.id]?.y || 0}px`,
+                            transform: 'translate(-50%, -50%)',
+                            animation: 'likePopFade 0.6s ease-out forwards'
+                          }}
+                        >
+                          <IoHeart className="w-24 h-24 text-red-500" style={{ filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.8))' }} />
+                        </div>
+                      )}
+                      </div>
                     </div>
                   )}
 
                   {/* Text-only Post - Solid dark blue with elegant styling */}
                   {isTextOnly && (
-                    <div className="w-full h-full flex items-center justify-center bg-[#0f1729] p-8">
+                    <div className="w-full h-full flex items-start justify-center bg-[#0f1729] p-8 pt-[38vh] relative" onClick={(e) => handleDoubleTap(post.id, e)}>
                       <div className="max-w-2xl text-center">
                         <p className="text-white text-xl md:text-2xl font-light italic leading-relaxed tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
                           {post.description}
                         </p>
                       </div>
+                      
+                      {/* Double-tap Like Animation for Text Posts */}
+                      {showLikeAnimation[post.id] && (
+                        <div 
+                          className="absolute pointer-events-none z-20"
+                          style={{
+                            left: `${likeAnimationPosition[post.id]?.x || 0}px`,
+                            top: `${likeAnimationPosition[post.id]?.y || 0}px`,
+                            transform: 'translate(-50%, -50%)',
+                            animation: 'likePopFade 0.6s ease-out forwards'
+                          }}
+                        >
+                          <IoHeart className="w-24 h-24 text-red-500" style={{ filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.8))' }} />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
 
-                {/* Bottom Overlay - User Info & Description - Much higher */}
+                {/* Bottom Overlay - User Info & Description */}
                 <div 
-                  className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10" 
-                  style={{ bottom: '180px' }} // Much higher up
+                  className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
+                  style={{ 
+                    bottom: typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches 
+                      ? '145px'  // PWA app mode - lower position to match browser
+                      : '165px'  // Browser mode - keep current position
+                  }}
                 >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
@@ -603,14 +790,25 @@ function FeedContent() {
 
                     {/* User Info */}
                     <Link href={`/user/${post.user.id}`} className="flex items-center gap-2">
-                      {post.user.avatar ? (
+                      {post.user.avatar && !post.user.avatar.includes('supabase') ? (
                         <Image 
                           src={post.user.avatar} 
                           alt={post.user.username} 
                           width={32} 
                           height={32} 
                           className="w-8 h-8 rounded-full border-2 border-white shadow-lg" 
-                          unoptimized 
+                          unoptimized
+                          onError={(e) => {
+                            // Hide image and show default avatar on error
+                            e.currentTarget.style.display = 'none';
+                            const parent = e.currentTarget.parentElement;
+                            if (parent) {
+                              const defaultAvatar = document.createElement('div');
+                              defaultAvatar.className = 'w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center border-2 border-white shadow-lg';
+                              defaultAvatar.innerHTML = `<span class="text-white text-xs font-bold">${post.user.firstName[0]}</span>`;
+                              parent.insertBefore(defaultAvatar, e.currentTarget);
+                            }
+                          }}
                         />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center border-2 border-white shadow-lg">
@@ -634,10 +832,10 @@ function FeedContent() {
                   </div>
                 </div>
 
-                {/* Right Side - Action Buttons - Moved down even more */}
-                <div 
-                  className="absolute right-3 flex flex-col gap-6 z-10" 
-                  style={{ bottom: '120px' }} // Moved down even more
+                {/* Right Side - Action Buttons - Positioned higher */}
+<div 
+                  className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
+                  style={{ bottom: '200px' }} // Moved up higher
                 >
                   {/* Like */}
                   <button
@@ -861,6 +1059,37 @@ function FeedContent() {
             );
           })}
         </div>
+
+        {/* Global Video Progress Bar - Fixed to viewport bottom, only shows for current video */}
+        {posts[currentIndex] && posts[currentIndex].videos && posts[currentIndex].videos.length > 0 && (
+          <div 
+            className="fixed left-1/2 -translate-x-1/2 z-50 pointer-events-auto" 
+            style={{ bottom: '8px', width: '95%', maxWidth: '600px' }}
+          >
+            <div 
+              ref={(el) => {
+                if (el) progressBarRef.current[posts[currentIndex].id] = el;
+              }}
+              className="relative h-0.5 bg-gray-600/50 cursor-pointer touch-none rounded-full backdrop-blur-sm"
+              onClick={(e) => handleProgressBarInteraction(e, posts[currentIndex].id)}
+              onMouseDown={() => handleProgressBarDragStart(posts[currentIndex].id)}
+              onMouseMove={(e) => handleProgressBarDragMove(e, posts[currentIndex].id)}
+              onMouseUp={handleProgressBarDragEnd}
+              onMouseLeave={handleProgressBarDragEnd}
+              onTouchStart={(e) => {
+                handleProgressBarDragStart(posts[currentIndex].id);
+                handleProgressBarInteraction(e, posts[currentIndex].id);
+              }}
+              onTouchMove={(e) => handleProgressBarInteraction(e, posts[currentIndex].id)}
+              onTouchEnd={handleProgressBarDragEnd}
+            >
+              <div 
+                className="absolute left-0 top-0 h-full bg-white rounded-full transition-all duration-150 ease-out pointer-events-none"
+                style={{ width: `${videoProgress[posts[currentIndex].id] || 0}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </AppShell>
   );

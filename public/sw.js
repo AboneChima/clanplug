@@ -1,4 +1,4 @@
-// Service Worker to force cache bypass - UPDATED VERSION
+// Service Worker to force cache bypass AND handle push notifications
 const CACHE_VERSION = 'v5-' + Date.now();
 const CACHE_NAME = `clanplug-${CACHE_VERSION}`;
 
@@ -82,4 +82,92 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// Push notification event handler
+self.addEventListener('push', (event) => {
+  console.log('📨 SW: Push notification received');
+  
+  let notificationData = {
+    title: 'New Notification',
+    body: 'You have a new notification',
+    icon: '/favicon.ico',
+    badge: '/favicon.ico',
+    url: '/',
+    tag: 'notification',
+    requireInteraction: false,
+    silent: false,
+    vibrate: [200, 100, 200],
+    timestamp: Date.now()
+  };
+
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      notificationData = {
+        title: data.title || notificationData.title,
+        body: data.body || data.message || notificationData.body,
+        icon: data.icon || notificationData.icon,
+        badge: data.badge || notificationData.badge,
+        url: data.url || notificationData.url,
+        tag: data.tag || notificationData.tag,
+        requireInteraction: data.requireInteraction || notificationData.requireInteraction,
+        silent: data.silent || notificationData.silent,
+        vibrate: data.vibrate || notificationData.vibrate,
+        timestamp: data.timestamp || notificationData.timestamp,
+        data: data // Store full data for click handler
+      };
+      console.log('📦 SW: Notification data:', notificationData);
+    } catch (error) {
+      console.error('❌ SW: Failed to parse push data:', error);
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon,
+      badge: notificationData.badge,
+      tag: notificationData.tag,
+      requireInteraction: notificationData.requireInteraction,
+      silent: notificationData.silent,
+      vibrate: notificationData.vibrate,
+      timestamp: notificationData.timestamp,
+      data: {
+        url: notificationData.url,
+        ...notificationData.data
+      }
+    })
+  );
+});
+
+// Notification click event handler
+self.addEventListener('notificationclick', (event) => {
+  console.log('🖱️ SW: Notification clicked');
+  
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/';
+  
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Check if there's already a window open
+        for (const client of clientList) {
+          if (client.url.includes(self.registration.scope) && 'focus' in client) {
+            // Focus existing window and navigate
+            return client.focus().then((client) => {
+              if ('navigate' in client) {
+                return client.navigate(urlToOpen);
+              }
+            });
+          }
+        }
+        // If no window is open, open a new one
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
 console.log('🚀 SW: Loaded version', CACHE_VERSION);
+

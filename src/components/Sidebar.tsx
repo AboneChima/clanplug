@@ -51,22 +51,9 @@ const navItems = [
     Icon: IoStorefrontOutline
   },
   { 
-    href: '/top-up', 
-    label: 'Top Up', 
-    Icon: IoWalletOutline,
-    comingSoon: true
-  },
-  { 
-    href: '/groups', 
+    href: '/chat?tab=groups', 
     label: 'Groups', 
-    Icon: IoPeopleOutline,
-    comingSoon: true
-  },
-  { 
-    href: '/tournaments', 
-    label: 'Tournaments', 
-    Icon: IoTrophyOutline,
-    comingSoon: true
+    Icon: IoPeopleOutline
   },
   { 
     href: '/kyc', 
@@ -87,6 +74,18 @@ const navItems = [
     href: '/settings', 
     label: 'Settings', 
     Icon: IoSettingsOutline
+  },
+  { 
+    href: '/top-up', 
+    label: 'Top Up', 
+    Icon: IoWalletOutline,
+    comingSoon: true
+  },
+  { 
+    href: '/tournaments', 
+    label: 'Tournaments', 
+    Icon: IoTrophyOutline,
+    comingSoon: true
   },
 ];
 
@@ -206,8 +205,8 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
               <span className="text-sm font-medium">Help</span>
             </Link>
 
-            {/* Install App Button - Only show if not installed */}
-            {showInstallButton && (
+            {/* Install App Button - HIDDEN */}
+            {/* {showInstallButton && (
               <button
                 onClick={() => {
                   const event = new CustomEvent('openInstallModal');
@@ -220,7 +219,7 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
                 </svg>
                 <span className="text-sm font-semibold">Install App</span>
               </button>
-            )}
+            )} */}
           </div>
         </div>
       </nav>

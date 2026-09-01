@@ -15,23 +15,33 @@ import {
   IoArrowForwardOutline,
   IoTrashOutline,
   IoPeople,
-  IoAddCircleOutline
+  IoAddCircleOutline,
+  IoChatbubbleEllipsesOutline,
+  IoLogOutOutline
 } from 'react-icons/io5';
 import AppShell from '@/components/AppShell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useSocket } from '@/contexts/SocketContext';
 import { chatService, Chat, ChatMessage } from '@/services/chat.service';
-import { groupService, GroupMessage } from '@/services/group.service';
-import GroupDiscoveryModal from '@/components/GroupDiscoveryModal';
+import { groupService } from '@/services/group.service';
+import GroupList from '@/components/groups/GroupList';
 
 function ChatContent() {
   const searchParams = useSearchParams();
   const chatId = searchParams?.get('id');
+  const groupId = searchParams?.get('groupId');
+  const tabParam = searchParams?.get('tab');
   
   const { accessToken, user } = useAuth();
   const { showToast } = useToast();
   const { socket, isConnected: socketConnected, joinChat, leaveChat } = useSocket();
+  
+  // Tab state: 'dms' or 'groups'
+  const [activeTab, setActiveTab] = useState<'dms' | 'groups'>(() => {
+    if (tabParam === 'groups') return 'groups';
+    return groupId ? 'groups' : 'dms';
+  });
   
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChat, setCurrentChat] = useState<Chat | null>(null);
@@ -56,7 +66,6 @@ function ChatContent() {
   const [messageReactions, setMessageReactions] = useState<{[key: string]: string}>({});
   const [showMessageInfo, setShowMessageInfo] = useState(false);
   const [showForwardModal, setShowForwardModal] = useState(false);
-  const [showGroupDiscovery, setShowGroupDiscovery] = useState(false);
   const [isGroupChat, setIsGroupChat] = useState(false);
   const [groupMemberCounts, setGroupMemberCounts] = useState<{[key: string]: number}>({});
   const [showGroupMembers, setShowGroupMembers] = useState(false);
@@ -66,6 +75,37 @@ function ChatContent() {
   const [isConnected, setIsConnected] = useState(false);
 
   const emojis = ['😊', '😂', '❤️', '👍', '🎉', '🔥', '😍', '🤔', '😭', '💯', '🙏', '👏', '✨', '💪', '🎮', '🎯', '🚀', '⭐', '💰', '🎁'];
+
+  // WhatsApp-style user colors for group chats
+  const userColors = [
+    '#25D366', // WhatsApp green
+    '#34B7F1', // Sky blue
+    '#FF6B6B', // Coral red
+    '#4ECDC4', // Turquoise
+    '#FFD93D', // Yellow
+    '#A8E6CF', // Mint green
+    '#FF8B94', // Pink
+    '#95E1D3', // Light teal
+    '#F38181', // Light coral
+    '#AA96DA', // Purple
+    '#FCBAD3', // Light pink
+    '#FFFFD2', // Cream
+  ];
+
+  // Generate consistent color for a user ID
+  const getUserColor = (userId: string): string => {
+    const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return userColors[hash % userColors.length];
+  };
+
+  // Update active tab when URL changes
+  useEffect(() => {
+    if (groupId) {
+      setActiveTab('groups');
+    } else if (chatId) {
+      setActiveTab('dms');
+    }
+  }, [chatId, groupId]);
 
   // Setup real-time connection (Socket.IO for groups, SSE for 1-on-1)
   useEffect(() => {
@@ -81,11 +121,18 @@ function ChatContent() {
         const handleNewMessage = (newMessage: any) => {
           console.log('📨 New group message received:', newMessage);
           if (newMessage.chatId === currentChat.id) {
+            // Assign user color to new message
+            const messageWithColor = {
+              ...newMessage,
+              userColor: getUserColor(newMessage.userId),
+            };
+            
             setMessages(prev => {
               if (prev.some(m => m.id === newMessage.id)) return prev;
-              return [...prev, newMessage];
+              return [...prev, messageWithColor];
             });
-            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+            
+            // No scroll needed with flex-col-reverse!
           }
         };
 
@@ -104,15 +151,22 @@ function ChatContent() {
         const unsubscribeMessage = chatService.onMessage((newMessage) => {
           console.log('📨 New message received via SSE:', newMessage);
           if (newMessage.chatId === currentChat.id) {
+            // Assign user color to new message
+            const messageWithColor = {
+              ...newMessage,
+              userColor: getUserColor(newMessage.userId),
+            };
+            
             setMessages(prev => {
               if (prev.some(m => m.id === newMessage.id)) {
                 console.log('⚠️ Duplicate message, skipping:', newMessage.id);
                 return prev;
               }
               console.log('✅ Adding new message to chat');
-              return [...prev, newMessage];
+              return [...prev, messageWithColor];
             });
-            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+            
+            // No scroll needed with flex-col-reverse!
           }
         });
 
@@ -369,35 +423,38 @@ function ChatContent() {
     }
   }, [accessToken]);
 
-  // Function to load group member counts
+  // Function to load group member counts (DEPRECATED - groups are now handled separately)
   const loadGroupMemberCounts = async () => {
-    if (!accessToken) return;
-    try {
-      const groups = await groupService.getGroups(accessToken);
-      const counts: {[key: string]: number} = {};
-      groups.forEach((group: any) => {
-        // Match by group name
-        if (group.name?.includes('Free Fire')) counts['Free Fire'] = group.memberCount || 0;
-        if (group.name?.includes('Call of Duty')) counts['Call of Duty'] = group.memberCount || 0;
-        if (group.name?.includes('PUBG')) counts['PUBG Mobile'] = group.memberCount || 0;
-        if (group.name?.includes('FIFA')) counts['FIFA Mobile'] = group.memberCount || 0;
-        if (group.name?.includes('eFootball')) counts['eFootball'] = group.memberCount || 0;
-      });
-      setGroupMemberCounts(counts);
-    } catch (error) {
-      console.error('Failed to load group member counts:', error);
-    }
+    // No longer needed - groups have their own tab and management
+    return;
   };
 
   // Function to load group members
   const loadGroupMembers = async () => {
-    if (!accessToken || !currentChat) return;
+    if (!accessToken || !currentChat) {
+      console.error('❌ Cannot load members: missing accessToken or currentChat', { accessToken: !!accessToken, currentChat: !!currentChat });
+      return;
+    }
+    
+    console.log('🔍 Loading group members for:', currentChat.id, currentChat.name);
+    
     try {
-      const details = await groupService.getGroupDetails(currentChat.id, accessToken);
-      setGroupMembers(details.members || []);
+      const members = await groupService.getGroupMembers(currentChat.id);
+      console.log('✅ Received members:', members);
+      
+      if (!members || members.length === 0) {
+        console.warn('⚠️ No members returned from API');
+      }
+      
+      setGroupMembers(members || []);
       setShowGroupMembers(true);
     } catch (error: any) {
-      console.error('Failed to load group members:', error);
+      console.error('❌ Failed to load group members:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       showToast(error.message || 'Failed to load members', 'error');
     }
   };
@@ -409,8 +466,107 @@ function ChatContent() {
       if (chat) {
         setCurrentChat(chat);
       }
+    } else if (groupId && accessToken) {
+      // Load group chat if groupId is provided
+      loadGroupChat(groupId);
     }
-  }, [chatId, chats]);
+  }, [chatId, groupId, chats, accessToken]);
+
+  // Function to load a group chat by ID
+  const loadGroupChat = async (gid: string) => {
+    if (!accessToken) return;
+    setLoading(true);
+    try {
+      const group = await groupService.getGroupById(gid);
+      
+      // Check if user is a member
+      if (!group.isMember) {
+        showToast('You must join this group first to view messages', 'info');
+        setLoading(false);
+        return;
+      }
+      
+      // Map group name to image
+      const getGroupImage = (groupName: string): string => {
+        const imageMap: Record<string, string> = {
+          'Free Fire': '/free fire.jpeg',
+          'COD Mobile': '/codm.jpeg',
+          'Call of Duty Mobile': '/codm.jpeg',
+          'PUBG Mobile': '/pubg.jpeg',
+          'FIFA Mobile': '/fifa.jpeg',
+          'General Gaming': '/game accessories.jpg',
+          'Fortnite': '/fortnite.jpeg',
+          'Apex Legends': '/apex legend.jpeg',
+          'Clash of Clans': '/clash of clans.jpeg',
+          'E Football': '/e football.jpeg',
+          'eFootball': '/e football.jpeg',
+          'E-Football': '/e football.jpeg',
+          'EA Sports FC': '/ea sport fc.jpeg',
+          'NBA 2K26': '/NBA 2K26 DESIGN.jpeg',
+          'Grand Theft Auto': '/grand theft auto.jpeg',
+          'Mortal Kombat': '/Mortal kombat 1.jpeg',
+          'Shadow Fight': '/shadow fight.jpeg',
+          'Critical Ops': '/critical ops.jpeg',
+          'Modern Strike': '/Modern Strike.jpeg',
+          'Blood Strike': '/blood strike.jpeg',
+          'Farlight': '/farlight.jpeg',
+          'Delta Force': '/Delta Force on Steam.jpeg',
+          'DLS': '/dls.jpg',
+          '8 Ball Pool': '/Free 8 Ball Pool.jpeg',
+          'Warzone Mobile': '/warzone mobile.jpeg',
+          'Call of Duty Warzone': '/call of duty warzone.jpeg',
+        };
+
+        // Try exact match first
+        if (imageMap[groupName]) return imageMap[groupName];
+
+        // Try case-insensitive match
+        const lowerName = groupName.toLowerCase();
+        for (const [key, value] of Object.entries(imageMap)) {
+          if (key.toLowerCase() === lowerName) return value;
+        }
+
+        // Try partial match
+        const normalizedName = lowerName.replace(/[-\s]/g, '');
+        for (const [key, value] of Object.entries(imageMap)) {
+          const normalizedKey = key.toLowerCase().replace(/[-\s]/g, '');
+          if (normalizedName === normalizedKey || 
+              normalizedName.includes(normalizedKey) || 
+              normalizedKey.includes(normalizedName)) {
+            return value;
+          }
+        }
+
+        return ''; // No match found
+      };
+      
+      const groupImage = getGroupImage(group.name);
+      const avatarSrc = group.avatar || groupImage;
+      
+      // Convert group to chat format
+      const groupChat: any = {
+        id: group.id,
+        type: 'GROUP',
+        name: group.name,
+        description: group.description,
+        avatar: avatarSrc, // Use mapped image if no avatar
+        participants: group.members.map((m: any) => ({
+          id: m.id,
+          userId: m.userId,
+          role: m.role,
+          user: m.user,
+        })),
+        memberCount: group.memberCount,
+      };
+      setCurrentChat(groupChat);
+      setIsGroupChat(true);
+    } catch (error: any) {
+      console.error('Failed to load group:', error);
+      showToast(error.message || 'Failed to load group', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load messages when chat changes
   useEffect(() => {
@@ -452,21 +608,28 @@ function ChatContent() {
     try {
       setLoading(true);
       
-      // Check if it's a group chat
-      const chat = chats.find(c => c.id === chatId);
-      if (chat && (chat as any).type === 'GROUP') {
-        // Load group messages
-        const msgs = await groupService.getGroupMessages(chatId, accessToken);
-        setMessages(msgs as any);
-      } else {
-        // Load 1-on-1 messages
-        const msgs = await chatService.getMessages(chatId, accessToken);
-        const hiddenMessages = JSON.parse(localStorage.getItem('hiddenMessages') || '{}');
-        const filteredMsgs = msgs.filter(m => !m.isDeleted && !hiddenMessages[m.id]);
-        setMessages(filteredMsgs);
-      }
+      // Both DMs and groups use the same chat service for messages
+      const msgs = await chatService.getMessages(chatId, accessToken);
+      const hiddenMessages = JSON.parse(localStorage.getItem('hiddenMessages') || '{}');
+      const filteredMsgs = msgs.filter(m => !m.isDeleted && !hiddenMessages[m.id]);
       
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      // Assign consistent colors to users for group chats
+      const msgsWithColors = filteredMsgs.map(msg => ({
+        ...msg,
+        userColor: getUserColor(msg.userId),
+      }));
+      
+      setMessages(msgsWithColors);
+      
+      // Always scroll to bottom after loading messages
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+        }
+      }, 100);
+      
+      console.log('✅ Messages loaded:', msgsWithColors.length, 'messages');
+      
       markChatAsRead(chatId);
     } catch (error) {
       console.error('Load messages error:', error);
@@ -577,20 +740,12 @@ function ChatContent() {
       
       console.log('📤 Final message payload:', JSON.stringify(messageData, null, 2));
       
-      // Use group service for groups, chat service for 1-on-1
-      let newMsg: any;
-      if ((currentChat as any).type === 'GROUP') {
-        newMsg = await groupService.sendMessage(
-          currentChat.id,
-          content,
-          messageData.type,
-          messageData.attachments,
-          accessToken
-        );
-        // Don't add to messages array immediately for groups (Socket.IO will handle it)
-      } else {
-        newMsg = await chatService.sendMessage(currentChat.id, messageData, accessToken);
-        // Add immediately for 1-on-1 chats
+      // Both DMs and groups use the same chat service
+      const newMsg = await chatService.sendMessage(currentChat.id, messageData, accessToken);
+      
+      // For DMs, add message immediately
+      // For groups with Socket.IO, the message will arrive via socket event
+      if ((currentChat as any).type !== 'GROUP') {
         setMessages(prev => [...prev, newMsg]);
       }
       
@@ -602,7 +757,7 @@ function ChatContent() {
         return [updatedChat, ...otherChats];
       });
       
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      // No scroll needed with flex-col-reverse!
     } catch (error: any) {
       console.error('❌ Send error:', error);
       showToast(error.message || 'Failed to send', 'error');
@@ -740,26 +895,51 @@ function ChatContent() {
         {!currentChat && (
           <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="bg-black px-4 py-3 flex-shrink-0 border-b border-[#2f3336] flex items-center justify-between">
-              <h1 className="text-xl font-bold text-white">Messages</h1>
-              <button
-                onClick={() => setShowGroupDiscovery(true)}
-                className="p-2 hover:bg-[#2a2a2a] rounded-full transition-colors"
-                title="Join a group"
-              >
-                <IoAddCircleOutline className="w-6 h-6 text-blue-500" />
-              </button>
+            <div className="bg-black px-4 py-3 flex-shrink-0 border-b border-[#2f3336]">
+              <h1 className="text-xl font-bold text-white mb-3">Messages</h1>
+              
+              {/* Minimal Tab Switcher with Underline Animation */}
+              <div className="flex border-b border-[#2f3336]">
+                <button
+                  onClick={() => setActiveTab('dms')}
+                  className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${
+                    activeTab === 'dms'
+                      ? 'text-white'
+                      : 'text-gray-400'
+                  }`}
+                >
+                  Chats
+                  {activeTab === 'dms' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab('groups')}
+                  className={`flex-1 pb-3 text-sm font-medium transition-colors relative ${
+                    activeTab === 'groups'
+                      ? 'text-white'
+                      : 'text-gray-400'
+                  }`}
+                >
+                  Groups
+                  {activeTab === 'groups' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full" />
+                  )}
+                </button>
+              </div>
             </div>
 
-            {/* Chat List */}
-            <div className="flex-1 overflow-y-auto">
-              {filteredChats.length === 0 ? (
-                <div className="text-center py-16 px-4">
-                  <p className="text-gray-500 text-sm">No direct conversations yet</p>
-                  <p className="text-gray-600 text-xs mt-2">Send someone a message to start chatting</p>
-                </div>
-              ) : (
-                filteredChats.map((chat) => (
+            {/* Tab Content - Chats */}
+            {activeTab === 'dms' && (
+              <div className="flex-1 overflow-y-auto pb-40">
+                {filteredChats.length === 0 ? (
+                  <div className="text-center py-16 px-4">
+                    <IoChatbubbleEllipsesOutline className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+                    <p className="text-gray-500 text-sm">No conversations yet</p>
+                    <p className="text-gray-600 text-xs mt-2">Send someone a message</p>
+                  </div>
+                ) : (
+                  filteredChats.map((chat) => (
                   <button
                     key={chat.id}
                     onClick={() => {
@@ -824,7 +1004,13 @@ function ChatContent() {
                   </button>
                 ))
               )}
-            </div>
+              </div>
+            )}
+
+            {/* Tab Content - Groups */}
+            {activeTab === 'groups' && (
+              <GroupList />
+            )}
           </div>
         )}
 
@@ -859,12 +1045,20 @@ function ChatContent() {
               >
                 {isGroupChat ? (
                   <>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                      <IoPeople className="w-6 h-6 text-white" />
-                    </div>
+                    {currentChat.avatar ? (
+                      <img
+                        src={currentChat.avatar}
+                        alt={currentChat.name}
+                        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                        <IoPeople className="w-6 h-6 text-white" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0 text-left">
                       <h2 className="font-semibold text-white truncate">{currentChat.name || 'Group Chat'}</h2>
-                      <p className="text-xs text-gray-400">Group • Tap to see members</p>
+                      <p className="text-xs text-gray-400">{(currentChat as any).memberCount || currentChat.participants?.length || 0} members</p>
                     </div>
                   </>
                 ) : (
@@ -905,82 +1099,99 @@ function ChatContent() {
                 )}
               </button>
               
-              {/* Menu Button */}
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-2 hover:bg-[#2a2a2a] rounded-full transition-colors"
-              >
-                <IoEllipsisVerticalOutline className="w-6 h-6 text-white" />
-              </button>
-              
-              {/* Dropdown Menu */}
-              {showMenu && (
-                <div className="absolute top-full right-4 mt-1 bg-[#1a1a1a] border border-[#2f3336] rounded-xl shadow-xl z-50 min-w-[160px]">
+              {/* Exit Group / Menu Button */}
+              {isGroupChat ? (
+                <button
+                  onClick={async () => {
+                    if (!user?.id || !currentChat.id) return;
+                    
+                    const confirmed = confirm('Are you sure you want to exit this group?');
+                    if (!confirmed) return;
+                    
+                    try {
+                      await groupService.leaveGroup(currentChat.id, user.id);
+                      showToast('You have left the group', 'success');
+                      setCurrentChat(null);
+                      window.history.replaceState({}, '', '/chat');
+                      loadChats(); // Refresh chat list
+                    } catch (error: any) {
+                      console.error('Failed to leave group:', error);
+                      showToast(error.message || 'Failed to leave group', 'error');
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-sm font-medium rounded-lg transition-colors"
+                >
+                  <IoLogOutOutline className="w-4 h-4" />
+                  <span>Exit</span>
+                </button>
+              ) : (
+                <>
+                  {/* Menu Button for DMs */}
                   <button
-                    onClick={() => {
-                      setShowReportModal(true);
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#2a2a2a] transition-colors flex items-center gap-2 border-b border-[#2f3336]"
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="p-2 hover:bg-[#2a2a2a] rounded-full transition-colors"
                   >
-                    <IoAlertCircleOutline className="w-4 h-4" />
-                    Report User
+                    <IoEllipsisVerticalOutline className="w-6 h-6 text-white" />
                   </button>
-                  <button
-                    onClick={() => setShowBlockConfirm(true)}
-                    className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-[#2a2a2a] transition-colors flex items-center gap-2"
-                  >
-                    <IoCloseOutline className="w-4 h-4" />
-                    Block User
-                  </button>
-                </div>
+                  
+                  {/* Dropdown Menu */}
+                  {showMenu && (
+                    <div className="absolute top-full right-4 mt-1 bg-[#1a1a1a] border border-[#2f3336] rounded-xl shadow-xl z-50 min-w-[160px]">
+                      <button
+                        onClick={() => {
+                          setShowReportModal(true);
+                          setShowMenu(false);
+                        }}
+                        className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#2a2a2a] transition-colors flex items-center gap-2 border-b border-[#2f3336]"
+                      >
+                        <IoAlertCircleOutline className="w-4 h-4" />
+                        Report User
+                      </button>
+                      <button
+                        onClick={() => setShowBlockConfirm(true)}
+                        className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-[#2a2a2a] transition-colors flex items-center gap-2"
+                      >
+                        <IoCloseOutline className="w-4 h-4" />
+                        Block User
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-black">
+            <div className="flex-1 overflow-y-auto p-4 pb-40 flex flex-col bg-black">
+              
               {loading ? (
-                <div className="text-center py-16">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                // Skeleton Loader
+                <div className="space-y-4 flex flex-col">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[75%] ${i % 2 === 0 ? 'items-end' : 'items-start'} flex flex-col gap-2`}>
+                        {/* User name skeleton for received messages */}
+                        {i % 2 !== 0 && (
+                          <div className="h-3 w-20 bg-[#2a2a2a] rounded animate-pulse"></div>
+                        )}
+                        {/* Message bubble skeleton */}
+                        <div className={`${
+                          i % 2 === 0 ? 'bg-[#1a3a52]' : 'bg-[#2a2a2a]'
+                        } rounded-2xl p-3 space-y-2 animate-pulse`}>
+                          <div className={`h-3 ${i % 3 === 0 ? 'w-32' : i % 3 === 1 ? 'w-48' : 'w-40'} bg-[#3a3a3a] rounded`}></div>
+                          {i % 4 === 0 && <div className="h-3 w-24 bg-[#3a3a3a] rounded"></div>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : messages.length === 0 ? (
                 <div className="text-center py-16 px-4">
                   <p className="text-gray-500">No messages yet. Say hi! 👋</p>
                 </div>
               ) : (
-                <>
-                  {/* Pinned Messages Section */}
-                  {Array.from(pinnedMessages).length > 0 && (
-                    <div className="sticky top-0 z-10 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-                          </svg>
-                          <span className="text-sm font-medium text-blue-400">Pinned Messages</span>
-                        </div>
-                        <button
-                          onClick={() => setPinnedMessages(new Set())}
-                          className="text-xs text-gray-400 hover:text-white"
-                        >
-                          Clear All
-                        </button>
-                      </div>
-                      {messages.filter(m => pinnedMessages.has(m.id)).map((msg) => {
-                        const isOwn = msg.userId === user?.id;
-                        return (
-                          <div key={msg.id} className="mb-2 last:mb-0">
-                            <div className={`text-xs p-2 rounded ${isOwn ? 'bg-blue-600/20' : 'bg-[#2a2a2a]'}`}>
-                              <p className="text-white line-clamp-2">{msg.content || '📷 Photo'}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Regular Messages */}
-                  {messages.filter(m => !m.isDeleted).map((msg) => {
+                <div className="flex flex-col space-y-3">
+                  {/* Regular Messages - always in normal order */}
+                  {messages.filter(m => !m.isDeleted).map((msg, index) => {
                   const isOwn = msg.userId === user?.id;
                   const hasImage = msg.type === 'IMAGE' && msg.attachments && msg.attachments.length > 0;
                   const isListingShare = (msg as any).metadata?.type === 'LISTING_SHARE';
@@ -989,6 +1200,11 @@ function ChatContent() {
                   const userName = messageData.user 
                     ? `${messageData.user.firstName || ''} ${messageData.user.lastName || ''}`.trim() || messageData.user.username
                     : 'User';
+                  
+                  // WhatsApp-style message grouping: Check if previous message is from same user
+                  const prevMessage = index > 0 ? messages[index - 1] : null;
+                  const isConsecutive = prevMessage && prevMessage.userId === msg.userId && !prevMessage.isDeleted;
+                  const shouldShowNameAndAvatar = !isConsecutive; // Only show name/avatar if NOT consecutive
                   
                   console.log('🔍 Rendering message:', { 
                     id: msg.id, 
@@ -1001,13 +1217,15 @@ function ChatContent() {
                     content: msg.content?.substring(0, 30),
                     isListingShare,
                     isGroupChat,
-                    userColor
+                    userColor,
+                    isConsecutive,
+                    shouldShowNameAndAvatar
                   });
                   
                   return (
                     <div 
                       key={msg.id} 
-                      className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${isConsecutive ? 'mt-1' : 'mt-3'}`}
                       onTouchStart={(e) => handleLongPressStart(e, msg)}
                       onTouchEnd={handleLongPressEnd}
                       onTouchMove={handleTouchMove}
@@ -1017,17 +1235,6 @@ function ChatContent() {
                       onContextMenu={(e) => e.preventDefault()} 
                     >
                       <div className={`relative max-w-[75%] ${isOwn ? 'items-end' : 'items-start'} flex flex-col`}>
-                        {/* Show user name and color for group chats */}
-                        {isGroupChat && !isOwn && (
-                          <div className="flex items-center gap-2 mb-1 px-2">
-                            <span 
-                              className="text-sm font-semibold"
-                              style={{ color: userColor }}
-                            >
-                              {userName}
-                            </span>
-                          </div>
-                        )}
                         
                         <div 
                           className={`${
@@ -1035,10 +1242,37 @@ function ChatContent() {
                           } ${
                           isOwn ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-[#2a2a2a] text-white rounded-bl-sm'
                         } ${hasImage && !isListingShare ? 'p-0 overflow-hidden' : isListingShare ? '' : isOwn ? 'px-2 py-1.5' : 'pl-2.5 pr-2 py-1.5'}`}
-                          style={!isOwn && isGroupChat && userColor ? {
-                            borderLeft: `3px solid ${userColor}`
-                          } : {}}
                         >
+                        
+                        {/* WhatsApp-style: User name INSIDE bubble at top left - ONLY if not consecutive and is group chat */}
+                        {isGroupChat && !isOwn && messageData.user && shouldShowNameAndAvatar && !hasImage && !isListingShare && (
+                          <div className="mb-0.5">
+                            <button
+                              onClick={() => {
+                                if (messageData.user?.id) {
+                                  window.location.href = `/user/${messageData.user.id}`;
+                                }
+                              }}
+                              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                            >
+                              {/* User Name */}
+                              <span 
+                                className="text-[13px] font-semibold"
+                                style={{ color: userColor }}
+                              >
+                                {userName}
+                              </span>
+                              
+                              {/* Verification Badge */}
+                              {(messageData.user.verificationBadge?.status === 'verified' || 
+                                messageData.user.verificationBadge?.status === 'active') && (
+                                <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        )}
                         
                         {/* Listing Share - Compact YouTube-style Thumbnail */}
                         
@@ -1184,9 +1418,11 @@ function ChatContent() {
                     </div>
                   );
                 })}
-                </>
+                </div>
               )}
-              <div ref={messagesEndRef} />
+              
+              {/* Messages End Ref at bottom for few messages */}
+              {messages.length <= 10 && <div ref={messagesEndRef} />}
             </div>
 
             {/* Message Input */}
@@ -1726,16 +1962,6 @@ function ChatContent() {
           </div>
         )}
       </div>
-      
-      {/* Group Discovery Modal */}
-      <GroupDiscoveryModal
-        isOpen={showGroupDiscovery}
-        onClose={() => setShowGroupDiscovery(false)}
-        onGroupJoined={() => {
-          loadChats(); // Reload chats to show newly joined groups
-        }}
-        accessToken={accessToken}
-      />
 
       {/* Group Members Modal */}
       {showGroupMembers && (
@@ -1749,62 +1975,76 @@ function ChatContent() {
           {/* Modal */}
           <div className="relative bg-[#0a0a0a] w-full sm:max-w-lg sm:rounded-2xl overflow-hidden flex flex-col max-h-[90vh] sm:max-h-[80vh] rounded-t-3xl sm:rounded-b-3xl border border-[#2f3336]">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-[#2f3336]">
-              <h2 className="text-xl font-bold text-white">Group Members ({groupMembers.length})</h2>
-              <button
-                onClick={() => setShowGroupMembers(false)}
-                className="p-2 hover:bg-[#2a2a2a] rounded-full transition-colors"
-              >
-                <IoCloseOutline className="w-6 h-6 text-white" />
-              </button>
+            <div className="p-3 border-b border-[#2f3336]">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-lg font-bold text-white">Members ({groupMembers.length})</h2>
+                <button
+                  onClick={() => setShowGroupMembers(false)}
+                  className="p-1.5 hover:bg-[#2a2a2a] rounded-full transition-colors"
+                >
+                  <IoCloseOutline className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              {currentChat?.description && (
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  {currentChat.description}
+                </p>
+              )}
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-2">
               {groupMembers.length === 0 ? (
                 <div className="text-center py-12">
                   <IoPeople className="w-16 h-16 text-gray-600 mx-auto mb-4" />
                   <p className="text-gray-400">No members found</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {groupMembers.map((member: any) => (
-                    <button
-                      key={member.id}
-                      onClick={() => {
-                        window.location.href = `/user/${member.id}`;
-                      }}
-                      className="w-full bg-[#1a1a1a] rounded-xl p-3 border border-[#2f3336] hover:bg-[#2a2a2a] transition-colors flex items-center gap-3"
-                    >
-                      {member.avatar ? (
-                        <img src={member.avatar} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center flex-shrink-0">
-                          <span className="text-white font-semibold">{member.username?.charAt(0) || 'U'}</span>
+                <div className="space-y-1">
+                  {groupMembers.map((member: any) => {
+                    const userData = member.user || member;
+                    const userColor = getUserColor(member.userId || userData.id);
+                    
+                    return (
+                      <button
+                        key={member.id}
+                        onClick={() => {
+                          setShowGroupMembers(false);
+                          window.location.href = `/user/${member.userId || userData.id}`;
+                        }}
+                        className="w-full bg-[#1a1a1a] rounded-lg p-2 border border-[#2f3336] hover:bg-[#2a2a2a] transition-colors flex items-center gap-2 text-left"
+                      >
+                        {userData.avatar ? (
+                          <img src={userData.avatar} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs font-semibold">{userData.username?.charAt(0)?.toUpperCase() || 'U'}</span>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <p 
+                              className="text-sm font-medium truncate"
+                              style={{ color: userColor }}
+                            >
+                              {userData.username}
+                            </p>
+                            {(userData.verificationBadge?.status === 'verified' || userData.verificationBadge?.status === 'active') && (
+                              <svg className="w-3 h-3 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            {member.role === 'owner' && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 font-medium">Owner</span>
+                            )}
+                            {member.role === 'admin' && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-medium">Admin</span>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-white truncate">{member.username}</p>
-                          {member.verificationBadge?.status === 'verified' && (
-                            <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                        {member.firstName || member.lastName ? (
-                          <p className="text-sm text-gray-400 truncate">
-                            {[member.firstName, member.lastName].filter(Boolean).join(' ')}
-                          </p>
-                        ) : null}
-                        <p className="text-xs text-gray-500">Joined {new Date(member.joinedAt).toLocaleDateString()}</p>
-                      </div>
-                      <div 
-                        className="w-8 h-8 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: member.color }}
-                      />
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

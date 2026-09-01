@@ -106,6 +106,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Fetch full user profile to get bio and location
         console.log('✅ Login successful, fetching full user profile...');
         await refetchUser();
+        
+        // Force page reload for iOS Safari to clear cached state
+        // Use setTimeout to ensure localStorage is saved first
+        setTimeout(() => {
+          window.location.replace('/feed');
+        }, 100);
       }
     } catch (error) {
       throw error;
@@ -154,8 +160,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       
+      // Clear ALL localStorage items to prevent stale data
+      localStorage.clear();
+      
+      // Clear sessionStorage as well
+      sessionStorage.clear();
+      
       // Also clear cookies
       deleteCookie('token');
+      
+      // Force service worker to update (iOS Safari issue)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            registration.update();
+          });
+        });
+      }
+      
+      // Force a complete page reload to clear ALL cached state (critical for iOS)
+      // Use location.replace instead of href to prevent back button issues
+      window.location.replace('/login');
     }
   };
 

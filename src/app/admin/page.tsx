@@ -7,7 +7,8 @@ import {
   IoRefreshOutline,
   IoTrendingUpOutline,
   IoWalletOutline,
-  IoDocumentTextOutline
+  IoDocumentTextOutline,
+  IoPeople
 } from 'react-icons/io5';
 import Link from 'next/link';
 
@@ -135,7 +136,7 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 sm:p-6">
         <h2 className="text-base sm:text-lg font-semibold text-white mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <Link
             href="/admin/kyc"
             className="flex items-center gap-3 p-3 sm:p-4 border border-slate-800 rounded-lg hover:bg-slate-800/50 hover:border-blue-500/30 transition-all group"
@@ -159,6 +160,19 @@ export default function AdminDashboard() {
             <div className="flex-1 min-w-0">
               <p className="font-medium text-white text-sm sm:text-base">Manage Users</p>
               <p className="text-xs sm:text-sm text-gray-400 truncate">View all users</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/admin/groups"
+            className="flex items-center gap-3 p-3 sm:p-4 border border-slate-800 rounded-lg hover:bg-slate-800/50 hover:border-green-500/30 transition-all group"
+          >
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-500/20 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+              <IoPeople className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-white text-sm sm:text-base">Manage Groups</p>
+              <p className="text-xs sm:text-sm text-gray-400 truncate">Edit group icons & details</p>
             </div>
           </Link>
         </div>
