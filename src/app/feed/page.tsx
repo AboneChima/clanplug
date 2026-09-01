@@ -70,6 +70,81 @@ function FeedContent() {
   const commentInputRef = useRef<HTMLInputElement>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({});
   const progressBarRef = useRef<Record<string, HTMLDivElement>>({});
+  const scrollPositionSaved = useRef(false);
+  const postsCache = useRef<Post[]>([]);
+  const postsFetched = useRef(false);
+
+  // Save scroll position before navigating away
+  useEffect(() => {
+    const saveScrollPosition = () => {
+      if (scrollContainerRef.current) {
+        const scrollTop = scrollContainerRef.current.scrollTop;
+        sessionStorage.setItem('feedScrollPosition', scrollTop.toString());
+        sessionStorage.setItem('feedCurrentIndex', currentIndex.toString());
+        // Save posts to cache
+        if (posts.length > 0) {
+          sessionStorage.setItem(`feedPosts_${activeTab}`, JSON.stringify(posts));
+        }
+      }
+    };
+
+    // Save on route change
+    window.addEventListener('beforeunload', saveScrollPosition);
+    
+    // Handle browser back/forward button
+    const handlePopState = () => {
+      // Don't clear cache on back button - we want to restore state
+      scrollPositionSaved.current = false;
+    };
+    window.addEventListener('popstate', handlePopState);
+    
+    // Also save when clicking links
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'A' || target.closest('a')) {
+        saveScrollPosition();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('beforeunload', saveScrollPosition);
+      window.removeEventListener('popstate', handlePopState);
+      saveScrollPosition(); // Save on component unmount
+    };
+  }, [currentIndex, posts, activeTab]);
+
+  // Restore scroll position after posts load
+  useEffect(() => {
+    if (posts.length > 0 && !scrollPositionSaved.current && scrollContainerRef.current) {
+      const savedScrollPosition = sessionStorage.getItem('feedScrollPosition');
+      const savedIndex = sessionStorage.getItem('feedCurrentIndex');
+      
+      if (savedScrollPosition) {
+        // Restore immediately without animation
+        requestAnimationFrame(() => {
+          if (scrollContainerRef.current) {
+            // Disable smooth scrolling temporarily
+            scrollContainerRef.current.style.scrollBehavior = 'auto';
+            scrollContainerRef.current.scrollTop = parseInt(savedScrollPosition);
+            
+            // Re-enable smooth scrolling after restoration
+            setTimeout(() => {
+              if (scrollContainerRef.current) {
+                scrollContainerRef.current.style.scrollBehavior = 'smooth';
+              }
+            }, 50);
+          }
+          
+          if (savedIndex) {
+            setCurrentIndex(parseInt(savedIndex));
+          }
+        });
+        
+        scrollPositionSaved.current = true;
+        // Keep cache for page refreshes, only clear on explicit navigation away
+      }
+    }
+  }, [posts]);
 
   // Hide/show bottom menu when modals are open
   useEffect(() => {
@@ -84,9 +159,28 @@ function FeedContent() {
   }, [showComments, showMoreMenu]);
 
   useEffect(() => {
-    // Only fetch posts if we have a user (auth is ready)
-    if (user) {
+    // Try to restore cached posts first
+    const cachedPosts = sessionStorage.getItem(`feedPosts_${activeTab}`);
+    if (cachedPosts && !postsFetched.current) {
+      try {
+        const parsedPosts = JSON.parse(cachedPosts);
+        if (Array.isArray(parsedPosts) && parsedPosts.length > 0) {
+          setPosts(parsedPosts);
+          postsCache.current = parsedPosts;
+          // Don't set loading to false yet - wait for scroll restoration
+          setTimeout(() => setLoading(false), 50);
+          postsFetched.current = true;
+          return;
+        }
+      } catch (e) {
+        console.error('Failed to parse cached posts', e);
+      }
+    }
+
+    // Only fetch posts if we have a user and haven't fetched yet
+    if (user && !postsFetched.current) {
       fetchPosts();
+      postsFetched.current = true;
     }
     
     // iOS viewport height fix
@@ -119,7 +213,7 @@ function FeedContent() {
       window.removeEventListener('resize', setAppHeight);
       window.removeEventListener('orientationchange', setAppHeight);
     };
-  }, [activeTab, user]); // Refetch when tab changes or user auth changes
+  }, []); // Remove activeTab and user dependencies to prevent re-fetching
 
   // Snap scrolling handler with Intersection Observer for better iOS support
   useEffect(() => {
@@ -212,6 +306,9 @@ function FeedContent() {
         
         const socialPosts = postsData.filter((p: Post) => !p.type || p.type === 'SOCIAL_POST');
         setPosts(socialPosts);
+        postsCache.current = socialPosts;
+        // Cache the posts
+        sessionStorage.setItem(`feedPosts_${activeTab}`, JSON.stringify(socialPosts));
         console.log('✅ Loaded', socialPosts.length, 'posts');
       }
     } catch (error) {
@@ -760,7 +857,7 @@ function FeedContent() {
                 {/* Bottom Overlay - User Info & Description */}
                 <div 
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
-                  style={{ bottom: '10px' }}
+                  style={{ bottom: '280px' }}
                 >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
@@ -822,10 +919,10 @@ function FeedContent() {
                   </div>
                 </div>
 
-                {/* Right Side - Action Buttons - Positioned higher */}
-<div 
+                {/* Right Side - Action Buttons */}
+                <div 
                   className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
-                  style={{ bottom: '40px' }}
+                  style={{ bottom: '320px' }}
                 >
                   {/* Like */}
                   <button
