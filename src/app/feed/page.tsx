@@ -767,13 +767,7 @@ function FeedContent() {
                 <div 
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
                   style={{ 
-                    bottom: typeof window !== 'undefined' && (
-                      window.matchMedia('(display-mode: standalone)').matches || 
-                      (window.navigator as any).standalone ||
-                      document.referrer.includes('android-app://')
-                    )
-                      ? '30px'  // PWA/App mode - extremely low
-                      : '165px'  // Browser mode - keep current position
+                    bottom: (isIOS || isAndroid) ? '30px' : '165px'
                   }}
                 >
                   <div className="pointer-events-auto max-w-xl">
@@ -840,13 +834,7 @@ function FeedContent() {
 <div 
                   className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
                   style={{ 
-                    bottom: typeof window !== 'undefined' && (
-                      window.matchMedia('(display-mode: standalone)').matches || 
-                      (window.navigator as any).standalone ||
-                      document.referrer.includes('android-app://')
-                    )
-                      ? '80px'  // PWA/App mode - very low
-                      : '200px'  // Browser mode
+                    bottom: (isIOS || isAndroid) ? '80px' : '200px'
                   }}
                 >
                   {/* Like */}
