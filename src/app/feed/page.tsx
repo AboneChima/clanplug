@@ -596,8 +596,8 @@ function FeedContent() {
                       className="relative w-full h-full flex items-center justify-center"
                       style={{
                         transform: mediaAspectRatio[post.id] === 'portrait'
-                          ? isIOS ? 'translateY(-20%)' : isAndroid ? 'translateY(-12%)' : 'translateY(0%)'
-                          : isIOS ? 'translateY(-25%)' : isAndroid ? 'translateY(-15%)' : 'translateY(-6%)'
+                          ? 'translateY(-35%)'
+                          : 'translateY(-35%)'
                       }}
                       onClick={(e) => {
                         handleDoubleTap(post.id, e);
@@ -671,11 +671,7 @@ function FeedContent() {
                   {hasImage && !hasVideo && (
                     <div className="relative w-full h-full bg-black">
                       <div 
-                        className={`absolute inset-0 flex items-center justify-center ${
-                          mediaAspectRatio[post.id] === 'portrait' 
-                            ? 'translate-y-[0%] is-android:-translate-y-[12%]' 
-                            : '-translate-y-[4%] is-android:-translate-y-[13%]'
-                        }`}
+                        className="absolute inset-0 flex items-center justify-center -translate-y-[35%]"
                         onClick={(e) => handleDoubleTap(post.id, e)}
                       >
                         <Image
