@@ -73,6 +73,21 @@ function FeedContent() {
   const scrollPositionSaved = useRef(false);
   const isRestoringFromNavigation = useRef(false);
   const initialLoadDone = useRef(false);
+  const isPageRefresh = useRef(false);
+
+  // Detect if this is a page refresh (not back navigation)
+  useEffect(() => {
+    // Check if navigation type is reload (page refresh)
+    const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    if (navEntry && navEntry.type === 'reload') {
+      isPageRefresh.current = true;
+      // Clear cache on manual refresh to get fresh random content
+      sessionStorage.removeItem(`feedPosts_${activeTab}`);
+      sessionStorage.removeItem('feedScrollPosition');
+      sessionStorage.removeItem('feedCurrentIndex');
+      sessionStorage.removeItem('feedStateTimestamp');
+    }
+  }, [activeTab]);
 
   // TikTok-style back navigation: Save state when navigating away, restore when coming back
   useEffect(() => {
@@ -83,6 +98,7 @@ function FeedContent() {
         sessionStorage.setItem('feedCurrentIndex', currentIndex.toString());
         sessionStorage.setItem(`feedPosts_${activeTab}`, JSON.stringify(posts));
         sessionStorage.setItem('feedStateTimestamp', Date.now().toString());
+        sessionStorage.setItem('feedNavigatedAway', 'true'); // Mark that user navigated away
       }
     };
 
@@ -108,11 +124,12 @@ function FeedContent() {
       const savedScrollPosition = sessionStorage.getItem('feedScrollPosition');
       const savedIndex = sessionStorage.getItem('feedCurrentIndex');
       const stateTimestamp = sessionStorage.getItem('feedStateTimestamp');
+      const navigatedAway = sessionStorage.getItem('feedNavigatedAway');
       
-      // Only restore if state was saved recently (within last 5 minutes) - TikTok keeps state briefly
+      // Only restore if state was saved recently AND user navigated away (not page refresh)
       const isRecentState = stateTimestamp && (Date.now() - parseInt(stateTimestamp)) < 300000;
       
-      if (savedScrollPosition && isRecentState) {
+      if (savedScrollPosition && isRecentState && !isPageRefresh.current) {
         isRestoringFromNavigation.current = true;
         
         // Instant restoration without any scroll animation (TikTok style)
@@ -141,6 +158,12 @@ function FeedContent() {
         });
         
         scrollPositionSaved.current = true;
+      } else if (isPageRefresh.current) {
+        // On page refresh, start from top
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = 0;
+        }
+        setCurrentIndex(0);
       }
     }
   }, [posts]);
@@ -158,20 +181,24 @@ function FeedContent() {
   }, [showComments, showMoreMenu]);
 
   useEffect(() => {
-    // Check if we're restoring from navigation (back button)
+    // Check if we're restoring from navigation (back button) - not a page refresh
     const cachedPosts = sessionStorage.getItem(`feedPosts_${activeTab}`);
     const stateTimestamp = sessionStorage.getItem('feedStateTimestamp');
+    const navigatedAway = sessionStorage.getItem('feedNavigatedAway');
     const isRecentState = stateTimestamp && (Date.now() - parseInt(stateTimestamp)) < 300000;
     
-    // TikTok logic: If coming back (recent state exists), restore cached posts
-    // Otherwise, fetch fresh random posts
-    if (cachedPosts && isRecentState && !initialLoadDone.current) {
+    // TikTok logic: 
+    // - Page refresh (F5) = fetch fresh random posts
+    // - Back button navigation = restore cached posts (exact same content)
+    if (cachedPosts && isRecentState && navigatedAway === 'true' && !isPageRefresh.current && !initialLoadDone.current) {
       try {
         const parsedPosts = JSON.parse(cachedPosts);
         if (Array.isArray(parsedPosts) && parsedPosts.length > 0) {
           setPosts(parsedPosts);
           setTimeout(() => setLoading(false), 50);
           initialLoadDone.current = true;
+          // Clear the navigation flag so next visit fetches fresh
+          sessionStorage.removeItem('feedNavigatedAway');
           return;
         }
       } catch (e) {
@@ -179,7 +206,7 @@ function FeedContent() {
       }
     }
 
-    // Fetch fresh posts if no valid cache or state is old
+    // Fetch fresh posts on page refresh or no valid cache
     if (user && !initialLoadDone.current) {
       fetchPosts();
       initialLoadDone.current = true;
@@ -857,7 +884,7 @@ function FeedContent() {
                 {/* Bottom Overlay - User Info & Description */}
                 <div 
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
-                  style={{ bottom: '120px' }}
+                  style={{ bottom: '150px' }}
                 >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
@@ -922,7 +949,7 @@ function FeedContent() {
                 {/* Right Side - Action Buttons */}
                 <div 
                   className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
-                  style={{ bottom: '160px' }}
+                  style={{ bottom: '190px' }}
                 >
                   {/* Like */}
                   <button
