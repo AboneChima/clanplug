@@ -768,7 +768,7 @@ function FeedContent() {
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
                   style={{ 
                     bottom: typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches 
-                      ? '70px'  // PWA app mode - aggressively lower
+                      ? '30px'  // PWA app mode - extremely low
                       : '165px'  // Browser mode - keep current position
                   }}
                 >
@@ -837,7 +837,7 @@ function FeedContent() {
                   className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
                   style={{ 
                     bottom: typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches 
-                      ? '150px'  // PWA app mode - lower to match content
+                      ? '80px'  // PWA app mode - very low
                       : '200px'  // Browser mode
                   }}
                 >
