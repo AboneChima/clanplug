@@ -99,22 +99,55 @@ function FeedContent() {
         sessionStorage.setItem(`feedPosts_${activeTab}`, JSON.stringify(posts));
         sessionStorage.setItem('feedStateTimestamp', Date.now().toString());
         sessionStorage.setItem('feedNavigatedAway', 'true'); // Mark that user navigated away
+        console.log('📌 Saved feed state:', { scrollTop, currentIndex, postsCount: posts.length });
       }
     };
 
-    // Save state when clicking any link (navigating away)
-    const handleLinkClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const link = target.closest('a');
-      if (link && link.href && !link.href.includes('#')) {
+    // Save on any navigation away from this page
+    const handleBeforeUnload = () => {
+      saveState();
+    };
+
+    // Save when page visibility changes (user navigates away)
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
         saveState();
       }
     };
 
+    // Save when clicking any link (Next.js navigation)
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a');
+      if (link && link.href && !link.href.includes('#')) {
+        // Use setTimeout to ensure state is saved after React updates
+        setTimeout(saveState, 0);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     document.addEventListener('click', handleLinkClick, true);
 
+    // Also save periodically while scrolling
+    let scrollSaveTimeout: NodeJS.Timeout;
+    const handleScroll = () => {
+      clearTimeout(scrollSaveTimeout);
+      scrollSaveTimeout = setTimeout(saveState, 500);
+    };
+
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.addEventListener('scroll', handleScroll);
+    }
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('click', handleLinkClick, true);
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.removeEventListener('scroll', handleScroll);
+      }
+      saveState(); // Save on component unmount
     };
   }, [currentIndex, posts, activeTab]);
 
@@ -124,13 +157,20 @@ function FeedContent() {
       const savedScrollPosition = sessionStorage.getItem('feedScrollPosition');
       const savedIndex = sessionStorage.getItem('feedCurrentIndex');
       const stateTimestamp = sessionStorage.getItem('feedStateTimestamp');
-      const navigatedAway = sessionStorage.getItem('feedNavigatedAway');
+      
+      console.log('📍 Scroll restoration check:', {
+        hasSavedPosition: !!savedScrollPosition,
+        savedIndex,
+        isPageRefresh: isPageRefresh.current
+      });
       
       // Only restore if state was saved recently AND user navigated away (not page refresh)
       const isRecentState = stateTimestamp && (Date.now() - parseInt(stateTimestamp)) < 300000;
       
       if (savedScrollPosition && isRecentState && !isPageRefresh.current) {
         isRestoringFromNavigation.current = true;
+        
+        console.log('✅ Restoring scroll position:', savedScrollPosition);
         
         // Instant restoration without any scroll animation (TikTok style)
         const restorePosition = () => {
@@ -160,6 +200,7 @@ function FeedContent() {
         scrollPositionSaved.current = true;
       } else if (isPageRefresh.current) {
         // On page refresh, start from top
+        console.log('🔝 Page refresh - starting from top');
         if (scrollContainerRef.current) {
           scrollContainerRef.current.scrollTop = 0;
         }
@@ -187,6 +228,14 @@ function FeedContent() {
     const navigatedAway = sessionStorage.getItem('feedNavigatedAway');
     const isRecentState = stateTimestamp && (Date.now() - parseInt(stateTimestamp)) < 300000;
     
+    console.log('🔍 Feed load check:', {
+      hasCachedPosts: !!cachedPosts,
+      isRecentState,
+      navigatedAway,
+      isPageRefresh: isPageRefresh.current,
+      initialLoadDone: initialLoadDone.current
+    });
+    
     // TikTok logic: 
     // - Page refresh (F5) = fetch fresh random posts
     // - Back button navigation = restore cached posts (exact same content)
@@ -194,6 +243,7 @@ function FeedContent() {
       try {
         const parsedPosts = JSON.parse(cachedPosts);
         if (Array.isArray(parsedPosts) && parsedPosts.length > 0) {
+          console.log('✅ Restoring cached posts:', parsedPosts.length);
           setPosts(parsedPosts);
           setTimeout(() => setLoading(false), 50);
           initialLoadDone.current = true;
@@ -208,6 +258,7 @@ function FeedContent() {
 
     // Fetch fresh posts on page refresh or no valid cache
     if (user && !initialLoadDone.current) {
+      console.log('🔄 Fetching fresh posts');
       fetchPosts();
       initialLoadDone.current = true;
     }
@@ -884,7 +935,7 @@ function FeedContent() {
                 {/* Bottom Overlay - User Info & Description */}
                 <div 
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
-                  style={{ bottom: '150px' }}
+                  style={{ bottom: '145px' }}
                 >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
@@ -949,7 +1000,7 @@ function FeedContent() {
                 {/* Right Side - Action Buttons */}
                 <div 
                   className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
-                  style={{ bottom: '190px' }}
+                  style={{ bottom: '185px' }}
                 >
                   {/* Like */}
                   <button

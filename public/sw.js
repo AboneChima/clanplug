@@ -1,5 +1,5 @@
 // Service Worker to force cache bypass AND handle push notifications
-const CACHE_VERSION = 'v18-refresh-vs-back-' + Date.now();
+const CACHE_VERSION = 'v19-fix-back-nav-' + Date.now();
 const CACHE_NAME = `clanplug-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
