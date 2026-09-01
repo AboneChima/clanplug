@@ -101,7 +101,7 @@ function ResetPasswordContent() {
 
   if (isVerifying) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-300">Verifying reset link...</p>
@@ -112,9 +112,10 @@ function ResetPasswordContent() {
 
   if (!tokenValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="max-w-md w-full">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+        <div className="max-w-md w-full z-10">
+          <div className="bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] backdrop-blur-xl border border-blue-400/30 rounded-3xl shadow-2xl shadow-blue-400/20 p-8 text-center">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-500/20 flex items-center justify-center">
               <IoAlertCircleOutline className="w-10 h-10 text-red-400" />
             </div>
@@ -134,9 +135,10 @@ function ResetPasswordContent() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="max-w-md w-full">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+        <div className="max-w-md w-full z-10">
+          <div className="bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] backdrop-blur-xl border border-blue-400/30 rounded-3xl shadow-2xl shadow-blue-400/20 p-8 text-center">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center">
               <IoCheckmarkCircleOutline className="w-10 h-10 text-green-400" />
             </div>
@@ -158,17 +160,19 @@ function ResetPasswordContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-50">
+    <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
+      {/* Animated Background Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
+      
+      <div className="absolute inset-0 opacity-40">
         <div className="absolute inset-0" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           backgroundRepeat: 'repeat'
         }}></div>
       </div>
 
-      <div className="relative max-w-md w-full">
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-8 space-y-8">
+      <div className="relative max-w-md w-full z-10">
+        <div className="bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] backdrop-blur-xl border border-blue-400/30 rounded-3xl shadow-2xl shadow-blue-400/20 p-6 sm:p-8 space-y-6 sm:space-y-8">
           {/* Header */}
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/25 border border-white/20">
