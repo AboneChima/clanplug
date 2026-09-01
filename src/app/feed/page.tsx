@@ -71,77 +71,76 @@ function FeedContent() {
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({});
   const progressBarRef = useRef<Record<string, HTMLDivElement>>({});
   const scrollPositionSaved = useRef(false);
-  const postsCache = useRef<Post[]>([]);
-  const postsFetched = useRef(false);
+  const isRestoringFromNavigation = useRef(false);
+  const initialLoadDone = useRef(false);
 
-  // Save scroll position before navigating away
+  // TikTok-style back navigation: Save state when navigating away, restore when coming back
   useEffect(() => {
-    const saveScrollPosition = () => {
-      if (scrollContainerRef.current) {
+    const saveState = () => {
+      if (scrollContainerRef.current && posts.length > 0) {
         const scrollTop = scrollContainerRef.current.scrollTop;
         sessionStorage.setItem('feedScrollPosition', scrollTop.toString());
         sessionStorage.setItem('feedCurrentIndex', currentIndex.toString());
-        // Save posts to cache
-        if (posts.length > 0) {
-          sessionStorage.setItem(`feedPosts_${activeTab}`, JSON.stringify(posts));
-        }
+        sessionStorage.setItem(`feedPosts_${activeTab}`, JSON.stringify(posts));
+        sessionStorage.setItem('feedStateTimestamp', Date.now().toString());
       }
     };
 
-    // Save on route change
-    window.addEventListener('beforeunload', saveScrollPosition);
-    
-    // Handle browser back/forward button
-    const handlePopState = () => {
-      // Don't clear cache on back button - we want to restore state
-      scrollPositionSaved.current = false;
-    };
-    window.addEventListener('popstate', handlePopState);
-    
-    // Also save when clicking links
-    document.addEventListener('click', (e) => {
+    // Save state when clicking any link (navigating away)
+    const handleLinkClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.tagName === 'A' || target.closest('a')) {
-        saveScrollPosition();
+      const link = target.closest('a');
+      if (link && link.href && !link.href.includes('#')) {
+        saveState();
       }
-    });
+    };
+
+    document.addEventListener('click', handleLinkClick, true);
 
     return () => {
-      window.removeEventListener('beforeunload', saveScrollPosition);
-      window.removeEventListener('popstate', handlePopState);
-      saveScrollPosition(); // Save on component unmount
+      document.removeEventListener('click', handleLinkClick, true);
     };
   }, [currentIndex, posts, activeTab]);
 
-  // Restore scroll position after posts load
+  // Restore scroll position instantly after posts load (TikTok logic)
   useEffect(() => {
     if (posts.length > 0 && !scrollPositionSaved.current && scrollContainerRef.current) {
       const savedScrollPosition = sessionStorage.getItem('feedScrollPosition');
       const savedIndex = sessionStorage.getItem('feedCurrentIndex');
+      const stateTimestamp = sessionStorage.getItem('feedStateTimestamp');
       
-      if (savedScrollPosition) {
-        // Restore immediately without animation
-        requestAnimationFrame(() => {
+      // Only restore if state was saved recently (within last 5 minutes) - TikTok keeps state briefly
+      const isRecentState = stateTimestamp && (Date.now() - parseInt(stateTimestamp)) < 300000;
+      
+      if (savedScrollPosition && isRecentState) {
+        isRestoringFromNavigation.current = true;
+        
+        // Instant restoration without any scroll animation (TikTok style)
+        const restorePosition = () => {
           if (scrollContainerRef.current) {
-            // Disable smooth scrolling temporarily
             scrollContainerRef.current.style.scrollBehavior = 'auto';
             scrollContainerRef.current.scrollTop = parseInt(savedScrollPosition);
             
-            // Re-enable smooth scrolling after restoration
+            if (savedIndex) {
+              setCurrentIndex(parseInt(savedIndex));
+            }
+            
+            // Re-enable smooth scrolling after a brief delay
             setTimeout(() => {
               if (scrollContainerRef.current) {
                 scrollContainerRef.current.style.scrollBehavior = 'smooth';
               }
-            }, 50);
+              isRestoringFromNavigation.current = false;
+            }, 100);
           }
-          
-          if (savedIndex) {
-            setCurrentIndex(parseInt(savedIndex));
-          }
+        };
+        
+        // Use double requestAnimationFrame for more reliable instant restoration
+        requestAnimationFrame(() => {
+          requestAnimationFrame(restorePosition);
         });
         
         scrollPositionSaved.current = true;
-        // Keep cache for page refreshes, only clear on explicit navigation away
       }
     }
   }, [posts]);
@@ -159,17 +158,20 @@ function FeedContent() {
   }, [showComments, showMoreMenu]);
 
   useEffect(() => {
-    // Try to restore cached posts first
+    // Check if we're restoring from navigation (back button)
     const cachedPosts = sessionStorage.getItem(`feedPosts_${activeTab}`);
-    if (cachedPosts && !postsFetched.current) {
+    const stateTimestamp = sessionStorage.getItem('feedStateTimestamp');
+    const isRecentState = stateTimestamp && (Date.now() - parseInt(stateTimestamp)) < 300000;
+    
+    // TikTok logic: If coming back (recent state exists), restore cached posts
+    // Otherwise, fetch fresh random posts
+    if (cachedPosts && isRecentState && !initialLoadDone.current) {
       try {
         const parsedPosts = JSON.parse(cachedPosts);
         if (Array.isArray(parsedPosts) && parsedPosts.length > 0) {
           setPosts(parsedPosts);
-          postsCache.current = parsedPosts;
-          // Don't set loading to false yet - wait for scroll restoration
           setTimeout(() => setLoading(false), 50);
-          postsFetched.current = true;
+          initialLoadDone.current = true;
           return;
         }
       } catch (e) {
@@ -177,10 +179,10 @@ function FeedContent() {
       }
     }
 
-    // Only fetch posts if we have a user and haven't fetched yet
-    if (user && !postsFetched.current) {
+    // Fetch fresh posts if no valid cache or state is old
+    if (user && !initialLoadDone.current) {
       fetchPosts();
-      postsFetched.current = true;
+      initialLoadDone.current = true;
     }
     
     // iOS viewport height fix
@@ -198,6 +200,22 @@ function FeedContent() {
       setIsIOS(true);
     } else {
       // Detect Android
+      const isAndroidDevice = /Android/.test(navigator.userAgent);
+      if (isAndroidDevice) {
+        document.documentElement.classList.add('is-android');
+        setIsAndroid(true);
+      }
+    }
+    
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
+    window.addEventListener('orientationchange', setAppHeight);
+    
+    return () => {
+      window.removeEventListener('resize', setAppHeight);
+      window.removeEventListener('orientationchange', setAppHeight);
+    };
+  }, [user, activeTab]);
       const isAndroidDevice = /Android/.test(navigator.userAgent);
       if (isAndroidDevice) {
         document.documentElement.classList.add('is-android');
@@ -306,10 +324,8 @@ function FeedContent() {
         
         const socialPosts = postsData.filter((p: Post) => !p.type || p.type === 'SOCIAL_POST');
         setPosts(socialPosts);
-        postsCache.current = socialPosts;
-        // Cache the posts
-        sessionStorage.setItem(`feedPosts_${activeTab}`, JSON.stringify(socialPosts));
-        console.log('✅ Loaded', socialPosts.length, 'posts');
+        // Don't cache here - let the navigation handler manage caching for TikTok-style behavior
+        console.log('✅ Loaded', socialPosts.length, 'fresh posts');
       }
     } catch (error) {
       console.error('❌ Error fetching posts:', error);

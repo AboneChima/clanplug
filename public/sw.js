@@ -1,5 +1,5 @@
 // Service Worker to force cache bypass AND handle push notifications
-const CACHE_VERSION = 'v15-move-elements-up-' + Date.now();
+const CACHE_VERSION = 'v16-tiktok-navigation-' + Date.now();
 const CACHE_NAME = `clanplug-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
