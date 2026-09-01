@@ -216,22 +216,6 @@ function FeedContent() {
       window.removeEventListener('orientationchange', setAppHeight);
     };
   }, [user, activeTab]);
-      const isAndroidDevice = /Android/.test(navigator.userAgent);
-      if (isAndroidDevice) {
-        document.documentElement.classList.add('is-android');
-        setIsAndroid(true);
-      }
-    }
-    
-    setAppHeight();
-    window.addEventListener('resize', setAppHeight);
-    window.addEventListener('orientationchange', setAppHeight);
-    
-    return () => {
-      window.removeEventListener('resize', setAppHeight);
-      window.removeEventListener('orientationchange', setAppHeight);
-    };
-  }, []); // Remove activeTab and user dependencies to prevent re-fetching
 
   // Snap scrolling handler with Intersection Observer for better iOS support
   useEffect(() => {
