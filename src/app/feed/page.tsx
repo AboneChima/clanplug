@@ -74,6 +74,14 @@ function FeedContent() {
   const isRestoringFromNavigation = useRef(false);
   const initialLoadDone = useRef(false);
   const isPageRefresh = useRef(false);
+  const navigationStartTime = useRef(0);
+
+  // Disable Next.js automatic scroll restoration - we'll handle it manually
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
 
   // Detect if this is a page refresh (not back navigation)
   useEffect(() => {
@@ -86,118 +94,156 @@ function FeedContent() {
       sessionStorage.removeItem('feedScrollPosition');
       sessionStorage.removeItem('feedCurrentIndex');
       sessionStorage.removeItem('feedStateTimestamp');
+      console.log('🔄 Page refresh detected - cleared cache');
+    } else if (navEntry && navEntry.type === 'back_forward') {
+      console.log('⬅️ Back/forward navigation detected');
     }
   }, [activeTab]);
 
-  // TikTok-style back navigation: Save state when navigating away, restore when coming back
+  // iOS-style back navigation: Save state aggressively, restore reliably
   useEffect(() => {
     const saveState = () => {
       if (scrollContainerRef.current && posts.length > 0) {
         const scrollTop = scrollContainerRef.current.scrollTop;
+        const state = {
+          scrollTop,
+          currentIndex,
+          posts,
+          timestamp: Date.now()
+        };
+        
         sessionStorage.setItem('feedScrollPosition', scrollTop.toString());
         sessionStorage.setItem('feedCurrentIndex', currentIndex.toString());
         sessionStorage.setItem(`feedPosts_${activeTab}`, JSON.stringify(posts));
         sessionStorage.setItem('feedStateTimestamp', Date.now().toString());
-        sessionStorage.setItem('feedNavigatedAway', 'true'); // Mark that user navigated away
-        console.log('📌 Saved feed state:', { scrollTop, currentIndex, postsCount: posts.length });
+        sessionStorage.setItem('feedNavigatedAway', 'true');
+        
+        console.log('💾 State saved:', { scrollTop, currentIndex, postsCount: posts.length });
       }
     };
 
-    // Save on any navigation away from this page
-    const handleBeforeUnload = () => {
-      saveState();
-    };
-
-    // Save when page visibility changes (user navigates away)
+    // Multiple save triggers to ensure state is always saved
+    const handleBeforeUnload = () => saveState();
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        saveState();
-      }
+      if (document.hidden) saveState();
+    };
+    
+    // Handle popstate (back/forward button)
+    const handlePopState = () => {
+      console.log('🔙 Popstate event - user used back/forward button');
+      scrollPositionSaved.current = false;
+      initialLoadDone.current = false;
     };
 
-    // Save when clicking any link (Next.js navigation)
-    const handleLinkClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const link = target.closest('a');
-      if (link && link.href && !link.href.includes('#')) {
-        // Use setTimeout to ensure state is saved after React updates
-        setTimeout(saveState, 0);
-      }
+    // Save on Next.js route change start
+    const handleRouteChangeStart = () => {
+      navigationStartTime.current = Date.now();
+      saveState();
+      console.log('🚀 Route change started');
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('click', handleLinkClick, true);
-
-    // Also save periodically while scrolling
+    // Save periodically while scrolling
     let scrollSaveTimeout: NodeJS.Timeout;
     const handleScroll = () => {
       clearTimeout(scrollSaveTimeout);
-      scrollSaveTimeout = setTimeout(saveState, 500);
+      scrollSaveTimeout = setTimeout(saveState, 300);
     };
 
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.addEventListener('scroll', handleScroll);
+      scrollContainerRef.current.addEventListener('scroll', handleScroll, { passive: true });
+    }
+
+    // Listen for Next.js router events if available
+    if (typeof window !== 'undefined' && (window as any).next?.router) {
+      (window as any).next.router.events.on('routeChangeStart', handleRouteChangeStart);
     }
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('click', handleLinkClick, true);
+      
       if (scrollContainerRef.current) {
         scrollContainerRef.current.removeEventListener('scroll', handleScroll);
       }
-      saveState(); // Save on component unmount
+      
+      if (typeof window !== 'undefined' && (window as any).next?.router) {
+        (window as any).next.router.events.off('routeChangeStart', handleRouteChangeStart);
+      }
+      
+      clearTimeout(scrollSaveTimeout);
+      saveState(); // Final save on unmount
     };
   }, [currentIndex, posts, activeTab]);
 
-  // Restore scroll position instantly after posts load (TikTok logic)
+  // Restore scroll position instantly after posts load (iOS-style)
   useEffect(() => {
     if (posts.length > 0 && !scrollPositionSaved.current && scrollContainerRef.current) {
       const savedScrollPosition = sessionStorage.getItem('feedScrollPosition');
       const savedIndex = sessionStorage.getItem('feedCurrentIndex');
       const stateTimestamp = sessionStorage.getItem('feedStateTimestamp');
+      const navigatedAway = sessionStorage.getItem('feedNavigatedAway');
       
       console.log('📍 Scroll restoration check:', {
         hasSavedPosition: !!savedScrollPosition,
+        savedScrollPosition,
         savedIndex,
-        isPageRefresh: isPageRefresh.current
+        navigatedAway,
+        isPageRefresh: isPageRefresh.current,
+        postsLength: posts.length
       });
       
-      // Only restore if state was saved recently AND user navigated away (not page refresh)
+      // Only restore if state was saved recently AND not a page refresh
       const isRecentState = stateTimestamp && (Date.now() - parseInt(stateTimestamp)) < 300000;
       
-      if (savedScrollPosition && isRecentState && !isPageRefresh.current) {
+      if (savedScrollPosition && isRecentState && navigatedAway === 'true' && !isPageRefresh.current) {
         isRestoringFromNavigation.current = true;
         
-        console.log('✅ Restoring scroll position:', savedScrollPosition);
+        const targetScroll = parseInt(savedScrollPosition);
+        const targetIndex = savedIndex ? parseInt(savedIndex) : 0;
         
-        // Instant restoration without any scroll animation (TikTok style)
+        console.log('✅ Restoring scroll to:', targetScroll, 'index:', targetIndex);
+        
+        // Instant restoration with triple RAF for maximum reliability (iOS needs this)
         const restorePosition = () => {
           if (scrollContainerRef.current) {
             scrollContainerRef.current.style.scrollBehavior = 'auto';
-            scrollContainerRef.current.scrollTop = parseInt(savedScrollPosition);
+            scrollContainerRef.current.scrollTop = targetScroll;
+            setCurrentIndex(targetIndex);
             
-            if (savedIndex) {
-              setCurrentIndex(parseInt(savedIndex));
-            }
+            // Force a second restore after a tiny delay to handle iOS quirks
+            setTimeout(() => {
+              if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollTop = targetScroll;
+                console.log('🔧 Double-checked scroll position:', scrollContainerRef.current.scrollTop);
+              }
+            }, 10);
             
-            // Re-enable smooth scrolling after a brief delay
+            // Re-enable smooth scrolling
             setTimeout(() => {
               if (scrollContainerRef.current) {
                 scrollContainerRef.current.style.scrollBehavior = 'smooth';
               }
               isRestoringFromNavigation.current = false;
-            }, 100);
+            }, 150);
           }
         };
         
-        // Use double requestAnimationFrame for more reliable instant restoration
+        // Triple RAF for iOS Safari reliability
         requestAnimationFrame(() => {
-          requestAnimationFrame(restorePosition);
+          requestAnimationFrame(() => {
+            requestAnimationFrame(restorePosition);
+          });
         });
         
         scrollPositionSaved.current = true;
+        
+        // Clear navigation flag after successful restore
+        sessionStorage.removeItem('feedNavigatedAway');
       } else if (isPageRefresh.current) {
         // On page refresh, start from top
         console.log('🔝 Page refresh - starting from top');
@@ -205,6 +251,7 @@ function FeedContent() {
           scrollContainerRef.current.scrollTop = 0;
         }
         setCurrentIndex(0);
+        scrollPositionSaved.current = true;
       }
     }
   }, [posts]);
@@ -689,45 +736,55 @@ function FeedContent() {
   return (
     <AppShell>
       <div className="relative bg-black min-h-screen">
-        {/* Fixed Header - Solid black with gradient */}
-        <div className="fixed top-14 lg:top-0 left-0 right-0 z-50 bg-gradient-to-b from-black via-black/95 to-black/70">
-          <div className="max-w-2xl mx-auto flex items-center gap-2 px-4 py-3">
-            <Link href="/feed">
-              <button className={`px-3 py-1.5 text-sm font-semibold rounded-full shadow-lg transition-all ${
-                activeTab === 'foryou' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white'
-              }`}>
-                For You
-              </button>
-            </Link>
-            <Link href="/feed?tab=bookmarks">
-              <button className={`px-3 py-1.5 text-sm font-semibold rounded-full shadow-lg transition-all ${
-                activeTab === 'bookmarks' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-900 text-gray-300 hover:bg-gray-800 hover:text-white'
-              }`}>
-                Bookmarks
-              </button>
-            </Link>
+        {/* Fixed Header - TikTok-style tabs */}
+        <div className="fixed top-14 lg:top-0 left-0 right-0 z-50 bg-black border-b border-gray-800">
+          <div className="max-w-2xl mx-auto flex items-center px-4 py-3">
+            {/* TikTok-style Centered Tabs with Blue Underline */}
+            <div className="flex justify-center gap-10 flex-1">
+              <Link href="/feed">
+                <button className={`pb-3 px-1 text-base font-semibold transition-all relative ${
+                  activeTab === 'foryou' 
+                    ? 'text-white scale-105' 
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}>
+                  For You
+                  {activeTab === 'foryou' && (
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-blue-500 rounded-full transition-all" />
+                  )}
+                </button>
+              </Link>
+              <Link href="/feed?tab=bookmarks">
+                <button className={`pb-3 px-1 text-base font-semibold transition-all relative ${
+                  activeTab === 'bookmarks' 
+                    ? 'text-white scale-105' 
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}>
+                  Bookmarks
+                  {activeTab === 'bookmarks' && (
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-blue-500 rounded-full transition-all" />
+                  )}
+                </button>
+              </Link>
+            </div>
             
-            <div className="flex-1"></div>
-            
-            <Link href="/search">
-              <button className="p-2 bg-gray-900 hover:bg-gray-800 text-gray-300 hover:text-white rounded-full transition-all shadow-lg">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-            </Link>
-            
-            <Link href="/create-post">
-              <button className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-            </Link>
+            {/* Right Icons */}
+            <div className="flex items-center gap-2">
+              <Link href="/search">
+                <button className="p-2 hover:bg-gray-800 text-gray-300 hover:text-white rounded-full transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </button>
+              </Link>
+              
+              <Link href="/create-post">
+                <button className="p-2 hover:bg-blue-700 bg-blue-600 text-white rounded-full transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -935,7 +992,7 @@ function FeedContent() {
                 {/* Bottom Overlay - User Info & Description */}
                 <div 
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
-                  style={{ bottom: '137px' }}
+                  style={{ bottom: '130px' }}
                 >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
@@ -1000,7 +1057,7 @@ function FeedContent() {
                 {/* Right Side - Action Buttons */}
                 <div 
                   className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
-                  style={{ bottom: '177px' }}
+                  style={{ bottom: '170px' }}
                 >
                   {/* Like */}
                   <button
