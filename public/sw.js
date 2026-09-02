@@ -1,5 +1,5 @@
 // Service Worker to force cache bypass AND handle push notifications
-const CACHE_VERSION = 'v24-fix-sw-fetch-' + Date.now();
+const CACHE_VERSION = 'v25-simplified-sw-' + Date.now();
 const CACHE_NAME = `clanplug-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
@@ -40,6 +40,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
+  // Only handle same-origin requests
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+  
   // Network-first strategy for HTML and JS files
   if (
     event.request.mode === 'navigate' || 
@@ -49,42 +54,22 @@ self.addEventListener('fetch', (event) => {
   ) {
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
-          // Clone the response before returning
-          return response;
-        })
-        .catch((error) => {
-          console.error('SW: Fetch failed, trying cache:', error);
-          return caches.match(event.request).then((cachedResponse) => {
-            return cachedResponse || new Response('Offline', { 
-              status: 503, 
-              statusText: 'Service Unavailable' 
-            });
-          });
+        .catch(() => {
+          // Try cache as fallback
+          return caches.match(event.request);
         })
     );
   } else {
     // For other resources (images, videos), use cache-first with network fallback
     event.respondWith(
-      caches.match(event.request).then((response) => {
-        if (response) {
-          return response;
-        }
-        
-        return fetch(event.request).then((fetchResponse) => {
-          // Don't cache if it's an error response
-          if (!fetchResponse || fetchResponse.status !== 200) {
-            return fetchResponse;
-          }
-          return fetchResponse;
-        }).catch((error) => {
-          console.error('SW: Fetch failed for resource:', error);
-          return new Response('Resource unavailable', { 
-            status: 404, 
-            statusText: 'Not Found' 
-          });
-        });
-      })
+      caches.match(event.request)
+        .then((response) => {
+          return response || fetch(event.request);
+        })
+        .catch(() => {
+          // Return empty response for failed fetches to avoid errors
+          return new Response('', { status: 200 });
+        })
     );
   }
 });
