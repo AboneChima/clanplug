@@ -157,11 +157,6 @@ function FeedContent() {
       scrollContainerRef.current.addEventListener('scroll', handleScroll, { passive: true });
     }
 
-    // Listen for Next.js router events if available
-    if (typeof window !== 'undefined' && (window as any).next?.router) {
-      (window as any).next.router.events.on('routeChangeStart', handleRouteChangeStart);
-    }
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
@@ -169,10 +164,6 @@ function FeedContent() {
       
       if (scrollContainerRef.current) {
         scrollContainerRef.current.removeEventListener('scroll', handleScroll);
-      }
-      
-      if (typeof window !== 'undefined' && (window as any).next?.router) {
-        (window as any).next.router.events.off('routeChangeStart', handleRouteChangeStart);
       }
       
       clearTimeout(scrollSaveTimeout);
