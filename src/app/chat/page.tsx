@@ -898,33 +898,27 @@ function ChatContent() {
             <div className="bg-black px-4 py-3 flex-shrink-0 border-b border-[#2f3336]">
               <h1 className="text-xl font-bold text-white mb-3">Messages</h1>
               
-              {/* TikTok-style Tab Switcher with Centered Blue Underline */}
-              <div className="flex justify-center gap-10 border-b border-[#2f3336]">
+              {/* Clean Button-Style Tab Switcher - Spread Apart */}
+              <div className="flex justify-between items-center px-4 py-3 border-b border-[#2f3336]">
                 <button
                   onClick={() => setActiveTab('dms')}
-                  className={`pb-4 px-1 text-base font-semibold transition-all relative ${
+                  className={`px-4 py-2 text-base font-semibold rounded-full transition-all ${
                     activeTab === 'dms'
-                      ? 'text-white scale-105'
-                      : 'text-gray-500 hover:text-gray-300'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                   }`}
                 >
                   Chats
-                  {activeTab === 'dms' && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-blue-500 rounded-full transition-all" />
-                  )}
                 </button>
                 <button
                   onClick={() => setActiveTab('groups')}
-                  className={`pb-4 px-1 text-base font-semibold transition-all relative ${
+                  className={`px-4 py-2 text-base font-semibold rounded-full transition-all ${
                     activeTab === 'groups'
-                      ? 'text-white scale-105'
-                      : 'text-gray-500 hover:text-gray-300'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
                   }`}
                 >
                   Groups
-                  {activeTab === 'groups' && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-blue-500 rounded-full transition-all" />
-                  )}
                 </button>
               </div>
             </div>

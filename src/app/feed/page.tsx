@@ -733,7 +733,7 @@ function FeedContent() {
             {/* TikTok-style Centered Tabs with Blue Underline */}
             <div className="flex justify-center gap-10 flex-1">
               <Link href="/feed">
-                <button className={`pb-3 px-1 text-base font-semibold transition-all relative ${
+                <button className={`pb-2 px-1 text-base font-semibold transition-all relative ${
                   activeTab === 'foryou' 
                     ? 'text-white scale-105' 
                     : 'text-gray-500 hover:text-gray-300'
@@ -745,7 +745,7 @@ function FeedContent() {
                 </button>
               </Link>
               <Link href="/feed?tab=bookmarks">
-                <button className={`pb-3 px-1 text-base font-semibold transition-all relative ${
+                <button className={`pb-2 px-1 text-base font-semibold transition-all relative ${
                   activeTab === 'bookmarks' 
                     ? 'text-white scale-105' 
                     : 'text-gray-500 hover:text-gray-300'
@@ -983,7 +983,7 @@ function FeedContent() {
                 {/* Bottom Overlay - User Info & Description */}
                 <div 
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
-                  style={{ bottom: '130px' }}
+                  style={{ bottom: '120px' }}
                 >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
@@ -1048,7 +1048,7 @@ function FeedContent() {
                 {/* Right Side - Action Buttons */}
                 <div 
                   className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
-                  style={{ bottom: '170px' }}
+                  style={{ bottom: '160px' }}
                 >
                   {/* Like */}
                   <button

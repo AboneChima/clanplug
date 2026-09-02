@@ -1,5 +1,5 @@
 // Service Worker to force cache bypass AND handle push notifications
-const CACHE_VERSION = 'v26-remove-router-events-' + Date.now();
+const CACHE_VERSION = 'v27-better-tabs-positioning-' + Date.now();
 const CACHE_NAME = `clanplug-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
