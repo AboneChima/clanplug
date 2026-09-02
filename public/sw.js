@@ -1,5 +1,5 @@
 // Service Worker to force cache bypass AND handle push notifications
-const CACHE_VERSION = 'v23-tiktok-tabs-' + Date.now();
+const CACHE_VERSION = 'v24-fix-sw-fetch-' + Date.now();
 const CACHE_NAME = `clanplug-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
@@ -48,27 +48,41 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('.html')
   ) {
     event.respondWith(
-      fetch(event.request, {
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      }).catch((error) => {
-        console.error('SW: Fetch failed, trying cache:', error);
-        return caches.match(event.request);
-      })
+      fetch(event.request)
+        .then((response) => {
+          // Clone the response before returning
+          return response;
+        })
+        .catch((error) => {
+          console.error('SW: Fetch failed, trying cache:', error);
+          return caches.match(event.request).then((cachedResponse) => {
+            return cachedResponse || new Response('Offline', { 
+              status: 503, 
+              statusText: 'Service Unavailable' 
+            });
+          });
+        })
     );
   } else {
     // For other resources (images, videos), use cache-first with network fallback
     event.respondWith(
       caches.match(event.request).then((response) => {
-        return response || fetch(event.request).then((fetchResponse) => {
+        if (response) {
+          return response;
+        }
+        
+        return fetch(event.request).then((fetchResponse) => {
           // Don't cache if it's an error response
           if (!fetchResponse || fetchResponse.status !== 200) {
             return fetchResponse;
           }
           return fetchResponse;
+        }).catch((error) => {
+          console.error('SW: Fetch failed for resource:', error);
+          return new Response('Resource unavailable', { 
+            status: 404, 
+            statusText: 'Not Found' 
+          });
         });
       })
     );
