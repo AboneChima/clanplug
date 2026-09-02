@@ -898,11 +898,11 @@ function ChatContent() {
             <div className="bg-black px-4 py-3 flex-shrink-0 border-b border-[#2f3336]">
               <h1 className="text-xl font-bold text-white mb-3">Messages</h1>
               
-              {/* Clean Button-Style Tab Switcher - Spread Apart */}
-              <div className="flex justify-between items-center px-4 py-3 border-b border-[#2f3336]">
+              {/* Clean Button-Style Tab Switcher - Closer Together */}
+              <div className="flex justify-center items-center gap-6 px-4 py-3">
                 <button
                   onClick={() => setActiveTab('dms')}
-                  className={`px-4 py-2 text-base font-semibold rounded-full transition-all ${
+                  className={`px-5 py-2 text-base font-semibold rounded-full transition-all ${
                     activeTab === 'dms'
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
@@ -912,7 +912,7 @@ function ChatContent() {
                 </button>
                 <button
                   onClick={() => setActiveTab('groups')}
-                  className={`px-4 py-2 text-base font-semibold rounded-full transition-all ${
+                  className={`px-5 py-2 text-base font-semibold rounded-full transition-all ${
                     activeTab === 'groups'
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'

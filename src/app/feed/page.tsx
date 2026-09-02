@@ -983,7 +983,7 @@ function FeedContent() {
                 {/* Bottom Overlay - User Info & Description */}
                 <div 
                   className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
-                  style={{ bottom: '120px' }}
+                  style={{ bottom: '110px' }}
                 >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
@@ -1048,7 +1048,7 @@ function FeedContent() {
                 {/* Right Side - Action Buttons */}
                 <div 
                   className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
-                  style={{ bottom: '160px' }}
+                  style={{ bottom: '150px' }}
                 >
                   {/* Like */}
                   <button
