@@ -8,13 +8,44 @@ function OAuthCallbackContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    // First check for data in URL fragment (from intermediate OAuth page)
+    const hash = window.location.hash.substring(1); // Remove the #
+    
+    if (hash) {
+      try {
+        console.log('OAuth callback: Reading from URL fragment');
+        const authData = JSON.parse(atob(hash));
+        
+        if (authData.token && authData.user) {
+          console.log('OAuth successful via fragment, logging in user:', authData.user.email);
+          
+          // Save tokens and user data
+          localStorage.setItem('accessToken', authData.token);
+          if (authData.refreshToken) {
+            localStorage.setItem('refreshToken', authData.refreshToken);
+          }
+          localStorage.setItem('user', JSON.stringify(authData.user));
+          
+          // Clear the fragment
+          window.location.hash = '';
+          
+          // Redirect to feed
+          router.push('/feed');
+          return;
+        }
+      } catch (err) {
+        console.error('Failed to parse fragment data:', err);
+      }
+    }
+
+    // Fallback: Check URL search params
     const token = searchParams?.get('token');
     const refreshToken = searchParams?.get('refreshToken');
     const userStr = searchParams?.get('user');
     const error = searchParams?.get('error');
     const success = searchParams?.get('success');
 
-    console.log('OAuth callback received:', { token: !!token, refreshToken: !!refreshToken, user: !!userStr, error, success });
+    console.log('OAuth callback received:', { token: !!token, refreshToken: !!refreshToken, user: !!userStr, error, success, hasFragment: !!hash });
 
     if (error) {
       console.error('OAuth error:', error);
@@ -22,54 +53,10 @@ function OAuthCallbackContent() {
       return;
     }
 
-    // NEW: Try to get tokens from cookies first (for OAuth)
-    if (success === 'true') {
-      try {
-        console.log('OAuth success via cookies, reading cookie data...');
-        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-          const [key, value] = cookie.trim().split('=');
-          acc[key] = value;
-          return acc;
-        }, {} as Record<string, string>);
-
-        const cookieToken = cookies['accessToken'];
-        const cookieRefreshToken = cookies['refreshToken'];
-        const cookieUserData = cookies['userData'];
-
-        if (cookieToken && cookieUserData) {
-          const user = JSON.parse(decodeURIComponent(cookieUserData));
-          console.log('OAuth successful via cookies, logging in user:', user.email);
-          
-          // Save tokens and user data to localStorage
-          localStorage.setItem('accessToken', cookieToken);
-          if (cookieRefreshToken) {
-            localStorage.setItem('refreshToken', cookieRefreshToken);
-          }
-          localStorage.setItem('user', JSON.stringify(user));
-          
-          // Clear the userData cookie (keep tokens for API calls)
-          document.cookie = 'userData=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.clanplug.site';
-          
-          // Redirect to feed
-          router.push('/feed');
-          return;
-        } else {
-          console.error('OAuth cookies missing');
-          router.push('/login?error=missing_cookies');
-          return;
-        }
-      } catch (err) {
-        console.error('Failed to parse cookie data:', err);
-        router.push('/login?error=invalid_cookie_data');
-        return;
-      }
-    }
-
-    // OLD: Fallback to URL parameters (for backward compatibility)
     if (token && userStr) {
       try {
         const user = JSON.parse(decodeURIComponent(userStr));
-        console.log('OAuth successful, logging in user:', user.email);
+        console.log('OAuth successful via URL params, logging in user:', user.email);
         
         // Save tokens and user data
         localStorage.setItem('accessToken', token);
@@ -78,14 +65,14 @@ function OAuthCallbackContent() {
         }
         localStorage.setItem('user', JSON.stringify(user));
         
-        // Redirect to feed - the app will auto-login from localStorage
+        // Redirect to feed
         router.push('/feed');
       } catch (err) {
         console.error('Failed to parse user data:', err);
         router.push('/login?error=invalid_data');
       }
-    } else {
-      console.error('Missing token or user data');
+    } else if (!hash) {
+      console.error('Missing OAuth data');
       router.push('/login');
     }
   }, [searchParams, router]);
