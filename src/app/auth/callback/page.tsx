@@ -29,8 +29,13 @@ function OAuthCallbackContent() {
           // Clear the fragment
           window.location.hash = '';
           
-          // Redirect to feed
-          router.push('/feed');
+          console.log('✅ OAuth data saved to localStorage, redirecting to feed...');
+          
+          // Use window.location.replace for better iOS Safari compatibility
+          // Small delay to ensure localStorage is written
+          setTimeout(() => {
+            window.location.replace('/feed');
+          }, 100);
           return;
         }
       } catch (err) {
