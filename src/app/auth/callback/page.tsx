@@ -1,104 +1,123 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-function OAuthCallbackContent() {
+export default function AuthCallbackPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    // First check for data in URL fragment (from intermediate OAuth page)
-    const hash = window.location.hash.substring(1); // Remove the #
-    
-    if (hash) {
+    const processAuthCallback = () => {
       try {
-        console.log('OAuth callback: Reading from URL fragment');
-        const authData = JSON.parse(atob(hash));
+        // Get data from URL fragment (after #)
+        const hash = window.location.hash.substring(1); // Remove the #
         
-        if (authData.token && authData.user) {
-          console.log('OAuth successful via fragment, logging in user:', authData.user.email);
-          
-          // Save tokens and user data
-          localStorage.setItem('accessToken', authData.token);
-          if (authData.refreshToken) {
-            localStorage.setItem('refreshToken', authData.refreshToken);
-          }
-          localStorage.setItem('user', JSON.stringify(authData.user));
-          
-          // Clear the fragment
-          window.location.hash = '';
-          
-          console.log('✅ OAuth data saved to localStorage, redirecting to feed...');
-          
-          // Use window.location.replace for better iOS Safari compatibility
-          // Small delay to ensure localStorage is written
-          setTimeout(() => {
-            window.location.replace('/feed');
-          }, 100);
+        if (!hash) {
+          setError('No authentication data received');
+          setStatus('error');
+          setTimeout(() => router.push('/login'), 3000);
           return;
         }
-      } catch (err) {
-        console.error('Failed to parse fragment data:', err);
-      }
-    }
 
-    // Fallback: Check URL search params
-    const token = searchParams?.get('token');
-    const refreshToken = searchParams?.get('refreshToken');
-    const userStr = searchParams?.get('user');
-    const error = searchParams?.get('error');
-    const success = searchParams?.get('success');
+        // Decode the base64 data
+        const authDataString = atob(hash);
+        const authData = JSON.parse(authDataString);
 
-    console.log('OAuth callback received:', { token: !!token, refreshToken: !!refreshToken, user: !!userStr, error, success, hasFragment: !!hash });
+        console.log('✅ Auth data received:', {
+          hasToken: !!authData.token,
+          hasRefreshToken: !!authData.refreshToken,
+          hasUser: !!authData.user,
+          userId: authData.user?.id
+        });
 
-    if (error) {
-      console.error('OAuth error:', error);
-      router.push('/login?error=' + error);
-      return;
-    }
-
-    if (token && userStr) {
-      try {
-        const user = JSON.parse(decodeURIComponent(userStr));
-        console.log('OAuth successful via URL params, logging in user:', user.email);
-        
-        // Save tokens and user data
-        localStorage.setItem('accessToken', token);
-        if (refreshToken) {
-          localStorage.setItem('refreshToken', refreshToken);
+        // Store tokens in localStorage
+        if (authData.token) {
+          localStorage.setItem('token', authData.token);
         }
-        localStorage.setItem('user', JSON.stringify(user));
         
-        // Redirect to feed
-        router.push('/feed');
-      } catch (err) {
-        console.error('Failed to parse user data:', err);
-        router.push('/login?error=invalid_data');
+        if (authData.refreshToken) {
+          localStorage.setItem('refreshToken', authData.refreshToken);
+        }
+
+        // Store user data
+        if (authData.user) {
+          localStorage.setItem('user', JSON.stringify(authData.user));
+        }
+
+        setStatus('success');
+
+        // Redirect to home page after successful login
+        setTimeout(() => {
+          router.push('/');
+        }, 1500);
+
+      } catch (error) {
+        console.error('❌ Error processing auth callback:', error);
+        setError('Failed to process authentication data');
+        setStatus('error');
+        setTimeout(() => router.push('/login'), 3000);
       }
-    } else if (!hash) {
-      console.error('Missing OAuth data');
-      router.push('/login');
-    }
-  }, [searchParams, router]);
+    };
+
+    processAuthCallback();
+  }, [router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
-      <p className="text-white text-lg">Completing sign in...</p>
-    </div>
-  );
-}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-md w-full mx-4">
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-slate-700">
+          {status === 'processing' && (
+            <div className="text-center">
+              <div className="inline-block mb-6">
+                <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Completing Sign In...
+              </h2>
+              <p className="text-slate-400">
+                Please wait while we log you in
+              </p>
+            </div>
+          )}
 
-export default function OAuthCallback() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500 mb-4"></div>
-        <p className="text-white text-lg">Loading...</p>
+          {status === 'success' && (
+            <div className="text-center">
+              <div className="inline-block mb-6">
+                <svg className="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Success!
+              </h2>
+              <p className="text-slate-400">
+                Redirecting you to the app...
+              </p>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className="text-center">
+              <div className="inline-block mb-6">
+                <svg className="w-16 h-16 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Authentication Failed
+              </h2>
+              <p className="text-slate-400 mb-4">
+                {error || 'Something went wrong'}
+              </p>
+              <p className="text-sm text-slate-500">
+                Redirecting to login page...
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    }>
-      <OAuthCallbackContent />
-    </Suspense>
+    </div>
   );
 }
