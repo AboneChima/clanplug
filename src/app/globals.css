@@ -47,7 +47,7 @@ a[href*="@"] {
 
 html {
   height: 100%;
-  min-height: 100vh;
+  min-height: 100lvh; /* Use large viewport height - stable */
   min-height: -webkit-fill-available;
   width: 100%;
   overflow-x: hidden;
@@ -58,7 +58,7 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100lvh; /* Use large viewport height - stable */
   min-height: -webkit-fill-available;
   height: 100%;
   width: 100%;
@@ -291,37 +291,41 @@ button, a {
 
 /* iOS Safe Area and Viewport Fixes */
 @supports (-webkit-touch-callout: none) {
-  /* iOS Safari viewport height fix */
+  /* iOS Safari viewport height fix - use stable large viewport */
   :root {
-    --app-height: 100vh;
+    --app-height: 100lvh;
   }
   
   body {
-    height: 100vh;
+    height: 100lvh;
     height: -webkit-fill-available;
   }
   
-  /* Fix for feed page full-screen items on iOS */
+  /* Fix for feed page full-screen items on iOS - use stable height */
   .feed-item-container {
-    height: 100vh;
+    height: 100lvh;
     height: -webkit-fill-available;
-    min-height: 100vh;
+    min-height: 100lvh;
     min-height: -webkit-fill-available;
   }
 }
 
-/* Feed Page Scroll Container - iOS optimizations */
+/* Feed Page Scroll Container - Use stable viewport units */
 .feed-scroll-container {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
+  height: 100lvh; /* Large viewport height - stable, doesn't change with Chrome toolbar */
+  min-height: 100lvh;
 }
 
-/* Prevent content from showing through on iOS */
+/* Feed post items - Use stable height */
 .feed-post-item {
   isolation: isolate;
   contain: layout style paint;
+  height: 100lvh !important;
+  min-height: 100lvh !important;
 }
 
 /* Better touch handling for progress bar */
@@ -347,38 +351,41 @@ button, a {
   }
 }
 
-/* iOS-SPECIFIC POSITIONING FIXES FOR FEED PAGE */
-/* Target iOS devices only to prevent affecting other platforms */
+/* FEED PAGE POSITIONING - Anchored to post container, not viewport */
+/* Use fixed pixel values that don't change with viewport */
+
+/* Default for all mobile devices - Android and Web */
+.feed-bottom-overlay {
+  bottom: 140px !important; /* Fixed to container */
+}
+
+.feed-action-buttons {
+  bottom: 180px !important; /* Fixed to container */
+}
+
+/* iOS-SPECIFIC - slightly lower positioning */
 .is-ios .feed-bottom-overlay {
-  bottom: 260px !important; /* Move username/description WAY UP on iOS */
+  bottom: 255px !important;
 }
 
 .is-ios .feed-action-buttons {
-  bottom: 295px !important; /* Move action buttons WAY UP on iOS */
+  bottom: 295px !important;
 }
 
-/* iOS text-only posts positioning fix */
-.is-ios .feed-post-item .bg-\[\#0f1729\] {
-  padding-top: 28vh !important; /* Adjust text-only post vertical position for iOS */
-}
-
-/* iOS Safari bottom padding to account for home indicator */
-@supports (-webkit-touch-callout: none) {
-  .is-ios .feed-scroll-container {
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-  }
-}
-
-/* ANDROID-SPECIFIC POSITIONING - Move name DOWN */
+/* ANDROID-SPECIFIC */
 .is-android .feed-bottom-overlay {
-  bottom: 195px !important; /* Move name/description DOWN more on Android */
+  bottom: 140px !important;
 }
 
 .is-android .feed-action-buttons {
-  bottom: 230px !important; /* Move buttons accordingly */
+  bottom: 180px !important;
 }
 
-/* Android text-only posts */
-.is-android .feed-post-item .bg-\[\#0f1729\] {
-  padding-top: 36vh !important; /* More padding for Android */
+/* WEB/DESKTOP - Use container-relative positioning */
+.feed-bottom-overlay-web {
+  bottom: -30px !important; /* Way below the edge - mostly hidden */
+}
+
+.feed-action-buttons-web {
+  bottom: 10px !important; /* Very close to bottom */
 }

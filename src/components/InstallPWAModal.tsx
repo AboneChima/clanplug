@@ -18,13 +18,13 @@ export default function InstallPWAModal() {
     const android = /Android/.test(navigator.userAgent);
     setIsAndroid(android);
 
-    // DISABLED: Don't capture beforeinstallprompt - only show instructions manually
-    // const handleBeforeInstallPrompt = (e: Event) => {
-    //   e.preventDefault();
-    //   setDeferredPrompt(e);
-    //   console.log('📱 Install prompt available');
-    // };
-    // window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // Capture beforeinstallprompt for Android native install
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      console.log('📱 Install prompt available for Android');
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     // Listen for custom open event from sidebar
     const handleOpenModal = () => {
@@ -34,7 +34,7 @@ export default function InstallPWAModal() {
     window.addEventListener('openInstallModal', handleOpenModal);
 
     return () => {
-      // window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('openInstallModal', handleOpenModal);
     };
   }, []);

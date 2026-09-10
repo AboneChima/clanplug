@@ -566,49 +566,32 @@ export default function UserProfilePage() {
               ) : activeTab === 'market' ? (
                 <div className="px-2 pt-2 space-y-2">
                   {currentPosts.map((post) => (
-                    <Link key={post.id} href={`/marketplace/${post.id}`}>
-                      <div className="bg-[#1a1a1a] rounded-lg overflow-hidden">
-                        <div className="flex gap-3 p-3">
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-black flex-shrink-0 relative">
+                    <div key={post.id} className="bg-[#1a1a1a] rounded-lg overflow-hidden hover:bg-[#252525] transition-colors relative">
+                      <Link href={`/marketplace/${post.id}`} className="block">
+                        <div className="flex gap-2 p-2">
+                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-black flex-shrink-0 relative">
                             {post.images?.[0] ? (
                               <Image 
                                 src={post.images[0]} 
                                 alt={post.title} 
-                                width={80} 
-                                height={80} 
+                                width={64} 
+                                height={64} 
                                 className="w-full h-full object-cover"
                                 unoptimized
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                  const parent = target.parentElement;
-                                  if (parent && !parent.querySelector('.fallback-placeholder')) {
-                                    const fallback = document.createElement('div');
-                                    fallback.className = 'fallback-placeholder flex items-center justify-center w-full h-full bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f]';
-                                    fallback.innerHTML = `
-                                      <div class="text-center">
-                                        <svg class="w-8 h-8 mx-auto text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                      </div>
-                                    `;
-                                    parent.appendChild(fallback);
-                                  }
-                                }}
                               />
                             ) : (post.videoThumbnails?.[0] || post.videos?.[0]) ? (
                               <div className="relative w-full h-full bg-black">
                                 <Image 
                                   src={post.videoThumbnails?.[0] || post.videos?.[0] || ''}
                                   alt={post.title}
-                                  width={80}
-                                  height={80}
+                                  width={64}
+                                  height={64}
                                   className="w-full h-full object-cover"
                                   unoptimized
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                  <div className="w-12 h-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
-                                    <svg className="w-6 h-6 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                  <div className="w-6 h-6 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+                                    <svg className="w-3 h-3 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                                       <path d="M8 5v14l11-7z"/>
                                     </svg>
                                   </div>
@@ -620,21 +603,20 @@ export default function UserProfilePage() {
                               </div>
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-white font-medium text-sm mb-1 line-clamp-2">{post.title}</h3>
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <h3 className="text-white font-medium text-xs mb-1 line-clamp-1">{post.title}</h3>
+                            {post.description && (
+                              <p className="text-gray-400 text-[10px] line-clamp-1 mb-1">{post.description}</p>
+                            )}
                             {post.price && (
-                              <p className="text-green-500 font-semibold text-sm mb-1">
+                              <p className="text-green-500 font-semibold text-xs">
                                 {formatPrice(post.price, post.currency)}
                               </p>
                             )}
-                            <div className="flex items-center gap-3 text-gray-500 text-xs">
-                              <span>{post.views || 0} views</span>
-                              <span>{post.likes || 0} likes</span>
-                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Link>
+                      </Link>
+                    </div>
                   ))}
                 </div>
               ) : (

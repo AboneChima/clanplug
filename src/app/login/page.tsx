@@ -15,6 +15,7 @@ import {
   IoArrowBackOutline,
   IoHomeOutline
 } from 'react-icons/io5';
+import { FcGoogle } from 'react-icons/fc';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -92,6 +93,25 @@ export default function LoginPage() {
 
           {/* Form */}
           <form className="space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
+            {/* Google OAuth Button */}
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/auth/google`;
+              }}
+              className="w-full flex items-center justify-center gap-3 px-4 py-3 border-2 border-gray-600 rounded-xl hover:border-blue-400/50 hover:bg-gray-800/50 transition-all duration-200 group"
+            >
+              <FcGoogle className="w-6 h-6" />
+              <span className="text-white font-semibold text-sm sm:text-base">Continue with Google</span>
+            </button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4">
+              <div className="flex-1 border-t border-gray-700"></div>
+              <span className="text-gray-500 text-xs sm:text-sm font-medium">OR</span>
+              <div className="flex-1 border-t border-gray-700"></div>
+            </div>
+
             <div className="space-y-4 sm:space-y-5">
               {/* Email Field */}
               <div>

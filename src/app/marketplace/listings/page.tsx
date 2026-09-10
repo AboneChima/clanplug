@@ -315,11 +315,7 @@ function ListingsContent() {
               </button>
             </div>
           ) : (
-            <div className={`grid gap-4 ${
-              displayName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i)
-                ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
-                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-            }`}>
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {filteredPosts.map((post) => {
                 const isSocialMedia = displayName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i);
                 return (

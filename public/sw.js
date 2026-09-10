@@ -1,5 +1,5 @@
 // Service Worker to force cache bypass AND handle push notifications
-const CACHE_VERSION = 'v28-chat-tabs-clean-' + Date.now();
+const CACHE_VERSION = 'v66-extremely-negative-positioning-' + Date.now();
 const CACHE_NAME = `clanplug-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
@@ -25,14 +25,6 @@ self.addEventListener('activate', (event) => {
       console.log('✅ SW: All old caches cleared, claiming clients');
       // Immediately take control of all pages
       return self.clients.claim();
-    }).then(() => {
-      // Force reload all open tabs to get fresh code
-      return self.clients.matchAll({ type: 'window' }).then(clients => {
-        clients.forEach(client => {
-          console.log('🔄 SW: Reloading client', client.url);
-          client.postMessage({ type: 'CACHE_UPDATED' });
-        });
-      });
     })
   );
 });

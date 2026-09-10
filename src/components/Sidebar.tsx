@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
-  IoGridOutline, 
+  IoHomeOutline, 
   IoWalletOutline, 
   IoChatbubbleEllipsesOutline, 
   IoStorefrontOutline, 
@@ -42,8 +42,8 @@ type SidebarProps = {
 const navItems = [
   { 
     href: '/feed', 
-    label: 'Dashboard', 
-    Icon: IoGridOutline
+    label: 'Home', 
+    Icon: IoHomeOutline
   },
   { 
     href: '/posts', 
@@ -205,8 +205,8 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
               <span className="text-sm font-medium">Help</span>
             </Link>
 
-            {/* Install App Button - HIDDEN */}
-            {/* {showInstallButton && (
+            {/* Install App Button */}
+            {showInstallButton && (
               <button
                 onClick={() => {
                   const event = new CustomEvent('openInstallModal');
@@ -219,7 +219,7 @@ const Sidebar = ({ user, onLogout }: SidebarProps) => {
                 </svg>
                 <span className="text-sm font-semibold">Install App</span>
               </button>
-            )} */}
+            )}
           </div>
         </div>
       </nav>

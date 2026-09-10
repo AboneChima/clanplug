@@ -257,8 +257,8 @@ export default function AppShell({ children, hideNavOnMobile = false, hideBottom
 
         {!hideBottomNavOnMobile && <MobileBottomNav />}
         
-        {/* Install PWA Modal - HIDDEN */}
-        {/* <InstallPWAModal /> */}
+        {/* Install PWA Modal */}
+        <InstallPWAModal />
         <BroadcastOverlay />
       </div>
     </VTUContext.Provider>

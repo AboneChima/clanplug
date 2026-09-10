@@ -34,7 +34,7 @@ interface Post {
   videos?: string[];
   videoThumbnails?: string[];
   type?: string;
-  user: User;
+  user: User & { isFollowing?: boolean };
   _count: { likes: number; comments: number };
   isLiked: boolean;
   isBookmarked?: boolean;
@@ -65,6 +65,8 @@ function FeedContent() {
   const [likeAnimationPosition, setLikeAnimationPosition] = useState<Record<string, { x: number; y: number }>>({});
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
+  const [platformBottomName, setPlatformBottomName] = useState(140); // Default Android/mobile
+  const [platformBottomButtons, setPlatformBottomButtons] = useState(180); // Default Android/mobile
   const lastTapTime = useRef<Record<string, number>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
@@ -301,27 +303,57 @@ function FeedContent() {
       initialLoadDone.current = true;
     }
     
-    // iOS viewport height fix
+    // iOS viewport height fix - use stable large viewport height
     const setAppHeight = () => {
       const doc = document.documentElement;
-      doc.style.setProperty('--app-height', `${window.innerHeight}px`);
+      // Use largest viewport height for stability
+      doc.style.setProperty('--app-height', `${window.screen.height}px`);
     };
     
     // Detect iOS devices
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
+    // Detect Android
+    const isAndroidDevice = /Android/.test(navigator.userAgent);
+    
     if (isIOSDevice) {
       document.documentElement.classList.add('is-ios');
+      document.documentElement.classList.remove('is-android', 'is-desktop');
+      document.body.classList.add('is-ios');
+      document.body.classList.remove('is-android', 'is-desktop');
       setIsIOS(true);
+      setPlatformBottomName(255);
+      setPlatformBottomButtons(295);
+      console.log('🍎 Detected iOS device - bottom:', 255, 295);
+    } else if (isAndroidDevice) {
+      document.documentElement.classList.add('is-android');
+      document.documentElement.classList.remove('is-ios', 'is-desktop');
+      document.body.classList.add('is-android');
+      document.body.classList.remove('is-ios', 'is-desktop');
+      setIsAndroid(true);
+      setPlatformBottomName(140);
+      setPlatformBottomButtons(180);
+      console.log('🤖 Detected Android device - bottom:', 140, 180);
     } else {
-      // Detect Android
-      const isAndroidDevice = /Android/.test(navigator.userAgent);
-      if (isAndroidDevice) {
-        document.documentElement.classList.add('is-android');
-        setIsAndroid(true);
-      }
+      // Desktop/Web view - Use viewport-relative positioning
+      document.documentElement.classList.add('is-desktop');
+      document.documentElement.classList.remove('is-ios', 'is-android');
+      document.body.classList.add('is-desktop');
+      document.body.classList.remove('is-ios', 'is-android');
+      
+      // Don't set values here - we'll use CSS calc() with vh units
+      // This allows CSS to handle dynamic Chrome menu visibility
+      setPlatformBottomName(0); // Will be overridden by CSS
+      setPlatformBottomButtons(0); // Will be overridden by CSS
+      console.log('💻 Desktop/Web - using CSS positioning');
+      console.log('UserAgent:', navigator.userAgent);
+      console.log('Platform:', navigator.platform);
+      console.log('Screen:', window.screen.width, 'x', window.screen.height);
+      console.log('Viewport:', window.innerWidth, 'x', window.innerHeight);
     }
+    
+    // NO resize listener - let CSS handle it with vh units
     
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
@@ -483,6 +515,34 @@ function FeedContent() {
       showToast(post?.isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks', 'success');
     } catch (error) {
       console.error('Error:', error);
+    }
+  };
+
+  const handleFollow = async (userId: string, e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent Link navigation
+    e.stopPropagation();
+    
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}/follow`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        // Update the follow status in posts
+        setPosts(posts.map(post => 
+          post.user.id === userId 
+            ? { ...post, user: { ...post.user, isFollowing: !post.user.isFollowing } }
+            : post
+        ));
+        
+        const post = posts.find(p => p.user.id === userId);
+        showToast(post?.user.isFollowing ? 'Following' : 'Unfollowed', 'success');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showToast('Failed to follow/unfollow', 'error');
     }
   };
 
@@ -727,8 +787,8 @@ function FeedContent() {
   return (
     <AppShell>
       <div className="relative bg-black min-h-screen">
-        {/* Fixed Header - TikTok-style tabs */}
-        <div className="fixed top-14 lg:top-0 left-0 right-0 z-50 bg-black border-b border-gray-800">
+        {/* Fixed Header - TikTok-style transparent overlay */}
+        <div className="fixed top-14 lg:top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/60 via-black/40 to-transparent backdrop-blur-sm">
           <div className="max-w-2xl mx-auto flex items-center px-4 py-3">
             {/* TikTok-style Centered Tabs with Blue Underline */}
             <div className="flex justify-center gap-10 flex-1">
@@ -784,7 +844,7 @@ function FeedContent() {
           ref={scrollContainerRef}
           className="feed-scroll-container overflow-y-scroll snap-y snap-mandatory scroll-smooth relative bg-black"
           style={{ 
-            height: '100vh',
+            height: '100lvh', /* Use large viewport height - stable, doesn't change with Chrome toolbar */
             scrollSnapType: 'y mandatory',
             scrollBehavior: 'smooth',
           }}
@@ -803,8 +863,8 @@ function FeedContent() {
                 key={post.id}
                 className="feed-post-item relative snap-start snap-always flex items-center justify-center bg-black"
                 style={{ 
-                  height: '100vh',
-                  minHeight: '100vh',
+                  height: '100dvh', /* Use dvh instead of vh for stable height */
+                  minHeight: '100dvh',
                   width: '100%',
                   overflow: 'hidden'
                 }}
@@ -955,7 +1015,7 @@ function FeedContent() {
 
                   {/* Text-only Post - Solid dark blue with elegant styling */}
                   {isTextOnly && (
-                    <div className="w-full h-full flex items-start justify-center bg-[#0f1729] p-8 pt-[38vh] relative" onClick={(e) => handleDoubleTap(post.id, e)}>
+                    <div className="w-full h-full flex items-start justify-center bg-[#0f1729] p-8 pt-[32vh] relative" onClick={(e) => handleDoubleTap(post.id, e)}>
                       <div className="max-w-2xl text-center">
                         <p className="text-white text-xl md:text-2xl font-light italic leading-relaxed tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
                           {post.description}
@@ -982,8 +1042,10 @@ function FeedContent() {
 
                 {/* Bottom Overlay - User Info & Description */}
                 <div 
-                  className="absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 feed-bottom-overlay" 
-                  style={{ bottom: '110px' }}
+                  className={`absolute left-0 right-0 px-4 pb-2 pointer-events-none z-10 ${
+                    isIOS || isAndroid ? '' : 'feed-bottom-overlay-web'
+                  }`}
+                  style={isIOS || isAndroid ? { bottom: `${platformBottomName}px` } : undefined}
                 >
                   <div className="pointer-events-auto max-w-xl">
                     {/* Description - Only show for media posts */}
@@ -1002,53 +1064,71 @@ function FeedContent() {
                     )}
 
                     {/* User Info */}
-                    <Link href={`/user/${post.user.id}`} className="flex items-center gap-2">
-                      {post.user.avatar && !post.user.avatar.includes('supabase') ? (
-                        <Image 
-                          src={post.user.avatar} 
-                          alt={post.user.username} 
-                          width={32} 
-                          height={32} 
-                          className="w-8 h-8 rounded-full border-2 border-white shadow-lg" 
-                          unoptimized
-                          onError={(e) => {
-                            // Hide image and show default avatar on error
-                            e.currentTarget.style.display = 'none';
-                            const parent = e.currentTarget.parentElement;
-                            if (parent) {
-                              const defaultAvatar = document.createElement('div');
-                              defaultAvatar.className = 'w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center border-2 border-white shadow-lg';
-                              defaultAvatar.innerHTML = `<span class="text-white text-xs font-bold">${post.user.firstName[0]}</span>`;
-                              parent.insertBefore(defaultAvatar, e.currentTarget);
-                            }
-                          }}
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center border-2 border-white shadow-lg">
-                          <span className="text-white text-xs font-bold">{post.user.firstName[0]}</span>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/user/${post.user.id}`} className="flex items-center gap-2">
+                        {post.user.avatar && !post.user.avatar.includes('supabase') ? (
+                          <Image 
+                            src={post.user.avatar} 
+                            alt={post.user.username} 
+                            width={32} 
+                            height={32} 
+                            className="w-8 h-8 rounded-full border-2 border-white shadow-lg" 
+                            unoptimized
+                            onError={(e) => {
+                              // Hide image and show default avatar on error
+                              e.currentTarget.style.display = 'none';
+                              const parent = e.currentTarget.parentElement;
+                              if (parent) {
+                                const defaultAvatar = document.createElement('div');
+                                defaultAvatar.className = 'w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center border-2 border-white shadow-lg';
+                                defaultAvatar.innerHTML = `<span class="text-white text-xs font-bold">${post.user.firstName[0]}</span>`;
+                                parent.insertBefore(defaultAvatar, e.currentTarget);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center border-2 border-white shadow-lg">
+                            <span className="text-white text-xs font-bold">{post.user.firstName[0]}</span>
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-white font-semibold text-sm drop-shadow-lg">
+                              {post.user.firstName} {post.user.lastName}
+                            </span>
+                            {(post.user.verificationBadge?.status === 'verified' || post.user.verificationBadge?.status === 'active') && (
+                              <svg className="w-4 h-4 text-blue-500 drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className="text-gray-300 text-xs drop-shadow-lg">@{post.user.username}</span>
                         </div>
+                      </Link>
+                      
+                      {/* Facebook-style Follow Button - Only show if not own post */}
+                      {user && post.user.id !== user.id && (
+                        <button
+                          onClick={(e) => handleFollow(post.user.id, e)}
+                          className={`ml-2 px-3 py-1 rounded-md text-xs font-semibold transition-all drop-shadow-lg backdrop-blur-sm ${
+                            post.user.isFollowing
+                              ? 'bg-transparent text-white border border-white/60 hover:border-white/80'
+                              : 'bg-transparent text-blue-400 border border-blue-400/60 hover:border-blue-400/80 hover:text-blue-300'
+                          }`}
+                        >
+                          {post.user.isFollowing ? 'Following' : 'Follow'}
+                        </button>
                       )}
-                      <div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-white font-semibold text-sm drop-shadow-lg">
-                            {post.user.firstName} {post.user.lastName}
-                          </span>
-                          {(post.user.verificationBadge?.status === 'verified' || post.user.verificationBadge?.status === 'active') && (
-                            <svg className="w-4 h-4 text-blue-500 drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className="text-gray-300 text-xs drop-shadow-lg">@{post.user.username}</span>
-                      </div>
-                    </Link>
+                    </div>
                   </div>
                 </div>
 
                 {/* Right Side - Action Buttons */}
                 <div 
-                  className="absolute right-3 flex flex-col gap-6 z-10 feed-action-buttons" 
-                  style={{ bottom: '150px' }}
+                  className={`absolute right-3 flex flex-col gap-6 z-10 ${
+                    isIOS || isAndroid ? '' : 'feed-action-buttons-web'
+                  }`}
+                  style={isIOS || isAndroid ? { bottom: `${platformBottomButtons}px` } : undefined}
                 >
                   {/* Like */}
                   <button

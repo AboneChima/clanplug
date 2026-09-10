@@ -350,12 +350,12 @@ export default function MarketplaceDetailPage() {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-2 sm:px-4 lg:px-6">
+        <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-2 sm:space-y-4">
-              {/* Video/Image - Compact */}
-              <div className="bg-[#0a0a0a] rounded-md sm:rounded-lg overflow-hidden border border-[#1a1a1a] relative">
+              {/* Video/Image - FULL WIDTH NO PADDING */}
+              <div className="-mx-2 sm:mx-0 bg-[#0a0a0a] sm:rounded-lg overflow-hidden border-y sm:border border-[#1a1a1a] relative">
                 {/* Check if it's a social media listing for portrait ratio */}
                 <div className={`relative bg-black ${
                   post.gameTitle?.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i) 
@@ -409,7 +409,7 @@ export default function MarketplaceDetailPage() {
               </div>
 
               {/* Details - Compact */}
-              <div className="bg-[#0a0a0a] rounded-md sm:rounded-lg p-2 sm:p-4 lg:p-6 border border-[#1a1a1a]">
+              <div className="mx-2 sm:mx-0 bg-[#0a0a0a] rounded-md sm:rounded-lg p-2 sm:p-4 lg:p-6 border border-[#1a1a1a]">
                 <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-white mb-1.5 sm:mb-2">{post.title}</h1>
 
                 {/* Tags - Smaller */}
@@ -490,7 +490,7 @@ export default function MarketplaceDetailPage() {
             </div>
 
             {/* Sidebar - Compact */}
-            <div className="space-y-2 sm:space-y-3">
+            <div className="mx-2 sm:mx-0 space-y-2 sm:space-y-3">
               {/* Price & Buy - Compact */}
               <div className="bg-[#0a0a0a] rounded-md sm:rounded-lg p-2 sm:p-3 border border-[#1a1a1a] lg:sticky lg:top-6">
                 <div className="mb-2 sm:mb-3">
@@ -501,49 +501,49 @@ export default function MarketplaceDetailPage() {
                 </div>
 
                 {post.status === 'SOLD' ? (
-                  <div className="w-full py-2 bg-gray-600 text-white text-xs sm:text-sm font-semibold rounded-md text-center mb-2">
+                  <div className="w-full py-1.5 bg-gray-700 text-white text-xs sm:text-sm font-medium rounded-lg text-center mb-2">
                     Sold Out
                   </div>
                 ) : post.userId === user?.id ? (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <button
                       onClick={handleMarkAsSold}
                       disabled={markingSold}
-                      className="w-full py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-md transition-all"
+                      className="w-full py-1.5 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 disabled:opacity-50 text-white text-xs sm:text-sm font-medium rounded-lg transition-all"
                     >
                       {markingSold ? 'Marking...' : 'Mark as Sold'}
                     </button>
                     <button
                       onClick={handleDeleteListing}
                       disabled={deleting}
-                      className="w-full py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs sm:text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+                      className="w-full py-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2"
                     >
                       {deleting ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           <span>Deleting...</span>
                         </>
                       ) : (
                         <>
-                          <IoTrashOutline className="w-4 h-4" />
+                          <IoTrashOutline className="w-3.5 h-3.5" />
                           <span>Delete Listing</span>
                         </>
                       )}
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {/* Call Button with Phone Number */}
                     {post.user.phone ? (
                       <a
                         href={`tel:${post.user.phone}`}
-                        className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+                        className="w-full py-2 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2"
                       >
-                        <IoCallOutline className="w-4 h-4" />
+                        <IoCallOutline className="w-3.5 h-3.5" />
                         <span>Call: {post.user.phone}</span>
                       </a>
                     ) : (
-                      <div className="w-full py-2 bg-gray-700 text-gray-400 text-xs sm:text-sm font-medium rounded-md text-center">
+                      <div className="w-full py-2 bg-gray-800 text-gray-400 text-xs sm:text-sm font-medium rounded-lg text-center">
                         No phone number provided
                       </div>
                     )}
@@ -551,9 +551,9 @@ export default function MarketplaceDetailPage() {
                     {/* Message Seller Button */}
                     <button
                       onClick={handleMessageSeller}
-                      className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2"
                     >
-                      <IoChatbubbleOutline className="w-4 h-4" />
+                      <IoChatbubbleOutline className="w-3.5 h-3.5" />
                       <span>Message Seller</span>
                     </button>
                   </div>
