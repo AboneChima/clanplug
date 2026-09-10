@@ -35,23 +35,25 @@ export default function AuthCallbackPage() {
         // Store tokens in localStorage
         if (authData.token) {
           localStorage.setItem('token', authData.token);
+          console.log('✅ Token saved to localStorage');
         }
         
         if (authData.refreshToken) {
           localStorage.setItem('refreshToken', authData.refreshToken);
+          console.log('✅ Refresh token saved');
         }
 
         // Store user data
         if (authData.user) {
           localStorage.setItem('user', JSON.stringify(authData.user));
+          console.log('✅ User data saved');
         }
 
         setStatus('success');
 
-        // Redirect to home page after successful login
-        setTimeout(() => {
-          router.push('/');
-        }, 1500);
+        // Force reload to ensure all components see the new auth state
+        console.log('✅ Redirecting to home...');
+        window.location.href = '/';
 
       } catch (error) {
         console.error('❌ Error processing auth callback:', error);
