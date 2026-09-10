@@ -295,7 +295,7 @@ function ListingsContent() {
             </div>
           </div>
 
-          {/* Listings Grid */}
+          {/* Listings - Full Width Single Column for Games, 2 Columns for Social */}
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
@@ -315,20 +315,27 @@ function ListingsContent() {
               </button>
             </div>
           ) : (
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className={`${
+              displayName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i)
+                ? 'grid grid-cols-2 gap-3'
+                : 'space-y-2'
+            }`}>
               {filteredPosts.map((post) => {
                 const isSocialMedia = displayName.match(/tiktok|instagram|youtube|facebook|twitter|google|vpn/i);
-                return (
-                <div
-                  key={post.id}
-                  onClick={() => router.push(`/marketplace/${post.id}`)}
-                  className={`bg-[#1a1a1a] border border-[#2f3336] rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all group relative cursor-pointer ${
-                    post.status === 'SOLD' ? 'opacity-60' : ''
-                  }`}
-                >
+                
+                if (isSocialMedia) {
+                  // Social media - 2 column grid (existing code)
+                  return (
+                    <div
+                      key={post.id}
+                      onClick={() => router.push(`/marketplace/${post.id}`)}
+                      className={`bg-[#1a1a1a] border border-[#2f3336] rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/10 transition-all group relative cursor-pointer ${
+                        post.status === 'SOLD' ? 'opacity-60' : ''
+                      }`}
+                    >
                   {/* Video/Image Preview */}
                   <div 
-                    className={`relative bg-slate-900 ${isSocialMedia ? 'aspect-[3/4]' : 'aspect-video'} ${post.images && post.images.length > 0 ? 'cursor-pointer' : ''}`}
+                    className={`relative bg-slate-900 aspect-[3/4] ${post.images && post.images.length > 0 ? 'cursor-pointer' : ''}`}
                     onClick={(e) => {
                       if (post.images && post.images.length > 0) {
                         e.stopPropagation();
@@ -489,7 +496,87 @@ function ListingsContent() {
                   </div>
                 </div>
               );
-              })}
+            } else {
+              // Game accounts - Full width horizontal cards (slim and compact)
+              return (
+                <div
+                  key={post.id}
+                  onClick={() => router.push(`/marketplace/${post.id}`)}
+                  className="bg-[#1a1a1a] border border-[#2f3336] rounded-lg overflow-hidden hover:border-blue-500/50 hover:shadow-lg transition-all group relative cursor-pointer"
+                >
+                  <div className="flex gap-2 p-2">
+                    {/* Compact Thumbnail */}
+                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-black flex-shrink-0 relative">
+                      {post.videos && post.videos.length > 0 ? (
+                        <div className="relative w-full h-full bg-black">
+                          <video
+                            src={post.videos[0]}
+                            className="w-full h-full object-cover"
+                            preload="metadata"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                            <div className="w-8 h-8 rounded-full bg-white/95 flex items-center justify-center">
+                              <svg className="w-4 h-4 text-black ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      ) : post.images && post.images.length > 0 ? (
+                        <img src={post.images[0]} alt={post.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-slate-900">
+                          <IoGameControllerOutline className="w-8 h-8 text-gray-600" />
+                        </div>
+                      )}
+                      
+                      {/* Sold badge */}
+                      {post.status === 'SOLD' && (
+                        <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                          <span className="text-red-500 font-bold text-xs">SOLD</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <h3 className="text-white font-medium text-sm mb-0.5 line-clamp-1">{post.title}</h3>
+                      {post.price && (
+                        <p className="text-green-400 font-bold text-sm mb-1">
+                          {formatPrice(post.price, post.currency)}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 text-gray-400 text-[10px]">
+                        <span className="flex items-center gap-0.5">
+                          <IoEyeOutline className="w-3 h-3" />
+                          {post.views || 0}
+                        </span>
+                        <span className="flex items-center gap-0.5">
+                          <IoHeartOutline className="w-3 h-3" />
+                          {post.likes || 0}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Bookmark button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBookmark(post.id);
+                      }}
+                      className="absolute top-2 right-2 p-1.5 bg-black/80 backdrop-blur-sm rounded-md border border-slate-600 hover:border-blue-500 transition-all z-10"
+                    >
+                      {post.isBookmarked ? (
+                        <IoBookmark className="w-3.5 h-3.5 text-blue-500" />
+                      ) : (
+                        <IoBookmarkOutline className="w-3.5 h-3.5 text-white" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+          })}
             </div>
           )}
         </div>
